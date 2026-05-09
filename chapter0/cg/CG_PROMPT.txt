@@ -1,0 +1,74 @@
+# ─── CG PROMPT // CHAPTER 0 ──────────────────────────────────
+# Place the generated image here as: ch0_entrance.png
+# Recommended dimensions: 1920×1080 or similar 16:9
+
+
+## PROMPT (kopiere alles unten und gib es in ChatGPT ein):
+
+Wide cinematic 16:9 shot, photorealistic. An abandoned industrial sci-fi
+calibration facility entrance, viewed from inside a dim foyer.
+
+In the center: a massive circular sealed vault door, about 4 meters in
+diameter, made of heavily weathered dark steel with riveted edges. The
+door has thick green ivy creeping across its surface. Around the outer
+ring of the door are four small embossed symbols (each clearly visible
+but weathered): a dot/circle (●) at the top, a triangle (▲) on the right,
+a square (■) at the bottom, and a hexagon (⬡) on the left. A faint
+sickly green emergency light bleeds through the seams of the door,
+suggesting power flickering inside.
+
+The room around the door has cracked concrete walls and floor. There
+is debris on the floor — broken pipes, a fallen warning sign, leaves
+blown in from outside. Faint shafts of dim emergency lighting come from
+overhead, casting long shadows.
+
+There must be FOUR distinct interactive objects placed around the room
+that the player can click on (these need to be visually identifiable
+but understated, not overpowering):
+  1. A weathered warning placard / sign on the lower-left wall
+  2. A small rusted maintenance plaque mounted on the upper-right wall
+  3. Faded floor markings near the bottom-center of the frame
+  4. An ivy-covered wall panel in the upper-right area
+
+DO NOT write any text on these objects — the text content will appear
+via the game's dialogue system.
+
+Mood: ominous, abandoned, slightly post-apocalyptic, but precise and
+engineered. Like Half-Life 2 / Portal aesthetic but heavier on decay.
+
+Color palette:
+  • Background:        very dark teal #04080c
+  • Steel:             weathered gray, gunmetal
+  • Ivy/moss:          deep green, naturalistic
+  • Emergency lights:  sickly green #2ecf62
+  • Warning markings:  dim red #d93333
+  • Shadows:           deep black
+
+Lighting: dramatic chiaroscuro, hard shadows, slight atmospheric haze
+or dust particles in the light beams.
+
+Composition: leave the bottom 20% of the frame relatively unobstructed
+for game UI (HUD, dialogue box, hint button). The door should be
+roughly centered and dominant in the frame.
+
+Style: photorealistic 3D render or matte painting quality. NOT
+illustrated or cartoony. NOT anime. Aim for AAA video game key-art quality.
+
+Aspect ratio: 16:9 (1920×1080 recommended)
+
+
+## NOTES FOR REMI
+
+If the four interactive objects in the generated image end up in
+different positions than the defaults in chapter0.js, simply edit the
+hotspot coordinates in `Chapter0.CLUES.<key>.pos` (x, y, w, h are
+percentages of the scene). The defaults are:
+
+  dot      → x:12 y:60   (lower-left)
+  triangle → x:78 y:22   (upper-right)
+  square   → x:32 y:82   (bottom-center)
+  hexagon  → x:84 y:70   (right side)
+  door     → x:38 y:30 w:24 h:44   (center)
+
+The CG should look great even if you keep the placeholder during dev.
+The placeholder uses CSS to render a stylized version of the door.

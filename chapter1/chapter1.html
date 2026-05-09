@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KA-II // Kapitel 1 — Die Wartungseinheiten</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Barlow:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="chapter1.css">
+</head>
+<body class="chapter-page">
+
+  <div class="bg-scanlines" aria-hidden="true"></div>
+
+  <header class="sys-bar">
+    <span class="sys-text">KAPITEL 01 // <span class="accent-system">DIE WARTUNGSEINHEITEN</span></span>
+    <span class="sys-text" id="reactProgress">REAKTIVIERUNG: 0%</span>
+  </header>
+
+  <!-- TITLE CARD -->
+  <div class="ch-title-card" id="titleCard">
+    <div class="ch-emblem" aria-hidden="true">
+      <div class="ch-ring ch-ring-1"></div>
+      <div class="ch-ring ch-ring-2"></div>
+      <div class="ch-eye ch-eye-r"></div>
+      <div class="ch-eye ch-eye-g"></div>
+      <span class="ch-num">01</span>
+    </div>
+    <div class="ch-title-text">
+      <p class="ch-label sys-text">KAPITEL 01</p>
+      <h1 class="ch-name">Die Wartungseinheiten</h1>
+      <p class="ch-subline">&bdquo;Nicht alles, was dir hilft, ist hilflos.&ldquo;</p>
+    </div>
+  </div>
+
+  <!-- SCENE -->
+  <div class="scene-wrapper" id="sceneWrapper">
+    <div class="scene-bg-layer" id="sceneBgLayer">
+      <img src="cg/ch1_hall_empty.png" class="scene-bg" id="sceneBg" alt=""
+           onerror="this.style.display='none'">
+      <div class="scene-ph" id="scenePh" data-scene="hall-empty"></div>
+    </div>
+    <div class="scene-hotspots" id="sceneHotspots"></div>
+    <div class="robot-icons hidden" id="robotIcons">
+      <button class="robot-icon r3mi-icon" onclick="Chapter1.clickRobot('r3mi')" aria-label="R-3MI ansprechen">
+        <div class="ri-eye ri-eye-r"></div>
+        <span class="ri-label sys-text">R-3MI</span>
+      </button>
+      <button class="robot-icon vtgm-icon" onclick="Chapter1.clickRobot('vtgm')" aria-label="V-TGM ansprechen">
+        <div class="ri-eye ri-eye-g"></div>
+        <span class="ri-label sys-text">V-TGM</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- CHOICE UI -->
+  <div class="choice-overlay hidden" id="choiceOverlay">
+    <div class="choice-panel">
+      <div class="choice-prompt sys-text" id="choicePrompt"></div>
+      <div class="choice-buttons" id="choiceButtons"></div>
+      <div class="choice-hint sys-text" id="choiceHint"></div>
+    </div>
+  </div>
+
+  <!-- HINT BAR -->
+  <div class="hint-bar hidden" id="hintBar">
+    <span class="sys-text hint-label" id="hintCount">HINWEISE: 3 VERFÜGBAR</span>
+    <button class="ka-btn small" id="hintBtnR3MI" onclick="Chapter1.useHint('r3mi')">
+      <span class="accent-r3mi">[ R-3MI ]</span>
+    </button>
+    <button class="ka-btn small" id="hintBtnVTGM" onclick="Chapter1.useHint('vtgm')">
+      <span class="accent-vtgm">[ V-TGM ]</span>
+    </button>
+  </div>
+
+  <!-- PUZZLE 1 -->
+  <div class="puzzle-modal hidden" id="puzzle1Modal">
+    <div class="puzzle-card">
+      <div class="puzzle-card-accent p1-accent"></div>
+      <div class="puzzle-header">
+        <p class="puzzle-label sys-text">TERMINAL 01 // ENERGIEWEGLEITUNG</p>
+        <h2 class="puzzle-title">GRUNDVERSORGUNG</h2>
+        <p class="puzzle-sub sys-text">VERBINDE ENERGIEQUELLE MIT DEM TERMINAL — KLICK ZUM DREHEN</p>
+      </div>
+      <div class="pipe-grid" id="puzzle1Grid"></div>
+      <div class="puzzle-status sys-text" id="puzzle1Status">LEITUNG UNTERBROCHEN.</div>
+      <div class="puzzle-actions">
+        <button class="ka-btn small" onclick="Chapter1.resetPuzzle1()">[ ZURÜCKSETZEN ]</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PUZZLE 2 -->
+  <div class="puzzle-modal hidden" id="puzzle2Modal">
+    <div class="puzzle-card">
+      <div class="puzzle-card-accent p2-accent"></div>
+      <div class="puzzle-header">
+        <p class="puzzle-label sys-text">HILFSPROTOKOLL-KALIBRIERUNG</p>
+        <h2 class="puzzle-title">DUALSIGNAL</h2>
+        <p class="puzzle-sub sys-text">BEIDE SIGNALE MÜSSEN GETRENNT UND SAUBER ANKOMMEN</p>
+      </div>
+      <div class="pipe-grid dual" id="puzzle2Grid"></div>
+      <div class="puzzle-status sys-text" id="puzzle2Status">SIGNALE INAKTIV.</div>
+      <div class="puzzle-actions">
+        <button class="ka-btn small" onclick="Chapter1.resetPuzzle2()">[ ZURÜCKSETZEN ]</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAPTER COMPLETE -->
+  <div class="chapter-complete hidden" id="chapterComplete">
+    <div class="cc-card">
+      <div class="cc-header sys-text">KAPITEL 01 ABGESCHLOSSEN</div>
+      <div class="cc-title">SEKTOR 02 FREIGEGEBEN</div>
+      <div class="cc-next">WARTUNGSGARTEN</div>
+      <div class="cc-progress sys-text" id="ccProgress"></div>
+      <a class="ka-btn primary" href="../chapter2/chapter2.html">[ EINTRETEN ]</a>
+      <a class="ka-btn small"   href="../index.html">[ HAUPTMENÜ ]</a>
+    </div>
+  </div>
+
+  <script src="../js/engine.js"></script>
+  <script src="chapter1.js"></script>
+</body>
+</html>

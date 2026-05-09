@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KA-II // Kapitel 0 — Rückkehr</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Barlow:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="chapter0.css">
+</head>
+<body class="chapter-page">
+
+  <!-- ── ATMOSPHERIC LAYERS ──────────────────────────────────── -->
+  <div class="bg-grid"      aria-hidden="true"></div>
+  <div class="bg-scanlines" aria-hidden="true"></div>
+
+  <!-- ── SYSTEM BAR ─────────────────────────────────────────── -->
+  <header class="sys-bar">
+    <span class="sys-text">
+      KAPITEL 00 //
+      <span class="accent-system">RÜCKKEHR</span>
+      &nbsp;//&nbsp;
+      SEKTOR&nbsp;7C — EINGANG
+    </span>
+    <span class="sys-text">
+      <a href="../index.html" class="back-link">[ ZURÜCK ZUM MENÜ ]</a>
+    </span>
+  </header>
+
+  <!-- ── SCENE WRAPPER ──────────────────────────────────────── -->
+  <div class="scene-wrapper" id="sceneWrapper">
+    <div class="scene-canvas" id="sceneCanvas">
+
+      <!-- Real CG (added by user) -->
+      <img
+        src="cg/ch0_entrance.png"
+        class="scene-bg"
+        id="sceneBg"
+        alt=""
+        onload="document.getElementById('placeholderScene').style.display='none'"
+        onerror="this.remove()"
+      >
+
+      <!-- CSS-only fallback if no CG present yet -->
+      <div class="placeholder-scene" id="placeholderScene" aria-hidden="true">
+        <div class="ph-vignette"></div>
+        <div class="ph-floor"></div>
+
+        <!-- Sealed door silhouette -->
+        <div class="ph-door">
+          <div class="ph-door-ring ph-door-ring-1"></div>
+          <div class="ph-door-ring ph-door-ring-2"></div>
+          <div class="ph-door-ring ph-door-ring-3"></div>
+          <div class="ph-door-symbol ph-sym-top">●</div>
+          <div class="ph-door-symbol ph-sym-right">▲</div>
+          <div class="ph-door-symbol ph-sym-bottom">■</div>
+          <div class="ph-door-symbol ph-sym-left">⬡</div>
+          <div class="ph-door-glow"></div>
+        </div>
+
+        <!-- Floating debris / overgrown details -->
+        <div class="ph-vine ph-vine-1"></div>
+        <div class="ph-vine ph-vine-2"></div>
+        <div class="ph-vine ph-vine-3"></div>
+
+        <!-- Note for builder -->
+        <div class="ph-note sys-text">
+          [ PLATZHALTER — ERSETZE DURCH chapter0/cg/ch0_entrance.png ]
+        </div>
+      </div>
+
+      <!-- Hotspots are added here by Chapter0.js -->
+
+    </div>
+  </div>
+
+  <!-- ── HUD: HINWEIS BUTTON + PROGRESS ──────────────────────── -->
+  <div class="chapter-hud">
+    <button class="ka-btn small" onclick="Chapter0.showHint()" aria-label="Hinweis anzeigen">
+      [ HINWEIS ]
+    </button>
+    <span class="sys-text" id="cluesProgress">HINWEISE: 0 / 4</span>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       PUZZLE MODAL — Sealed door access panel
+       ════════════════════════════════════════════════════════════ -->
+  <div class="puzzle-modal hidden" id="puzzleModal" role="dialog" aria-label="Schleusensteuerung">
+    <div class="puzzle-card">
+
+      <div class="puzzle-header">
+        <div class="puzzle-label sys-text">SCHLEUSENSTEUERUNG // SEKTOR 7C</div>
+        <div class="puzzle-title">ZUGRIFFSCODE</div>
+        <div class="puzzle-sublabel sys-text">VIER-SYMBOL-SEQUENZ ERFORDERLICH</div>
+      </div>
+
+      <div class="puzzle-display" id="puzzleDisplay">
+        <span class="puzzle-slot">_</span>
+        <span class="puzzle-slot">_</span>
+        <span class="puzzle-slot">_</span>
+        <span class="puzzle-slot">_</span>
+      </div>
+
+      <div class="puzzle-status sys-text" id="puzzleStatus">BEREIT.</div>
+
+      <div class="puzzle-buttons">
+        <button class="puzzle-key" data-symbol="●">●</button>
+        <button class="puzzle-key" data-symbol="▲">▲</button>
+        <button class="puzzle-key" data-symbol="■">■</button>
+        <button class="puzzle-key" data-symbol="⬡">⬡</button>
+      </div>
+
+      <div class="puzzle-actions">
+        <button class="ka-btn small" onclick="Chapter0.resetPuzzle()">[ ZURÜCKSETZEN ]</button>
+        <button class="ka-btn small" onclick="Chapter0.closePuzzle()">[ ABBRECHEN ]</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── CHAPTER COMPLETE OVERLAY ────────────────────────────── -->
+  <div class="chapter-complete hidden" id="chapterComplete">
+    <div class="cc-card">
+      <div class="cc-glitch">SCHLEUSE GEÖFFNET</div>
+      <div class="cc-divider">──────────────</div>
+      <div class="cc-chapter sys-text">KAPITEL 00 ABGESCHLOSSEN</div>
+      <div class="cc-next">KAPITEL 01 — DIE WARTUNGSEINHEITEN</div>
+      <div class="cc-progress sys-text" id="ccProgress"></div>
+      <a class="ka-btn primary" href="../chapter1/chapter1.html">[ EINTRETEN ]</a>
+      <a class="ka-btn small" href="../index.html">[ HAUPTMENÜ ]</a>
+    </div>
+  </div>
+
+  <!-- ── SCRIPTS ─────────────────────────────────────────────── -->
+  <script src="../js/engine.js"></script>
+  <script src="chapter0.js"></script>
+
+</body>
+</html>

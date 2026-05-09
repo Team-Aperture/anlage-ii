@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Die Kalibrierungsanlage II: Die Reaktivierung — Ein Team_Aperture Geocaching-Erlebnis">
+  <title>KA-II: Die Reaktivierung</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Barlow:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/title.css">
+</head>
+<body>
+
+  <!-- ── ATMOSPHERIC LAYERS ──────────────────────────────────── -->
+  <div class="bg-grid"      aria-hidden="true"></div>
+  <div class="bg-scanlines" aria-hidden="true"></div>
+  <div class="bg-vignette"  aria-hidden="true"></div>
+  <div id="particles"       aria-hidden="true"></div>
+
+  <!-- ── BOOT SEQUENCE OVERLAY ──────────────────────────────── -->
+  <div class="boot-sequence" id="bootSequence" aria-hidden="true"></div>
+
+  <!-- ── SYSTEM BAR ─────────────────────────────────────────── -->
+  <header class="sys-bar">
+    <span class="sys-text">
+      KA-II SYSTEM //
+      STATUS: <span id="sysStatus" class="blink status-offline">OFFLINE</span>
+    </span>
+    <span class="sys-text">
+      SEKTOR&nbsp;7C //
+      <span class="accent-r3mi">R-3MI</span>
+      &nbsp;/&nbsp;
+      <span class="accent-vtgm">V-TGM</span>
+    </span>
+  </header>
+
+  <!-- ── MAIN CONTENT ───────────────────────────────────────── -->
+  <main class="title-main" role="main">
+
+    <!-- HERO LOGO -->
+    <section class="hero-section" aria-label="Spieltitel">
+
+      <div class="hero-logo-wrap" id="heroLogoWrap">
+
+        <!-- Reactor warning lights flanking the logo -->
+        <div class="hero-light hero-light-l" aria-hidden="true"></div>
+        <div class="hero-light hero-light-r" aria-hidden="true"></div>
+
+        <!-- The logo itself -->
+        <img
+          src="assets/logo.png"
+          alt="Die Kalibrierungsanlage II: Die Reaktivierung"
+          class="hero-logo"
+          id="heroLogo"
+        >
+
+        <!-- Scanline that passes across the logo -->
+        <div class="hero-scanbar" aria-hidden="true"></div>
+
+      </div>
+
+      <p class="hero-tagline">
+        &ldquo;Sie hätte abgeschaltet bleiben sollen.&rdquo;
+      </p>
+
+      <p class="sys-text" id="chapterProgress"></p>
+
+    </section>
+
+    <!-- Navigation menu -->
+    <nav class="title-menu" aria-label="Hauptmenü">
+      <a  class="ka-btn primary"
+          href="access.html">
+        [ STARTEN ]
+      </a>
+      <button class="ka-btn"
+              onclick="GameEngine.achievements.showOverlay()"
+              aria-label="Erfolge anzeigen">
+        [ ERFOLGE ]
+      </button>
+      <button class="ka-btn"
+              onclick="GameEngine.signals.showOverlay()"
+              aria-label="Signalnischen anzeigen">
+        [ SIGNALNISCHEN ]
+      </button>
+      <button class="ka-btn"
+              onclick="GameEngine.showCredits()"
+              aria-label="Credits anzeigen">
+        [ CREDITS ]
+      </button>
+    </nav>
+
+  </main>
+
+  <!-- ── IDLE COMMENT (R-3MI) ────────────────────────────────── -->
+  <aside class="idle-comment" aria-live="polite">
+    <div class="idle-comment-speaker">R-3MI</div>
+    <div class="idle-comment-text"></div>
+  </aside>
+
+  <!-- ── VERSION TAG ─────────────────────────────────────────── -->
+  <div class="version-tag">
+    <span class="sys-text">v0.1.0 // TEAM_APERTURE</span>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       OVERLAYS
+       ════════════════════════════════════════════════════════════ -->
+
+  <div class="overlay-backdrop hidden"
+       id="overlayBackdrop"
+       onclick="GameEngine.closeOverlay()"
+       aria-hidden="true"></div>
+
+  <div class="overlay-panel hidden" id="achievementOverlay" role="dialog" aria-label="Erfolge">
+    <div class="overlay-card">
+      <h2 class="overlay-title">ERFOLGE</h2>
+      <div class="overlay-content" id="achievementList"></div>
+      <button class="ka-btn" onclick="GameEngine.closeOverlay()">[ SCHLIESSEN ]</button>
+    </div>
+  </div>
+
+  <div class="overlay-panel hidden" id="signalOverlay" role="dialog" aria-label="Signalnischen">
+    <div class="overlay-card">
+      <h2 class="overlay-title">SIGNALNISCHEN</h2>
+      <p class="overlay-subtitle sys-text">
+        OPTIONALE ARCHIVFRAGMENTE // THE TRANSMISSION
+      </p>
+      <div class="overlay-content" id="signalList"></div>
+      <button class="ka-btn" onclick="GameEngine.closeOverlay()">[ SCHLIESSEN ]</button>
+    </div>
+  </div>
+
+  <div class="overlay-panel hidden" id="creditsOverlay" role="dialog" aria-label="Credits">
+    <div class="overlay-card">
+      <h2 class="overlay-title">CREDITS</h2>
+      <div class="overlay-content credits-content">
+
+        <p>
+          <span class="accent-r3mi">R-3MI</span> / Remortem<br>
+          <span class="sys-text">Story · Code · Rätseldesign</span>
+        </p>
+
+        <p class="credits-divider">──────────────────────────</p>
+
+        <p>
+          <span class="accent-vtgm">V-TGM</span> / Vintagium__<br>
+          <span class="sys-text">Konzept · Musik · Artwork</span>
+        </p>
+
+        <p class="credits-divider">──────────────────────────</p>
+
+        <p class="sys-text">Gastcharaktere</p>
+        <p style="font-size:13px; color:var(--text-secondary); margin-top:4px;">
+          F-RØ5CHI · L-UX · J4W-A3 · B-RADF1SH<br>
+          T-FLON14 · ASP-1024 · AGN-H3R
+        </p>
+
+        <p class="credits-divider">──────────────────────────</p>
+
+        <p class="sys-text">Ein Team_Aperture Geocaching-Projekt.</p>
+        <p class="sys-text" style="margin-top:8px;">
+          Dieses Spiel speichert keine personenbezogenen Daten.<br>
+          Spielfortschritt wird lokal gespeichert.
+        </p>
+
+      </div>
+      <button class="ka-btn" onclick="GameEngine.closeOverlay()">[ SCHLIESSEN ]</button>
+    </div>
+  </div>
+
+  <!-- ── SCRIPTS ─────────────────────────────────────────────── -->
+  <script src="js/engine.js"></script>
+  <script src="js/title.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,305 @@
+/* ═══════════════════════════════════════════════════════════════
+   KALIBRIERUNGSANLAGE II — TITLE SCREEN
+   Hero-logo redesign
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── PARTICLES (floating dust/vine specks) ──────────────────── */
+#particles {
+  position: fixed; inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0;
+  animation: floatUp linear infinite;
+}
+
+@keyframes floatUp {
+  0%   { transform: translateY(0) translateX(0) scale(0.6); opacity: 0; }
+  10%  { opacity: 0.5; }
+  80%  { opacity: 0.3; }
+  100% { transform: translateY(-110vh) translateX(var(--drift)) scale(1.2); opacity: 0; }
+}
+
+/* ─── MAIN LAYOUT ────────────────────────────────────────────── */
+.title-main {
+  position: relative;
+  z-index: 10;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-xl);
+  padding: 80px var(--sp-lg) 100px;
+}
+
+/* ─── SYSTEM BAR ─────────────────────────────────────────────── */
+.sys-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--sp-sm) var(--sp-lg);
+  background: rgba(4,8,12,0.9);
+  border-bottom: 1px solid var(--bdr-dim);
+  z-index: 20;
+  backdrop-filter: blur(4px);
+}
+
+/* ─── BOOT SEQUENCE ──────────────────────────────────────────── */
+.boot-sequence {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-deep);
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: var(--sp-xl);
+  overflow: hidden;
+}
+
+.boot-line {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-terminal);
+  letter-spacing: 0.05em;
+  line-height: 2;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.boot-line.visible { opacity: 1; transform: translateX(0); }
+.boot-line.error   { color: var(--accent-r3mi); }
+.boot-line.warn    { color: var(--accent-warn); }
+.boot-line.success { color: var(--accent-vtgm); }
+.boot-line.dim     { color: var(--text-dim); }
+
+.boot-cursor {
+  display: inline-block;
+  width: 8px; height: 14px;
+  background: var(--text-terminal);
+  margin-left: 4px;
+  vertical-align: middle;
+  animation: blink 0.8s step-end infinite;
+}
+
+/* ─── HERO SECTION ───────────────────────────────────────────── */
+.hero-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-md);
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.9s ease, transform 0.9s ease;
+}
+
+.hero-section.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ─── HERO LOGO ──────────────────────────────────────────────── */
+.hero-logo-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 1000px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-md) 0;
+}
+
+.hero-logo {
+  width: 100%;
+  height: auto;
+  max-width: 1000px;
+  display: block;
+  filter: drop-shadow(0 12px 24px rgba(0,0,0,0.6));
+  position: relative;
+  z-index: 2;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Slow ambient breathing — matches the green reactor light */
+  animation: heroBreathe 5.5s ease-in-out infinite;
+}
+
+@keyframes heroBreathe {
+  0%, 100% {
+    filter:
+      drop-shadow(0 12px 24px rgba(0,0,0,0.6))
+      drop-shadow(0 0 30px rgba(46,207,98,0.08));
+  }
+  50% {
+    filter:
+      drop-shadow(0 12px 24px rgba(0,0,0,0.6))
+      drop-shadow(0 0 50px rgba(46,207,98,0.18));
+  }
+}
+
+/* Subtle parallax tilt on mouse move (set by JS) */
+.hero-logo[data-tilt] {
+  transform: perspective(1200px)
+             rotateX(var(--tilt-x, 0deg))
+             rotateY(var(--tilt-y, 0deg));
+}
+
+/* ─── REACTOR WARNING LIGHTS (flanking the logo) ─────────────── */
+.hero-light {
+  position: absolute;
+  top: 50%;
+  width: 6px;
+  height: 60px;
+  background: var(--accent-r3mi);
+  box-shadow: 0 0 12px var(--accent-r3mi), 0 0 24px var(--accent-r3mi);
+  transform: translateY(-50%);
+  opacity: 0.7;
+  z-index: 1;
+}
+
+.hero-light-l { left: -2px;  animation: lightPulseL 2.2s ease-in-out infinite; }
+.hero-light-r {
+  right: -2px;
+  background: var(--accent-vtgm);
+  box-shadow: 0 0 12px var(--accent-vtgm), 0 0 24px var(--accent-vtgm);
+  animation: lightPulseR 2.7s ease-in-out infinite;
+}
+
+@keyframes lightPulseL {
+  0%, 100% { opacity: 0.4; height: 40px; }
+  50%      { opacity: 0.9; height: 80px; }
+}
+
+@keyframes lightPulseR {
+  0%, 100% { opacity: 0.5; height: 50px; }
+  50%      { opacity: 1.0; height: 90px; }
+}
+
+/* ─── SCAN BAR (passes across the logo every ~9s) ────────────── */
+.hero-scanbar {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  overflow: hidden;
+  mix-blend-mode: screen;
+}
+
+.hero-scanbar::before {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 80px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(46,207,98,0.0) 30%,
+    rgba(46,207,98,0.25) 50%,
+    rgba(46,207,98,0.0) 70%,
+    transparent 100%
+  );
+  left: -120px;
+  animation: scanbarSweep 9s ease-in-out infinite;
+  animation-delay: 4s;
+}
+
+@keyframes scanbarSweep {
+  0%, 60% { left: -120px; }
+  90%     { left: calc(100% + 60px); }
+  100%    { left: calc(100% + 60px); }
+}
+
+/* ─── TAGLINE ────────────────────────────────────────────────── */
+.hero-tagline {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 16px;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+  text-align: center;
+  margin-top: var(--sp-md);
+}
+
+/* ─── MENU ───────────────────────────────────────────────────── */
+.title-menu {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-md);
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.6s ease 0.5s;
+}
+
+.title-menu.revealed { opacity: 1; }
+
+/* ─── VERSION TAG ────────────────────────────────────────────── */
+.version-tag {
+  position: fixed;
+  bottom: var(--sp-md);
+  right: var(--sp-lg);
+  z-index: 20;
+}
+
+/* ─── R-3MI IDLE COMMENT ─────────────────────────────────────── */
+.idle-comment {
+  position: fixed;
+  bottom: var(--sp-xl);
+  left: var(--sp-lg);
+  z-index: 20;
+  max-width: 320px;
+  background: var(--bg-panel);
+  border: 1px solid var(--bdr-dim);
+  border-left: 2px solid var(--accent-r3mi);
+  padding: var(--sp-sm) var(--sp-md);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.idle-comment.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.idle-comment-speaker {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent-r3mi);
+  letter-spacing: 0.15em;
+  margin-bottom: 4px;
+}
+
+.idle-comment-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* ─── RESPONSIVE ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .hero-logo-wrap { padding: var(--sp-sm) 0; }
+  .hero-light { height: 40px; width: 4px; }
+  .hero-tagline { font-size: 14px; }
+
+  .sys-bar { padding: var(--sp-xs) var(--sp-md); }
+  .sys-bar .sys-text { font-size: 9px; }
+
+  .idle-comment { display: none; }
+  .version-tag  { left: 50%; right: auto; transform: translateX(-50%); }
+
+  .title-menu { gap: var(--sp-sm); }
+  .ka-btn { padding: 8px 16px; font-size: 11px; }
+}
+
+@media (max-width: 480px) {
+  .title-main { padding: 60px var(--sp-md) 80px; gap: var(--sp-lg); }
+  .hero-tagline { font-size: 13px; }
+}
