@@ -826,32 +826,35 @@ const Chapter1 = (() => {
    * Green solution path: (0,3)S→(1,3)S→(2,3)W→(2,2)S→(3,2) 
    */
 
+  // FIXED LAYOUT: row 0 is no longer connected — no bridge between sources.
+  // Sources (top) and terminals (bottom) are simple straight pieces.
+  // Player rotates the inner tiles to form two disjoint paths.
   const P2_TYPES = [
-    [4, 1, 1, 4],
+    [1, 0, 0, 1],
     [1, 0, 0, 1],
     [2, 2, 2, 2],
-    [0, 4, 4, 0],
+    [0, 1, 1, 0],
   ];
 
   const P2_SOLVED = [
-    [0, 1, 1, 0],
-    [0, 0, 0, 0],
-    [1, 0, 2, 3],
-    [0, 0, 0, 0],
+    [0, 0, 0, 0],   // sources NS
+    [0, 0, 0, 0],   // straights NS
+    [0, 2, 1, 3],   // corners: NE, SW, ES, WN
+    [0, 0, 0, 0],   // terminals NS
   ];
 
-  // Red cells: (0,0),(1,0),(2,0),(2,1),(3,1)
-  // Green cells: (0,3),(1,3),(2,2),(2,3),(3,2)
+  // Red path:   (0,0)→(1,0)→(2,0)→(2,1)→(3,1)
+  // Green path: (0,3)→(1,3)→(2,3)→(2,2)→(3,2)
   const P2_SOURCE_R  = '0,0';
   const P2_TERM_R    = '3,1';
   const P2_SOURCE_G  = '0,3';
   const P2_TERM_G    = '3,2';
 
   const P2_FIXED = [
-    [1, 0, 0, 1],
-    [0, 1, 1, 0],
-    [0, 0, 0, 0],
-    [0, 1, 1, 0],
+    [1, 0, 0, 1],   // sources fixed
+    [0, 0, 0, 0],   // straights rotatable
+    [0, 0, 0, 0],   // corners rotatable
+    [0, 1, 1, 0],   // terminals fixed
   ];
 
   let p2Grid = [];
@@ -931,7 +934,22 @@ const Chapter1 = (() => {
     const reachG = bfsReach(p2Grid, 0, 3);
     const okR    = reachR.has(P2_TERM_R);
     const okG    = reachG.has(P2_TERM_G);
+
+    // Disjoint check — paths must not share any tile
+    const overlap = [...reachR].some(t => reachG.has(t));
+
     const status = document.getElementById('puzzle2Status');
+
+    // CRITICAL: detect cross-contamination
+    // Red reaches green's terminal OR green reaches red's terminal = bridged
+    const redReachesGreen = reachR.has(P2_TERM_G);
+    const greenReachesRed = reachG.has(P2_TERM_R);
+
+    if (overlap || redReachesGreen || greenReachesRed) {
+      status.textContent = 'SIGNALE INTERFERIEREN — PFADE MÜSSEN GETRENNT BLEIBEN.';
+      status.className   = 'puzzle-status sys-text error';
+      return;
+    }
 
     if (okR && okG) {
       status.textContent = 'BEIDE SIGNALE VERBUNDEN.';
@@ -945,7 +963,7 @@ const Chapter1 = (() => {
       status.textContent = 'V-TGM-SIGNAL: AKTIV. R-3MI-SIGNAL: UNTERBROCHEN.';
       status.className   = 'puzzle-status sys-text';
     } else {
-      status.textContent = 'SIGNALE INAKTIV.';
+      status.textContent = 'BEIDE SIGNALE INAKTIV.';
       status.className   = 'puzzle-status sys-text';
     }
   }

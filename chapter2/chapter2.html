@@ -4,27 +4,246 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>KA-II // Kapitel 2 — Wartungsgarten</title>
-  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&family=Barlow:wght@300;400&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Barlow:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/global.css">
-  <style>
-    .tbc-wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--sp-lg);gap:var(--sp-md);text-align:center;position:relative;z-index:10;}
-    .tbc-label{font-family:var(--font-mono);font-size:11px;letter-spacing:.2em;color:var(--text-secondary);}
-    .tbc-title{font-family:var(--font-display);font-size:clamp(28px,5vw,48px);font-weight:700;letter-spacing:.2em;color:var(--text-primary);margin:var(--sp-md) 0;}
-    .tbc-status{font-family:var(--font-mono);font-size:13px;color:var(--accent-warn);margin:var(--sp-md) 0;letter-spacing:.1em;}
-    .tbc-guest{font-family:var(--font-mono);font-size:12px;color:var(--accent-g1);margin-bottom:var(--sp-lg);}
-  </style>
+  <link rel="stylesheet" href="chapter2.css">
 </head>
-<body>
-  <div class="bg-grid" aria-hidden="true"></div>
+<body class="chapter-page">
+
   <div class="bg-scanlines" aria-hidden="true"></div>
-  <div class="bg-vignette" aria-hidden="true"></div>
-  <main class="tbc-wrap">
-    <div class="tbc-label">KAPITEL 02</div>
-    <h1 class="tbc-title">WARTUNGSGARTEN</h1>
-    <div class="tbc-guest">GASTCHARAKTER: F-RØ5CHI</div>
-    <div class="tbc-status">[ IN ENTWICKLUNG ]</div>
-    <a class="ka-btn primary" href="../index.html">[ HAUPTMENÜ ]</a>
-  </main>
+
+  <header class="sys-bar">
+    <span class="sys-text">KAPITEL 02 // <span class="accent-system">WARTUNGSGARTEN</span></span>
+    <span class="sys-text" id="reactProgress">REAKTIVIERUNG: 8%</span>
+  </header>
+
+  <!-- TITLE CARD -->
+  <div class="ch-title-card" id="titleCard">
+    <div class="ch-emblem ch2-emblem" aria-hidden="true">
+      <div class="ch-ring ch-ring-1"></div>
+      <div class="ch-ring ch-ring-2"></div>
+      <div class="ch2-frost ch2-frost-1"></div>
+      <div class="ch2-frost ch2-frost-2"></div>
+      <div class="ch2-leaf"></div>
+      <div class="ch2-droplet"></div>
+      <span class="ch-num">02</span>
+    </div>
+    <div class="ch-title-text">
+      <p class="ch-label sys-text">KAPITEL 02</p>
+      <h1 class="ch-name">Wartungsgarten</h1>
+      <p class="ch-subline">&bdquo;Manche Räume schlafen nicht. Sie warten.&ldquo;</p>
+    </div>
+  </div>
+
+  <!-- SCENE -->
+  <div class="scene-wrapper" id="sceneWrapper">
+    <div class="scene-bg-layer" id="sceneBgLayer">
+      <img src="cg/ch2_garden_frozen.png" class="scene-bg" id="sceneBg" alt=""
+           onerror="this.style.display='none'">
+      <div class="scene-ph" id="scenePh" data-scene="frozen-wide"></div>
+      <!-- Animated frost overlay -->
+      <div class="frost-layer" id="frostLayer"></div>
+    </div>
+    <div class="scene-hotspots" id="sceneHotspots"></div>
+
+    <!-- Robot icons (R-3MI, V-TGM, F-RØ5CHI when present) -->
+    <div class="robot-icons hidden" id="robotIcons">
+      <button class="robot-icon r3mi-icon" onclick="Chapter2.clickRobot('r3mi')" aria-label="R-3MI">
+        <div class="ri-eye ri-eye-r"></div>
+        <span class="ri-label sys-text">R-3MI</span>
+      </button>
+      <button class="robot-icon vtgm-icon" onclick="Chapter2.clickRobot('vtgm')" aria-label="V-TGM">
+        <div class="ri-eye ri-eye-g"></div>
+        <span class="ri-label sys-text">V-TGM</span>
+      </button>
+      <button class="robot-icon froschi-icon hidden" id="froschiIcon" onclick="Chapter2.clickRobot('froschi')" aria-label="F-RØ5CHI">
+        <div class="ri-eye ri-eye-p"></div>
+        <span class="ri-label sys-text">F-RØ5CHI</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- CHOICE UI -->
+  <div class="choice-overlay hidden" id="choiceOverlay">
+    <div class="choice-panel">
+      <div class="choice-prompt sys-text" id="choicePrompt"></div>
+      <div class="choice-buttons" id="choiceButtons"></div>
+      <div class="choice-hint sys-text" id="choiceHint"></div>
+    </div>
+  </div>
+
+  <!-- HINT BAR (3 chars: r3mi / vtgm / froschi) -->
+  <div class="hint-bar hidden" id="hintBar">
+    <span class="sys-text hint-label" id="hintCount">HINWEISE: 4 VERFÜGBAR</span>
+    <button class="ka-btn small" id="hintBtnR3MI" onclick="Chapter2.useHint('r3mi')">
+      <span class="accent-r3mi">[ R-3MI ]</span>
+    </button>
+    <button class="ka-btn small" id="hintBtnVTGM" onclick="Chapter2.useHint('vtgm')">
+      <span class="accent-vtgm">[ V-TGM ]</span>
+    </button>
+    <button class="ka-btn small" id="hintBtnFroschi" onclick="Chapter2.useHint('froschi')">
+      <span class="accent-froschi">[ F-RØ5CHI ]</span>
+    </button>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       PUZZLE 1 — TAU-SEQUENZ
+       ════════════════════════════════════════════════════════════ -->
+  <div class="puzzle-modal hidden" id="puzzle1Modal">
+    <div class="puzzle-card thaw-card">
+      <div class="puzzle-card-accent thaw-accent"></div>
+      <div class="puzzle-header">
+        <p class="puzzle-label sys-text">WASSERORGEL // PFLANZSEKTOR</p>
+        <h2 class="puzzle-title">TAU-SEQUENZ</h2>
+        <p class="puzzle-sub sys-text">JEDE PFLANZE BRAUCHT IHRE EIGENE TEMPERATUR &amp; DRUCK</p>
+      </div>
+
+      <!-- Plant display -->
+      <div class="thaw-plants" id="thawPlants">
+        <div class="thaw-plant" data-plant="0">
+          <div class="plant-state">❄</div>
+          <div class="plant-name sys-text">GERHILDE</div>
+          <div class="plant-status">eingefroren</div>
+        </div>
+        <div class="thaw-plant" data-plant="1">
+          <div class="plant-state">❄</div>
+          <div class="plant-name sys-text">PFLANZE 02</div>
+          <div class="plant-status">eingefroren</div>
+        </div>
+        <div class="thaw-plant" data-plant="2">
+          <div class="plant-state">❄</div>
+          <div class="plant-name sys-text">PFLANZE 03</div>
+          <div class="plant-status">eingefroren</div>
+        </div>
+      </div>
+
+      <!-- Ambient temp display -->
+      <div class="ambient-display">
+        <span class="sys-text">UMGEBUNGSTEMPERATUR:</span>
+        <div class="ambient-bar">
+          <div class="ambient-fill" id="ambientFill"></div>
+          <div class="ambient-marker" id="ambientMarker"></div>
+        </div>
+        <span class="sys-text" id="ambientLabel">SEHR KALT</span>
+      </div>
+
+      <!-- Controls -->
+      <div class="thaw-controls">
+        <div class="thaw-control">
+          <label class="sys-text">PFLANZE</label>
+          <div class="control-row">
+            <button class="control-btn" onclick="Chapter2.thawSelect(-1)">◀</button>
+            <span class="control-val" id="thawSelected">GERHILDE</span>
+            <button class="control-btn" onclick="Chapter2.thawSelect(1)">▶</button>
+          </div>
+        </div>
+
+        <div class="thaw-control">
+          <label class="sys-text">TEMPERATUR</label>
+          <div class="control-row">
+            <button class="control-btn" onclick="Chapter2.thawTemp(-1)">−</button>
+            <div class="control-bar">
+              <div class="control-bar-fill temp-fill" id="tempBar"></div>
+            </div>
+            <button class="control-btn" onclick="Chapter2.thawTemp(1)">+</button>
+          </div>
+          <span class="sys-text control-label" id="tempLabel">3 / 10</span>
+        </div>
+
+        <div class="thaw-control">
+          <label class="sys-text">DRUCK</label>
+          <div class="control-row">
+            <button class="control-btn" onclick="Chapter2.thawPressure(-1)">−</button>
+            <div class="control-bar">
+              <div class="control-bar-fill press-fill" id="pressBar"></div>
+            </div>
+            <button class="control-btn" onclick="Chapter2.thawPressure(1)">+</button>
+          </div>
+          <span class="sys-text control-label" id="pressLabel">3 / 10</span>
+        </div>
+      </div>
+
+      <button class="ka-btn primary" onclick="Chapter2.thawApply()">[ AUFTAUEN ]</button>
+
+      <div class="puzzle-status sys-text" id="puzzle1Status">BEREIT.</div>
+
+      <div class="puzzle-actions">
+        <button class="ka-btn small" onclick="Chapter2.thawReset()">[ ZURÜCKSETZEN ]</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       PUZZLE 2 — EICHHORN-FREQUENZ
+       ════════════════════════════════════════════════════════════ -->
+  <div class="puzzle-modal hidden" id="puzzle2Modal">
+    <div class="puzzle-card frog-card">
+      <div class="puzzle-card-accent frog-accent"></div>
+      <div class="puzzle-header">
+        <p class="puzzle-label sys-text">RHYTHMUSSEKTION // QUAK-SEQUENZ</p>
+        <h2 class="puzzle-title">EICHHORN-FREQUENZ</h2>
+        <p class="puzzle-sub sys-text">REKONSTRUIERE DIE URSPRÜNGLICHE QUAK-REIHENFOLGE</p>
+      </div>
+
+      <!-- Replay button -->
+      <div class="frog-replay-wrap">
+        <button class="ka-btn primary" onclick="Chapter2.frogPlayPattern()" id="frogPlayBtn">
+          [ ▶ ORIGINALSEQUENZ HÖREN ]
+        </button>
+      </div>
+
+      <!-- Sequence display (what player has tapped so far) -->
+      <div class="frog-input-display" id="frogInputDisplay"></div>
+
+      <!-- 5 Frog buttons -->
+      <div class="frog-pad">
+        <button class="frog-btn frog-1" data-frog="0" onclick="Chapter2.frogTap(0)">
+          <span class="frog-emoji">🐸</span>
+          <span class="frog-tone">▁</span>
+        </button>
+        <button class="frog-btn frog-2" data-frog="1" onclick="Chapter2.frogTap(1)">
+          <span class="frog-emoji">🐸</span>
+          <span class="frog-tone">▂</span>
+        </button>
+        <button class="frog-btn frog-3" data-frog="2" onclick="Chapter2.frogTap(2)">
+          <span class="frog-emoji">🐸</span>
+          <span class="frog-tone">▄</span>
+        </button>
+        <button class="frog-btn frog-4" data-frog="3" onclick="Chapter2.frogTap(3)">
+          <span class="frog-emoji">🐸</span>
+          <span class="frog-tone">▆</span>
+        </button>
+        <button class="frog-btn frog-5" data-frog="4" onclick="Chapter2.frogTap(4)">
+          <span class="frog-emoji">🐸</span>
+          <span class="frog-tone">█</span>
+        </button>
+      </div>
+
+      <div class="puzzle-status sys-text" id="puzzle2Status">DRÜCKE [ORIGINALSEQUENZ HÖREN] ZUM STARTEN.</div>
+
+      <div class="puzzle-actions">
+        <button class="ka-btn small" onclick="Chapter2.frogReset()">[ EINGABE LÖSCHEN ]</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       CHAPTER COMPLETE
+       ════════════════════════════════════════════════════════════ -->
+  <div class="chapter-complete hidden" id="chapterComplete">
+    <div class="cc-card">
+      <div class="cc-header sys-text">KAPITEL 02 ABGESCHLOSSEN</div>
+      <div class="cc-title">SEKTOR 03 FREIGEGEBEN</div>
+      <div class="cc-next">BEOBACHTUNGSSEKTOR</div>
+      <div class="cc-progress sys-text" id="ccProgress"></div>
+      <a class="ka-btn primary" href="../chapter3/chapter3.html">[ EINTRETEN ]</a>
+      <a class="ka-btn small"   href="../index.html">[ HAUPTMENÜ ]</a>
+    </div>
+  </div>
+
   <script src="../js/engine.js"></script>
+  <script src="chapter2.js"></script>
 </body>
 </html>

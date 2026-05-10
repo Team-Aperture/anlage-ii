@@ -14,16 +14,16 @@
   --bg-raised:      #162030;
 
   /* Primary accents */
-  --accent-r3mi:    #d93333;
-  --accent-r3mi-lo: rgba(217,51,51,0.12);
-  --accent-vtgm:    #2ecf62;
-  --accent-vtgm-lo: rgba(46,207,98,0.12);
+  --accent-r3mi:    #2ecf62;
+  --accent-r3mi-lo: rgba(46,207,98,0.12);
+  --accent-vtgm:    #d93333;
+  --accent-vtgm-lo: rgba(217,51,51,0.12);
   --accent-system:  #3a8fd4;
   --accent-system-lo: rgba(58,143,212,0.12);
   --accent-warn:    #c88a28;
 
   /* Guest character accents */
-  --accent-g1:  #c4663a;   /* F-RØ5CHI  — warm Bavarian orange */
+  --accent-g1:  #e84a8c;   /* F-RØ5CHI  — pink */
   --accent-g2:  #3aaabf;   /* L-UX      — clear Regensburg blue */
   --accent-g3:  #7ab83a;   /* J4W-A3    — workshop wood-green */
   --accent-g4:  #bf3a9a;   /* B-RADF1SH — FTF magenta */

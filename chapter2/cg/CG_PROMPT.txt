@@ -1,0 +1,118 @@
+# ═══════════════════════════════════════════════════════════════
+# CG PROMPTS — KAPITEL 2: WARTUNGSGARTEN
+# ═══════════════════════════════════════════════════════════════
+
+Use the same STYLE ANCHOR from CG_PROMPT_BIBLE.md before each scene.
+
+---
+
+## ch2_garden_frozen.png
+**Path:** `chapter2/cg/ch2_garden_frozen.png`
+**Purpose:** Wide view of the frozen garden when player first enters
+
+```
+[STYLE ANCHOR]
+
+Scene: Wide cinematic view of a large abandoned greenhouse / garden
+chamber inside an industrial sci-fi facility. The room was once lush
+and tropical — hanging vines, tall mechanical plant beds, stone water
+basins, ferns on suspended platforms. NOW it is COMPLETELY FROZEN.
+
+Frozen elements throughout:
+- Hanging vines turned to frozen icicle cascades
+- Mechanical plants caught mid-motion, ice crystals on metal petals
+- Water droplets suspended frozen in mid-air
+- Frost crawling across walls in fractal patterns
+- Pale blue-white frost over everything
+
+A central PAVILION / gazebo stands at the back-center of the scene.
+A small PINK figure stands motionless inside it — barely visible,
+just a pink presence with a hint of gold (her crown).
+
+Three plant beds visible in the lower-mid area of the frame:
+- Plant bed 1 at ~30% from left, ~75% from top
+- Plant bed 2 at ~50% from left, ~78% from top
+- Plant bed 3 at ~70% from left, ~75% from top
+
+Other features:
+- Wall valve system / pipes visible on left side, ~8% left, ~35-65% vertical
+- A frozen wooden plaque encased in an ice column at ~18% left, ~60% top
+- An ice sculpture (frozen water column) at ~78% left, ~48-62% vertical
+- A small mechanical frog on a stone at ~62% left, ~80% top
+- A small maintenance vent at ~88% left, ~78% top
+
+Color palette: heavy blues (#7fb8d4), pale frost whites (#d6f2ff),
+deep teal shadows. ONE warm pink point in the pavilion (#e84a8c).
+Faint warm light leaks from the frog and the plant beds.
+
+Mood: beautiful but eerie. Like Sleeping Beauty's castle but mechanical.
+Sad, not horrific.
+```
+
+---
+
+## ch2_pavilion_frozen.png
+**Path:** `chapter2/cg/ch2_pavilion_frozen.png`
+**Purpose:** Closer view zooming on F-RØ5CHI in the pavilion (after the wide shot)
+
+```
+[STYLE ANCHOR]
+
+Closer cinematic shot of the central pavilion. F-RØ5CHI is now visible —
+a small pink frog robot character standing inside, frozen in a slow
+posture. She has a gold crown on her head, big green camera-eyes (one
+visible glowing, one frosted over), pink heart-decorated body.
+
+Heavy frost on her shoulders, ice crystals on the crown. Her body is
+mid-gesture, as if she was waving when the cold hit.
+
+The pavilion around her: ornate metal structure with overgrown vines
+now turned to ice. Soft cold light filters through frosted glass panels.
+
+Frame her centrally, slightly upper-half of frame. Atmosphere should
+feel like discovering a frozen princess, not a horror moment — beautiful
+melancholy.
+
+Tone is more intimate than ch2_garden_frozen.png — this is the moment
+before she speaks her first slow "O…h…a…"
+```
+
+---
+
+## ch2_garden_thawed.png
+**Path:** `chapter2/cg/ch2_garden_thawed.png`
+**Purpose:** SAME composition as ch2_garden_frozen.png but fully thawed
+
+```
+[STYLE ANCHOR]
+
+EXACTLY THE SAME camera angle, same composition, same elements in
+the same positions as ch2_garden_frozen.png — BUT now everything has
+thawed and bloomed.
+
+Changes from the frozen version:
+- All ice melted; vines green and lush, hanging naturally
+- Plant beds now blooming with mechanical flowers (some pink, some
+  green, some white — bioluminescent quality)
+- Water flows in basins, gentle steam rising
+- Warm humid green-tinted light replacing cold blue
+- The mechanical frog at 62%/80% looks alert/awake
+- F-RØ5CHI in the pavilion stands proudly, crown gleaming
+
+Color palette flips: now lush green (#3aaf6a), warm gold sunbeams,
+pink accents from the plants. The pink in the pavilion is no longer
+the only warm point — the entire room is alive with warmth.
+
+This is the "after" reward shot. Mood: triumphant, lush, gentle.
+```
+
+---
+
+## NOTES FOR REMI
+
+When generating these:
+- **Generate ch2_garden_frozen.png first** — it's the template. Keep the
+  generation seed/reference, then prompt the thawed version using "same
+  scene, same camera angle, same composition" + the changes list.
+- The placeholder gradients in CSS already approximate the layout, so
+  the game runs fine without these CGs while you generate them.
