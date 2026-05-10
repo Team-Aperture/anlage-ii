@@ -26,7 +26,7 @@ const Chapter0 = (() => {
   const CLUES = {
     dot: {
       label: 'WARNTAFEL',
-      pos:   { x: 12, y: 60, w: 6, h: 6 },
+      pos:   { x: 11, y: 48, w: 6, h: 6 },
       lines: [
         { speaker: 'SYSTEM', text: 'WARNTAFEL // VERWITTERT, DURCH EFEU VERDECKT.' },
         { speaker: 'SYSTEM', text: 'TEXT TEILWEISE LESBAR: »… STUFE 1 … KREIS …«' },
@@ -34,7 +34,7 @@ const Chapter0 = (() => {
     },
     triangle: {
       label: 'WARTUNGSPLAKETTE',
-      pos:   { x: 78, y: 22, w: 6, h: 6 },
+      pos:   { x: 78, y: 21, w: 6, h: 6 },
       lines: [
         { speaker: 'SYSTEM', text: 'METALLPLAKETTE // STARK OXIDIERT.' },
         { speaker: 'SYSTEM', text: 'GRAVUR ERKENNBAR: »ZWEITER — ▲«' },
@@ -42,7 +42,7 @@ const Chapter0 = (() => {
     },
     square: {
       label: 'BODENMARKIERUNG',
-      pos:   { x: 32, y: 82, w: 6, h: 6 },
+      pos:   { x: 41, y: 86, w: 6, h: 6 },
       lines: [
         { speaker: 'SYSTEM', text: 'BODENMARKIERUNG // STARK VERBLASST.' },
         { speaker: 'SYSTEM', text: 'AUFSCHRIFT: »POSITION 3 — VIERECK«' },
@@ -50,7 +50,7 @@ const Chapter0 = (() => {
     },
     hexagon: {
       label: 'WANDPANEEL',
-      pos:   { x: 84, y: 70, w: 6, h: 6 },
+      pos:   { x: 88.7, y: 54.1, w: 6, h: 6 },
       lines: [
         { speaker: 'SYSTEM', text: 'WANDPANEEL // VOLLSTÄNDIG VON EFEU ÜBERWUCHERT.' },
         { speaker: 'SYSTEM', text: 'PRÄGUNG UNTER DEN RANKEN: »STUFE 4 — HEXAGON«' },
@@ -60,7 +60,7 @@ const Chapter0 = (() => {
 
   const DOOR_HOTSPOT = {
     label: 'SCHLEUSENSTEUERUNG',
-    pos:   { x: 38, y: 30, w: 24, h: 44 },
+    pos:   { x: 37.5, y: 26, w: 24, h: 44 },
     onClick: () => openPuzzle(),
     className: 'door-hotspot',
   };
