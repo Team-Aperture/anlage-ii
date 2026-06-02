@@ -313,8 +313,10 @@ const GameEngine = (() => {
 
       _container.addEventListener('click', advance);
       document.addEventListener('keydown', e => {
-        if ((e.key === ' ' || e.key === 'Enter') && _container.classList.contains('visible'))
+        if ((e.key === ' ' || e.key === 'Enter') && _container.classList.contains('visible')) {
+          e.preventDefault();
           advance();
+        }
       });
     }
 
@@ -375,11 +377,13 @@ const GameEngine = (() => {
 
     function _typeText(el, text, speed, onDone) {
       if (_typeTimer) clearInterval(_typeTimer);
+      const full = text || '';
       let i = 0;
       el.textContent = '';
+      if (!full.length) { if (onDone) onDone(); return; }
       _typeTimer = setInterval(() => {
-        el.textContent += text[i++];
-        if (i >= text.length) {
+        el.textContent += full[i++];
+        if (i >= full.length) {
           clearInterval(_typeTimer);
           _typeTimer = null;
           if (onDone) onDone();
@@ -394,7 +398,7 @@ const GameEngine = (() => {
         clearInterval(_typeTimer);
         _typeTimer = null;
         _typing = false;
-        document.getElementById('dlgText').textContent = _queue[_index].text;
+        document.getElementById('dlgText').textContent = _queue[_index].text || '';
         document.getElementById('dlgAdvance').style.opacity = '1';
         return;
       }

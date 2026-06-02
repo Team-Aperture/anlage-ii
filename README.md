@@ -8,21 +8,30 @@
 ```
 /
 ├── index.html              ← Title screen (start here)
+├── access.html             ← KA-I code gate (8-digit verification)
 ├── css/
 │   ├── global.css          ← Full design system, shared by ALL pages
-│   └── title.css           ← Title screen specific styles
+│   ├── title.css           ← Title screen specific styles
+│   └── access.css          ← Code-gate specific styles
 ├── js/
 │   ├── engine.js           ← Game engine (state, dialogue, achievements,
 │   │                          signals, scene, puzzle) — load on every page
-│   └── title.js            ← Title screen logic (boot, particles, glitch)
+│   ├── title.js            ← Title screen logic (boot, particles, idle)
+│   └── access.js           ← Code-gate verification logic
 ├── assets/
-│   └── logo.png            ← Place your logo here
-├── chapter0/
-│   └── chapter0.html       ← Kapitel 0: Rückkehr (ChatGPT base → migrate here)
-│   (chapter1/ … chapter9/ will be added here)
-└── bonus/
-    └── (hidden — no index link)
+│   ├── logo.png            ← Title logo
+│   └── portraits/          ← Speaker portraits (optional per dialogue line)
+├── chapter0/               ← Kapitel 0: Rückkehr (implemented)
+├── chapter1/               ← Kapitel 1: Die Wartungseinheiten (implemented)
+├── chapter2/               ← Kapitel 2: Wartungsgarten (implemented)
+└── chapter3/               ← Kapitel 3: Beobachtungssektor (stub — in Entwicklung)
+    (chapter4/ … chapter9/ to follow)
 ```
+
+Each implemented chapter holds its own `chapterN.html`, `chapterN.js`,
+`chapterN.css`, and a `cg/` folder for scene art (with a `CG_PROMPT.txt`
+describing the intended image). Missing CGs and audio degrade gracefully:
+a CSS placeholder scene is shown and sound calls are wrapped in `try/catch`.
 
 ---
 
