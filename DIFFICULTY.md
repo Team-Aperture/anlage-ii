@@ -8,8 +8,8 @@ curve. From Chapter 1 the baseline is **4.5/10**, rising **+0.75 per chapter**.
 |---------|--------|--------|-----------------|
 | Ch0 — Rückkehr            | ~2.0 (tutorial) | done | Symbol door — clues spell out the order |
 | Ch1 — Wartungseinheiten   | **4.5** | done | P1 pipe path ~4 · P2 dual-signal ~5 (4 hints) |
-| Ch2 — Wartungsgarten      | **5.25** | done | P1 Tau-Sequenz ~5 · P2 Frostmuster ~5.5 |
-| Ch3 — Beobachtungssektor  | 6.0  | stub | — |
+| Ch2 — Wartungsgarten      | **5.25** | done | P1 Tau-Sequenz ~5 · P2 Frostmuster ~5.5–6 (6 fixed walls → unique solution, cap 18) |
+| Ch3 — Beobachtungssektor  | **6.0** | done | One multi-stage Belichtung puzzle (logic dials → spectrum match) under a draining exposure meter |
 | Ch4 | 6.75 | — | — |
 | Ch5 | 7.5  | — | — |
 | Ch6 | 8.25 | — | — |
@@ -30,8 +30,12 @@ second ~0.5 above, bracketing it — the chapter *average* is the number above.
 3. **Scramble / fixed tiles.** Ch1 pipe puzzles: more rotatable (non-`*_FIXED`)
    tiles and a wider scramble = more steps.
 4. **Problem size / constraints.** Ch2 Frostmuster: 5×5 → six 4-cell regions +
-   isolated well. Larger boards, more regions, or pre-placed locked channels
-   (none today — "as specified") push it higher.
+   isolated well, with 6 pre-frozen `FROST_FIXED` walls that (under the 18 cap)
+   force a unique solution. More fixed walls / a tighter cap → harder.
+5. **Time pressure (decay).** Ch3 Belichtung: an exposure meter drains while you
+   think; correct sensors refill it. Per-stage `STAGES[*].drain`, `REFILL`, and
+   `FAIL_FLOOR` in `chapter3.js` are the dials — faster drain / smaller refill =
+   harder. This raises difficulty without adding puzzle complexity.
 
 These are all simple constants — tune, playtest, repeat. Ratings are estimates;
 expect to nudge them after a real playthrough.
