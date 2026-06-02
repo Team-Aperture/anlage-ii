@@ -366,3 +366,12 @@
 .cc-next   { font-family:var(--font-display); font-size:20px; letter-spacing:.15em; color:var(--text-primary); }
 .cc-progress { margin-bottom:var(--sp-md); }
 .cc-card .ka-btn { min-width:200px; }
+
+/* ─── RESPONSIVE ──────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .sys-bar { flex-direction:column; gap:2px; align-items:flex-start; }
+  .pipe-grid { max-width:88vw; }
+  .choice-panel { width:92vw; padding:var(--sp-md); }
+  .hint-bar { flex-wrap:wrap; justify-content:center; }
+  .cc-card .ka-btn { min-width:auto; width:100%; }
+}

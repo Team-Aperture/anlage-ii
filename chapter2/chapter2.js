@@ -10,9 +10,9 @@
  *   2.3 Choice 1: First questions (3 to see)
  *   2.4 Garden exploration phase 1 (5 hotspots, leads to Puzzle 1)
  *   2.5 Puzzle 1 — Tau-Sequenz (3 plants, temp + pressure + order)
- *   2.6 Garden exploration phase 2 (frogs unfreeze)
- *   2.7 Puzzle 2 — Eichhorn-Frequenz (5-tone sequence memory)
- *   2.8 Ending + Karli reveal
+ *   2.6 Garden exploration phase 2 (garden thaws)
+ *   2.7 Puzzle 2 — Frostmuster (Layton-style 5×5 region partition)
+ *   2.8 Ending + Eissplitter keepsake
  * ═══════════════════════════════════════════════════════════════
  */
 
@@ -24,7 +24,7 @@ const Chapter2 = (() => {
   // ═══════════════════════════════════════════════════════════════
   const S = {
     choice1Seen: { what:false, why:false, visitors:false },
-    hotspots: { plants:0, valves:0, tafel:0, ice:0, frog:0, vent:0, froschi:0, r3mi:0, vtgm:0 },
+    hotspots: { plants:0, valves:0, tafel:0, ice:0, brunnen:0, vent:0, froschi:0, r3mi:0, vtgm:0 },
     p1Solved: false,
     p2Solved: false,
     bayernPMOFound: false,
@@ -163,7 +163,7 @@ const Chapter2 = (() => {
       { speaker:'R-3MI',  text:'„Wann war das letzte Mal?"' },
       { speaker:'V-TGM',  text:'"I do not remember."', subtitle:'Ich erinnere mich nicht.' },
       { speaker:'R-3MI',  text:'„Das ist die schlimmste Antwort."' },
-      { speaker:'SYSTEM', text:'Aus der Ferne: ein langsames, tiefes, mechanisches "Q…u…a…k…" — als würde jemand mit halber Geschwindigkeit eine Schallplatte abspielen.' },
+      { speaker:'SYSTEM', text:'Aus der Ferne: ein leises Knistern von Eis, das sich bewegt, ohne zu schmelzen. Etwas in der Mitte des Gartens glitzert wie eine gefrorene Tafel.' },
     ], () => scene_2_2_froschi());
   }
 
@@ -285,7 +285,7 @@ const Chapter2 = (() => {
       { speaker:'V-TGM',    text:'"Yes."', subtitle:'Ja.' },
       { speaker:'R-3MI',    text:'„Zu nett?"' },
       { speaker:'V-TGM',    text:'"I am observing."', subtitle:'Ich beobachte.' },
-      { speaker:'SYSTEM',   text:'SEKTOR 02 — WARTUNGSGARTEN. ZUSTAND: VEREIST. EMPFOHLENE MASSNAHME: TAU-SEQUENZ + RHYTHMUSREKALIBRIERUNG.' },
+      { speaker:'SYSTEM',   text:'SEKTOR 02 — WARTUNGSGARTEN. ZUSTAND: VEREIST. EMPFOHLENE MASSNAHME: TAU-SEQUENZ + FROSTMUSTER-ENTSIEGELUNG.' },
     ], () => loadGardenHotspots());
   }
 
@@ -295,7 +295,7 @@ const Chapter2 = (() => {
     addHotspot({ x:8,  y:35, w:6,  h:30, label:'WASSERORGEL',          fn:() => clickGarden('valves') });
     addHotspot({ x:18, y:60, w:6,  h:8,  label:'EISVERPACKTE TAFEL',   fn:() => clickGarden('tafel') });
     addHotspot({ x:78, y:48, w:6,  h:14, label:'EIS-SKULPTUR',         fn:() => clickGarden('ice') });
-    addHotspot({ x:62, y:80, w:5,  h:6,  label:'MECHANISCHER FROSCH',  fn:() => clickGarden('frog') });
+    addHotspot({ x:62, y:80, w:5,  h:6,  label:'EISBRUNNEN',            fn:() => clickGarden('brunnen') });
     addHotspot({ x:88, y:78, w:5,  h:8,  label:'WARTUNGSSCHACHT',      fn:() => clickGarden('vent') });
   }
 
@@ -336,12 +336,12 @@ const Chapter2 = (() => {
           { speaker:'V-TGM',    text:'"That is concerning."', subtitle:'Das ist beunruhigend.' },
         ],
       },
-      frog: {
+      brunnen: {
         1: [
-          { speaker:'SYSTEM',   text:'Ein mechanischer Frosch sitzt auf einem Stein. Er versucht zu quaken, aber das Geräusch kommt nur in extremer Zeitlupe.' },
-          { speaker:'F-RØ5CHI', text:'„Des is da Karli. Er und seine Brüder sand mei Rhythmus-Sektion."', subtitle:'Das ist der Karli. Er und seine Brüder sind meine Rhythmus-Sektion.' },
-          { speaker:'R-3MI',    text:'„Es gibt mehrere?"' },
-          { speaker:'F-RØ5CHI', text:'„Fünf! Und sie singen wunderschee."', subtitle:'Fünf! Und sie singen wunderschön.' },
+          { speaker:'SYSTEM',   text:'In der Mitte des Gartens steht ein kleiner Brunnen, vollständig zugefroren. Darum herum: eine quadratische Eis-Tafel mit feinen Rillen, fünf mal fünf Felder.' },
+          { speaker:'F-RØ5CHI', text:'„Ah, des is\'s Eis-Rätsl von mei\'m Mo. Er hod\'s eingschnitzt, bevor da Garten g\'froren is."', subtitle:'Ah, das ist das Eis-Rätsel von meinem Mann. Er hat\'s eingeschnitzt, bevor der Garten gefroren ist.' },
+          { speaker:'R-3MI',    text:'„Ein Rätsel? In einer Tafel?"' },
+          { speaker:'F-RØ5CHI', text:'„Er hod g\'sagt, ma muass\'s Eis richtig aufteiln. Aber zerst muass da Garten auftaut sei."', subtitle:'Er hat gesagt, man muss das Eis richtig aufteilen. Aber zuerst muss der Garten aufgetaut sein.' },
         ],
       },
       vent: {
@@ -675,44 +675,44 @@ const Chapter2 = (() => {
       { speaker:'R-3MI',    text:'„Sie nickt wirklich."' },
       { speaker:'V-TGM',    text:'"That is botanically impossible."', subtitle:'Das ist botanisch unmöglich.' },
       { speaker:'F-RØ5CHI', text:'„Mei Pflanzn sand ned botanisch. Sie sand höflich."', subtitle:'Meine Pflanzen sind nicht botanisch. Sie sind höflich.' },
-      { speaker:'F-RØ5CHI', text:'„Jetzd kemmen meine Buabn dro. De Frösch."', subtitle:'Jetzt kommen meine Buben dran. Die Frösche.' },
-      { speaker:'R-3MI',    text:'„Bitte sag mir, dass das ein Spitzname ist."' },
-      { speaker:'F-RØ5CHI', text:'„Naa. Es sand fünf mechanische Frösch. Sie quaken in Sequenz. Wenn d\' Sequenz stimmt, geht da Garten richtig auf."', subtitle:'Nein. Es sind fünf mechanische Frösche. Sie quaken in Sequenz. Wenn die Sequenz stimmt, geht der Garten richtig auf.' },
+      { speaker:'F-RØ5CHI', text:'„Und jetzd… kummt no mei liabste Erinnerung. De oide Eis-Tafel von mei\'m Mo."', subtitle:'Und jetzt… kommt noch meine liebste Erinnerung. Die alte Eis-Tafel von meinem Mann.' },
+      { speaker:'R-3MI',    text:'„Der zugefrorene Brunnen von vorhin?"' },
+      { speaker:'F-RØ5CHI', text:'„Genau der. Er hod a Eis-Rätsl neig\'schnitzt. Ma muass\'s Feld richtig aufteiln — dann gibt da Garten sein letzten Sektor frei."', subtitle:'Genau der. Er hat ein Eis-Rätsel hineingeschnitzt. Man muss das Feld richtig aufteilen — dann gibt der Garten seinen letzten Sektor frei.' },
     ], () => openPuzzle2());
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // PUZZLE 2 — EICHHORN-FREQUENZ (frog sequence memory)
+  // PUZZLE 2 — FROSTMUSTER (Layton-style region partition)  ~5.5/10
   // ═══════════════════════════════════════════════════════════════
   /*
-   * 5 frogs (indices 0-4), each plays a tone (Web Audio API).
-   * The "frozen original sequence" is 6 frogs long.
-   * Player listens, then taps the same sequence on the buttons.
+   * 5×5 ice board. Centre cell (2,2) = the well (Brunnen).
+   * Clicking an edge between two cells toggles an "Eiskanal" = a CUT
+   * (the cells no longer connect across it). Click again removes it.
    *
-   * Difficulty escalation:
-   * - First listen: full sequence at normal speed
-   * - Each replay: same sequence
-   * - 6 frogs is harder than ch1 puzzles
+   * Goal: isolate the well (its own region of size 1) AND carve the
+   * remaining 24 cells into exactly SIX regions of exactly 4 cells.
+   * (6×4 + 1 = 25.) Many layouts are valid — we validate the rule
+   * only, never a specific solution.
+   *
+   * Edge ids:
+   *   'h,r,c'  cut between (r,c) and (r,c+1)   c in 0..3
+   *   'v,r,c'  cut between (r,c) and (r+1,c)   r in 0..3
    */
 
-  const FROG_SEQUENCE = [2, 4, 1, 3, 0, 4]; // 6-tone pattern
-  const FROG_FREQS    = [220, 277, 330, 392, 466]; // pentatonic-ish, A3 to Bb4
+  const WELL          = '2,2';
+  const FROST_PALETTE = 6; // number of pastel region colours
 
-  let p2State = {
-    input: [],
-    playing: false,
-    audioCtx: null,
-  };
+  let p2State = { cuts: new Set() };
 
   function openPuzzle2() {
-    p2State = { input: [], playing: false, audioCtx: null };
+    p2State = { cuts: new Set() };
 
     GameEngine.dialogue.load([
-      { speaker:'SYSTEM',   text:'RHYTHMUSSEKALIBRIERUNG STARTEN?' },
-      { speaker:'F-RØ5CHI', text:'„De Buabn singen no a bissl verfror\'n. Hör guad zua!"', subtitle:'Die Buben singen noch ein bisschen verfroren. Hör gut zu!' },
-      { speaker:'V-TGM',    text:'"Listen to the original. Then reproduce in order."', subtitle:'Hör das Original. Dann reproduzieren in Reihenfolge.' },
-      { speaker:'R-3MI',    text:'„Wenn ihr eine Pause-Taste habt, das wäre jetzt nett."' },
-      { speaker:'F-RØ5CHI', text:'„Jeder Frosch hod sein eigene Stimm. Du erkennst sie scho."', subtitle:'Jeder Frosch hat seine eigene Stimme. Du erkennst sie schon.' },
+      { speaker:'SYSTEM',   text:'FROSTMUSTER-KALIBRIERUNG STARTEN?' },
+      { speaker:'F-RØ5CHI', text:'„De Tafel is a Fünf-mal-Fünf-Feld. In da Mittn da Brunnen — den muassd freihoidn, ganz alloa."', subtitle:'Die Tafel ist ein Fünf-mal-Fünf-Feld. In der Mitte der Brunnen — den musst du freihalten, ganz allein.' },
+      { speaker:'F-RØ5CHI', text:'„Drumherum schneidst sechs Bereiche, jeder genau vier Felder. Klick zwischn zwoa Felder, dann setzt a Eiskanal."', subtitle:'Drumherum schneidest du sechs Bereiche, jeder genau vier Felder. Klick zwischen zwei Felder, dann setzt du einen Eiskanal.' },
+      { speaker:'V-TGM',    text:'"Many layouts work. Only the rule matters."', subtitle:'Viele Anordnungen funktionieren. Nur die Regel zählt.' },
+      { speaker:'R-3MI',    text:'„Sechs mal vier, plus ein Brunnen. Das sind… fünfundzwanzig. Schau, ich kann auch Mathe."' },
     ], () => {
       document.getElementById('puzzle2Modal').classList.remove('hidden');
       document.getElementById('hintBar').classList.remove('hidden');
@@ -722,130 +722,148 @@ const Chapter2 = (() => {
       S.hints.vtgm    = 1;
       S.hints.froschi = 2;
       updateHintBar();
-      renderP2Input();
-      setP2Status('DRÜCKE [ORIGINALSEQUENZ HÖREN] ZUM STARTEN.', '');
+      buildFrostGrid();
+      updateFrost();
     });
   }
 
-  function getAudioCtx() {
-    if (!p2State.audioCtx) {
-      try {
-        const Ctx = window.AudioContext || window.webkitAudioContext;
-        if (Ctx) p2State.audioCtx = new Ctx();
-      } catch(_) {}
-    }
-    return p2State.audioCtx;
+  // ─── Connectivity + region detection ─────────────────────────
+  function frostNeighbours(r, c) {
+    const nb = [];
+    if (c < 4 && !p2State.cuts.has(`h,${r},${c}`))     nb.push([r, c + 1]); // right
+    if (c > 0 && !p2State.cuts.has(`h,${r},${c - 1}`)) nb.push([r, c - 1]); // left
+    if (r < 4 && !p2State.cuts.has(`v,${r},${c}`))     nb.push([r + 1, c]); // down
+    if (r > 0 && !p2State.cuts.has(`v,${r - 1},${c}`)) nb.push([r - 1, c]); // up
+    return nb;
   }
 
-  function playFrogTone(idx, duration = 300) {
-    const ctx = getAudioCtx();
-    if (!ctx) return;
-    const t = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(FROG_FREQS[idx], t);
-    // Vibrato wobble — froggy
-    const lfo = ctx.createOscillator();
-    const lfoGain = ctx.createGain();
-    lfo.frequency.value = 12;
-    lfoGain.gain.value = 8;
-    lfo.connect(lfoGain).connect(osc.frequency);
-    lfo.start(t);
-    lfo.stop(t + duration / 1000);
-
-    gain.gain.setValueAtTime(0, t);
-    gain.gain.linearRampToValueAtTime(0.3, t + 0.02);
-    gain.gain.linearRampToValueAtTime(0, t + duration / 1000);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start(t);
-    osc.stop(t + duration / 1000);
-  }
-
-  function flashFrog(idx) {
-    const btn = document.querySelector(`.frog-btn[data-frog="${idx}"]`);
-    if (!btn) return;
-    btn.classList.add('flash');
-    setTimeout(() => btn.classList.remove('flash'), 280);
-  }
-
-  async function frogPlayPattern() {
-    if (p2State.playing) return;
-    p2State.playing = true;
-    document.getElementById('frogPlayBtn').disabled = true;
-    setP2Status('▶ ORIGINALSEQUENZ WIRD ABGESPIELT…', '');
-
-    // Resume audio context (browsers require user gesture)
-    const ctx = getAudioCtx();
-    if (ctx && ctx.state === 'suspended') await ctx.resume();
-
-    for (let i = 0; i < FROG_SEQUENCE.length; i++) {
-      const idx = FROG_SEQUENCE[i];
-      flashFrog(idx);
-      playFrogTone(idx, 280);
-      await new Promise(r => setTimeout(r, 480));
-    }
-
-    p2State.playing = false;
-    document.getElementById('frogPlayBtn').disabled = false;
-    setP2Status('TIPPE DIE SEQUENZ NACH.', '');
-  }
-
-  function frogTap(idx) {
-    if (S.p2Solved || p2State.playing) return;
-    if (p2State.input.length >= FROG_SEQUENCE.length) return;
-
-    flashFrog(idx);
-    playFrogTone(idx, 240);
-    p2State.input.push(idx);
-    renderP2Input();
-
-    // Check progress
-    const current = p2State.input.length - 1;
-    if (p2State.input[current] !== FROG_SEQUENCE[current]) {
-      // Wrong tap
-      setP2Status('FALSCHE NOTE — VERSUCH ES NOCHMAL.', 'error');
-      setTimeout(() => {
-        p2State.input = [];
-        renderP2Input();
-        setP2Status('SEQUENZ ZURÜCKGESETZT. NOCH EINMAL HÖREN?', '');
-      }, 1100);
-      return;
-    }
-
-    // Correct so far
-    if (p2State.input.length === FROG_SEQUENCE.length) {
-      // All correct
-      S.p2Solved = true;
-      setP2Status('SEQUENZ KORREKT. RHYTHMUSSEKTION AKTIV.', 'ok');
-      setTimeout(() => solvePuzzle2(), 900);
-    } else {
-      setP2Status(`${p2State.input.length} / ${FROG_SEQUENCE.length} KORREKT.`, '');
-    }
-  }
-
-  function renderP2Input() {
-    const wrap = document.getElementById('frogInputDisplay');
-    wrap.innerHTML = '';
-    for (let i = 0; i < FROG_SEQUENCE.length; i++) {
-      const slot = document.createElement('div');
-      slot.className = 'frog-input-slot';
-      if (p2State.input[i] != null) {
-        const idx = p2State.input[i];
-        slot.classList.add(`f${idx + 1}`);
-        slot.textContent = idx + 1;
-      } else {
-        slot.textContent = '·';
+  function frostComponents() {
+    const seen = new Set();
+    const comps = [];
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
+        const start = `${r},${c}`;
+        if (seen.has(start)) continue;
+        const comp = [];
+        const q = [[r, c]];
+        seen.add(start);
+        while (q.length) {
+          const [cr, cc] = q.shift();
+          comp.push(`${cr},${cc}`);
+          frostNeighbours(cr, cc).forEach(([nr, nc]) => {
+            const k = `${nr},${nc}`;
+            if (!seen.has(k)) { seen.add(k); q.push([nr, nc]); }
+          });
+        }
+        comps.push(comp);
       }
-      wrap.appendChild(slot);
+    }
+    return comps;
+  }
+
+  function frostStatus() {
+    const comps = frostComponents();
+    let regions4 = 0;
+    let wellIsolated = false;
+    comps.forEach(comp => {
+      const isWell = comp.includes(WELL);
+      if (isWell) wellIsolated = comp.length === 1;
+      else if (comp.length === 4) regions4++;
+    });
+    const win = wellIsolated && regions4 === 6 && comps.length === 7;
+    return { comps, regions4, wellIsolated, win };
+  }
+
+  // ─── Rendering (9×9 grid: cells + channel slots + corners) ───
+  function buildFrostGrid() {
+    const grid = document.getElementById('frostGrid');
+    grid.innerHTML = '';
+    for (let gr = 0; gr < 9; gr++) {
+      for (let gc = 0; gc < 9; gc++) {
+        const evenR = gr % 2 === 0, evenC = gc % 2 === 0;
+        if (evenR && evenC) {
+          const r = gr / 2, c = gc / 2;
+          const el = document.createElement('div');
+          el.className = 'frost-cell' + (`${r},${c}` === WELL ? ' frost-well' : '');
+          el.dataset.r = r; el.dataset.c = c;
+          grid.appendChild(el);
+        } else if (evenR && !evenC) {
+          // vertical channel slot between (r,c)-(r,c+1) → 'h' cut
+          const r = gr / 2, c = (gc - 1) / 2;
+          grid.appendChild(makeChannel('frost-ch-v', `h,${r},${c}`));
+        } else if (!evenR && evenC) {
+          // horizontal channel slot between (r,c)-(r+1,c) → 'v' cut
+          const r = (gr - 1) / 2, c = gc / 2;
+          grid.appendChild(makeChannel('frost-ch-h', `v,${r},${c}`));
+        } else {
+          const corner = document.createElement('div');
+          corner.className = 'frost-corner';
+          grid.appendChild(corner);
+        }
+      }
     }
   }
 
-  function frogReset() {
+  function makeChannel(cls, edge) {
+    const btn = document.createElement('button');
+    btn.className = 'frost-ch ' + cls;
+    btn.dataset.edge = edge;
+    btn.setAttribute('aria-label', 'Eiskanal setzen oder entfernen');
+    btn.addEventListener('click', () => toggleCut(edge));
+    return btn;
+  }
+
+  function toggleCut(edge) {
     if (S.p2Solved) return;
-    p2State.input = [];
-    renderP2Input();
-    setP2Status('EINGABE GELÖSCHT.', '');
+    if (p2State.cuts.has(edge)) p2State.cuts.delete(edge);
+    else p2State.cuts.add(edge);
+    updateFrost();
+  }
+
+  function updateFrost() {
+    const { comps, regions4, wellIsolated, win } = frostStatus();
+
+    // Assign a pastel colour to each exactly-4 region
+    const cellColour = {};
+    let ci = 0;
+    comps.forEach(comp => {
+      if (!comp.includes(WELL) && comp.length === 4) {
+        const colour = ci % FROST_PALETTE;
+        comp.forEach(k => cellColour[k] = colour);
+        ci++;
+      }
+    });
+
+    document.querySelectorAll('#frostGrid .frost-cell').forEach(el => {
+      const k = `${el.dataset.r},${el.dataset.c}`;
+      const isWell = k === WELL;
+      el.className = 'frost-cell' + (isWell ? ' frost-well' : '');
+      if (isWell) {
+        if (wellIsolated) el.classList.add('isolated');
+      } else if (cellColour[k] != null) {
+        el.classList.add('region', 'region-' + cellColour[k]);
+      }
+    });
+
+    document.querySelectorAll('#frostGrid .frost-ch').forEach(el => {
+      el.classList.toggle('active', p2State.cuts.has(el.dataset.edge));
+    });
+
+    setP2Status(
+      `${regions4} / 6 BEREICHE KORREKT · BRUNNEN ${wellIsolated ? 'ISOLIERT' : 'OFFEN'}`,
+      win ? 'ok' : ''
+    );
+
+    if (win && !S.p2Solved) {
+      S.p2Solved = true;
+      setTimeout(() => solvePuzzle2(), 900);
+    }
+  }
+
+  function frostReset() {
+    if (S.p2Solved) return;
+    p2State.cuts.clear();
+    updateFrost();
   }
 
   function setP2Status(text, type) {
@@ -863,9 +881,9 @@ const Chapter2 = (() => {
     setProgress(18);
 
     GameEngine.dialogue.load([
-      { speaker:'SYSTEM',   text:'RHYTHMUSSEKTION AKTIV. SEKTOR 02 STABILISIERT.' },
-      { speaker:'F-RØ5CHI', text:'„Ois live! Mei!"', subtitle:'Alles lebt! Mei!' },
-      { speaker:'SYSTEM',   text:'Wasserfälle fließen wieder. Pflanzen erblühen alle. Frösche quaken im Rhythmus.' },
+      { speaker:'SYSTEM',   text:'FROSTMUSTER GELÖST. EIS-TAFEL ENTSIEGELT. SEKTOR 02 STABILISIERT.' },
+      { speaker:'F-RØ5CHI', text:'„Schau! De Tafel glänzt wieder. Mei Mo waar so stoiz."', subtitle:'Schau! Die Tafel glänzt wieder. Mein Mann wäre so stolz.' },
+      { speaker:'SYSTEM',   text:'Entlang der geschnittenen Linien schmilzt das Eis. Wasserfälle fließen wieder. Pflanzen erblühen alle.' },
       { speaker:'F-RØ5CHI', text:'„Mei Garten! Schaut\'s eahm o, schee aufblüht!"', subtitle:'Mein Garten! Schaut ihn an, schön aufgeblüht!' },
       { speaker:'R-3MI',    text:'„Es ist… tatsächlich schön."' },
       { speaker:'V-TGM',    text:'"You sound surprised."', subtitle:'Du klingst überrascht.' },
@@ -879,9 +897,9 @@ const Chapter2 = (() => {
   function scene_2_8_ending() {
     GameEngine.dialogue.load([
       { speaker:'F-RØ5CHI', text:'„Wartet — i hob euch wos zum Mitnehma."', subtitle:'Wartet — ich hab euch was zum Mitnehmen.' },
-      { speaker:'SYSTEM',   text:'Sie übergibt dem Spieler einen kleinen, mechanischen Frosch — Karli.' },
-      { speaker:'F-RØ5CHI', text:'„Er passt af di auf. Er is leise, aber er hört vui."', subtitle:'Er passt auf dich auf. Er ist leise, aber er hört viel.' },
-      { speaker:'R-3MI',    text:'„Warum gibst du uns einen Frosch?"' },
+      { speaker:'SYSTEM',   text:'Sie drückt dem Spieler einen kleinen, glänzenden Eissplitter in die Hand — ein Stück aus der Tafel ihres Mannes.' },
+      { speaker:'F-RØ5CHI', text:'„Der schmilzt ned. Er erinnert si bloß ned dro, dass er soi."', subtitle:'Der schmilzt nicht. Er erinnert sich bloß nicht daran, dass er soll.' },
+      { speaker:'R-3MI',    text:'„Warum gibst du uns einen Eissplitter?"' },
       { speaker:'F-RØ5CHI', text:'„Weil i kann."', subtitle:'Weil ich kann.' },
       { speaker:'V-TGM',    text:'"That is the best answer she has given."', subtitle:'Das ist die beste Antwort, die sie gegeben hat.' },
       { speaker:'F-RØ5CHI', text:'„Pfiat eich, ihr Drei. Kemmts wieder, gell?"', subtitle:'Tschüss, ihr drei. Kommts wieder, gell?' },
@@ -891,7 +909,7 @@ const Chapter2 = (() => {
       { speaker:'R-3MI',    text:'„Das ist auch ein Wenn."' },
     ], () => {
       GameEngine.state.markChapterComplete('ch2');
-      GameEngine.state.setFlag('has_karli');
+      GameEngine.state.setFlag('has_eissplitter');
       try { GameEngine.achievements.unlock('ch2_complete'); } catch(_) {}
 
       document.getElementById('chapterComplete').classList.remove('hidden');
@@ -923,19 +941,19 @@ const Chapter2 = (() => {
     },
     p2: {
       r3mi: [
-        '„Konzentriere dich auf die Tonhöhen, nicht auf die Knöpfe. Frosch 1 ist tief, Frosch 5 ist hoch."',
+        '„Mathe-Pep-Talk: vierundzwanzig Felder, sechs Gruppen — das macht exakt vier pro Gruppe. Die Zahlen sind auf deiner Seite. Ich auch. Meistens."',
       ],
       vtgm: [
-        { text:'"The pattern uses 6 notes. Listen multiple times — replay is free."',
-          sub:'Das Muster hat 6 Noten. Hör mehrmals — Wiederholung kostet nichts.' },
+        { text:'"Isolate the well first — cut all four of its walls. Then divide the rest into fours."',
+          sub:'Isoliere zuerst den Brunnen — schneide alle vier Wände. Dann teile den Rest in Vierer.' },
       ],
       froschi: [
-        '„De Buabn habn an Lieblingston in da Mittn — der kummt zwoamoi vor."',
-        '„De erste Not is mittelhoch. De letzte is laut."',
+        '„Mei Mo hod\'s amoi g\'sagt: \'Denk an Tetromino-Stückerl wia bei Tetris.\' Vier Felder, de zammhänga."',
+        '„Fang in da Eckn o. De Eckn lassn da weniger Wahl — drum sand\'s leichter z\' schneidn."',
       ],
       froschi_sub: [
-        'Die Buben haben einen Lieblingston in der Mitte — der kommt zweimal vor.',
-        'Die erste Note ist mittelhoch. Die letzte ist laut.',
+        'Mein Mann hat\'s mal gesagt: \'Denk an Tetromino-Stückchen wie bei Tetris.\' Vier Felder, die zusammenhängen.',
+        'Fang in der Ecke an. Die Ecken lassen dir weniger Wahl — drum sind sie leichter zu schneiden.',
       ],
     },
   };
@@ -1001,9 +1019,7 @@ const Chapter2 = (() => {
     thawApply,
     thawReset,
     // Puzzle 2
-    frogPlayPattern,
-    frogTap,
-    frogReset,
+    frostReset,
   };
 
 })();

@@ -176,55 +176,24 @@
   </div>
 
   <!-- ════════════════════════════════════════════════════════════
-       PUZZLE 2 — EICHHORN-FREQUENZ
+       PUZZLE 2 — FROSTMUSTER (Layton-style Eis-Tafel)
        ════════════════════════════════════════════════════════════ -->
   <div class="puzzle-modal hidden" id="puzzle2Modal">
-    <div class="puzzle-card frog-card">
-      <div class="puzzle-card-accent frog-accent"></div>
+    <div class="puzzle-card frost-card">
+      <div class="puzzle-card-accent frost-accent"></div>
       <div class="puzzle-header">
-        <p class="puzzle-label sys-text">RHYTHMUSSEKTION // QUAK-SEQUENZ</p>
-        <h2 class="puzzle-title">EICHHORN-FREQUENZ</h2>
-        <p class="puzzle-sub sys-text">REKONSTRUIERE DIE URSPRÜNGLICHE QUAK-REIHENFOLGE</p>
+        <p class="puzzle-label sys-text">EIS-TAFEL // F-RØ5CHIs MANN</p>
+        <h2 class="puzzle-title">FROSTMUSTER</h2>
+        <p class="puzzle-sub sys-text">SCHNEIDE SECHS BEREICHE ZU JE VIER FELDERN — BRUNNEN ALLEIN IN DER MITTE</p>
       </div>
 
-      <!-- Replay button -->
-      <div class="frog-replay-wrap">
-        <button class="ka-btn primary" onclick="Chapter2.frogPlayPattern()" id="frogPlayBtn">
-          [ ▶ ORIGINALSEQUENZ HÖREN ]
-        </button>
-      </div>
+      <!-- 5×5 ice board (cells + clickable channels) built by chapter2.js -->
+      <div class="frost-board" id="frostGrid"></div>
 
-      <!-- Sequence display (what player has tapped so far) -->
-      <div class="frog-input-display" id="frogInputDisplay"></div>
-
-      <!-- 5 Frog buttons -->
-      <div class="frog-pad">
-        <button class="frog-btn frog-1" data-frog="0" onclick="Chapter2.frogTap(0)">
-          <span class="frog-emoji">🐸</span>
-          <span class="frog-tone">▁</span>
-        </button>
-        <button class="frog-btn frog-2" data-frog="1" onclick="Chapter2.frogTap(1)">
-          <span class="frog-emoji">🐸</span>
-          <span class="frog-tone">▂</span>
-        </button>
-        <button class="frog-btn frog-3" data-frog="2" onclick="Chapter2.frogTap(2)">
-          <span class="frog-emoji">🐸</span>
-          <span class="frog-tone">▄</span>
-        </button>
-        <button class="frog-btn frog-4" data-frog="3" onclick="Chapter2.frogTap(3)">
-          <span class="frog-emoji">🐸</span>
-          <span class="frog-tone">▆</span>
-        </button>
-        <button class="frog-btn frog-5" data-frog="4" onclick="Chapter2.frogTap(4)">
-          <span class="frog-emoji">🐸</span>
-          <span class="frog-tone">█</span>
-        </button>
-      </div>
-
-      <div class="puzzle-status sys-text" id="puzzle2Status">DRÜCKE [ORIGINALSEQUENZ HÖREN] ZUM STARTEN.</div>
+      <div class="puzzle-status sys-text" id="puzzle2Status">SCHNEIDE SECHS BEREICHE ZU JE VIER FELDERN.</div>
 
       <div class="puzzle-actions">
-        <button class="ka-btn small" onclick="Chapter2.frogReset()">[ EINGABE LÖSCHEN ]</button>
+        <button class="ka-btn small" onclick="Chapter2.frostReset()">[ ZURÜCKSETZEN ]</button>
       </div>
     </div>
   </div>
@@ -244,6 +213,7 @@
   </div>
 
   <script src="../js/engine.js"></script>
+  <script src="../js/mobile-warning.js"></script>
   <script src="chapter2.js"></script>
 </body>
 </html>

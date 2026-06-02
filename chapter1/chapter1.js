@@ -19,7 +19,9 @@ const Chapter1 = (() => {
     roomB: { console:0, red:0, green:0, poster:0, door:0, vent:0 },
     p1Solved: false,
     p2Solved: false,
-    hints: { r3mi:3, vtgm:3, active: null /* 'p1'|'p2' */ },
+    // DIFFICULTY TARGET: chapter ~4.5/10 (P1 pipe ~4, P2 dual-signal ~5).
+    // 4 hints total (2 per unit) — was 6; the cut is the main difficulty lever.
+    hints: { r3mi:2, vtgm:2, active: null /* 'p1'|'p2' */ },
   };
 
   // ═══════════════════════════════════════════════════════════════
@@ -970,8 +972,8 @@ const Chapter1 = (() => {
 
   function openPuzzle2() {
     S.hints.active = 'p2';
-    S.hints.r3mi   = 3;
-    S.hints.vtgm   = 3;
+    S.hints.r3mi   = P2_HINT_MAX;
+    S.hints.vtgm   = P2_HINT_MAX;
     updateHintBar();
 
     GameEngine.dialogue.load([
@@ -1014,6 +1016,7 @@ const Chapter1 = (() => {
   }
 
   // ─── Hint system ──────────────────────────────────────────────
+  const P2_HINT_MAX = 2; // hints per unit (R-3MI / V-TGM) → 4 total
   const P2_HINTS = {
     r3mi: [
       '„Okay, ich würde nicht versuchen, beide Signale gleichzeitig perfekt zu verstehen. Fang mit dem an, das weniger Spielraum hat."',
@@ -1045,7 +1048,7 @@ const Chapter1 = (() => {
       ]);
       return;
     }
-    const idx = 3 - remaining;
+    const idx = P2_HINT_MAX - remaining;
     S.hints[who]--;
     updateHintBar();
 
