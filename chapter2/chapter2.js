@@ -701,6 +701,7 @@ const Chapter2 = (() => {
 
   const WELL          = '2,2';
   const FROST_PALETTE = 6; // number of pastel region colours
+  const FROST_MAX_CUTS = 21; // minimum solvable layout needs 18 bars; +3 slack
 
   let p2State = { cuts: new Set() };
 
@@ -711,6 +712,8 @@ const Chapter2 = (() => {
       { speaker:'SYSTEM',   text:'FROSTMUSTER-KALIBRIERUNG STARTEN?' },
       { speaker:'F-RØ5CHI', text:'„De Tafel is a Fünf-mal-Fünf-Feld. In da Mittn da Brunnen — den muassd freihoidn, ganz alloa."', subtitle:'Die Tafel ist ein Fünf-mal-Fünf-Feld. In der Mitte der Brunnen — den musst du freihalten, ganz allein.' },
       { speaker:'F-RØ5CHI', text:'„Drumherum schneidst sechs Bereiche, jeder genau vier Felder. Klick zwischn zwoa Felder, dann setzt a Eiskanal."', subtitle:'Drumherum schneidest du sechs Bereiche, jeder genau vier Felder. Klick zwischen zwei Felder, dann setzt du einen Eiskanal.' },
+      { speaker:'F-RØ5CHI', text:'„Oba pass auf: so vui Eis hob i nimmer. Mehr ois oanazwanzg Kanäl mog de Tafel ned. Geh sparsam um."', subtitle:'Aber pass auf: so viel Eis hab ich nicht mehr. Mehr als einundzwanzig Kanäle mag die Tafel nicht. Geh sparsam damit um.' },
+      { speaker:'R-3MI',    text:'„Eine Tafel mit Mengenbegrenzung. Passive Aggression in Eisform. Ich mag sie."' },
       { speaker:'V-TGM',    text:'"Many layouts work. Only the rule matters."', subtitle:'Viele Anordnungen funktionieren. Nur die Regel zählt.' },
       { speaker:'R-3MI',    text:'„Sechs mal vier, plus ein Brunnen. Das sind… fünfundzwanzig. Schau, ich kann auch Mathe."' },
     ], () => {
@@ -815,8 +818,15 @@ const Chapter2 = (() => {
 
   function toggleCut(edge) {
     if (S.p2Solved) return;
-    if (p2State.cuts.has(edge)) p2State.cuts.delete(edge);
-    else p2State.cuts.add(edge);
+    if (p2State.cuts.has(edge)) {
+      p2State.cuts.delete(edge);
+    } else {
+      if (p2State.cuts.size >= FROST_MAX_CUTS) {
+        setP2Status(`KEIN EIS MEHR — HÖCHSTENS ${FROST_MAX_CUTS} KANÄLE. ENTFERNE ZUERST EINEN.`, 'error');
+        return;
+      }
+      p2State.cuts.add(edge);
+    }
     updateFrost();
   }
 
@@ -850,7 +860,7 @@ const Chapter2 = (() => {
     });
 
     setP2Status(
-      `${regions4} / 6 BEREICHE KORREKT · BRUNNEN ${wellIsolated ? 'ISOLIERT' : 'OFFEN'}`,
+      `${regions4} / 6 BEREICHE · BRUNNEN ${wellIsolated ? 'ISOLIERT' : 'OFFEN'} · EIS ${p2State.cuts.size}/${FROST_MAX_CUTS}`,
       win ? 'ok' : ''
     );
 
