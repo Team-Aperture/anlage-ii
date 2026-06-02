@@ -4,28 +4,152 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>KA-II // Kapitel 3 — Beobachtungssektor</title>
-  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&family=Barlow:wght@300;400&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Barlow:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/global.css">
-  <style>
-    .tbc-wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--sp-lg);gap:var(--sp-md);text-align:center;position:relative;z-index:10;}
-    .tbc-label{font-family:var(--font-mono);font-size:11px;letter-spacing:.2em;color:var(--text-secondary);}
-    .tbc-title{font-family:var(--font-display);font-size:clamp(28px,5vw,48px);font-weight:700;letter-spacing:.2em;color:var(--text-primary);margin:var(--sp-md) 0;}
-    .tbc-status{font-family:var(--font-mono);font-size:13px;color:var(--accent-warn);margin:var(--sp-md) 0;letter-spacing:.1em;}
-    .tbc-guest{font-family:var(--font-mono);font-size:12px;color:var(--accent-g2);margin-bottom:var(--sp-lg);}
-  </style>
+  <link rel="stylesheet" href="chapter3.css">
 </head>
-<body>
-  <div class="bg-grid" aria-hidden="true"></div>
+<body class="chapter-page">
+
   <div class="bg-scanlines" aria-hidden="true"></div>
-  <div class="bg-vignette" aria-hidden="true"></div>
-  <main class="tbc-wrap">
-    <div class="tbc-label">KAPITEL 03</div>
-    <h1 class="tbc-title">BEOBACHTUNGSSEKTOR</h1>
-    <div class="tbc-guest">GASTCHARAKTER: L-UX</div>
-    <div class="tbc-status">[ IN ENTWICKLUNG ]</div>
-    <a class="ka-btn primary" href="../index.html">[ HAUPTMENÜ ]</a>
-  </main>
+
+  <header class="sys-bar">
+    <span class="sys-text">KAPITEL 03 // <span class="accent-system">BEOBACHTUNGSSEKTOR</span></span>
+    <span class="sys-text" id="reactProgress">REAKTIVIERUNG: 18%</span>
+  </header>
+
+  <!-- TITLE CARD -->
+  <div class="ch-title-card" id="titleCard">
+    <div class="ch-emblem ch3-emblem" aria-hidden="true">
+      <div class="ch-ring ch-ring-1"></div>
+      <div class="ch-ring ch-ring-2"></div>
+      <div class="ch3-scan"></div>
+      <div class="ch3-lens"></div>
+      <span class="ch-num">03</span>
+    </div>
+    <div class="ch-title-text">
+      <p class="ch-label sys-text">KAPITEL 03</p>
+      <h1 class="ch-name">Beobachtungssektor</h1>
+      <p class="ch-subline">&bdquo;Wer alles sieht, sieht auch, dass es dunkel wird.&ldquo;</p>
+    </div>
+  </div>
+
+  <!-- SCENE -->
+  <div class="scene-wrapper" id="sceneWrapper">
+    <div class="scene-bg-layer" id="sceneBgLayer">
+      <img src="cg/ch3_observation.png" class="scene-bg" id="sceneBg" alt=""
+           onerror="this.style.display='none'">
+      <div class="scene-ph" id="scenePh" data-scene="obs-dim"></div>
+    </div>
+    <div class="scene-hotspots" id="sceneHotspots"></div>
+
+    <!-- Robot icons (R-3MI, V-TGM, L-UX when present) -->
+    <div class="robot-icons hidden" id="robotIcons">
+      <button class="robot-icon r3mi-icon" onclick="Chapter3.clickRobot('r3mi')" aria-label="R-3MI">
+        <div class="ri-eye ri-eye-r"></div>
+        <span class="ri-label sys-text">R-3MI</span>
+      </button>
+      <button class="robot-icon vtgm-icon" onclick="Chapter3.clickRobot('vtgm')" aria-label="V-TGM">
+        <div class="ri-eye ri-eye-g"></div>
+        <span class="ri-label sys-text">V-TGM</span>
+      </button>
+      <button class="robot-icon lux-icon hidden" id="luxIcon" onclick="Chapter3.clickRobot('lux')" aria-label="L-UX">
+        <div class="ri-eye ri-eye-l"></div>
+        <span class="ri-label sys-text">L-UX</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- CHOICE UI -->
+  <div class="choice-overlay hidden" id="choiceOverlay">
+    <div class="choice-panel">
+      <div class="choice-prompt sys-text" id="choicePrompt"></div>
+      <div class="choice-buttons" id="choiceButtons"></div>
+      <div class="choice-hint sys-text" id="choiceHint"></div>
+    </div>
+  </div>
+
+  <!-- HINT BAR (3 chars: r3mi / vtgm / lux) -->
+  <div class="hint-bar hidden" id="hintBar">
+    <span class="sys-text hint-label" id="hintCount">HINWEISE: 4 VERFÜGBAR</span>
+    <button class="ka-btn small" id="hintBtnR3MI" onclick="Chapter3.useHint('r3mi')">
+      <span class="accent-r3mi">[ R-3MI ]</span>
+    </button>
+    <button class="ka-btn small" id="hintBtnVTGM" onclick="Chapter3.useHint('vtgm')">
+      <span class="accent-vtgm">[ V-TGM ]</span>
+    </button>
+    <button class="ka-btn small" id="hintBtnLux" onclick="Chapter3.useHint('lux')">
+      <span class="accent-lux">[ L-UX ]</span>
+    </button>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       BELICHTUNG — multi-stage exposure calibration
+       ════════════════════════════════════════════════════════════ -->
+  <div class="puzzle-modal hidden" id="belModal">
+    <div class="puzzle-card bel-card">
+      <div class="puzzle-card-accent bel-accent"></div>
+      <div class="puzzle-header">
+        <p class="puzzle-label sys-text" id="belLabel">BEOBACHTUNGSARRAY // L-UX</p>
+        <h2 class="puzzle-title">BELICHTUNG</h2>
+        <p class="puzzle-sub sys-text">KALIBRIERE, BEVOR DAS LICHT STIRBT — RICHTIGE SENSOREN GEBEN LICHT ZURÜCK</p>
+      </div>
+
+      <!-- Exposure meter -->
+      <div class="bel-meter">
+        <span class="sys-text">BELICHTUNG</span>
+        <div class="bel-meter-bar"><div class="bel-meter-fill" id="belMeter"></div></div>
+        <span class="sys-text" id="belMeterPct">100%</span>
+      </div>
+
+      <div class="bel-stage sys-text" id="belStage">STUFE 1 / 3 — BLENDEN I</div>
+
+      <!-- Rules / clues -->
+      <div class="bel-rules" id="belRules"></div>
+
+      <!-- Logic dials (stages 1-2) -->
+      <div class="bel-dials" id="belDials"></div>
+
+      <!-- Spectrum (stage 3) -->
+      <div class="bel-spectrum hidden" id="belSpectrum">
+        <div class="bel-swatches">
+          <div class="bel-swatch-wrap">
+            <span class="sys-text">ZIEL</span>
+            <div class="bel-sw" id="belTarget"></div>
+          </div>
+          <div class="bel-swatch-wrap">
+            <span class="sys-text">DEINS</span>
+            <div class="bel-sw" id="belCurrent"></div>
+          </div>
+        </div>
+        <div class="bel-dials" id="belChannels"></div>
+      </div>
+
+      <div class="puzzle-status sys-text" id="belStatus">BEREIT.</div>
+
+      <div class="puzzle-actions">
+        <button class="ka-btn small" onclick="Chapter3.belReset()">[ STUFE ZURÜCKSETZEN ]</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       CHAPTER COMPLETE
+       ════════════════════════════════════════════════════════════ -->
+  <div class="chapter-complete hidden" id="chapterComplete">
+    <div class="cc-card">
+      <div class="cc-header sys-text">KAPITEL 03 ABGESCHLOSSEN</div>
+      <div class="cc-title">SEKTOR 04 FREIGEGEBEN</div>
+      <div class="cc-next">KARTOGRAFIESEKTOR</div>
+      <div class="cc-progress sys-text" id="ccProgress"></div>
+      <a class="ka-btn primary" href="../chapter4/chapter4.html">[ EINTRETEN ]</a>
+      <a class="ka-btn small"   href="../index.html">[ HAUPTMENÜ ]</a>
+    </div>
+  </div>
+
   <script src="../js/engine.js"></script>
   <script src="../js/mobile-warning.js"></script>
+  <script src="chapter3.js"></script>
 </body>
 </html>
