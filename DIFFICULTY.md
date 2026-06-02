@@ -10,7 +10,7 @@ curve. From Chapter 1 the baseline is **4.5/10**, rising **+0.75 per chapter**.
 | Ch1 — Wartungseinheiten   | **4.5** | done | P1 pipe path ~4 · P2 dual-signal ~5 (4 hints) |
 | Ch2 — Wartungsgarten      | **5.25** | done | P1 Tau-Sequenz ~5 · P2 Frostmuster ~5.5–6 (6 fixed walls → unique solution, cap 18) |
 | Ch3 — Beobachtungssektor  | **6.0** | done | One multi-stage Belichtung puzzle (logic dials → spectrum match) under a draining exposure meter |
-| Ch4 | 6.75 | — | — |
+| Ch4 — Rätselsektor (Armin/B-RADF1SH) | **6.75** | done | P1 Cubus-Netz ~6.25 (fold, opposite faces) · P2 Castra-Chiffre ~7.25 (Caesar wheel → Stammtisch) |
 | Ch5 | 7.5  | — | — |
 | Ch6 | 8.25 | — | — |
 | Ch7 | 9.0  | — | — |
