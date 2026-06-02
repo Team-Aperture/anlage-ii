@@ -3,8 +3,8 @@
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
-  --accent-bradfish:    #bf3a9a;            /* B-RADF1SH — FTF magenta (= --accent-g4) */
-  --accent-bradfish-lo: rgba(191,58,154,0.13);
+  --accent-bradfish:    #f3c623;            /* B-RADF1SH — yellow (= --accent-g4) */
+  --accent-bradfish-lo: rgba(243,198,35,0.15);
 }
 
 .chapter-page { overflow: hidden; }
@@ -27,10 +27,10 @@
   content:''; position:absolute; inset:0;
   background:
     /* the cube silhouette in the middle */
-    linear-gradient(135deg, rgba(191,58,154,0.18) 0%, transparent 60%),
-    radial-gradient(ellipse 16% 22% at 50% 52%, rgba(191,58,154,0.22) 0%, transparent 70%),
+    linear-gradient(135deg, rgba(243,198,35,0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 16% 22% at 50% 52%, rgba(243,198,35,0.22) 0%, transparent 70%),
     /* floor grid hint */
-    repeating-linear-gradient(90deg, transparent 0 38px, rgba(191,58,154,0.05) 38px 39px),
+    repeating-linear-gradient(90deg, transparent 0 38px, rgba(243,198,35,0.05) 38px 39px),
     linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 22%),
     linear-gradient(0deg, rgba(0,0,0,0.6) 0%, transparent 22%);
 }
@@ -40,9 +40,9 @@
 .scene-ph[data-scene="vault-lit"]::before {
   content:''; position:absolute; inset:0;
   background:
-    radial-gradient(ellipse 18% 24% at 50% 52%, rgba(191,58,154,0.4) 0%, transparent 70%),
-    radial-gradient(circle 5px at 30% 40%, rgba(255,120,210,0.8) 0%, transparent 100%),
-    radial-gradient(circle 5px at 70% 44%, rgba(255,120,210,0.7) 0%, transparent 100%),
+    radial-gradient(ellipse 18% 24% at 50% 52%, rgba(243,198,35,0.4) 0%, transparent 70%),
+    radial-gradient(circle 5px at 30% 40%, rgba(255,224,107,0.8) 0%, transparent 100%),
+    radial-gradient(circle 5px at 70% 44%, rgba(255,224,107,0.7) 0%, transparent 100%),
     linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent 20%),
     linear-gradient(0deg, rgba(0,0,0,0.5) 0%, transparent 20%);
 }
@@ -62,12 +62,12 @@
 .ch-ring-2 { inset: 14%; border-color: var(--accent-bradfish); border-style: dashed; animation: spinCCW 7s linear infinite; }
 @keyframes spinCW  { to{transform:rotate(360deg)} }
 @keyframes spinCCW { to{transform:rotate(-360deg)} }
-.ch4-emblem .ch-num { color: var(--accent-bradfish); text-shadow: 0 0 12px rgba(191,58,154,0.6); position: relative; z-index: 1; }
+.ch4-emblem .ch-num { color: var(--accent-bradfish); text-shadow: 0 0 12px rgba(243,198,35,0.6); position: relative; z-index: 1; }
 .ch4-cube {
   position: absolute; width: 44px; height: 44px;
-  border: 2px solid rgba(191,58,154,0.55);
+  border: 2px solid rgba(243,198,35,0.55);
   transform: rotate(45deg);
-  box-shadow: inset 0 0 10px rgba(191,58,154,0.4);
+  box-shadow: inset 0 0 10px rgba(243,198,35,0.4);
   animation: cubeSpin 9s linear infinite;
 }
 @keyframes cubeSpin { to { transform: rotate(405deg); } }
@@ -149,7 +149,7 @@ button.ka-btn:disabled { opacity:.3; pointer-events:none; }
 .puzzle-modal { position: fixed; inset:0; background:rgba(0,0,0,0.88); backdrop-filter:blur(6px); z-index:200; display:flex; align-items:center; justify-content:center; padding:var(--sp-md); overflow-y:auto; }
 .puzzle-card { background:var(--bg-panel); border:1px solid var(--bdr-bright); padding:var(--sp-lg); position:relative; max-width:540px; width:100%; margin:auto; }
 .puzzle-card-accent { position:absolute; top:0; left:0; right:0; height:2px; }
-.bradfish-accent { background:linear-gradient(90deg, var(--accent-bradfish), #ff9ad8); }
+.bradfish-accent { background:linear-gradient(90deg, var(--accent-bradfish), #ffe9a8); }
 .puzzle-header { text-align:center; margin-bottom:var(--sp-md); }
 .puzzle-label  { margin-bottom:var(--sp-xs); }
 .puzzle-title  { font-family:var(--font-display); font-size:22px; font-weight:700; letter-spacing:.2em; color:var(--text-primary); margin:var(--sp-xs) 0; }
@@ -171,12 +171,12 @@ button.ka-btn:disabled { opacity:.3; pointer-events:none; }
 }
 .cube-face {
   display:flex; align-items:center; justify-content:center;
-  font-family:var(--font-display); font-size:22px; font-weight:700; letter-spacing:.05em;
+  font-family:var(--font-mono); font-size:15px; font-weight:600; letter-spacing:.08em;
   color:var(--accent-bradfish);
   background:var(--bg-surface); border:1px solid var(--accent-bradfish);
   border-radius:4px; cursor:pointer; transition:all var(--t-fast);
 }
-.cube-face:hover { background:var(--accent-bradfish-lo); box-shadow:0 0 10px rgba(191,58,154,0.4); }
+.cube-face:hover { background:var(--accent-bradfish-lo); box-shadow:0 0 10px rgba(243,198,35,0.4); }
 .cube-face.empty { background:transparent; border:1px dashed var(--bdr-dim); cursor:default; }
 .cube-face.done  { color:var(--accent-r3mi); border-color:var(--accent-r3mi); background:rgba(46,207,98,0.1); box-shadow:none; }
 .cubus-prompt { text-align:center; font-size:12px; color:var(--text-primary); margin-bottom:var(--sp-xs); letter-spacing:.05em; }
@@ -205,7 +205,7 @@ button.ka-btn:disabled { opacity:.3; pointer-events:none; }
 @keyframes ccIn { to{opacity:1} }
 .cc-card { text-align:center; display:flex; flex-direction:column; align-items:center; gap:var(--sp-md); max-width:480px; }
 .cc-header { letter-spacing:.2em; }
-.cc-title  { font-family:var(--font-display); font-size:clamp(26px,4vw,44px); font-weight:700; letter-spacing:.2em; color:var(--accent-bradfish); text-shadow:0 0 16px rgba(191,58,154,0.5); }
+.cc-title  { font-family:var(--font-display); font-size:clamp(26px,4vw,44px); font-weight:700; letter-spacing:.2em; color:var(--accent-bradfish); text-shadow:0 0 16px rgba(243,198,35,0.5); }
 .cc-next   { font-family:var(--font-display); font-size:20px; letter-spacing:.15em; color:var(--text-primary); }
 .cc-progress { margin-bottom:var(--sp-md); }
 .cc-card .ka-btn { min-width:200px; }
@@ -213,7 +213,7 @@ button.ka-btn:disabled { opacity:.3; pointer-events:none; }
 /* ─── RESPONSIVE ──────────────────────────────────────────────── */
 @media (max-width: 600px) {
   .cubus-grid { grid-template-columns: repeat(4, 46px); grid-template-rows: repeat(3, 46px); }
-  .cube-face { font-size:17px; }
+  .cube-face { font-size:13px; }
   .chiffre-out { font-size:14px; }
   .chiffre-answer { flex-direction:column; }
   .hint-bar { top:38px; flex-wrap:wrap; max-width:calc(100% - 16px); }

@@ -129,8 +129,8 @@ const Chapter4 = (() => {
     showBradfish(false);
 
     GameEngine.dialogue.load([
-      { speaker:'SYSTEM', text:'SEKTOR 04 — RÄTSELSEKTOR. Hier hat die Anlage ihre schwierigsten Verschlüsse gelagert. Die Wände tragen römische Ziffern. Der Boden ist ein Raster aus alten Steinplatten — fast wie ein Lagerplan.' },
-      { speaker:'SYSTEM', text:'In der Mitte steht ein massiver Würfel aus Stein und Messing. Auf jeder sichtbaren Fläche eine Zahl. Daneben eine Tafel voller wirrer Buchstaben.' },
+      { speaker:'SYSTEM', text:'SEKTOR 04 — RÄTSELSEKTOR. Hier hat die Anlage ihre schwierigsten Verschlüsse gelagert. Die Wände tragen verwitterte Zeichen. Der Boden ist ein Raster aus alten Steinplatten — fast wie ein Lagerplan.' },
+      { speaker:'SYSTEM', text:'In der Mitte steht ein massiver Würfel aus Stein und Messing. Auf jeder sichtbaren Fläche eine Reihe aus Nullen und Einsen. Daneben eine Tafel voller wirrer Buchstaben.' },
       { speaker:'R-3MI',  text:'„Oh nein. Ich kenne diesen Würfel. Den hat… er gebaut."' },
       { speaker:'V-TGM',  text:'"The one no visitor ever solved."', subtitle:'Den nie ein Besucher gelöst hat.' },
       { speaker:'R-3MI',  text:'„Bitte sag mir, dass er nicht—"' },
@@ -147,7 +147,7 @@ const Chapter4 = (() => {
 
     GameEngine.dialogue.load([
       { speaker:'B-RADF1SH', text:'„B-RADF1SH. Aber sag ruhig Armin. Erstfinder, Rätselbauer, und — wenn man ehrlich ist — der Grund, warum dieser Sektor einen so schlechten Ruf hat."' },
-      { speaker:'B-RADF1SH', text:'„Magenta ist meine Farbe. Wie der Stempel im Logbuch, wenn man als Erster da war. FTF. Mein Lieblingswort."' },
+      { speaker:'B-RADF1SH', text:'„Gelb ist meine Farbe — wie mein Fisch. Einen Stempel hab ich nie gebraucht: Ich schreib einfach mit\'m Stift »FTF« ins Logbuch. Erster. Mein Lieblingswort."' },
       { speaker:'R-3MI',  text:'„Er hat zu allem als Erster »gefunden« gerufen. Sogar zu Dingen, die niemand verloren hatte."' },
       { speaker:'B-RADF1SH', text:'„Gefunden ist gefunden."' },
       { speaker:'V-TGM',  text:'"He is harmless. Mostly."', subtitle:'Er ist harmlos. Meistens.' },
@@ -182,8 +182,9 @@ const Chapter4 = (() => {
     cubus: {
       key:'cubus', label:'[Erzähl mir vom Cubus.]', seen:false,
       lines:[
-        { speaker:'B-RADF1SH', text:'„Ah. Der Cubus. Mein Meisterstück. Castra Enigma — Cubus. Benannt nach dem alten Lager, auf dem alles hier steht."' },
-        { speaker:'B-RADF1SH', text:'„Sechs Flächen. Sechs Zahlen. Aufgefaltet liegt er da wie ein Schnittmuster. Die Kunst ist, ihn im Kopf wieder zusammenzufalten — und zu wissen, was wem gegenüberliegt."' },
+        { speaker:'B-RADF1SH', text:'„Ah. Der Cubus. Mein Meisterstück. »Castra Enigma — Cubus«. Wonach das Lager benannt ist, auf dem wir stehen, verrate ich nicht — das wäre ja viel zu einfach."' },
+        { speaker:'B-RADF1SH', text:'„Sechs Flächen, jede randvoll mit Nullen und Einsen. Aufgefaltet liegt er da wie ein Schnittmuster. Falte ihn im Kopf zusammen und sag mir, was wem gegenüberliegt."' },
+        { speaker:'B-RADF1SH', text:'„Noch nie hat ihn jemand geknackt. Niemand. Ich hab Hinweise verschenkt wie Bonbons — geholfen hat es keinem. Er ist gemein. Wunderschön gemein."' },
         { speaker:'V-TGM',  text:'"No one has done it."', subtitle:'Niemand hat es geschafft.' },
         { speaker:'B-RADF1SH', text:'„Noch niemand. Ich sage das ohne Stolz." …' },
         { speaker:'B-RADF1SH', text:'„Das war gelogen. Mit sehr viel Stolz. Komm zum Stammtisch, dann erzähl ich dir, wie viele es probiert haben."' },
@@ -249,16 +250,16 @@ const Chapter4 = (() => {
 
     const lines = {
       cubus: [[
-        { speaker:'SYSTEM', text:'Der Würfel ist aufgeklappt — sechs Flächen liegen flach in einer Treppenform. Jede trägt eine römische Ziffer von I bis VI.' },
-        { speaker:'B-RADF1SH', text:'„Falte ihn im Kopf zusammen. Sag mir, was jeder Zahl gegenüberliegt. Tipp: Nachbarn im Netz sind nie Gegenüber."' },
+        { speaker:'SYSTEM', text:'Der Würfel ist aufgeklappt — sechs Flächen liegen flach in einer Treppenform. Jede trägt eine Folge aus drei Nullen und Einsen.' },
+        { speaker:'B-RADF1SH', text:'„Falte ihn im Kopf zusammen. Sag mir, welche Folge welcher gegenüberliegt. Tipp, gratis: Nachbarn im Netz liegen sich nie gegenüber. Der Rest ist… na ja. Berüchtigt."' },
       ]],
       tablet: [[
         { speaker:'SYSTEM', text:'Die Castra-Tafel: ein Ring aus Buchstaben um einen zweiten, drehbaren Ring. Darunter eine Reihe wirrer Lettern.' },
         { speaker:'B-RADF1SH', text:'„Erst der Würfel, dann die Chiffre. Eins nach dem anderen. Wie beim Cachen: man unterschreibt nicht, bevor man die Dose hat."' },
       ]],
       board: [[
-        { speaker:'SYSTEM', text:'Ein alter Lagerplan: ein Rechteck mit vier Toren und der Aufschrift CASTRA REGINA. Das römische Lager, auf dem die Anlage steht.' },
-        { speaker:'B-RADF1SH', text:'„Castra Regina. Regensburg, für die Daheimgebliebenen. Alles hier steht auf etwas sehr Altem."' },
+        { speaker:'SYSTEM', text:'Ein alter Lagerplan: ein Rechteck mit vier Toren, exakt nach den Himmelsrichtungen ausgerichtet. Die Aufschrift ist verwittert — nur das Wort für eine Königin lässt sich noch erahnen.' },
+        { speaker:'B-RADF1SH', text:'„Vier Tore, ein Lager, uralt. Manche Steine hier sind älter als die Anlage — älter als fast alles in der Stadt da draußen. Aber pssst. Namen verraten zu viel."' },
       ]],
     };
     const bucket = lines[key];
@@ -302,19 +303,21 @@ const Chapter4 = (() => {
   // PUZZLE 1 — CUBUS-NETZ  (fold the net, name the opposite face)
   // ═══════════════════════════════════════════════════════════════
   /*
-   * Staircase net (verified by a rolling-cube simulation):
-   *   (0,0)=I (0,1)=II
-   *           (1,1)=III (1,2)=IV
-   *                     (2,2)=V (2,3)=VI
-   * Opposite pairs: I–IV, II–V, III–VI.
+   * Staircase net (verified by a rolling-cube simulation). Faces are 3-bit
+   * binary strings — a nod to the real "Castra Enigma — Cubus" (all 0s/1s):
+   *   (0,0)=001 (0,1)=011
+   *             (1,1)=100 (1,2)=010
+   *                       (2,2)=101 (2,3)=110
+   * Opposite pairs: 001–010, 011–101, 100–110. (No pair is a bit-complement,
+   * so there is no shortcut — you must actually fold it.)
    */
   const NET = [
-    { r:0, c:0, f:'I'  }, { r:0, c:1, f:'II' },
-    { r:1, c:1, f:'III'}, { r:1, c:2, f:'IV' },
-    { r:2, c:2, f:'V'  }, { r:2, c:3, f:'VI' },
+    { r:0, c:0, f:'001' }, { r:0, c:1, f:'011' },
+    { r:1, c:1, f:'100' }, { r:1, c:2, f:'010' },
+    { r:2, c:2, f:'101' }, { r:2, c:3, f:'110' },
   ];
-  const OPP = { 'I':'IV', 'IV':'I', 'II':'V', 'V':'II', 'III':'VI', 'VI':'III' };
-  const CUBUS_QUERIES = ['I', 'III', 'II']; // ask opposite of each (→ IV, VI, V)
+  const OPP = { '001':'010', '010':'001', '011':'101', '101':'011', '100':'110', '110':'100' };
+  const CUBUS_QUERIES = ['001', '100', '011']; // ask opposite of each (→ 010, 110, 101)
   let p1 = { qi:0, solvedFaces:[] };
 
   function openCubus() {
@@ -497,11 +500,11 @@ const Chapter4 = (() => {
   const HINTS = {
     p1: {
       r3mi: ['„Im Netz benachbarte Flächen können NIE gegenüber liegen. Streich erst mal alle Nachbarn weg."'],
-      vtgm: [{ text:'"Fold it step by step. I and IV never touch in the net — that is the giveaway pair."',
-               sub:'Falte Schritt für Schritt. I und IV berühren sich im Netz nie — das ist das verräterische Paar.' }],
+      vtgm: [{ text:'"Fold it step by step. 001 and 010 never touch in the net — that is the giveaway pair."',
+               sub:'Falte Schritt für Schritt. 001 und 010 berühren sich im Netz nie — das ist das verräterische Paar.' }],
       bradfish: [
         '„Treppenform. Geh von einer Fläche zwei Schritte am Netz entlang — meistens landest du beim Gegenüber. Meistens."',
-        '„Gut. Zwischen dir und der Lösung steht nur noch ein bisschen Mut. Die Paare sind I–IV, II–V, III–VI. Aber das hast du nicht von mir."',
+        '„Gut. Zwischen dir und der Lösung steht nur noch ein bisschen Mut. Die Paare sind 001–010, 011–101, 100–110. Aber das hast du nicht von mir."',
       ],
     },
     p2: {
