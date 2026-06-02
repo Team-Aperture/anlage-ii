@@ -133,7 +133,7 @@ const Chapter3 = (() => {
       { speaker:'R-3MI',  text:'„Oh. Hier. Ich mag diesen Sektor nicht."' },
       { speaker:'V-TGM',  text:'"You say that about every sector."', subtitle:'Das sagst du über jeden Sektor.' },
       { speaker:'R-3MI',  text:'„Und ich habe jedes Mal recht."' },
-      { speaker:'SYSTEM', text:'Irgendwo zwischen den Linsen huscht etwas. Ein blauer Lichtpunkt — links. Dann rechts. Dann oben. Zu schnell, um ihm zu folgen.' },
+      { speaker:'SYSTEM', text:'Irgendwo zwischen den Linsen huscht etwas. Ein warmer, oranger Lichtpunkt — links. Dann rechts. Dann oben. Zu schnell, um ihm zu folgen.' },
       { speaker:'V-TGM',  text:'"There he is. If he holds still."', subtitle:'Da ist er. Wenn er stillhält.' },
     ], () => scene_3_2_lux());
   }
@@ -417,6 +417,18 @@ const Chapter3 = (() => {
     renderBel();
   }
 
+  // The puzzle modal (z-index 200) sits above the dialogue box (z-index 50),
+  // so any dialogue shown mid-puzzle must hide the modal first, then reopen it.
+  function withModalDialogue(lines, after) {
+    const modal = document.getElementById('belModal');
+    const wasOpen = modal && !modal.classList.contains('hidden');
+    if (wasOpen) modal.classList.add('hidden');
+    GameEngine.dialogue.load(lines, () => {
+      if (wasOpen && !S.puzzleSolved) modal.classList.remove('hidden');
+      if (after) after();
+    });
+  }
+
   // ─── Rendering ────────────────────────────────────────────────
   function paintMeter() {
     const pct = Math.max(0, Math.min(100, bel.meter));
@@ -523,7 +535,7 @@ const Chapter3 = (() => {
             { speaker:'V-TGM', text:'"Now the spectrum. Match his colour exactly."', subtitle:'Jetzt das Spektrum. Triff seine Farbe genau.' },
             { speaker:'L-UX',  text:'„Meine Farbe! Ich hab eine Lieblingsfarbe und das ist sie und du musst sie TREFFEN, kein Druck, totaler Druck, viel Spaß!"' },
           ];
-      GameEngine.dialogue.load(lines, () => startStage(next));
+      withModalDialogue(lines, () => startStage(next));
     } else {
       solveBelichtung();
     }
@@ -556,7 +568,7 @@ const Chapter3 = (() => {
 
     GameEngine.dialogue.load([
       { speaker:'SYSTEM', text:'BEOBACHTUNGSARRAY ONLINE. SPEKTRUM STABIL. RESTLICHT: WIEDERHERGESTELLT.' },
-      { speaker:'SYSTEM', text:'Reihe um Reihe erwachen die Linsen. Der Sektor füllt sich mit einem klaren, kühlen Blau. Zum ersten Mal seit langer Zeit sieht der Raum sich selbst.' },
+      { speaker:'SYSTEM', text:'Reihe um Reihe erwachen die Linsen. Der Sektor füllt sich mit einem warmen, bernsteinfarbenen Licht. Zum ersten Mal seit langer Zeit sieht der Raum sich selbst.' },
       { speaker:'L-UX',  text:'„Ich SEH! Ich seh alles! Den Staub, die Risse, dich — oh, du siehst müde aus, in einem guten Sinn, in einem heldenhaften Sinn —"' },
       { speaker:'R-3MI', text:'„Er hat in elf Sekunden dreimal das Thema gewechselt."' },
       { speaker:'V-TGM', text:'"That is slow for him."', subtitle:'Das ist langsam für ihn.' },
@@ -603,14 +615,19 @@ const Chapter3 = (() => {
 
   function useHint(who) {
     const remaining = S.hints[who];
+    // Pause the meter while the player reads, resume after
+    const wasRunning = !!belTimer;
+    belStopTimer();
+    const resume = () => { if (wasRunning && !S.puzzleSolved) belStartTimer(); };
+
     if (remaining <= 0) {
-      GameEngine.dialogue.load([{
+      withModalDialogue([{
         speaker: who === 'r3mi' ? 'R-3MI' : who === 'vtgm' ? 'V-TGM' : 'L-UX',
         text: who === 'r3mi' ? '„Mehr Hinweise habe ich nicht. Ehrlich gesagt überrascht mich, dass ich überhaupt welche hatte."'
             : who === 'vtgm' ? '"That is all I have."'
             : '„Ich hab schon ZU viel gesagt! Mir wird ganz schwindelig vom Helfen! Du schaffst das auch so, ich GLAUB an dich, das ist wie Helfen, nur lauter!"',
         subtitle: who === 'vtgm' ? 'Mehr habe ich nicht.' : undefined,
-      }]);
+      }], resume);
       return;
     }
     const stage = bel ? bel.stage : 1;
@@ -620,19 +637,12 @@ const Chapter3 = (() => {
     S.hints[who]--;
     updateHintBar();
 
-    // Pause the meter while the player reads, resume after
-    const wasRunning = !!belTimer;
-    belStopTimer();
-    const resume = () => { if (wasRunning && !S.puzzleSolved) belStartTimer(); };
-
     const entry = bank[who] ? bank[who][idx] : null;
     if (!entry) { resume(); return; }
-    if (typeof entry === 'string') {
-      const speaker = who === 'r3mi' ? 'R-3MI' : 'L-UX';
-      GameEngine.dialogue.load([{ speaker, text: entry }], resume);
-    } else {
-      GameEngine.dialogue.load([{ speaker:'V-TGM', text: entry.text, subtitle: entry.sub }], resume);
-    }
+    const line = (typeof entry === 'string')
+      ? { speaker: who === 'r3mi' ? 'R-3MI' : 'L-UX', text: entry }
+      : { speaker: 'V-TGM', text: entry.text, subtitle: entry.sub };
+    withModalDialogue([line], resume);
   }
 
   function updateHintBar() {
