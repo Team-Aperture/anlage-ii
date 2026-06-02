@@ -528,6 +528,14 @@ button.ka-btn:disabled { opacity:.3; pointer-events:none; }
   box-shadow: 0 0 8px var(--frost-pale), 0 0 14px rgba(214,242,255,0.7);
 }
 
+/* Pre-frozen GIVEN walls — magenta, fixed, cannot be moved */
+.frost-ch.fixed { cursor: default; }
+.frost-ch.fixed::after {
+  background: #ff5db1;
+  box-shadow: 0 0 8px rgba(255,93,177,0.85), 0 0 14px rgba(255,93,177,0.45);
+}
+.frost-ch.fixed:hover::after { background: #ff5db1; }
+
 .frost-corner { width: var(--fc-gap); height: var(--fc-gap); }
 
 /* ─── CHAPTER COMPLETE ────────────────────────────────────────── */

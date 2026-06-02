@@ -702,6 +702,10 @@ const Chapter2 = (() => {
   const WELL          = '2,2';
   const FROST_PALETTE = 6; // number of pastel region colours
   const FROST_MAX_CUTS = 18; // exact minimum — only an optimal layout solves
+  // Pre-frozen "given" walls the player cannot move. With the 18-cap these
+  // pin the puzzle to exactly ONE valid completion — a real deduction puzzle.
+  const FROST_FIXED = new Set(['h,0,1','h,0,3','h,1,1','v,1,0','v,1,1','v,2,1']);
+  function isCut(edge) { return p2State.cuts.has(edge) || FROST_FIXED.has(edge); }
 
   let p2State = { cuts: new Set() };
 
@@ -714,7 +718,8 @@ const Chapter2 = (() => {
       { speaker:'F-RØ5CHI', text:'„Drumherum schneidst sechs Bereiche, jeder genau vier Felder. Klick zwischn zwoa Felder, dann setzt a Eiskanal."', subtitle:'Drumherum schneidest du sechs Bereiche, jeder genau vier Felder. Klick zwischen zwei Felder, dann setzt du einen Eiskanal.' },
       { speaker:'F-RØ5CHI', text:'„Oba pass auf: so vui Eis hob i nimmer. Mehr ois achtzehn Kanäl mog de Tafel ned. Geh sparsam um."', subtitle:'Aber pass auf: so viel Eis hab ich nicht mehr. Mehr als achtzehn Kanäle mag die Tafel nicht. Geh sparsam damit um.' },
       { speaker:'R-3MI',    text:'„Eine Tafel mit Mengenbegrenzung. Passive Aggression in Eisform. Ich mag sie."' },
-      { speaker:'V-TGM',    text:'"Many layouts work. Only the rule matters."', subtitle:'Viele Anordnungen funktionieren. Nur die Regel zählt.' },
+      { speaker:'F-RØ5CHI', text:'„Und schau: a poar Kanäl san scho ins Eis g\'frorn — de pinkn. De kannst ned wegmacha, du muassd drumrum denka."', subtitle:'Und schau: ein paar Kanäle sind schon ins Eis gefroren — die pinken. Die kannst du nicht entfernen, du musst drumherum denken.' },
+      { speaker:'V-TGM',    text:'"With those fixed, exactly one solution remains. Find it."', subtitle:'Mit denen fest bleibt genau eine Lösung. Finde sie.' },
       { speaker:'R-3MI',    text:'„Sechs mal vier, plus ein Brunnen. Das sind… fünfundzwanzig. Schau, ich kann auch Mathe."' },
     ], () => {
       document.getElementById('puzzle2Modal').classList.remove('hidden');
@@ -733,10 +738,10 @@ const Chapter2 = (() => {
   // ─── Connectivity + region detection ─────────────────────────
   function frostNeighbours(r, c) {
     const nb = [];
-    if (c < 4 && !p2State.cuts.has(`h,${r},${c}`))     nb.push([r, c + 1]); // right
-    if (c > 0 && !p2State.cuts.has(`h,${r},${c - 1}`)) nb.push([r, c - 1]); // left
-    if (r < 4 && !p2State.cuts.has(`v,${r},${c}`))     nb.push([r + 1, c]); // down
-    if (r > 0 && !p2State.cuts.has(`v,${r - 1},${c}`)) nb.push([r - 1, c]); // up
+    if (c < 4 && !isCut(`h,${r},${c}`))     nb.push([r, c + 1]); // right
+    if (c > 0 && !isCut(`h,${r},${c - 1}`)) nb.push([r, c - 1]); // left
+    if (r < 4 && !isCut(`v,${r},${c}`))     nb.push([r + 1, c]); // down
+    if (r > 0 && !isCut(`v,${r - 1},${c}`)) nb.push([r - 1, c]); // up
     return nb;
   }
 
@@ -809,19 +814,24 @@ const Chapter2 = (() => {
 
   function makeChannel(cls, edge) {
     const btn = document.createElement('button');
-    btn.className = 'frost-ch ' + cls;
+    const fixed = FROST_FIXED.has(edge);
+    btn.className = 'frost-ch ' + cls + (fixed ? ' fixed' : '');
     btn.dataset.edge = edge;
-    btn.setAttribute('aria-label', 'Eiskanal setzen oder entfernen');
-    btn.addEventListener('click', () => toggleCut(edge));
+    if (fixed) {
+      btn.setAttribute('aria-label', 'Vorgegebener Eiskanal — fest, nicht veränderbar');
+    } else {
+      btn.setAttribute('aria-label', 'Eiskanal setzen oder entfernen');
+      btn.addEventListener('click', () => toggleCut(edge));
+    }
     return btn;
   }
 
   function toggleCut(edge) {
-    if (S.p2Solved) return;
+    if (S.p2Solved || FROST_FIXED.has(edge)) return;
     if (p2State.cuts.has(edge)) {
       p2State.cuts.delete(edge);
     } else {
-      if (p2State.cuts.size >= FROST_MAX_CUTS) {
+      if (p2State.cuts.size + FROST_FIXED.size >= FROST_MAX_CUTS) {
         setP2Status(`KEIN EIS MEHR — HÖCHSTENS ${FROST_MAX_CUTS} KANÄLE. ENTFERNE ZUERST EINEN.`, 'error');
         return;
       }
@@ -860,7 +870,7 @@ const Chapter2 = (() => {
     });
 
     setP2Status(
-      `${regions4} / 6 BEREICHE · BRUNNEN ${wellIsolated ? 'ISOLIERT' : 'OFFEN'} · EIS ${p2State.cuts.size}/${FROST_MAX_CUTS}`,
+      `${regions4} / 6 BEREICHE · BRUNNEN ${wellIsolated ? 'ISOLIERT' : 'OFFEN'} · EIS ${p2State.cuts.size + FROST_FIXED.size}/${FROST_MAX_CUTS}`,
       win ? 'ok' : ''
     );
 
