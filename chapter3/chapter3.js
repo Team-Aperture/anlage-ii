@@ -573,8 +573,8 @@ const Chapter3 = (() => {
       { speaker:'R-3MI', text:'„Er hat in elf Sekunden dreimal das Thema gewechselt."' },
       { speaker:'V-TGM', text:'"That is slow for him."', subtitle:'Das ist langsam für ihn.' },
       { speaker:'L-UX',  text:'„Danke. Wirklich. Es ist — es ist nicht mehr dunkel. Das hätte ich allein nie geschafft. Selbst-Kalibrierung. Kitzeln. Du erinnerst dich."' },
-      { speaker:'SYSTEM', text:'SEKTOR 04 — KARTOGRAFIESEKTOR — FREIGEGEBEN.' },
-      { speaker:'L-UX',  text:'„Sektor vier? Oh, da unten ist J4W-A3. Der baut Karten. Wunderschöne Karten. Die leider nie ganz stimmen. Sag ihm nicht, dass ich das gesagt hab. Sag\'s ihm. Sag\'s ihm nicht."' },
+      { speaker:'SYSTEM', text:'SEKTOR 04 — RÄTSELSEKTOR — FREIGEGEBEN.' },
+      { speaker:'L-UX',  text:'„Sektor vier? Oh — da unten sitzt Armin. B-RADF1SH. Erstfinder, immer und überall. Er baut Rätsel, die keiner löst — einen Würfel hat er, den Cubus, völlig unmöglich, ich hab elfmal zugeschaut, wie Leute aufgegeben haben! Viel Glück! Du brauchst es! Liebevoll gemeint!"' },
     ], () => endChapter());
   }
 

@@ -3,29 +3,152 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>KA-II // Kapitel 4 — Kartografiesektor</title>
-  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&family=Barlow:wght@300;400&display=swap" rel="stylesheet">
+  <title>KA-II // Kapitel 4 — Rätselsektor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Barlow:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/global.css">
-  <style>
-    .tbc-wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--sp-lg);gap:var(--sp-md);text-align:center;position:relative;z-index:10;}
-    .tbc-label{font-family:var(--font-mono);font-size:11px;letter-spacing:.2em;color:var(--text-secondary);}
-    .tbc-title{font-family:var(--font-display);font-size:clamp(28px,5vw,48px);font-weight:700;letter-spacing:.2em;color:var(--text-primary);margin:var(--sp-md) 0;}
-    .tbc-status{font-family:var(--font-mono);font-size:13px;color:var(--accent-warn);margin:var(--sp-md) 0;letter-spacing:.1em;}
-    .tbc-guest{font-family:var(--font-mono);font-size:12px;color:var(--accent-g3);margin-bottom:var(--sp-lg);}
-  </style>
+  <link rel="stylesheet" href="chapter4.css">
 </head>
-<body>
-  <div class="bg-grid" aria-hidden="true"></div>
+<body class="chapter-page">
+
   <div class="bg-scanlines" aria-hidden="true"></div>
-  <div class="bg-vignette" aria-hidden="true"></div>
-  <main class="tbc-wrap">
-    <div class="tbc-label">KAPITEL 04</div>
-    <h1 class="tbc-title">KARTOGRAFIESEKTOR</h1>
-    <div class="tbc-guest">GASTCHARAKTER: J4W-A3</div>
-    <div class="tbc-status">[ IN ENTWICKLUNG ]</div>
-    <a class="ka-btn primary" href="../index.html">[ HAUPTMENÜ ]</a>
-  </main>
+
+  <header class="sys-bar">
+    <span class="sys-text">KAPITEL 04 // <span class="accent-system">RÄTSELSEKTOR</span></span>
+    <span class="sys-text" id="reactProgress">REAKTIVIERUNG: 30%</span>
+  </header>
+
+  <!-- TITLE CARD -->
+  <div class="ch-title-card" id="titleCard">
+    <div class="ch-emblem ch4-emblem" aria-hidden="true">
+      <div class="ch-ring ch-ring-1"></div>
+      <div class="ch-ring ch-ring-2"></div>
+      <div class="ch4-cube"></div>
+      <span class="ch-num">04</span>
+    </div>
+    <div class="ch-title-text">
+      <p class="ch-label sys-text">KAPITEL 04</p>
+      <h1 class="ch-name">Rätselsektor</h1>
+      <p class="ch-subline">&bdquo;Gefunden ist gefunden.&ldquo;</p>
+    </div>
+  </div>
+
+  <!-- SCENE -->
+  <div class="scene-wrapper" id="sceneWrapper">
+    <div class="scene-bg-layer" id="sceneBgLayer">
+      <img src="cg/ch4_vault.png" class="scene-bg" id="sceneBg" alt=""
+           onerror="this.style.display='none'">
+      <div class="scene-ph" id="scenePh" data-scene="vault-dim"></div>
+    </div>
+    <div class="scene-hotspots" id="sceneHotspots"></div>
+
+    <div class="robot-icons hidden" id="robotIcons">
+      <button class="robot-icon r3mi-icon" onclick="Chapter4.clickRobot('r3mi')" aria-label="R-3MI">
+        <div class="ri-eye ri-eye-r"></div>
+        <span class="ri-label sys-text">R-3MI</span>
+      </button>
+      <button class="robot-icon vtgm-icon" onclick="Chapter4.clickRobot('vtgm')" aria-label="V-TGM">
+        <div class="ri-eye ri-eye-g"></div>
+        <span class="ri-label sys-text">V-TGM</span>
+      </button>
+      <button class="robot-icon bradfish-icon hidden" id="bradfishIcon" onclick="Chapter4.clickRobot('bradfish')" aria-label="B-RADF1SH">
+        <div class="ri-eye ri-eye-b"></div>
+        <span class="ri-label sys-text">B-RADF1SH</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- CHOICE UI -->
+  <div class="choice-overlay hidden" id="choiceOverlay">
+    <div class="choice-panel">
+      <div class="choice-prompt sys-text" id="choicePrompt"></div>
+      <div class="choice-buttons" id="choiceButtons"></div>
+      <div class="choice-hint sys-text" id="choiceHint"></div>
+    </div>
+  </div>
+
+  <!-- HINT BAR -->
+  <div class="hint-bar hidden" id="hintBar">
+    <span class="sys-text hint-label" id="hintCount">HINWEISE: 4 VERFÜGBAR</span>
+    <button class="ka-btn small" id="hintBtnR3MI" onclick="Chapter4.useHint('r3mi')">
+      <span class="accent-r3mi">[ R-3MI ]</span>
+    </button>
+    <button class="ka-btn small" id="hintBtnVTGM" onclick="Chapter4.useHint('vtgm')">
+      <span class="accent-vtgm">[ V-TGM ]</span>
+    </button>
+    <button class="ka-btn small" id="hintBtnBradfish" onclick="Chapter4.useHint('bradfish')">
+      <span class="accent-bradfish">[ B-RADF1SH ]</span>
+    </button>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       PUZZLE 1 — CUBUS-NETZ
+       ════════════════════════════════════════════════════════════ -->
+  <div class="puzzle-modal hidden" id="cubusModal">
+    <div class="puzzle-card cubus-card">
+      <div class="puzzle-card-accent bradfish-accent"></div>
+      <div class="puzzle-header">
+        <p class="puzzle-label sys-text">CASTRA ENIGMA // CUBUS</p>
+        <h2 class="puzzle-title">CUBUS-NETZ</h2>
+        <p class="puzzle-sub sys-text">FALTE DEN WÜRFEL IM KOPF — TIPPE DIE GEGENÜBERLIEGENDE FLÄCHE</p>
+      </div>
+      <div class="cubus-grid" id="cubusGrid"></div>
+      <div class="cubus-prompt sys-text" id="cubusPrompt"></div>
+      <div class="puzzle-status sys-text" id="cubusStatus">FALTE DAS NETZ.</div>
+      <div class="puzzle-actions">
+        <button class="ka-btn small" onclick="Chapter4.cubusReset()">[ ZURÜCKSETZEN ]</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       PUZZLE 2 — CASTRA-CHIFFRE
+       ════════════════════════════════════════════════════════════ -->
+  <div class="puzzle-modal hidden" id="chiffreModal">
+    <div class="puzzle-card chiffre-card">
+      <div class="puzzle-card-accent bradfish-accent"></div>
+      <div class="puzzle-header">
+        <p class="puzzle-label sys-text">CASTRA-TAFEL // CAESAR</p>
+        <h2 class="puzzle-title">CASTRA-CHIFFRE</h2>
+        <p class="puzzle-sub sys-text">DREH DEN RING, BIS DER TEXT SPRICHT — DANN ANTWORTE</p>
+      </div>
+
+      <div class="chiffre-out" id="chiffreOut"></div>
+
+      <div class="chiffre-wheel">
+        <button class="control-btn" onclick="Chapter4.chiffreRotate(-1)" aria-label="Ring zurück">◀</button>
+        <div class="chiffre-shift">
+          <span class="sys-text">VERSCHIEBUNG</span>
+          <span class="chiffre-shift-val" id="chiffreShift">00</span>
+        </div>
+        <button class="control-btn" onclick="Chapter4.chiffreRotate(1)" aria-label="Ring vor">▶</button>
+      </div>
+
+      <div class="chiffre-answer">
+        <input type="text" id="chiffreInput" class="chiffre-input" placeholder="Antwort eingeben…"
+               autocomplete="off" aria-label="Antwort">
+        <button class="ka-btn primary" onclick="Chapter4.chiffreSubmit()">[ PRÜFEN ]</button>
+      </div>
+
+      <div class="puzzle-status sys-text" id="chiffreStatus">RING DREHEN.</div>
+    </div>
+  </div>
+
+  <!-- CHAPTER COMPLETE -->
+  <div class="chapter-complete hidden" id="chapterComplete">
+    <div class="cc-card">
+      <div class="cc-header sys-text">KAPITEL 04 ABGESCHLOSSEN</div>
+      <div class="cc-title">SEKTOR 05 FREIGEGEBEN</div>
+      <div class="cc-next">NÄCHSTER SEKTOR</div>
+      <div class="cc-progress sys-text" id="ccProgress"></div>
+      <a class="ka-btn primary" href="../chapter5/chapter5.html">[ EINTRETEN ]</a>
+      <a class="ka-btn small"   href="../index.html">[ HAUPTMENÜ ]</a>
+    </div>
+  </div>
+
   <script src="../js/engine.js"></script>
   <script src="../js/mobile-warning.js"></script>
+  <script src="chapter4.js"></script>
 </body>
 </html>
