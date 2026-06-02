@@ -998,7 +998,6 @@ const Chapter1 = (() => {
     setProgress(8);
 
     GameEngine.achievements.unlock('ch1_complete');
-    GameEngine.achievements.unlock('first_boot'); // "Wartungsbeginn"
 
     GameEngine.dialogue.load([
       { speaker:'SYSTEM', text:'HILFSPROTOKOLL KALIBRIERT. BETREUUNGSEINHEITEN AKTIV.' },

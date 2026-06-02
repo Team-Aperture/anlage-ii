@@ -887,7 +887,7 @@ const Chapter2 = (() => {
       { speaker:'F-RØ5CHI', text:'„Pfiat eich, ihr Drei. Kemmts wieder, gell?"', subtitle:'Tschüss, ihr drei. Kommts wieder, gell?' },
       { speaker:'SYSTEM',   text:'SEKTOR 03 — BEOBACHTUNGSSEKTOR — FREIGEGEBEN.' },
       { speaker:'R-3MI',    text:'„L-UX wird sich freuen."' },
-      { speaker:'V-TGM',    text:'"Wenn er stillhält lange genug, dass wir ihn finden."', subtitle:'If he holds still long enough for us to find him.' },
+      { speaker:'V-TGM',    text:'"If he holds still long enough for us to find him."', subtitle:'Wenn er lange genug stillhält, dass wir ihn finden.' },
       { speaker:'R-3MI',    text:'„Das ist auch ein Wenn."' },
     ], () => {
       GameEngine.state.markChapterComplete('ch2');
