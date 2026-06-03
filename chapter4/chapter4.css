@@ -167,9 +167,12 @@ button.ka-btn:disabled { opacity:.3; pointer-events:none; }
 .pers-bar .sys-text { font-size:10px; letter-spacing:.1em; color:var(--accent-bradfish); }
 .pers-bar #persSwitches.low { color:var(--accent-vtgm); }
 
+.pers-axes { text-align:center; font-size:10px; letter-spacing:.18em; color:var(--accent-bradfish); margin-bottom:var(--sp-sm); }
+.pers-stage { perspective:700px; perspective-origin:50% 38%; width:max-content; margin:0 auto var(--sp-sm); }
 .pers-grid {
   display:grid; grid-template-columns:repeat(var(--cols,3), 46px);
-  gap:4px; justify-content:center; margin:0 auto var(--sp-sm);
+  gap:4px; justify-content:center;
+  transform-style:preserve-3d; transform-origin:center center;
 }
 .mz-cell {
   width:46px; height:46px; border:1px solid var(--bdr-dim); border-radius:3px;

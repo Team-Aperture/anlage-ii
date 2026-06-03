@@ -1,9 +1,9 @@
 /**
  * ═══════════════════════════════════════════════════════════════
  * KAPITEL 04 — RÄTSELSEKTOR
- * Guest character: B-RADF1SH (Armin) — Team_Bradfisch, Regensburg.
- *   Legendary Erstfinder (FTF), maker of the infamous, never-solved
- *   "Castra Enigma — Cubus"; warm veteran, monthly Stammtisch.
+ * Guest character: B-RADF1SH (Armin) — warm veteran who is always the
+ *   first, everywhere, at everything; builder of the facility's hardest,
+ *   never-solved lock ("der Würfel"); hosts a monthly Stammtisch.
  *
  * Scene flow:
  *   4.0 Title card
@@ -12,16 +12,15 @@
  *   4.3 Choice 1: first questions (3 to see)
  *   4.4 Exploration (one hotspot hides Signalnische sig_02 — brauner Kasten)
  *   4.5 PUZZLE 1 — PERSPEKTIVE (warm-up: 3×3×3 maze, generous switches)
- *   4.6 PUZZLE 2 — CASTRA ENIGMA · CUBUS (3×4×4 staircase, min 6 switches)
+ *   4.6 PUZZLE 2 — DER WÜRFEL (3×4×4 staircase, min 6 switches)
  *   4.7 Ending → Sektor 05 freigegeben
  *
- * The Cubus is a 3D grid you can only ever see as a flat 2D slice:
+ * "Der Würfel" is a 3D grid you can only ever see as a flat 2D slice:
  *   FRONT view moves width (X) + height (Y); TOP view moves width (X) +
- *   depth (Z). The goal sits at a different height AND depth, so you must
- *   alternate views — and switches are limited, so you must plan.
- *   Mazes BFS-verified: warm-up min 2 switches, Cubus min 6.
- *
- * Difficulty target: ~6.75 (warm-up gentle · Cubus brutal)
+ *   depth (Z). Goal is at a different height AND depth → you must alternate
+ *   views; switches are limited → you must plan. Switching pitches the cube
+ *   with a 90° flip so the rotation axis is visible.
+ *   Mazes BFS-verified: warm-up min 2 switches, Würfel min 6.
  * ═══════════════════════════════════════════════════════════════
  */
 
@@ -29,8 +28,8 @@ const Chapter4 = (() => {
   'use strict';
 
   const S = {
-    choice1Seen: { who:false, what:false, cubus:false },
-    hotspots: { cubus:0, board:0, kasten:0, r3mi:0, vtgm:0, bradfish:0 },
+    choice1Seen: { who:false, what:false, cube:false },
+    hotspots: { cube:0, board:0, kasten:0, r3mi:0, vtgm:0, bradfish:0 },
     sigFound: false,
     p1Solved: false,
     p2Solved: false,
@@ -94,8 +93,6 @@ const Chapter4 = (() => {
   }
   function allSeen(choices) { return choices.every(c => c.seen); }
 
-  // Puzzle modal (z-index 200) covers the dialogue box (z-index 50),
-  // so hide it while mid-puzzle dialogue plays, then reopen.
   function withModalDialogue(lines, after) {
     const modal = document.getElementById('persModal');
     const wasOpen = modal && !modal.classList.contains('hidden');
@@ -122,8 +119,8 @@ const Chapter4 = (() => {
     showRobots(true);
     showBradfish(false);
     GameEngine.dialogue.load([
-      { speaker:'SYSTEM', text:'SEKTOR 04 — RÄTSELSEKTOR. Hier hat die Anlage ihre schwierigsten Verschlüsse gelagert. Die Wände tragen verwitterte Zeichen. Der Boden ist ein Raster aus alten Steinplatten — fast wie ein Lagerplan.' },
-      { speaker:'SYSTEM', text:'In der Mitte schwebt ein massiver Würfel aus Stein und Messing. Seine Flächen sind mit Nullen und Einsen übersät — und irgendwie wirkt er größer von innen.' },
+      { speaker:'SYSTEM', text:'SEKTOR 04 — RÄTSELSEKTOR. Hier hat die Anlage ihre schwierigsten Verschlüsse gelagert. Die Wände tragen verwitterte Zeichen. Der Boden ist ein Raster aus alten Steinplatten.' },
+      { speaker:'SYSTEM', text:'In der Mitte schwebt ein massiver Würfel aus Stein und Messing. Schaut man ihn an, wirkt er größer von innen als von außen — als wäre er ein Raum, der sich versteckt.' },
       { speaker:'R-3MI',  text:'„Oh nein. Ich kenne diesen Würfel. Den hat… er gebaut."' },
       { speaker:'V-TGM',  text:'"The one no visitor ever solved."', subtitle:'Den nie ein Besucher gelöst hat.' },
       { speaker:'R-3MI',  text:'„Bitte sag mir, dass er nicht—"' },
@@ -136,12 +133,12 @@ const Chapter4 = (() => {
     setScene('vault-lit', 'cg/ch4_bradfish.png');
     playSound('ch4_bradfish.mp3');
     GameEngine.dialogue.load([
-      { speaker:'B-RADF1SH', text:'„B-RADF1SH. Aber sag ruhig Armin. Erstfinder, Rätselbauer, und — wenn man ehrlich ist — der Grund, warum dieser Sektor einen so schlechten Ruf hat."' },
-      { speaker:'B-RADF1SH', text:'„Gelb ist meine Farbe — wie mein Fisch. Einen Stempel hab ich nie gebraucht: Ich schreib einfach mit\'m Stift »FTF« ins Logbuch. Erster. Mein Lieblingswort."' },
-      { speaker:'R-3MI',  text:'„Er hat zu allem als Erster »gefunden« gerufen. Sogar zu Dingen, die niemand verloren hatte."' },
-      { speaker:'B-RADF1SH', text:'„Gefunden ist gefunden."' },
+      { speaker:'B-RADF1SH', text:'„B-RADF1SH. Aber sag ruhig Armin. Der, der überall zuerst ist, Rätselbauer, und — wenn man ehrlich ist — der Grund, warum dieser Sektor einen so schlechten Ruf hat."' },
+      { speaker:'B-RADF1SH', text:'„Gelb ist meine Farbe — wie mein Fisch. Und »zuerst« ist mein Lieblingswort. Egal welche Tür, welches Rätsel, welcher Sektor: Ich bin schon da, bevor du ankommst."' },
+      { speaker:'R-3MI',  text:'„Er ruft zu allem als Erster »fertig«. Sogar zu Dingen, die noch gar nicht angefangen haben."' },
+      { speaker:'B-RADF1SH', text:'„Zuerst ist zuerst."' },
       { speaker:'V-TGM',  text:'"He is harmless. Mostly."', subtitle:'Er ist harmlos. Meistens.' },
-      { speaker:'B-RADF1SH', text:'„Harmlos! Charmant! Und ich mache die besten Rätsel der ganzen Anlage. Eines davon hat noch nie jemand geknackt. Es heißt Cubus."' },
+      { speaker:'B-RADF1SH', text:'„Harmlos! Charmant! Und ich mache die besten Rätsel der ganzen Anlage. Eines davon hat noch nie jemand geknackt. Mein Würfel."' },
       { speaker:'B-RADF1SH', text:'„Vielleicht hast du ja Glück. Oder Verstand. Beides hilft. Eines reicht."' },
     ], () => scene_4_3_choice1());
   }
@@ -151,9 +148,9 @@ const Chapter4 = (() => {
     who: {
       key:'who', label:'[Wer bist du, Armin?]', seen:false,
       lines:[
-        { speaker:'B-RADF1SH', text:'„Ein alter Hase. Ich war schon hier, als die Anlage noch lief. Habe jede Dose zuerst gefunden, jedes Logbuch zuerst unterschrieben."' },
-        { speaker:'R-3MI',  text:'„»Dose«. »Logbuch«. Versteht ihr Menschen das?"' },
-        { speaker:'B-RADF1SH', text:'„Die Testperson versteht es. Du hast den Blick von jemandem, der schon mal nachts mit einer Taschenlampe im Gebüsch gestanden hat."' },
+        { speaker:'B-RADF1SH', text:'„Ein alter Hase. Ich war schon hier, als die Anlage noch lief. Bei jedem Rätsel zuerst durch. Hinter jeder Tür, die sich öffnen ließ, zuerst."' },
+        { speaker:'R-3MI',  text:'„Zuerst, zuerst, zuerst. Er erwähnt das… auffällig oft."' },
+        { speaker:'B-RADF1SH', text:'„Die Testperson versteht es. Du hast den Blick von jemandem, der schon mal vor einer Tür gestanden hat, die sich einfach nicht öffnen wollte — und trotzdem geblieben ist."' },
         { speaker:'V-TGM',  text:'"That is oddly specific."', subtitle:'Das ist seltsam genau.' },
         { speaker:'B-RADF1SH', text:'„Ich beobachte. Anders als L-UX rede ich nur nicht die ganze Zeit darüber."' },
       ],
@@ -162,15 +159,15 @@ const Chapter4 = (() => {
       key:'what', label:'[Was ist dieser Sektor?]', seen:false,
       lines:[
         { speaker:'B-RADF1SH', text:'„Das Rätselarchiv. Hier hat die Anlage alles weggeschlossen, was zu wertvoll war, um es offen herumstehen zu lassen."' },
-        { speaker:'B-RADF1SH', text:'„Ein einziges Schloss bewacht es: der Cubus. Von mir. Und der ist… nun ja. Sagen wir: gründlich."' },
+        { speaker:'B-RADF1SH', text:'„Ein einziges Schloss bewacht es: mein Würfel. Und der ist… nun ja. Sagen wir: gründlich."' },
         { speaker:'R-3MI',  text:'„»Gründlich« heißt bei ihm »gemein«."' },
         { speaker:'B-RADF1SH', text:'„Gemein mit Liebe. Das ist ein Unterschied."' },
       ],
     },
-    cubus: {
-      key:'cubus', label:'[Erzähl mir vom Cubus.]', seen:false,
+    cube: {
+      key:'cube', label:'[Erzähl mir von deinem Würfel.]', seen:false,
       lines:[
-        { speaker:'B-RADF1SH', text:'„Ah. Der Cubus. Mein Meisterstück. »Castra Enigma — Cubus«. Wonach das Lager benannt ist, auf dem wir stehen, verrate ich nicht — das wäre ja viel zu einfach."' },
+        { speaker:'B-RADF1SH', text:'„Ah. Mein Würfel. Mein Meisterstück. Keinen Namen hat er, keine Inschrift — Namen verraten zu viel."' },
         { speaker:'B-RADF1SH', text:'„Es ist kein Würfel, den man dreht. Es ist ein Raum, durch den man geht — aber du siehst immer nur eine Seite davon. Mal von vorn, mal von oben."' },
         { speaker:'V-TGM',  text:'"Two flat views of one solid space."', subtitle:'Zwei flache Ansichten eines festen Raums.' },
         { speaker:'B-RADF1SH', text:'„Von vorn kommst du in die Höhe. Von oben in die Tiefe. Und wechseln darfst du nur ein paar Mal. Deshalb hat ihn noch nie jemand geknackt. Niemand."' },
@@ -198,13 +195,13 @@ const Chapter4 = (() => {
   function scene_4_4_explore() {
     GameEngine.dialogue.load([
       { speaker:'B-RADF1SH', text:'„Schau dich um. Echte Rätselleute schauen immer erst, bevor sie anfassen. Und dann fassen sie das Falsche an. Das gehört dazu."' },
-      { speaker:'SYSTEM', text:'SEKTOR 04 — EIN VERSCHLUSS AKTIV: CASTRA ENIGMA — CUBUS.' },
+      { speaker:'SYSTEM', text:'SEKTOR 04 — EIN VERSCHLUSS AKTIV: DER WÜRFEL.' },
     ], () => loadExploreHotspots());
   }
 
   function loadExploreHotspots() {
     clearHotspots();
-    addHotspot({ x:46, y:42, w:14, h:18, cls:'hs-bradfish', label:'CUBUS', fn:() => clickExplore('cubus') });
+    addHotspot({ x:46, y:42, w:14, h:18, cls:'hs-bradfish', label:'WÜRFEL', fn:() => clickExplore('cube') });
     addHotspot({ x:16, y:40, w:7,  h:14, label:'LAGERPLAN',     fn:() => clickExplore('board') });
     addHotspot({ x:85, y:78, w:6,  h:8,  label:'BRAUNER KASTEN', fn:() => clickExplore('kasten') });
   }
@@ -216,7 +213,7 @@ const Chapter4 = (() => {
       if (!S.sigFound) {
         S.sigFound = true;
         GameEngine.dialogue.load([
-          { speaker:'SYSTEM', text:'Ein brauner Metallkasten, halb unter Geröll. Ein Munitionskasten, wie man ihn als Versteck benutzt. Innen blinkt schwach ein Sender — und sendet noch immer.' },
+          { speaker:'SYSTEM', text:'Ein brauner Metallkasten, halb unter Geröll, mit Kratzern und Rost. Innen blinkt schwach ein Sender — und sendet noch immer.' },
           { speaker:'B-RADF1SH', text:'„Den hab ich hier vergessen. Vor… langer Zeit. Er sendet noch? Nach all den Jahren?"' },
         ], () => {
           try { GameEngine.signals.find('sig_02'); } catch(_) {}
@@ -239,17 +236,16 @@ const Chapter4 = (() => {
       return;
     }
 
-    // CUBUS hotspot → warm-up first, then the real Cubus
-    if (key === 'cubus') {
+    if (key === 'cube') {
       if (!S.p1Solved) {
         GameEngine.dialogue.load([
           { speaker:'SYSTEM', text:'Der Würfel ist in Wahrheit ein begehbarer Raum aus Zellen — sichtbar nur als flache Schnittbilder: einmal von vorn, einmal von oben.' },
-          { speaker:'B-RADF1SH', text:'„Erst die Übung. Klein, harmlos, fast freundlich. Lern den Trick. Dann der echte Cubus — der ist keins von beidem."' },
+          { speaker:'B-RADF1SH', text:'„Erst die Übung. Klein, harmlos, fast freundlich. Lern den Trick. Dann der echte Würfel — der ist keins von beidem."' },
         ], () => openMaze('warmup'));
       } else if (!S.p2Solved) {
-        openMaze('cubus');
+        openMaze('cube');
       } else {
-        GameEngine.dialogue.load([{ speaker:'B-RADF1SH', text:'„Gelöst. Der Cubus. Ich verarbeite das immer noch."' }]);
+        GameEngine.dialogue.load([{ speaker:'B-RADF1SH', text:'„Gelöst. Mein Würfel. Ich verarbeite das immer noch."' }]);
       }
       return;
     }
@@ -264,7 +260,7 @@ const Chapter4 = (() => {
         [{ speaker:'R-3MI', text:'„Vorne Höhe, oben Tiefe. Sag es dir vor wie ein Gebet. Es hilft. Mir nicht, aber dir vielleicht."' }],
       ],
       vtgm: [
-        [{ speaker:'V-TGM', text:'"He has waited a long time for someone to finish the Cubus."', subtitle:'Er hat lange auf jemanden gewartet, der den Cubus löst.' }],
+        [{ speaker:'V-TGM', text:'"He has waited a long time for someone to finish his cube."', subtitle:'Er hat lange auf jemanden gewartet, der seinen Würfel löst.' }],
         [{ speaker:'V-TGM', text:'"Plan the whole route before you move. Switches are precious."', subtitle:'Plane die ganze Route, bevor du dich bewegst. Wechsel sind kostbar.' }],
       ],
       bradfish: [
@@ -278,21 +274,15 @@ const Chapter4 = (() => {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // PUZZLE — PERSPEKTIVE / CUBUS  (2D↔3D dual-projection maze)
+  // PUZZLE — PERSPEKTIVE / DER WÜRFEL  (2D↔3D dual-projection maze)
   // ═══════════════════════════════════════════════════════════════
-  /*
-   * A 3D grid of cells; some are walls. You see ONE flat slice at a time:
-   *   FRONT: X-Y plane at current z → move ±X (left/right), ±Y (up/down)
-   *   TOP:   X-Z plane at current y → move ±X (left/right), ±Z (up/down)
-   * Switching views is limited. Mazes BFS-verified (warm-up 2, Cubus 6).
-   */
   const MAZES = {
     warmup: {
       dims: [3, 3, 3], start: { x:0, y:0, z:0 }, goal: { x:2, y:2, z:2 },
       budget: 5, startView: 'front',
       walls: [[0,1,0],[1,1,0],[2,1,0],[0,2,0],[1,2,0],[2,2,0]],
     },
-    cubus: {
+    cube: {
       dims: [3, 4, 4], start: { x:0, y:0, z:0 }, goal: { x:2, y:3, z:3 },
       budget: 7, startView: 'front',
       walls: [[0,0,2],[0,0,3],[0,1,0],[0,1,3],[0,2,0],[0,2,1],[0,3,0],[0,3,1],[0,3,2],
@@ -301,7 +291,7 @@ const Chapter4 = (() => {
     },
   };
 
-  let pz = null; // { key, x, y, z, view, switches }
+  let pz = null; // { key, x, y, z, view, switches, animating }
 
   function wallAt(m, x, y, z) {
     return m.walls.some(w => w[0] === x && w[1] === y && w[2] === z);
@@ -309,20 +299,22 @@ const Chapter4 = (() => {
 
   function openMaze(key) {
     const m = MAZES[key];
-    pz = { key, x:m.start.x, y:m.start.y, z:m.start.z, view:m.startView || 'front', switches:m.budget };
-    S.hints.active = (key === 'cubus') ? 'p2' : 'p1';
+    pz = { key, x:m.start.x, y:m.start.y, z:m.start.z, view:m.startView || 'front', switches:m.budget, animating:false };
+    S.hints.active = (key === 'cube') ? 'p2' : 'p1';
     S.hints.r3mi = 1; S.hints.vtgm = 1; S.hints.bradfish = 2;
     updateHintBar();
 
-    document.getElementById('persTitle').textContent = (key === 'cubus')
-      ? 'CASTRA ENIGMA — CUBUS' : 'PERSPEKTIVE — ÜBUNG';
-    document.getElementById('persSub').textContent = (key === 'cubus')
+    document.getElementById('persTitle').textContent = (key === 'cube')
+      ? 'DER WÜRFEL' : 'PERSPEKTIVE — ÜBUNG';
+    document.getElementById('persSub').textContent = (key === 'cube')
       ? 'NAVIGIERE DEN WÜRFEL — WECHSLE ANSICHTEN, ABER SPARSAM'
       : 'ÜBUNG: ERREICHE DAS ZIEL MIT BEIDEN ANSICHTEN';
 
     document.getElementById('persModal').classList.remove('hidden');
     document.getElementById('hintBar').classList.remove('hidden');
-    setPersStatus(key === 'cubus' ? 'Plane, bevor du wechselst.' : 'Vorne = Höhe, Oben = Tiefe.', '');
+    const grid = document.getElementById('persGrid');
+    if (grid) { grid.style.transition = 'none'; grid.style.transform = 'rotateX(0deg)'; grid.style.opacity = '1'; }
+    setPersStatus(key === 'cube' ? 'Plane, bevor du wechselst.' : 'Vorne = Höhe, Oben = Tiefe.', '');
     renderMaze();
   }
 
@@ -334,9 +326,11 @@ const Chapter4 = (() => {
 
     document.getElementById('persView').textContent =
       isFront ? 'VORDERANSICHT · BREITE × HÖHE' : 'DRAUFSICHT · BREITE × TIEFE';
-    document.getElementById('persSwitches').textContent = `WECHSEL: ${pz.switches}`;
-    document.getElementById('persSwitches').className =
-      'sys-text' + (pz.switches <= 1 ? ' low' : '');
+    const sw = document.getElementById('persSwitches');
+    sw.textContent = `WECHSEL: ${pz.switches}`;
+    sw.className = 'sys-text' + (pz.switches <= 1 ? ' low' : '');
+    document.getElementById('persAxes').textContent =
+      isFront ? '◀▶ BREITE   ▲▼ HÖHE' : '◀▶ BREITE   ▲▼ TIEFE';
 
     const rows = isFront ? H : D;
     const grid = document.getElementById('persGrid');
@@ -366,7 +360,7 @@ const Chapter4 = (() => {
   }
 
   function persMove(dir) {
-    if (!pz) return;
+    if (!pz || pz.animating) return;
     const m = MAZES[pz.key];
     const [W, H, D] = m.dims;
     let { x, y, z } = pz;
@@ -388,23 +382,50 @@ const Chapter4 = (() => {
   }
 
   function persSwitch() {
-    if (!pz) return;
+    if (!pz || pz.animating) return;
     if (pz.switches <= 0) {
       setPersStatus('Keine Perspektivwechsel mehr. [ ZURÜCKSETZEN ]?', 'error');
       return;
     }
     pz.switches--;
-    pz.view = (pz.view === 'front') ? 'top' : 'front';
+    const toTop = (pz.view === 'front');
+    pz.view = toTop ? 'top' : 'front';
     playSound('ch4_switch.mp3');
     setPersStatus('', '');
-    renderMaze();
+    flipTo(toTop);
+  }
+
+  // Pitch the cube 90° so the player SEES which way it turns:
+  // front→top tilts the top toward you; top→front tilts it back.
+  function flipTo(toTop) {
+    const grid = document.getElementById('persGrid');
+    if (!grid) { renderMaze(); return; }
+    pz.animating = true;
+    const out = toTop ? -90 : 90;
+    grid.style.transition = 'transform 0.16s ease-in, opacity 0.16s ease-in';
+    grid.style.transform  = `rotateX(${out}deg)`;
+    grid.style.opacity    = '0';
+    setTimeout(() => {
+      renderMaze();                              // swap to new slice while edge-on
+      grid.style.transition = 'none';
+      grid.style.transform  = `rotateX(${-out}deg)`;
+      grid.style.opacity    = '0';
+      requestAnimationFrame(() => {
+        grid.style.transition = 'transform 0.24s ease-out, opacity 0.24s ease-out';
+        grid.style.transform  = 'rotateX(0deg)';
+        grid.style.opacity    = '1';
+        setTimeout(() => { if (pz) pz.animating = false; }, 250);
+      });
+    }, 160);
   }
 
   function persReset() {
-    if (!pz) return;
+    if (!pz || pz.animating) return;
     const m = MAZES[pz.key];
     pz.x = m.start.x; pz.y = m.start.y; pz.z = m.start.z;
     pz.view = m.startView || 'front'; pz.switches = m.budget;
+    const grid = document.getElementById('persGrid');
+    if (grid) { grid.style.transition = 'none'; grid.style.transform = 'rotateX(0deg)'; grid.style.opacity = '1'; }
     setPersStatus('Zurückgesetzt.', '');
     renderMaze();
   }
@@ -426,17 +447,17 @@ const Chapter4 = (() => {
       GameEngine.dialogue.load([
         { speaker:'SYSTEM', text:'ÜBUNG ABGESCHLOSSEN. PERSPEKTIV-PROTOKOLL VERSTANDEN.' },
         { speaker:'B-RADF1SH', text:'„Sauber. Du hast den Dreh raus — vorn Höhe, oben Tiefe. Das war das Kinderzimmer."' },
-        { speaker:'B-RADF1SH', text:'„Jetzt der echte Cubus. Sechs Wechsel reichen — keiner mehr, wenn du perfekt spielst. Niemand spielt perfekt. Beweis mir das Gegenteil."' },
-      ], () => openMaze('cubus'));
+        { speaker:'B-RADF1SH', text:'„Jetzt der echte Würfel. Sechs Wechsel reichen — keiner mehr, wenn du perfekt spielst. Niemand spielt perfekt. Beweis mir das Gegenteil."' },
+      ], () => openMaze('cube'));
     } else {
       S.p2Solved = true;
       setProgress(40);
       GameEngine.dialogue.load([
-        { speaker:'SYSTEM', text:'CASTRA ENIGMA — CUBUS // GELÖST. ERSTE LÖSUNG SEIT INBETRIEBNAHME.' },
-        { speaker:'B-RADF1SH', text:'„…du hast ihn geknackt. Den Cubus. Den NIEMAND knackt. Den ICH gebaut habe, damit ihn niemand knackt."' },
+        { speaker:'SYSTEM', text:'DER WÜRFEL // GELÖST. ERSTE LÖSUNG SEIT INBETRIEBNAHME.' },
+        { speaker:'B-RADF1SH', text:'„…du hast ihn geknackt. Meinen Würfel. Den NIEMAND knackt. Den ICH gebaut habe, damit ihn niemand knackt."' },
         { speaker:'R-3MI',  text:'„Er ist gerührt. Sehr."' },
-        { speaker:'B-RADF1SH', text:'„Ich bin professionell erschüttert! …und ein bisschen stolz. Erstfinder erkennt Erstfinder."' },
-        { speaker:'B-RADF1SH', text:'„Komm zum Stammtisch. Jeden Monat, echter Kaffee, echte Rätsel. Wer den Cubus löst, hat dort einen Platz auf Lebenszeit."' },
+        { speaker:'B-RADF1SH', text:'„Ich bin professionell erschüttert! …und ein bisschen stolz. Wer immer zuerst ist, erkennt einen, der auch zuerst ist."' },
+        { speaker:'B-RADF1SH', text:'„Komm zum Stammtisch. Jeden Monat, echter Kaffee, echte Rätsel. Wer meinen Würfel löst, hat dort einen Platz auf Lebenszeit."' },
         { speaker:'V-TGM',  text:'"Sektor 05 is open."', subtitle:'Sektor 05 ist offen.' },
       ], () => endChapter());
     }
@@ -466,7 +487,7 @@ const Chapter4 = (() => {
       vtgm: [{ text:'"Each rung blocks the same direction twice — you are forced to alternate. Plan all six switches before moving."',
                sub:'Jede Stufe blockiert dieselbe Richtung zweimal — du musst abwechseln. Plane alle sechs Wechsel, bevor du dich bewegst.' }],
       bradfish: [
-        '„Der Cubus ist eine Wendeltreppe in drei Achsen. Immer im Wechsel: Tiefe, Höhe, Tiefe, Höhe, Tiefe, Höhe."',
+        '„Der Würfel ist eine Wendeltreppe in drei Achsen. Immer im Wechsel: Tiefe, Höhe, Tiefe, Höhe, Tiefe, Höhe."',
         '„Sechs Wechsel reichen — keiner mehr. Verschwende keinen mit Neugier. Sagt der, der ihn gebaut hat."',
       ],
     },
