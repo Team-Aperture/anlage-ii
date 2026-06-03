@@ -213,7 +213,7 @@ const Chapter4 = (() => {
       if (!S.sigFound) {
         S.sigFound = true;
         GameEngine.dialogue.load([
-          { speaker:'SYSTEM', text:'Ein brauner Metallkasten, halb unter Geröll, mit Kratzern und Rost. Innen blinkt schwach ein Sender — und sendet noch immer.' },
+          { speaker:'SYSTEM', text:'Eine braune Plastikbox, halb unter Geröll, mit Kratzern und alten Wasserflecken. Innen blinkt schwach ein Sender — und sendet noch immer.' },
           { speaker:'B-RADF1SH', text:'„Den hab ich hier vergessen. Vor… langer Zeit. Er sendet noch? Nach all den Jahren?"' },
         ], () => {
           try { GameEngine.signals.find('sig_02'); } catch(_) {}
