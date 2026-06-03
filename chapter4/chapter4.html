@@ -30,7 +30,7 @@
     <div class="ch-title-text">
       <p class="ch-label sys-text">KAPITEL 04</p>
       <h1 class="ch-name">Rätselsektor</h1>
-      <p class="ch-subline">&bdquo;Gefunden ist gefunden.&ldquo;</p>
+      <p class="ch-subline">&bdquo;Zuerst da. Wie immer.&ldquo;</p>
     </div>
   </div>
 
@@ -83,13 +83,13 @@
   </div>
 
   <!-- ════════════════════════════════════════════════════════════
-       PUZZLE — PERSPEKTIVE / CUBUS  (2D↔3D dual-projection maze)
+       PUZZLE — PERSPEKTIVE / DER WÜRFEL  (2D↔3D dual-projection maze)
        ════════════════════════════════════════════════════════════ -->
   <div class="puzzle-modal hidden" id="persModal">
     <div class="puzzle-card pers-card">
       <div class="puzzle-card-accent bradfish-accent"></div>
       <div class="puzzle-header">
-        <p class="puzzle-label sys-text" id="persTitle">CASTRA ENIGMA — CUBUS</p>
+        <p class="puzzle-label sys-text" id="persTitle">DER WÜRFEL</p>
         <h2 class="puzzle-title">PERSPEKTIVE</h2>
         <p class="puzzle-sub sys-text" id="persSub">NAVIGIERE DEN WÜRFEL</p>
       </div>
@@ -98,8 +98,9 @@
         <span class="sys-text" id="persView">VORDERANSICHT</span>
         <span class="sys-text" id="persSwitches">WECHSEL: 0</span>
       </div>
+      <div class="pers-axes sys-text" id="persAxes">◀▶ BREITE   ▲▼ HÖHE</div>
 
-      <div class="pers-grid" id="persGrid"></div>
+      <div class="pers-stage"><div class="pers-grid" id="persGrid"></div></div>
       <div class="pers-readout sys-text" id="persReadout"></div>
 
       <div class="pers-controls">
@@ -124,7 +125,7 @@
     <div class="cc-card">
       <div class="cc-header sys-text">KAPITEL 04 ABGESCHLOSSEN</div>
       <div class="cc-title">SEKTOR 05 FREIGEGEBEN</div>
-      <div class="cc-next">NÄCHSTER SEKTOR</div>
+      <div class="cc-next">FÖRDERSEKTOR</div>
       <div class="cc-progress sys-text" id="ccProgress"></div>
       <a class="ka-btn primary" href="../chapter5/chapter5.html">[ EINTRETEN ]</a>
       <a class="ka-btn small"   href="../index.html">[ HAUPTMENÜ ]</a>
