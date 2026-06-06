@@ -31,11 +31,7 @@
     const seqEl = document.getElementById('bootSequence');
     if (!seqEl) { onDone(); return; }
 
-    // Check if first visit
-    const booted = sessionStorage.getItem('ka2_booted');
-    if (booted) { seqEl.remove(); onDone(); return; }
-    sessionStorage.setItem('ka2_booted', '1');
-
+    // Plays in full on every title-screen visit (Energy-Star nostalgia, by request).
     let max = 0;
     BOOT_LINES.forEach(({ text, cls, delay }, i) => {
       setTimeout(() => {
