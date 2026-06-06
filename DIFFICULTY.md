@@ -11,7 +11,7 @@ curve. From Chapter 1 the baseline is **4.5/10**, rising **+0.75 per chapter**.
 | Ch2 — Wartungsgarten      | **5.25** | done | P1 Tau-Sequenz ~5 · P2 Frostmuster ~5.5–6 (6 fixed walls → unique solution, cap 18) |
 | Ch3 — Beobachtungssektor  | **6.0** | done | One multi-stage Belichtung puzzle (logic dials → spectrum match) under a draining exposure meter |
 | Ch4 — Rätselsektor (Armin/B-RADF1SH) | **6.75** | done | Dual-projection maze (2D↔3D): warm-up ~5 (3×3×3, min 2 switches) · Cubus ~7.5 (3×4×4 staircase, min 6 switches, budget 7) |
-| Ch5 — Fördersektor (T-FLON14) | **7.5** | done | FÖRDERLAUF: 20 rapid mixed micro-tasks (odd-one / match / tap-all / count / odd-colour) under one global clock (FL_TIME=85, −3s per miss), escalating grid size & subtlety |
+| Ch5 — Fördersektor (T-FLON14) | **7.5** | done | FÖRDERLAUF: 20 rapid mixed micro-tasks (odd-one / match / tap-all / count / odd-colour) under one global clock (FL_TIME=70, −3s per miss). Rounds 11-20 mix look-alike filled/outline twins; odd-colour always uses distinct colours |
 | Ch6 | 8.25 | — | — |
 | Ch7 | 9.0  | — | — |
 | Ch8 | ~9.75 (cap 10) | — | — |

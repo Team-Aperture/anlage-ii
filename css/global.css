@@ -311,6 +311,28 @@ body {
   letter-spacing: 0.1em;
 }
 
+/* Slow auto-scrolling (rolling) credits */
+.credits-content {
+  height: 300px;
+  overflow: hidden;
+  position: relative;
+  text-align: center;
+  -webkit-mask-image: linear-gradient(transparent 0%, #000 12%, #000 86%, transparent 100%);
+          mask-image: linear-gradient(transparent 0%, #000 12%, #000 86%, transparent 100%);
+}
+.credits-roll {
+  animation: creditsRoll 30s linear infinite;
+}
+@keyframes creditsRoll {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(-100%); }
+}
+/* Respect reduced-motion: show static, scrollable credits instead */
+@media (prefers-reduced-motion: reduce) {
+  .credits-content { height: auto; overflow: visible; -webkit-mask-image: none; mask-image: none; }
+  .credits-roll { animation: none; }
+}
+
 /* ─── DIALOGUE SYSTEM ────────────────────────────────────────── */
 .dlg-container {
   position: fixed;
