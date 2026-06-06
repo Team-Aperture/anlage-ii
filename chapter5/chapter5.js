@@ -268,15 +268,15 @@ const Chapter5 = (() => {
   // FÖRDERLAUF — 20 rapid mixed micro-tasks under one global clock
   // ═══════════════════════════════════════════════════════════════
   const ROUNDS    = 20;
-  const FL_TIME   = 85;   // seconds on the clock (tunable)
+  const FL_TIME   = 70;   // seconds on the clock (tunable — lower = meaner)
   const FL_PENALTY = 3;   // seconds lost per wrong tap
   const TICK      = 100;
 
-  const GLYPHS = ['●','▲','■','◆','★','✚','✦','♦','⬟','◐'];
-  // confusable filled/outline pairs for late, subtle "odd one" rounds
-  const CONFUSE = [['●','○'],['■','□'],['▲','△'],['◆','◇'],['★','☆']];
-  const COLORS_EASY = ['#e0b83a','#7fd14f','#d9534f','#3a8fd4','#c45ad9'];
-  const COLORS_HARD = [['#e0b83a','#cda832'],['#7fd14f','#86c84f'],['#3a8fd4','#3a78c4']]; // close shades
+  // filled/outline pairs — "hard" rounds mix a target with its look-alike twin
+  const PAIRS   = [['●','○'],['■','□'],['▲','△'],['◆','◇'],['★','☆']];
+  const FILLED  = ['●','■','▲','◆','★'];
+  const PALETTE = ['#e0c64a','#7fd14f','#d9534f','#3a8fd4','#c45ad9','#e6e6e6']; // always clearly distinct
+  function partnerOf(g){ for (const p of PAIRS) { if (p[0]===g) return p[1]; if (p[1]===g) return p[0]; } return g; }
 
   let FL = null; // { round, time, timerId, cur, found, running }
 
@@ -287,54 +287,51 @@ const Chapter5 = (() => {
 
   function makeRound(round) {
     const n = gridN(round), total = n*n;
-    const hard = round > 12;
+    const hard = round > 10;
     const type = ['odd_glyph','match','tap_all','count','odd_color'][(round-1) % 5];
     const base = '#e0c64a';
     const cells = Array.from({length: total}, () => ({ glyph:'●', color:base }));
 
     if (type === 'odd_glyph') {
       let g, g2;
-      if (hard) { const p = pick(CONFUSE); g = p[0]; g2 = p[1]; }
-      else { g = pick(GLYPHS); do { g2 = pick(GLYPHS); } while (g2 === g); }
+      if (hard) { const p = pick(PAIRS); g = p[0]; g2 = p[1]; }          // filled vs its outline twin
+      else { g = pick(FILLED); do { g2 = pick(FILLED); } while (g2 === g); } // two clearly different shapes
       cells.forEach(c => { c.glyph = g; });
       const idx = randint(0, total-1); cells[idx].glyph = g2;
       return { type, prompt:'Finde das andere Symbol!', cells, correct:idx };
     }
 
     if (type === 'odd_color') {
-      const glyph = pick(GLYPHS);
-      let cA, cB;
-      if (hard) { const p = pick(COLORS_HARD); cA = p[0]; cB = p[1]; }
-      else { const cs = shuffle([...COLORS_EASY]); cA = cs[0]; cB = cs[1]; }
+      const glyph = pick(FILLED);
+      const cs = shuffle([...PALETTE]); const cA = cs[0], cB = cs[1];     // always clearly distinct
       cells.forEach(c => { c.glyph = glyph; c.color = cA; });
       const idx = randint(0, total-1); cells[idx].color = cB;
       return { type, prompt:'Finde die andere Farbe!', cells, correct:idx };
     }
 
+    // match / tap_all / count share distractor logic:
+    // hard rounds fill the grid with the target's look-alike twin (similar, still distinct).
+    const target = pick(FILLED);
+    const distract = hard ? [partnerOf(target)] : FILLED.filter(g => g !== target);
+
     if (type === 'match') {
-      const target = pick(GLYPHS);
-      const others = GLYPHS.filter(g => g !== target);
-      cells.forEach(c => { c.glyph = pick(others); });
+      cells.forEach(c => { c.glyph = pick(distract); });
       const idx = randint(0, total-1); cells[idx].glyph = target;
       return { type, prompt:'Finde dieses Symbol:', target, cells, correct:idx };
     }
 
     if (type === 'tap_all') {
-      const target = pick(GLYPHS);
-      const others = GLYPHS.filter(g => g !== target);
       const k = round<=7 ? 2 : round<=14 ? 3 : 4;
-      cells.forEach(c => { c.glyph = pick(others); });
+      cells.forEach(c => { c.glyph = pick(distract); });
       const idxs = shuffle(Array.from({length: total}, (_,i)=>i)).slice(0, k);
       idxs.forEach(i => { cells[i].glyph = target; });
       return { type, prompt:`Tippe alle „${target}" (${k})!`, target, cells, targets:new Set(idxs) };
     }
 
     // count
-    const target = pick(GLYPHS);
-    const others = GLYPHS.filter(g => g !== target);
     const maxK = total <= 9 ? 5 : total <= 16 ? 7 : 9;
     const k = randint(2, maxK);
-    cells.forEach(c => { c.glyph = pick(others); });
+    cells.forEach(c => { c.glyph = pick(distract); });
     shuffle(Array.from({length: total}, (_,i)=>i)).slice(0, k).forEach(i => { cells[i].glyph = target; });
     const opts = new Set([k]);
     while (opts.size < 4) opts.add(Math.max(1, k + randint(-2, 2)));

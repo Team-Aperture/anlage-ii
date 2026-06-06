@@ -135,7 +135,7 @@
 .choice-hint { font-size:10px; margin-top:var(--sp-sm); color:var(--text-dim); }
 
 /* ─── HINT BAR ────────────────────────────────────────────────── */
-.hint-bar { position: fixed; top:44px; right:var(--sp-md); z-index:30; display:flex; align-items:center; gap:var(--sp-sm); background:rgba(4,8,12,0.9); border:1px solid var(--bdr-mid); padding:var(--sp-xs) var(--sp-md); backdrop-filter:blur(4px); flex-wrap:wrap; }
+.hint-bar { position: fixed; top:44px; right:var(--sp-md); z-index:250; display:flex; align-items:center; gap:var(--sp-sm); background:rgba(4,8,12,0.9); border:1px solid var(--bdr-mid); padding:var(--sp-xs) var(--sp-md); backdrop-filter:blur(4px); flex-wrap:wrap; }
 .hint-label { font-size:10px; }
 .ka-btn.small { font-size:10px; padding:4px 12px; }
 button.ka-btn:disabled { opacity:.3; pointer-events:none; }
