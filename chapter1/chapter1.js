@@ -1093,7 +1093,7 @@ const Chapter1 = (() => {
         GameEngine.state.markChapterComplete('ch1');
         document.getElementById('chapterComplete').classList.remove('hidden');
         document.getElementById('ccProgress').textContent =
-          `FORTSCHRITT: ${GameEngine.state.get('chaptersCompleted').length} / 10 KAPITEL`;
+          `FORTSCHRITT: ${GameEngine.state.get('chaptersCompleted').length} / 9 KAPITEL`;
       }});
     });
   }
