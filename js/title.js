@@ -244,7 +244,7 @@
     if (!progressEl || typeof GameEngine === 'undefined') return;
 
     const completed = GameEngine.state.get('chaptersCompleted') || [];
-    const total     = 10; // chapters 0–9
+    const total     = 9; // chapters 0–8 (J4W-A3 sector dropped)
     const pct       = Math.round((completed.length / total) * 100);
 
     progressEl.textContent = `FORTSCHRITT: ${completed.length}/${total} KAPITEL (${pct}%)`;

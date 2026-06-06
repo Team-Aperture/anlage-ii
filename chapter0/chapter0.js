@@ -250,7 +250,7 @@ const Chapter0 = (() => {
     const prog = document.getElementById('ccProgress');
 
     const completed = GameEngine.state.get('chaptersCompleted').length;
-    if (prog) prog.textContent = `FORTSCHRITT: ${completed} / 10 KAPITEL`;
+    if (prog) prog.textContent = `FORTSCHRITT: ${completed} / 9 KAPITEL`;
 
     cc.classList.remove('hidden');
   }

@@ -324,7 +324,7 @@ body {
   animation: creditsRoll 30s linear infinite;
 }
 @keyframes creditsRoll {
-  from { transform: translateY(100%); }
+  from { transform: translateY(240px); }  /* start inside the 300px window → credits show at once */
   to   { transform: translateY(-100%); }
 }
 /* Respect reduced-motion: show static, scrollable credits instead */

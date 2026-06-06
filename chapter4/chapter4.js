@@ -468,7 +468,7 @@ const Chapter4 = (() => {
     try { GameEngine.achievements.unlock('ch4_complete'); } catch(_) {}
     document.getElementById('chapterComplete').classList.remove('hidden');
     document.getElementById('ccProgress').textContent =
-      `FORTSCHRITT: ${GameEngine.state.get('chaptersCompleted').length} / 10 KAPITEL`;
+      `FORTSCHRITT: ${GameEngine.state.get('chaptersCompleted').length} / 9 KAPITEL`;
   }
 
   // ─── HINT SYSTEM ──────────────────────────────────────────────
