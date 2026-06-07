@@ -3,29 +3,144 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>KA-II // Kapitel 6</title>
-  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&family=Barlow:wght@300;400&display=swap" rel="stylesheet">
+  <title>KA-II // Kapitel 6 — Dunkelkammer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Barlow:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/global.css">
-  <style>
-    .tbc-wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--sp-lg);gap:var(--sp-md);text-align:center;position:relative;z-index:10;}
-    .tbc-label{font-family:var(--font-mono);font-size:11px;letter-spacing:.2em;color:var(--text-secondary);}
-    .tbc-title{font-family:var(--font-display);font-size:clamp(28px,5vw,48px);font-weight:700;letter-spacing:.2em;color:var(--text-primary);margin:var(--sp-md) 0;}
-    .tbc-status{font-family:var(--font-mono);font-size:13px;color:var(--accent-warn);margin:var(--sp-md) 0;letter-spacing:.1em;}
-    .tbc-guest{font-family:var(--font-mono);font-size:12px;color:var(--text-dim);margin-bottom:var(--sp-lg);}
-  </style>
+  <link rel="stylesheet" href="chapter6.css">
 </head>
-<body>
-  <div class="bg-grid" aria-hidden="true"></div>
+<body class="chapter-page">
+
   <div class="bg-scanlines" aria-hidden="true"></div>
-  <div class="bg-vignette" aria-hidden="true"></div>
-  <main class="tbc-wrap">
-    <div class="tbc-label">KAPITEL 06</div>
-    <h1 class="tbc-title">SEKTOR 06</h1>
-    <div class="tbc-guest">GASTCHARAKTER: NOCH NICHT BESTÄTIGT</div>
-    <div class="tbc-status">[ IN ENTWICKLUNG ]</div>
-    <a class="ka-btn primary" href="../index.html">[ HAUPTMENÜ ]</a>
-  </main>
+
+  <header class="sys-bar">
+    <span class="sys-text">KAPITEL 06 // <span class="accent-system">DUNKELKAMMER</span></span>
+    <span class="sys-text" id="reactProgress">REAKTIVIERUNG: 52%</span>
+  </header>
+
+  <!-- TITLE CARD -->
+  <div class="ch-title-card" id="titleCard">
+    <div class="ch-emblem ch6-emblem" aria-hidden="true">
+      <div class="ch-ring ch-ring-1"></div>
+      <div class="ch-ring ch-ring-2"></div>
+      <div class="ch6-eye"></div>
+      <span class="ch-num">06</span>
+    </div>
+    <div class="ch-title-text">
+      <p class="ch-label sys-text">KAPITEL 06</p>
+      <h1 class="ch-name">Dunkelkammer</h1>
+      <p class="ch-subline">&bdquo;Was versteckt ist, bleibt.&ldquo;</p>
+    </div>
+  </div>
+
+  <!-- SCENE -->
+  <div class="scene-wrapper" id="sceneWrapper">
+    <div class="scene-bg-layer" id="sceneBgLayer">
+      <img src="cg/ch6_darkroom.png" class="scene-bg" id="sceneBg" alt=""
+           onerror="this.style.display='none'">
+      <div class="scene-ph" id="scenePh" data-scene="dark-dim"></div>
+    </div>
+    <div class="scene-hotspots" id="sceneHotspots"></div>
+
+    <div class="robot-icons hidden" id="robotIcons">
+      <button class="robot-icon r3mi-icon" onclick="Chapter6.clickRobot('r3mi')" aria-label="R-3MI">
+        <div class="ri-eye ri-eye-r"></div>
+        <span class="ri-label sys-text">R-3MI</span>
+      </button>
+      <button class="robot-icon vtgm-icon" onclick="Chapter6.clickRobot('vtgm')" aria-label="V-TGM">
+        <div class="ri-eye ri-eye-g"></div>
+        <span class="ri-label sys-text">V-TGM</span>
+      </button>
+      <button class="robot-icon asp-icon hidden" id="aspIcon" onclick="Chapter6.clickRobot('asp')" aria-label="ASP-1024">
+        <div class="ri-eye ri-eye-a"></div>
+        <span class="ri-label sys-text">ASP-1024</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- CHOICE UI -->
+  <div class="choice-overlay hidden" id="choiceOverlay">
+    <div class="choice-panel">
+      <div class="choice-prompt sys-text" id="choicePrompt"></div>
+      <div class="choice-buttons" id="choiceButtons"></div>
+      <div class="choice-hint sys-text" id="choiceHint"></div>
+    </div>
+  </div>
+
+  <!-- HINT BAR -->
+  <div class="hint-bar hidden" id="hintBar">
+    <span class="sys-text hint-label" id="hintCount">HINWEISE: 4 VERFÜGBAR</span>
+    <button class="ka-btn small" id="hintBtnR3MI" onclick="Chapter6.useHint('r3mi')">
+      <span class="accent-r3mi">[ R-3MI ]</span>
+    </button>
+    <button class="ka-btn small" id="hintBtnVTGM" onclick="Chapter6.useHint('vtgm')">
+      <span class="accent-vtgm">[ V-TGM ]</span>
+    </button>
+    <button class="ka-btn small" id="hintBtnAsp" onclick="Chapter6.useHint('asp')">
+      <span class="accent-asp">[ ASP-1024 ]</span>
+    </button>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       BILDFORENSIK — steganography (canvas channels + threshold)
+       ════════════════════════════════════════════════════════════ -->
+  <div class="puzzle-modal hidden" id="stegModal">
+    <div class="puzzle-card steg-card" id="stegCard">
+      <div class="puzzle-card-accent asp-accent"></div>
+      <div class="puzzle-header">
+        <p class="puzzle-label sys-text">BILDFORENSIK // ASP-1024</p>
+        <h2 class="puzzle-title">DAS VERSTECKTE BILD</h2>
+        <p class="puzzle-sub sys-text">ISOLIERE EINEN KANAL · INVERTIERE · HEB DIE SCHWELLE</p>
+      </div>
+
+      <div class="steg-canvas-wrap">
+        <canvas id="stegCanvas" width="280" height="110"></canvas>
+      </div>
+
+      <div class="steg-controls">
+        <div class="steg-channels" id="stegChannels">
+          <button class="steg-ch active" data-ch="rgb" onclick="Chapter6.stegChannel('rgb')">RGB</button>
+          <button class="steg-ch" data-ch="r" onclick="Chapter6.stegChannel('r')">ROT</button>
+          <button class="steg-ch" data-ch="g" onclick="Chapter6.stegChannel('g')">GRÜN</button>
+          <button class="steg-ch" data-ch="b" onclick="Chapter6.stegChannel('b')">BLAU</button>
+          <button class="steg-toggle" id="stegInvertBtn" onclick="Chapter6.stegInvert()">INVERT</button>
+        </div>
+        <div class="steg-thresh">
+          <span class="sys-text">SCHWELLE</span>
+          <input type="range" id="stegThreshold" min="0" max="255" value="0" step="1"
+                 oninput="Chapter6.stegThreshold(this.value)" aria-label="Schwelle">
+          <span class="sys-text" id="stegThreshLabel">AUS</span>
+        </div>
+      </div>
+
+      <div class="steg-answer">
+        <input type="text" id="stegInput" class="steg-input" maxlength="4" placeholder="CODE (4)"
+               autocomplete="off" aria-label="Code">
+        <button class="ka-btn primary" onclick="Chapter6.stegSubmit()">[ ENTSCHLÜSSELN ]</button>
+      </div>
+
+      <div class="puzzle-status sys-text" id="stegStatus"></div>
+      <div class="puzzle-actions">
+        <button class="ka-btn small" onclick="Chapter6.stegReset()">[ ANSICHT ZURÜCKSETZEN ]</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAPTER COMPLETE -->
+  <div class="chapter-complete hidden" id="chapterComplete">
+    <div class="cc-card">
+      <div class="cc-header sys-text">KAPITEL 06 ABGESCHLOSSEN</div>
+      <div class="cc-title">SEKTOR 07 FREIGEGEBEN</div>
+      <div class="cc-next">NÄCHSTER SEKTOR</div>
+      <div class="cc-progress sys-text" id="ccProgress"></div>
+      <a class="ka-btn primary" href="../chapter7/chapter7.html">[ EINTRETEN ]</a>
+      <a class="ka-btn small"   href="../index.html">[ HAUPTMENÜ ]</a>
+    </div>
+  </div>
+
   <script src="../js/engine.js"></script>
   <script src="../js/mobile-warning.js"></script>
+  <script src="chapter6.js"></script>
 </body>
 </html>
