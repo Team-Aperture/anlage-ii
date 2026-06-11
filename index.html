@@ -91,7 +91,7 @@
         [ CREDITS ]
       </button>
       <button class="ka-btn" id="audioToggle"
-              onclick="this.textContent = GameEngine.audio.toggleMute() ? '[ TON: AUS ]' : '[ TON: AN ]'"
+              onclick="if (window.GameEngine &amp;&amp; GameEngine.audio) this.textContent = GameEngine.audio.toggleMute() ? '[ TON: AUS ]' : '[ TON: AN ]'"
               aria-label="Ton an oder aus">
         [ TON: AN ]
       </button>

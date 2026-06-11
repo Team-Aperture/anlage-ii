@@ -693,3 +693,8 @@ const GameEngine = (() => {
   };
 
 })();
+
+// Top-level `const` lives in the global lexical scope but is NOT a property of
+// `window`. Some call sites (and any inline on* handlers) look the engine up as
+// `window.GameEngine`, so publish it explicitly.
+if (typeof window !== 'undefined') window.GameEngine = GameEngine;
