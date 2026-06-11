@@ -124,6 +124,7 @@ const GameEngine = (() => {
       list.push(id);
       state.set('achievementsUnlocked', list);
       _showToast(def);
+      try { audio.achievement(); } catch (_) {}
     }
 
     function _showToast(def) {
@@ -372,17 +373,19 @@ const GameEngine = (() => {
       _typeText(textEl, line.text, 28, () => {
         _typing = false;
         advEl.style.opacity = '1';
-      });
+      }, line.speaker);
     }
 
-    function _typeText(el, text, speed, onDone) {
+    function _typeText(el, text, speed, onDone, speaker) {
       if (_typeTimer) clearInterval(_typeTimer);
       const full = text || '';
       let i = 0;
       el.textContent = '';
       if (!full.length) { if (onDone) onDone(); return; }
       _typeTimer = setInterval(() => {
-        el.textContent += full[i++];
+        const ch = full[i++];
+        el.textContent += ch;
+        if (ch !== ' ' && i % 3 === 0) audio.blip(speaker);
         if (i >= full.length) {
           clearInterval(_typeTimer);
           _typeTimer = null;
@@ -486,6 +489,75 @@ const GameEngine = (() => {
 
 
   // ═══════════════════════════════════════════════════════════════
+  // AUDIO ENGINE — procedural Web Audio, no files
+  // ═══════════════════════════════════════════════════════════════
+  const audio = (() => {
+    let ctx = null, master = null, muted = false;
+
+    function ensure() {
+      if (ctx) return ctx;
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        ctx = new AC();
+        master = ctx.createGain();
+        master.gain.value = 0.5;
+        master.connect(ctx.destination);
+      } catch (_) { ctx = null; }
+      return ctx;
+    }
+    function resume() { const c = ensure(); if (c && c.state === 'suspended') c.resume(); }
+
+    function tone(o) {
+      if (muted) return;
+      const c = ensure(); if (!c) return;
+      const { freq = 440, type = 'sine', dur = 0.08, vol = 0.25, glideTo = null, delay = 0 } = o || {};
+      const t0 = c.currentTime + delay;
+      const osc = c.createOscillator(), g = c.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t0);
+      if (glideTo) osc.frequency.exponentialRampToValueAtTime(Math.max(20, glideTo), t0 + dur);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.linearRampToValueAtTime(vol, t0 + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(g).connect(master);
+      osc.start(t0); osc.stop(t0 + dur + 0.02);
+    }
+
+    // Per-character speech voice — Portal-style chirps, one per few letters.
+    const VOICE = {
+      'R-3MI':     { base: 520, type: 'square',   spread: 70  },
+      'V-TGM':     { base: 196, type: 'sine',     spread: 24  },
+      'SYSTEM':    { base: 300, type: 'triangle', spread: 0   },
+      'F-RØ5CHI':  { base: 430, type: 'sine',     spread: 110 },
+      'L-UX':      { base: 720, type: 'square',   spread: 150 },
+      'B-RADF1SH': { base: 290, type: 'triangle', spread: 55  },
+      'T-FLON14':  { base: 470, type: 'sawtooth', spread: 80  },
+      'ASP-1024':  { base: 110, type: 'sine',     spread: 8   },
+    };
+    function blip(speaker) {
+      const v = VOICE[speaker] || VOICE['SYSTEM'];
+      tone({ freq: v.base + (Math.random() * 2 - 1) * v.spread, type: v.type, dur: 0.045, vol: 0.10 });
+    }
+    function click()       { tone({ freq: 660, type: 'square',   dur: 0.025, vol: 0.10 }); }
+    function solve()       { [523, 659, 784, 1047].forEach((f, i) => tone({ freq: f, type: 'triangle', dur: 0.2, vol: 0.16, delay: i * 0.085 })); }
+    function fail()        { tone({ freq: 180, type: 'sawtooth', dur: 0.22, vol: 0.16, glideTo: 80 }); }
+    function achievement() { [659, 880, 1318].forEach((f, i) => tone({ freq: f, type: 'sine', dur: 0.34, vol: 0.18, delay: i * 0.11 })); }
+
+    function setMuted(m) { muted = !!m; }
+    function isMuted()   { return muted; }
+    function toggleMute() {
+      muted = !muted;
+      try { state.set('muted', muted); } catch (_) {}
+      if (!muted) click();
+      return muted;
+    }
+
+    return { ensure, resume, tone, blip, click, solve, fail, achievement, setMuted, isMuted, toggleMute };
+  })();
+
+
+  // ═══════════════════════════════════════════════════════════════
   // OVERLAY UTILITIES
   // ═══════════════════════════════════════════════════════════════
   function closeOverlay() {
@@ -499,7 +571,10 @@ const GameEngine = (() => {
   }
 
   document.addEventListener('click', e => {
-    if (e.target?.id === 'overlayBackdrop') closeOverlay();
+    audio.resume();
+    if (e.target?.id === 'overlayBackdrop') { closeOverlay(); return; }
+    const btn = e.target.closest && e.target.closest('button');
+    if (btn && !btn.disabled) audio.click();
   });
 
 
@@ -508,6 +583,10 @@ const GameEngine = (() => {
   // ═══════════════════════════════════════════════════════════════
   (function init() {
     state.load();
+    audio.setMuted(!!state.get('muted'));
+    const wake = () => audio.resume();
+    document.addEventListener('pointerdown', wake);
+    document.addEventListener('keydown', wake);
     if (state.get('firstPlay')) {
       state.set('firstPlay', false);
       setTimeout(() => achievements.unlock('first_boot'), 1200);
@@ -524,6 +603,7 @@ const GameEngine = (() => {
     dialogue,
     scene,
     puzzle,
+    audio,
     closeOverlay,
     showCredits,
   };
