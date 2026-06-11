@@ -286,6 +286,48 @@ const GameEngine = (() => {
       'AGN-H3R':   { colorVar: '--accent-g7',      placeholder: 'AG' },
     };
 
+    // Per-character animated face: personality lives in the eye + idle class.
+    const FACES = {
+      'R-3MI':     { eyes: 1, eyeR: 9, idle: 'face-dart',   antenna: true  }, // anxious — eye darts
+      'V-TGM':     { eyes: 2, eyeR: 6, idle: 'face-calm'                   }, // deadpan — steady
+      'SYSTEM':    { eyes: 0,          idle: 'face-scan'                   }, // scanlines, no eye
+      'F-RØ5CHI':  { eyes: 2, eyeR: 7, idle: 'face-bob'                    }, // warm — gentle bob
+      'L-UX':      { eyes: 1, eyeR: 8, idle: 'face-jitter', antenna: true  }, // hyper — jitter
+      'J4W-A3':    { eyes: 2, eyeR: 6, idle: 'face-calm'                   },
+      'B-RADF1SH': { eyes: 2, eyeR: 6, idle: 'face-calm'                   }, // confident — steady
+      'T-FLON14':  { eyes: 1, eyeR: 8, idle: 'face-zip'                    }, // fast — eye zips
+      'ASP-1024':  { eyes: 1, eyeR: 9, idle: 'face-slit', slit: true       }, // silent — barely open
+      'AGN-H3R':   { eyes: 2, eyeR: 6, idle: 'face-calm'                   },
+    };
+
+    function _faceSVG(speaker) {
+      const spk = SPEAKERS[speaker] || SPEAKERS['SYSTEM'];
+      const f   = FACES[speaker]    || FACES['SYSTEM'];
+      const col = `var(${spk.colorVar})`;
+      let eyes = '';
+      if (f.slit) {
+        eyes = '<ellipse class="bot-eye" cx="32" cy="32" rx="11" ry="9"/>';
+      } else if (f.eyes === 2) {
+        eyes = `<circle class="bot-eye" cx="24" cy="31" r="${f.eyeR}"/>`
+             + `<circle class="bot-eye" cx="40" cy="31" r="${f.eyeR}"/>`;
+      } else if (f.eyes === 1) {
+        eyes = `<circle class="bot-eye" cx="32" cy="31" r="${f.eyeR}"/>`;
+      } else {
+        eyes = '<rect class="bot-scan" x="14" y="22" width="36" height="3" rx="1.5"/>'
+             + '<rect class="bot-scan" x="14" y="30" width="36" height="3" rx="1.5"/>'
+             + '<rect class="bot-scan" x="14" y="38" width="36" height="3" rx="1.5"/>';
+      }
+      const antenna = f.antenna
+        ? '<line class="bot-antenna" x1="32" y1="6" x2="32" y2="-3"/><circle class="bot-antenna-tip" cx="32" cy="-4" r="2.5"/>'
+        : '';
+      return `<svg class="bot-face ${f.idle}" viewBox="-4 -10 72 78" style="--bot-color:${col}" aria-hidden="true">`
+           +   antenna
+           +   '<rect class="bot-frame" x="6" y="6" width="52" height="52" rx="12"/>'
+           +   `<g class="bot-eyes">${eyes}</g>`
+           +   '<rect class="bot-mouth" x="22" y="47" width="20" height="3" rx="1.5"/>'
+           + '</svg>';
+    }
+
     let _queue      = [];
     let _index      = 0;
     let _typing     = false;
@@ -344,7 +386,6 @@ const GameEngine = (() => {
       const spkEl   = document.getElementById('dlgSpeaker');
       const textEl  = document.getElementById('dlgText');
       const subEl   = document.getElementById('dlgSub');
-      const phEl    = document.getElementById('dlgPlaceholder');
       const advEl   = document.getElementById('dlgAdvance');
       const portEl  = document.getElementById('dlgPortrait');
 
@@ -353,25 +394,27 @@ const GameEngine = (() => {
       spkEl.style.color  = colorVal;
       textEl.textContent = '';
       subEl.textContent  = line.subtitle || '';
-      phEl.textContent   = spk.placeholder;
       advEl.style.opacity = '0';
 
-      // Portrait image
-      const existImg = portEl.querySelector('img');
-      if (existImg) existImg.remove();
+      // Portrait: a CG image if the line provides one, else an animated face.
       if (line.portrait) {
+        portEl.innerHTML = '';
         const img = document.createElement('img');
         img.src = line.portrait;
         img.alt = line.speaker;
-        img.onerror = () => img.remove();
+        img.onerror = () => { portEl.innerHTML = _faceSVG(line.speaker); };
         portEl.appendChild(img);
+      } else {
+        portEl.innerHTML = _faceSVG(line.speaker);
       }
 
       _container.classList.add('visible');
+      portEl.classList.add('speaking');
       _typing = true;
 
       _typeText(textEl, line.text, 28, () => {
         _typing = false;
+        portEl.classList.remove('speaking');
         advEl.style.opacity = '1';
       }, line.speaker);
     }
@@ -402,6 +445,7 @@ const GameEngine = (() => {
         _typeTimer = null;
         _typing = false;
         document.getElementById('dlgText').textContent = _queue[_index].text || '';
+        document.getElementById('dlgPortrait')?.classList.remove('speaking');
         document.getElementById('dlgAdvance').style.opacity = '1';
         return;
       }
@@ -411,6 +455,7 @@ const GameEngine = (() => {
 
     function hide() {
       _container?.classList.remove('visible');
+      document.getElementById('dlgPortrait')?.classList.remove('speaking');
     }
 
     return { load, advance, hide };
