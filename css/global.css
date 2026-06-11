@@ -16,8 +16,8 @@
   /* Primary accents */
   --accent-r3mi:    #2ecf62;
   --accent-r3mi-lo: rgba(46,207,98,0.12);
-  --accent-vtgm:    #d93333;
-  --accent-vtgm-lo: rgba(217,51,51,0.12);
+  --accent-vtgm:    #c0322c;
+  --accent-vtgm-lo: rgba(192,50,44,0.12);
   --accent-system:  #3a8fd4;
   --accent-system-lo: rgba(58,143,212,0.12);
   --accent-warn:    #c88a28;
@@ -25,11 +25,12 @@
   /* Guest character accents */
   --accent-g1:  #e84a8c;   /* F-RØ5CHI  — pink */
   --accent-g2:  #e8893a;   /* L-UX      — warm orange */
-  --accent-g3:  #7ab83a;   /* J4W-A3    — workshop wood-green */
-  --accent-g4:  #f3c623;   /* B-RADF1SH — yellow (gelber Fisch) */
-  --accent-g5:  #b89a3a;   /* T-FLON14  — forest trail gold */
-  --accent-g6:  #b14ad6;   /* ASP-1024  — steganography violet */
-  --accent-g7:  #3a7abf;   /* AGN-H3R   — jigsaw puzzle blue */
+  --accent-g3:  #7ab83a;   /* J4W-A3    — (dropped) */
+  --accent-g4:  #f3c623;   /* B-RADF1SH — yellow fish (A-RM1N) */
+  --accent-g5:  #36b8e8;   /* T-FLON14  — pan blue */
+  --accent-g6:  #c7ccd6;   /* ASP-1024  — mouse light grey */
+  --accent-g7:  #d6dae2;   /* AGN-H3R   — skull bone-white (visible "black") */
+  --accent-g8:  #ff4733;   /* F-AXN     — pumpkin bright red (FAXENMEIER) */
 
   /* Text */
   --text-primary:   #b8ccd8;
@@ -430,8 +431,21 @@ body {
 @keyframes botSlit   { 0%,88%,100%{transform:scaleY(.18)} 93%{transform:scaleY(1)} }
 @keyframes botBob    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-2px)} }
 @keyframes botScan   { 0%,100%{opacity:.2} 50%{opacity:.85} }
+/* form-specific parts (frog crown, cat/mouse ears, fish fin, pan handle, skull, pumpkin) */
+.bot-crown, .bot-ear, .bot-fin, .bot-nose, .bot-bone, .bot-stem, .bot-nose-skull, .bot-jag { fill: var(--bot-color); }
+.bot-tube   { fill: var(--bot-color); opacity: .6; }
+.bot-whisker, .bot-ridge { stroke: var(--bot-color); stroke-width: 1.5; fill: none; opacity: .65; }
+.bot-handle { stroke: var(--bot-color); stroke-width: 4; stroke-linecap: round; }
+.bot-smile  { fill: none; stroke: var(--bot-color); stroke-width: 3; stroke-linecap: round; }
+.bot-screen { fill: #0a0b10; stroke: var(--bot-color); stroke-width: 2; }
+.bot-skull  { fill: rgba(255,255,255,0.02); stroke: var(--bot-color); stroke-width: 2; }
+.bot-ear-r  { fill: rgba(255,255,255,0.025); stroke: var(--bot-color); stroke-width: 2; }
+.face-pumpkin .bot-frame { fill: rgba(0,0,0,0.4); }
+.face-flicker .bot-eye, .face-flicker .bot-jag { animation: botFlicker .9s ease-in-out infinite; }
+@keyframes botFlicker { 0%,100%{opacity:1} 45%{opacity:.55} 70%{opacity:.85} }
+
 @media (prefers-reduced-motion: reduce) {
-  .bot-face, .bot-eye, .bot-eyes, .bot-mouth, .bot-scan { animation: none !important; }
+  .bot-face, .bot-face * { animation: none !important; }
 }
 
 .dlg-body {
