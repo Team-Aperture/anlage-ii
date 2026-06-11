@@ -13,12 +13,13 @@ curve. From Chapter 1 the baseline is **4.5/10**, rising **+0.75 per chapter**.
 | Ch4 — Rätselsektor (Armin/B-RADF1SH) | **6.75** | done | Dual-projection maze (2D↔3D): warm-up ~5 (3×3×3, min 2 switches) · der Würfel ~7.5 (3×4×4 staircase, min 6 switches, budget 7) |
 | Ch5 — Fördersektor (T-FLON14) | **7.5** | done | FÖRDERLAUF: 20 rapid mixed micro-tasks (odd-one / match / tap-all / count / odd-colour) under one global clock (FL_TIME=60, −3s per miss). Rounds 11-20 mix look-alike filled/outline twins; odd-colour always uses distinct colours |
 | Ch6 — Dunkelkammer (ASP-1024) | **8.25** | done | BILDFORENSIK: one steganography puzzle — a 4-char code hidden in the blue channel (+18 over ±6 noise, math-clean at threshold); isolate R/G/B + invert + threshold, past a loud green decoy code |
-| Ch7 | 9.0  | stub | guest TBD |
-| Ch8 — Finale | 10 | — | Reaktivierung — the truth about R-3MI/V-TGM + the coordinates |
+| Ch7 — Vexiersektor (F-AXN / FAXENMEIER) | **9.0** | done | VEXIERSCHLOSS: a deduction lock (Mastermind-style) — 4 seals · 6 symbols · 8 tries. Feedback ● richtig / ○ verschoben. A lying host, an honest lock. Budget 8 proven crackable by pure logic (20k-trial sim: worst case 8, avg 4.6). First chapter built on the shared `GameEngine.chapter` scaffold |
+| Ch8 — Archivsektor (AGN-H3R) | 10 | stub | skull-bot, black — last regular chapter; ends with the Reaktivierung + the coordinates |
+| Ch9 — BONUS (hidden) | outside curve | — | Unlocked via all 5 Signalnischen. The story takes a dark turn: R-3MI & V-TGM are revealed as the bad guys |
 
-*J4W-A3 (Kartografiesektor) is dropped — the cacher never responded. The run
-is now **8 chapters (Ch1–Ch8)** plus the Ch0 prologue → 9 total; the finale
-moves from Ch9 to Ch8.*
+*J4W-A3 (Kartografiesektor) is dropped — the cacher never responded. The main
+run is **Ch0 prologue + Ch1–Ch8 → 9 chapters**; Ch9 is a hidden bonus chapter
+that does not count toward title-screen progress.*
 
 Within a chapter the first puzzle is usually ~0.5 below the target and the
 second ~0.5 above, bracketing it — the chapter *average* is the number above.

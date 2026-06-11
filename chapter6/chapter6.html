@@ -7,87 +7,22 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Barlow:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/global.css">
-  <link rel="stylesheet" href="chapter6.css">
+  <link rel="stylesheet" href="../css/global.css?v=20260611">
+  <link rel="stylesheet" href="../css/chapter.css?v=20260611">
+  <link rel="stylesheet" href="chapter6.css?v=20260611">
 </head>
 <body class="chapter-page">
 
-  <div class="bg-scanlines" aria-hidden="true"></div>
-
-  <header class="sys-bar">
-    <span class="sys-text">KAPITEL 06 // <span class="accent-system">DUNKELKAMMER</span></span>
-    <span class="sys-text" id="reactProgress">REAKTIVIERUNG: 52%</span>
-  </header>
-
-  <!-- TITLE CARD -->
-  <div class="ch-title-card" id="titleCard">
-    <div class="ch-emblem ch6-emblem" aria-hidden="true">
-      <div class="ch-ring ch-ring-1"></div>
-      <div class="ch-ring ch-ring-2"></div>
-      <div class="ch6-eye"></div>
-      <span class="ch-num">06</span>
-    </div>
-    <div class="ch-title-text">
-      <p class="ch-label sys-text">KAPITEL 06</p>
-      <h1 class="ch-name">Dunkelkammer</h1>
-      <p class="ch-subline">&bdquo;Was versteckt ist, bleibt.&ldquo;</p>
-    </div>
-  </div>
-
-  <!-- SCENE -->
-  <div class="scene-wrapper" id="sceneWrapper">
-    <div class="scene-bg-layer" id="sceneBgLayer">
-      <img src="cg/ch6_darkroom.png" class="scene-bg" id="sceneBg" alt=""
-           onerror="this.style.display='none'">
-      <div class="scene-ph" id="scenePh" data-scene="dark-dim"></div>
-    </div>
-    <div class="scene-hotspots" id="sceneHotspots"></div>
-
-    <div class="robot-icons hidden" id="robotIcons">
-      <button class="robot-icon r3mi-icon" onclick="Chapter6.clickRobot('r3mi')" aria-label="R-3MI">
-        <div class="ri-eye ri-eye-r"></div>
-        <span class="ri-label sys-text">R-3MI</span>
-      </button>
-      <button class="robot-icon vtgm-icon" onclick="Chapter6.clickRobot('vtgm')" aria-label="V-TGM">
-        <div class="ri-eye ri-eye-g"></div>
-        <span class="ri-label sys-text">V-TGM</span>
-      </button>
-      <button class="robot-icon asp-icon hidden" id="aspIcon" onclick="Chapter6.clickRobot('asp')" aria-label="ASP-1024">
-        <div class="ri-eye ri-eye-a"></div>
-        <span class="ri-label sys-text">ASP-1024</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- CHOICE UI -->
-  <div class="choice-overlay hidden" id="choiceOverlay">
-    <div class="choice-panel">
-      <div class="choice-prompt sys-text" id="choicePrompt"></div>
-      <div class="choice-buttons" id="choiceButtons"></div>
-      <div class="choice-hint sys-text" id="choiceHint"></div>
-    </div>
-  </div>
-
-  <!-- HINT BAR -->
-  <div class="hint-bar hidden" id="hintBar">
-    <span class="sys-text hint-label" id="hintCount">HINWEISE: 4 VERFÜGBAR</span>
-    <button class="ka-btn small" id="hintBtnR3MI" onclick="Chapter6.useHint('r3mi')">
-      <span class="accent-r3mi">[ R-3MI ]</span>
-    </button>
-    <button class="ka-btn small" id="hintBtnVTGM" onclick="Chapter6.useHint('vtgm')">
-      <span class="accent-vtgm">[ V-TGM ]</span>
-    </button>
-    <button class="ka-btn small" id="hintBtnAsp" onclick="Chapter6.useHint('asp')">
-      <span class="accent-asp">[ ASP-1024 ]</span>
-    </button>
-  </div>
+  <!-- The shared chrome (sys-bar, title card, scene, choices, hint bar,
+       chapter-complete) is built by GameEngine.chapter.build() in chapter6.js.
+       Only the chapter's own puzzle modal lives here. -->
 
   <!-- ════════════════════════════════════════════════════════════
        BILDFORENSIK — steganography (canvas channels + threshold)
        ════════════════════════════════════════════════════════════ -->
   <div class="puzzle-modal hidden" id="stegModal">
     <div class="puzzle-card steg-card" id="stegCard">
-      <div class="puzzle-card-accent asp-accent"></div>
+      <div class="puzzle-card-accent"></div>
       <div class="puzzle-header">
         <p class="puzzle-label sys-text">BILDFORENSIK // ASP-1024</p>
         <h2 class="puzzle-title">DAS VERSTECKTE BILD</h2>
@@ -127,20 +62,8 @@
     </div>
   </div>
 
-  <!-- CHAPTER COMPLETE -->
-  <div class="chapter-complete hidden" id="chapterComplete">
-    <div class="cc-card">
-      <div class="cc-header sys-text">KAPITEL 06 ABGESCHLOSSEN</div>
-      <div class="cc-title">SEKTOR 07 FREIGEGEBEN</div>
-      <div class="cc-next">NÄCHSTER SEKTOR</div>
-      <div class="cc-progress sys-text" id="ccProgress"></div>
-      <a class="ka-btn primary" href="../chapter7/chapter7.html">[ EINTRETEN ]</a>
-      <a class="ka-btn small"   href="../index.html">[ HAUPTMENÜ ]</a>
-    </div>
-  </div>
-
-  <script src="../js/engine.js"></script>
-  <script src="../js/mobile-warning.js"></script>
-  <script src="chapter6.js"></script>
+  <script src="../js/engine.js?v=20260611"></script>
+  <script src="../js/mobile-warning.js?v=20260611"></script>
+  <script src="chapter6.js?v=20260611"></script>
 </body>
 </html>

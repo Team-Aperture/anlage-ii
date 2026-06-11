@@ -143,3 +143,10 @@ GameEngine.state.hasFlag('gate_1_open'); // → true/false
 ---
 
 *Sie hätte abgeschaltet bleiben sollen.*
+
+---
+
+**Release-Hinweis:** Alle lokalen CSS/JS-Verweise tragen einen Cache-Buster
+(`?v=JJJJMMTT`). Nach inhaltlichen Änderungen vor dem Merge die Version in
+allen HTML-Dateien anheben:
+`sed -i 's/?v=[0-9]*/?v=NEUES_DATUM/g' *.html chapter*/*.html`

@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Barlow:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/global.css">
-  <link rel="stylesheet" href="css/title.css">
+  <link rel="stylesheet" href="css/global.css?v=20260611">
+  <link rel="stylesheet" href="css/title.css?v=20260611">
 </head>
 <body>
 
@@ -91,7 +91,7 @@
         [ CREDITS ]
       </button>
       <button class="ka-btn" id="audioToggle"
-              onclick="this.textContent = GameEngine.audio.toggleMute() ? '[ TON: AUS ]' : '[ TON: AN ]'"
+              onclick="if (window.GameEngine &amp;&amp; GameEngine.audio) this.textContent = GameEngine.audio.toggleMute() ? '[ TON: AUS ]' : '[ TON: AN ]'"
               aria-label="Ton an oder aus">
         [ TON: AN ]
       </button>
@@ -179,9 +179,9 @@
   </div>
 
   <!-- ── SCRIPTS ─────────────────────────────────────────────── -->
-  <script src="js/engine.js"></script>
-  <script src="js/mobile-warning.js"></script>
-  <script src="js/title.js"></script>
+  <script src="js/engine.js?v=20260611"></script>
+  <script src="js/mobile-warning.js?v=20260611"></script>
+  <script src="js/title.js?v=20260611"></script>
 
 </body>
 </html>

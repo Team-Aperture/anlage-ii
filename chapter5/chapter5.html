@@ -7,87 +7,21 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Barlow:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/global.css">
-  <link rel="stylesheet" href="chapter5.css">
+  <link rel="stylesheet" href="../css/global.css?v=20260611">
+  <link rel="stylesheet" href="../css/chapter.css?v=20260611">
+  <link rel="stylesheet" href="chapter5.css?v=20260611">
 </head>
 <body class="chapter-page">
 
-  <div class="bg-scanlines" aria-hidden="true"></div>
-
-  <header class="sys-bar">
-    <span class="sys-text">KAPITEL 05 // <span class="accent-system">FÖRDERSEKTOR</span></span>
-    <span class="sys-text" id="reactProgress">REAKTIVIERUNG: 40%</span>
-  </header>
-
-  <!-- TITLE CARD -->
-  <div class="ch-title-card" id="titleCard">
-    <div class="ch-emblem ch5-emblem" aria-hidden="true">
-      <div class="ch-ring ch-ring-1"></div>
-      <div class="ch-ring ch-ring-2"></div>
-      <div class="ch5-dash"></div>
-      <span class="ch-num">05</span>
-    </div>
-    <div class="ch-title-text">
-      <p class="ch-label sys-text">KAPITEL 05</p>
-      <h1 class="ch-name">Fördersektor</h1>
-      <p class="ch-subline">&bdquo;Stehen ist nur langsames Umfallen.&ldquo;</p>
-    </div>
-  </div>
-
-  <!-- SCENE -->
-  <div class="scene-wrapper" id="sceneWrapper">
-    <div class="scene-bg-layer" id="sceneBgLayer">
-      <img src="cg/ch5_trail.png" class="scene-bg" id="sceneBg" alt=""
-           onerror="this.style.display='none'">
-      <div class="scene-ph" id="scenePh" data-scene="trail-dim"></div>
-    </div>
-    <div class="scene-hotspots" id="sceneHotspots"></div>
-
-    <div class="robot-icons hidden" id="robotIcons">
-      <button class="robot-icon r3mi-icon" onclick="Chapter5.clickRobot('r3mi')" aria-label="R-3MI">
-        <div class="ri-eye ri-eye-r"></div>
-        <span class="ri-label sys-text">R-3MI</span>
-      </button>
-      <button class="robot-icon vtgm-icon" onclick="Chapter5.clickRobot('vtgm')" aria-label="V-TGM">
-        <div class="ri-eye ri-eye-g"></div>
-        <span class="ri-label sys-text">V-TGM</span>
-      </button>
-      <button class="robot-icon tflon-icon hidden" id="tflonIcon" onclick="Chapter5.clickRobot('tflon')" aria-label="T-FLON14">
-        <div class="ri-eye ri-eye-t"></div>
-        <span class="ri-label sys-text">T-FLON14</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- CHOICE UI -->
-  <div class="choice-overlay hidden" id="choiceOverlay">
-    <div class="choice-panel">
-      <div class="choice-prompt sys-text" id="choicePrompt"></div>
-      <div class="choice-buttons" id="choiceButtons"></div>
-      <div class="choice-hint sys-text" id="choiceHint"></div>
-    </div>
-  </div>
-
-  <!-- HINT BAR -->
-  <div class="hint-bar hidden" id="hintBar">
-    <span class="sys-text hint-label" id="hintCount">HINWEISE: 4 VERFÜGBAR</span>
-    <button class="ka-btn small" id="hintBtnR3MI" onclick="Chapter5.useHint('r3mi')">
-      <span class="accent-r3mi">[ R-3MI ]</span>
-    </button>
-    <button class="ka-btn small" id="hintBtnVTGM" onclick="Chapter5.useHint('vtgm')">
-      <span class="accent-vtgm">[ V-TGM ]</span>
-    </button>
-    <button class="ka-btn small" id="hintBtnTflon" onclick="Chapter5.useHint('tflon')">
-      <span class="accent-tflon">[ T-FLON14 ]</span>
-    </button>
-  </div>
+  <!-- The shared chrome is built by GameEngine.chapter.build() in chapter5.js.
+       Only the FÖRDERLAUF puzzle modal lives here. -->
 
   <!-- ════════════════════════════════════════════════════════════
        FÖRDERLAUF — 20 rapid mixed micro-tasks under one clock
        ════════════════════════════════════════════════════════════ -->
   <div class="puzzle-modal hidden" id="flModal">
     <div class="puzzle-card fl-card" id="flCard">
-      <div class="puzzle-card-accent tflon-accent"></div>
+      <div class="puzzle-card-accent"></div>
       <div class="puzzle-header">
         <p class="puzzle-label sys-text">FÖRDERLAUF // T-FLON14</p>
         <h2 class="puzzle-title">DIE STRECKE</h2>
@@ -96,7 +30,7 @@
 
       <div class="fl-bar">
         <div class="fl-timer-track"><div class="fl-timer-fill" id="flTimer"></div></div>
-        <span class="sys-text" id="flTimeLabel">85s</span>
+        <span class="sys-text" id="flTimeLabel">60s</span>
       </div>
       <div class="fl-progress sys-text" id="flProgress">RUNDE 1 / 20</div>
 
@@ -111,20 +45,8 @@
     </div>
   </div>
 
-  <!-- CHAPTER COMPLETE -->
-  <div class="chapter-complete hidden" id="chapterComplete">
-    <div class="cc-card">
-      <div class="cc-header sys-text">KAPITEL 05 ABGESCHLOSSEN</div>
-      <div class="cc-title">SEKTOR 06 FREIGEGEBEN</div>
-      <div class="cc-next">DUNKELKAMMER</div>
-      <div class="cc-progress sys-text" id="ccProgress"></div>
-      <a class="ka-btn primary" href="../chapter6/chapter6.html">[ EINTRETEN ]</a>
-      <a class="ka-btn small"   href="../index.html">[ HAUPTMENÜ ]</a>
-    </div>
-  </div>
-
-  <script src="../js/engine.js"></script>
-  <script src="../js/mobile-warning.js"></script>
-  <script src="chapter5.js"></script>
+  <script src="../js/engine.js?v=20260611"></script>
+  <script src="../js/mobile-warning.js?v=20260611"></script>
+  <script src="chapter5.js?v=20260611"></script>
 </body>
 </html>

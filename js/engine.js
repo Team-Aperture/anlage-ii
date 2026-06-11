@@ -284,48 +284,87 @@ const GameEngine = (() => {
       'T-FLON14':  { colorVar: '--accent-g5',      placeholder: 'T' },
       'ASP-1024':  { colorVar: '--accent-g6',      placeholder: 'A' },
       'AGN-H3R':   { colorVar: '--accent-g7',      placeholder: 'AG' },
+      'F-AXN':     { colorVar: '--accent-g8',      placeholder: 'FX' },
     };
 
-    // Per-character animated face: personality lives in the eye + idle class.
+    // Each face echoes the character's real design (form) + a personality (idle).
     const FACES = {
-      'R-3MI':     { eyes: 1, eyeR: 9, idle: 'face-dart',   antenna: true  }, // anxious — eye darts
-      'V-TGM':     { eyes: 2, eyeR: 6, idle: 'face-calm'                   }, // deadpan — steady
-      'SYSTEM':    { eyes: 0,          idle: 'face-scan'                   }, // scanlines, no eye
-      'F-RØ5CHI':  { eyes: 2, eyeR: 7, idle: 'face-bob'                    }, // warm — gentle bob
-      'L-UX':      { eyes: 1, eyeR: 8, idle: 'face-jitter', antenna: true  }, // hyper — jitter
-      'J4W-A3':    { eyes: 2, eyeR: 6, idle: 'face-calm'                   },
-      'B-RADF1SH': { eyes: 2, eyeR: 6, idle: 'face-calm'                   }, // confident — steady
-      'T-FLON14':  { eyes: 1, eyeR: 8, idle: 'face-zip'                    }, // fast — eye zips
-      'ASP-1024':  { eyes: 1, eyeR: 9, idle: 'face-slit', slit: true       }, // silent — barely open
-      'AGN-H3R':   { eyes: 2, eyeR: 6, idle: 'face-calm'                   },
+      'R-3MI':     { form: 'humanoid', idle: 'face-dart'   }, // one-eyed humanoid, anxious
+      'V-TGM':     { form: 'orb',      idle: 'face-calm'   }, // sphere + test-tube, deadpan
+      'SYSTEM':    { form: 'system',   idle: 'face-scan'   }, // scanlines
+      'F-RØ5CHI':  { form: 'frog',     idle: 'face-bob'    }, // crowned frog, warm
+      'L-UX':      { form: 'cat',      idle: 'face-jitter' }, // cat, hyper
+      'J4W-A3':    { form: 'humanoid', idle: 'face-calm'   },
+      'B-RADF1SH': { form: 'fish',     idle: 'face-calm'   }, // fish, confident
+      'T-FLON14':  { form: 'pan',      idle: 'face-zip'    }, // pan-bot, fast
+      'ASP-1024':  { form: 'mouse',    idle: 'face-calm'   }, // mouse, silent
+      'AGN-H3R':   { form: 'skull',    idle: 'face-calm'   }, // skull
+      'F-AXN':     { form: 'pumpkin',  idle: 'face-flicker'}, // jack-o'-lantern
     };
 
     function _faceSVG(speaker) {
       const spk = SPEAKERS[speaker] || SPEAKERS['SYSTEM'];
       const f   = FACES[speaker]    || FACES['SYSTEM'];
       const col = `var(${spk.colorVar})`;
-      let eyes = '';
-      if (f.slit) {
-        eyes = '<ellipse class="bot-eye" cx="32" cy="32" rx="11" ry="9"/>';
-      } else if (f.eyes === 2) {
-        eyes = `<circle class="bot-eye" cx="24" cy="31" r="${f.eyeR}"/>`
-             + `<circle class="bot-eye" cx="40" cy="31" r="${f.eyeR}"/>`;
-      } else if (f.eyes === 1) {
-        eyes = `<circle class="bot-eye" cx="32" cy="31" r="${f.eyeR}"/>`;
-      } else {
-        eyes = '<rect class="bot-scan" x="14" y="22" width="36" height="3" rx="1.5"/>'
-             + '<rect class="bot-scan" x="14" y="30" width="36" height="3" rx="1.5"/>'
-             + '<rect class="bot-scan" x="14" y="38" width="36" height="3" rx="1.5"/>';
-      }
-      const antenna = f.antenna
-        ? '<line class="bot-antenna" x1="32" y1="6" x2="32" y2="-3"/><circle class="bot-antenna-tip" cx="32" cy="-4" r="2.5"/>'
-        : '';
-      return `<svg class="bot-face ${f.idle}" viewBox="-4 -10 72 78" style="--bot-color:${col}" aria-hidden="true">`
-           +   antenna
-           +   '<rect class="bot-frame" x="6" y="6" width="52" height="52" rx="12"/>'
-           +   `<g class="bot-eyes">${eyes}</g>`
-           +   '<rect class="bot-mouth" x="22" y="47" width="20" height="3" rx="1.5"/>'
-           + '</svg>';
+      const BODY = {
+        humanoid:
+            '<line class="bot-antenna" x1="32" y1="6" x2="32" y2="-4"/><circle class="bot-antenna-tip" cx="32" cy="-5" r="2.5"/>'
+          + '<rect class="bot-frame" x="9" y="6" width="46" height="50" rx="14"/>'
+          + '<g class="bot-eyes"><circle class="bot-eye" cx="32" cy="30" r="10"/></g>'
+          + '<rect class="bot-mouth" x="22" y="47" width="20" height="3" rx="1.5"/>',
+        orb:
+            '<rect class="bot-tube" x="49" y="12" width="8" height="20" rx="3"/>'
+          + '<circle class="bot-frame" cx="31" cy="32" r="25"/>'
+          + '<g class="bot-eyes"><circle class="bot-eye" cx="31" cy="30" r="11"/></g>'
+          + '<rect class="bot-mouth" x="21" y="47" width="20" height="3" rx="1.5"/>',
+        system:
+            '<rect class="bot-frame" x="9" y="8" width="46" height="46" rx="8"/>'
+          + '<rect class="bot-scan" x="16" y="20" width="32" height="3" rx="1.5"/>'
+          + '<rect class="bot-scan" x="16" y="30" width="32" height="3" rx="1.5"/>'
+          + '<rect class="bot-scan" x="16" y="40" width="32" height="3" rx="1.5"/>',
+        frog:
+            '<path class="bot-crown" d="M16 4 L20 -7 L26 3 L32 -10 L38 3 L44 -7 L48 4 Z"/>'
+          + '<circle class="bot-frame" cx="20" cy="14" r="9"/><circle class="bot-frame" cx="44" cy="14" r="9"/>'
+          + '<rect class="bot-frame" x="8" y="16" width="48" height="40" rx="20"/>'
+          + '<g class="bot-eyes"><circle class="bot-eye" cx="20" cy="14" r="5"/><circle class="bot-eye" cx="44" cy="14" r="5"/></g>'
+          + '<path class="bot-smile" d="M20 42 Q32 52 44 42"/>',
+        cat:
+            '<path class="bot-ear" d="M12 10 L15 -8 L27 6 Z"/><path class="bot-ear" d="M52 10 L49 -8 L37 6 Z"/>'
+          + '<rect class="bot-frame" x="9" y="6" width="46" height="48" rx="18"/>'
+          + '<g class="bot-eyes"><circle class="bot-eye" cx="24" cy="28" r="7"/><circle class="bot-eye" cx="40" cy="28" r="7"/></g>'
+          + '<line class="bot-whisker" x1="4" y1="38" x2="22" y2="40"/><line class="bot-whisker" x1="4" y1="44" x2="22" y2="44"/>'
+          + '<line class="bot-whisker" x1="60" y1="38" x2="42" y2="40"/><line class="bot-whisker" x1="60" y1="44" x2="42" y2="44"/>',
+        fish:
+            '<path class="bot-fin" d="M6 32 L-7 16 L-7 48 Z"/>'
+          + '<circle class="bot-frame" cx="35" cy="32" r="25"/>'
+          + '<g class="bot-eyes"><circle class="bot-eye" cx="38" cy="28" r="11"/></g>'
+          + '<rect class="bot-mouth" x="27" y="47" width="18" height="3" rx="1.5"/>',
+        pan:
+            '<line class="bot-handle" x1="47" y1="14" x2="62" y2="-3"/>'
+          + '<circle class="bot-screen" cx="30" cy="32" r="25"/>'
+          + '<g class="bot-eyes"><circle class="bot-eye" cx="22" cy="28" r="4"/><circle class="bot-eye" cx="38" cy="28" r="4"/></g>'
+          + '<path class="bot-smile" d="M19 38 Q30 49 41 38"/>',
+        mouse:
+            '<circle class="bot-ear-r" cx="14" cy="8" r="11"/><circle class="bot-ear-r" cx="50" cy="8" r="11"/>'
+          + '<circle class="bot-frame" cx="32" cy="34" r="23"/>'
+          + '<g class="bot-eyes"><circle class="bot-eye" cx="24" cy="30" r="5"/><circle class="bot-eye" cx="40" cy="30" r="5"/></g>'
+          + '<circle class="bot-nose" cx="32" cy="40" r="2.5"/>'
+          + '<line class="bot-whisker" x1="6" y1="42" x2="26" y2="42"/><line class="bot-whisker" x1="58" y1="42" x2="38" y2="42"/>',
+        skull:
+            '<rect class="bot-bone" x="2" y="49" width="60" height="5" rx="2.5" transform="rotate(18 32 52)"/>'
+          + '<rect class="bot-bone" x="2" y="49" width="60" height="5" rx="2.5" transform="rotate(-18 32 52)"/>'
+          + '<path class="bot-skull" d="M9 30 a23 22 0 0 1 46 0 v7 q0 8 -9 9 l-3 6 h-22 l-3 -6 q-9 -1 -9 -9 Z"/>'
+          + '<g class="bot-eyes"><circle class="bot-eye" cx="23" cy="29" r="7"/><circle class="bot-eye" cx="41" cy="29" r="7"/></g>'
+          + '<path class="bot-nose-skull" d="M32 35 l-3 6 h6 Z"/>',
+        pumpkin:
+            '<rect class="bot-stem" x="29" y="-3" width="6" height="11" rx="2"/>'
+          + '<ellipse class="bot-frame" cx="32" cy="33" rx="27" ry="23"/>'
+          + '<path class="bot-ridge" d="M21 12 Q15 33 21 54"/><path class="bot-ridge" d="M43 12 Q49 33 43 54"/>'
+          + '<g class="bot-eyes"><path class="bot-eye" d="M17 25 l11 5 l-11 6 Z"/><path class="bot-eye" d="M47 25 l-11 5 l11 6 Z"/></g>'
+          + '<path class="bot-jag" d="M17 41 l5 6 l4 -4 l4 6 l4 -5 l4 6 l5 -7 Z"/>',
+      };
+      const inner = BODY[f.form] || BODY.humanoid;
+      return `<svg class="bot-face ${f.idle} face-${f.form}" viewBox="-8 -16 80 88" style="--bot-color:${col}" aria-hidden="true">${inner}</svg>`;
     }
 
     let _queue      = [];
@@ -603,6 +642,258 @@ const GameEngine = (() => {
 
 
   // ═══════════════════════════════════════════════════════════════
+  // CHAPTER SCAFFOLD
+  // Builds the chrome every chapter shares (sys-bar, title card, scene
+  // wrapper, robot icons, choice overlay, hint bar, chapter-complete) from
+  // one config, and provides the behaviours each chapter used to re-implement
+  // (scene/hotspots, choices, title-card timing, modal-safe dialogue, hints,
+  // completion). A chapter supplies its own puzzle markup + puzzle logic only.
+  // ═══════════════════════════════════════════════════════════════
+  const chapter = (() => {
+    let _modalIds   = [];
+    let _onStart    = null;
+    let _hints      = null;   // { counts, max, banks, names, empty }
+    let _completeId = null;   // e.g. 'ch7'
+    let _completeAch= null;   // e.g. 'ch7_complete'
+    let _chapterCount = 9;    // denominator for the progress readout
+
+    const el = id => document.getElementById(id);
+
+    // ---- BUILD ------------------------------------------------------
+    function build(c) {
+      _modalIds     = c.modals || [];
+      _onStart      = c.onStart || null;
+      _completeId   = c.completeId  || null;
+      _completeAch  = c.completeAch || null;
+      if (c.chapterCount) _chapterCount = c.chapterCount;
+      if (c.title) document.title = c.title;
+      document.body.classList.add('chapter-page');
+
+      const g        = c.guest || {};
+      const guestNm  = g.name || 'GAST';
+      const reactPct = c.reactPct != null ? c.reactPct : 0;
+      const deco     = c.emblemDeco || '';
+      const sImg     = (c.scene && c.scene.img) || '';
+      const sPh      = (c.scene && c.scene.ph)  || '';
+      const next     = c.next || null;
+
+      const frag = document.createElement('div');
+      frag.innerHTML = `
+        <div class="bg-scanlines" aria-hidden="true"></div>
+
+        <header class="sys-bar">
+          <span class="sys-text">KAPITEL ${c.num} // <span class="accent-system">${c.sector}</span></span>
+          <span class="sys-text" id="reactProgress">REAKTIVIERUNG: ${reactPct}%</span>
+        </header>
+
+        <div class="ch-title-card" id="titleCard">
+          <div class="ch-emblem" aria-hidden="true">
+            <div class="ch-ring ch-ring-1"></div>
+            <div class="ch-ring ch-ring-2"></div>
+            ${deco}
+            <span class="ch-num">${c.num}</span>
+          </div>
+          <div class="ch-title-text">
+            <p class="ch-label sys-text">KAPITEL ${c.num}</p>
+            <h1 class="ch-name">${c.name}</h1>
+            <p class="ch-subline">${c.subline || ''}</p>
+          </div>
+        </div>
+
+        <div class="scene-wrapper" id="sceneWrapper">
+          <div class="scene-bg-layer" id="sceneBgLayer">
+            <img src="${sImg}" class="scene-bg" id="sceneBg" alt=""
+                 onerror="this.style.display='none'"${sImg ? '' : ' style="display:none"'}>
+            <div class="scene-ph" id="scenePh" data-scene="${sPh}"></div>
+          </div>
+          <div class="scene-hotspots" id="sceneHotspots"></div>
+
+          <div class="robot-icons hidden" id="robotIcons">
+            <button class="robot-icon r3mi-icon" data-who="r3mi" aria-label="R-3MI">
+              <div class="ri-eye ri-eye-r"></div><span class="ri-label sys-text">R-3MI</span>
+            </button>
+            <button class="robot-icon vtgm-icon" data-who="vtgm" aria-label="V-TGM">
+              <div class="ri-eye ri-eye-g"></div><span class="ri-label sys-text">V-TGM</span>
+            </button>
+            <button class="robot-icon guest-icon hidden" id="guestIcon" data-who="guest" aria-label="${guestNm}">
+              <div class="ri-eye ri-eye-guest"></div><span class="ri-label sys-text">${guestNm}</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="choice-overlay hidden" id="choiceOverlay">
+          <div class="choice-panel">
+            <div class="choice-prompt sys-text" id="choicePrompt"></div>
+            <div class="choice-buttons" id="choiceButtons"></div>
+            <div class="choice-hint sys-text" id="choiceHint"></div>
+          </div>
+        </div>
+
+        <div class="hint-bar hidden" id="hintBar">
+          <span class="sys-text hint-label" id="hintCount">HINWEISE</span>
+          <button class="ka-btn small" id="hintBtnR3MI" data-who="r3mi"><span class="accent-r3mi">[ R-3MI ]</span></button>
+          <button class="ka-btn small" id="hintBtnVTGM" data-who="vtgm"><span class="accent-vtgm">[ V-TGM ]</span></button>
+          <button class="ka-btn small" id="hintBtnGuest" data-who="guest"><span class="accent-guest">[ ${guestNm} ]</span></button>
+        </div>
+
+        ${c.puzzleHTML || ''}
+
+        <div class="chapter-complete hidden" id="chapterComplete">
+          <div class="cc-card">
+            <div class="cc-header sys-text">KAPITEL ${c.num} ABGESCHLOSSEN</div>
+            <div class="cc-title">${next ? next.title : 'SEKTOR FREIGEGEBEN'}</div>
+            <div class="cc-next">${next ? next.label : ''}</div>
+            <div class="cc-progress sys-text" id="ccProgress"></div>
+            <a class="ka-btn primary" href="${next ? next.href : '../index.html'}">[ ${next ? (next.enter || 'EINTRETEN') : 'HAUPTMENÜ'} ]</a>
+            <a class="ka-btn small" href="../index.html">[ HAUPTMENÜ ]</a>
+          </div>
+        </div>
+      `;
+      while (frag.firstChild) document.body.appendChild(frag.firstChild);
+
+      document.querySelectorAll('#robotIcons .robot-icon').forEach(b =>
+        b.addEventListener('click', () => { if (c.onRobot) c.onRobot(b.dataset.who); }));
+      [['hintBtnR3MI','r3mi'], ['hintBtnVTGM','vtgm'], ['hintBtnGuest','guest']].forEach(([id]) => {
+        const b = el(id); if (b) b.addEventListener('click', () => useHint(b.dataset.who));
+      });
+    }
+
+    // ---- SCENE ------------------------------------------------------
+    function setScene(key, imgSrc) {
+      const ph = el('scenePh'), img = el('sceneBg');
+      if (ph) ph.dataset.scene = key;
+      if (img && imgSrc) { img.src = imgSrc; img.style.display = ''; }
+    }
+    function clearHotspots() { const h = el('sceneHotspots'); if (h) h.innerHTML = ''; }
+    function addHotspot(cfg) {
+      const e = document.createElement('button');
+      e.className = 'hotspot' + (cfg.cls ? ' ' + cfg.cls : '');
+      e.setAttribute('aria-label', cfg.label || 'Interagieren');
+      e.style.cssText = `left:${cfg.x}%;top:${cfg.y}%;width:${cfg.w || 7}%;height:${cfg.h || 7}%;`;
+      if (cfg.label) {
+        const l = document.createElement('span');
+        l.className = 'hotspot-label'; l.textContent = cfg.label; e.appendChild(l);
+      }
+      e.addEventListener('click', cfg.fn);
+      el('sceneHotspots').appendChild(e);
+      return e;
+    }
+    function showRobots(v) { el('robotIcons')?.classList.toggle('hidden', !v); }
+    function showGuest(v)  { el('guestIcon')?.classList.toggle('hidden', !v); }
+    function setProgress(pct) { const e = el('reactProgress'); if (e) e.textContent = `REAKTIVIERUNG: ${pct}%`; }
+
+    // ---- CHOICES ----------------------------------------------------
+    function showChoices(cfg) {
+      const overlay = el('choiceOverlay'), btns = el('choiceButtons');
+      const prompt = el('choicePrompt'), hint = el('choiceHint');
+      prompt.textContent = cfg.prompt || 'WÄHLE EINE ANTWORT:';
+      hint.textContent   = cfg.hint   || '';
+      btns.innerHTML     = '';
+      cfg.choices.forEach(c => {
+        const btn = document.createElement('button');
+        btn.className   = 'choice-btn' + (c.seen ? ' seen' : '');
+        btn.textContent = c.label;
+        btn.addEventListener('click', () => {
+          c.seen = true; hideChoices();
+          if (c.fn) { c.fn(); return; }
+          dialogue.load(c.lines, () => { if (cfg.onAfterChoice) cfg.onAfterChoice(c.key, cfg); });
+        });
+        btns.appendChild(btn);
+      });
+      overlay.classList.remove('hidden');
+      requestAnimationFrame(() => overlay.classList.add('visible'));
+    }
+    function hideChoices() {
+      const overlay = el('choiceOverlay');
+      overlay.classList.remove('visible');
+      setTimeout(() => overlay.classList.add('hidden'), 410);
+    }
+    function allSeen(choices) { return choices.every(c => c.seen); }
+
+    // ---- TITLE CARD -------------------------------------------------
+    function start(firstScene, delay) {
+      const card = el('titleCard');
+      const fn = firstScene || _onStart;
+      setTimeout(() => {
+        card.classList.add('fading');
+        setTimeout(() => { card.style.display = 'none'; if (fn) fn(); }, 700);
+      }, delay || 3000);
+    }
+
+    // ---- MODAL-SAFE DIALOGUE ---------------------------------------
+    // Hide any open puzzle modal while a dialogue plays, then restore it,
+    // so dialogue (z-50) is never trapped behind a modal (z-200).
+    function withModalDialogue(lines, after) {
+      const open = _modalIds.map(el).find(m => m && !m.classList.contains('hidden'));
+      if (open) open.classList.add('hidden');
+      dialogue.load(lines, () => {
+        if (open) open.classList.remove('hidden');
+        if (after) after();
+      });
+    }
+
+    // ---- HINTS ------------------------------------------------------
+    function initHints(opts) {
+      _hints = {
+        counts:  { ...opts.counts },
+        max:     { ...opts.counts },
+        banks:   opts.banks || {},
+        names:   { r3mi: 'R-3MI', vtgm: 'V-TGM', guest: 'GAST', ...(opts.names || {}) },
+        empty:   opts.empty || {},
+        onOpen:  opts.onHintOpen  || null,   // e.g. pause a timer while reading
+        onClose: opts.onHintClose || null,   // …resume it afterwards
+      };
+      showHintBar(true);
+      updateHintBar();
+    }
+    function useHint(who) {
+      if (!_hints) return;
+      const name = _hints.names[who] || who;
+      const done = () => { if (_hints.onClose) _hints.onClose(); };
+      if (_hints.onOpen) _hints.onOpen();
+      if (_hints.counts[who] <= 0) {
+        withModalDialogue([ _hints.empty[who] || { speaker: name, text: '…' } ], done);
+        return;
+      }
+      const bank = _hints.banks[who] || [];
+      const idx  = Math.min(_hints.max[who] - _hints.counts[who], bank.length - 1);
+      _hints.counts[who]--;
+      updateHintBar();
+      const entry = bank[idx];
+      if (!entry) { done(); return; }
+      withModalDialogue([ typeof entry === 'string' ? { speaker: name, text: entry } : entry ], done);
+    }
+    function updateHintBar() {
+      if (!_hints) return;
+      const t = _hints.counts.r3mi + _hints.counts.vtgm + _hints.counts.guest;
+      const c = el('hintCount'); if (c) c.textContent = `HINWEISE: ${t} VERFÜGBAR`;
+      [['hintBtnR3MI','r3mi'], ['hintBtnVTGM','vtgm'], ['hintBtnGuest','guest']].forEach(([id, w]) => {
+        const b = el(id); if (b) b.disabled = _hints.counts[w] <= 0;
+      });
+    }
+    function showHintBar(v) { el('hintBar')?.classList.toggle('hidden', !v); }
+
+    // ---- COMPLETION -------------------------------------------------
+    function complete() {
+      if (_completeId)  state.markChapterComplete(_completeId);
+      if (_completeAch) { try { achievements.unlock(_completeAch); } catch (_) {} }
+      el('chapterComplete')?.classList.remove('hidden');
+      const p = el('ccProgress');
+      if (p) p.textContent = `FORTSCHRITT: ${state.get('chaptersCompleted').length} / ${_chapterCount} KAPITEL`;
+    }
+
+    return {
+      build, start,
+      setScene, clearHotspots, addHotspot, showRobots, showGuest, setProgress,
+      showChoices, hideChoices, allSeen,
+      withModalDialogue,
+      initHints, useHint, updateHintBar, showHintBar,
+      complete,
+    };
+  })();
+
+
+  // ═══════════════════════════════════════════════════════════════
   // OVERLAY UTILITIES
   // ═══════════════════════════════════════════════════════════════
   function closeOverlay() {
@@ -649,8 +940,14 @@ const GameEngine = (() => {
     scene,
     puzzle,
     audio,
+    chapter,
     closeOverlay,
     showCredits,
   };
 
 })();
+
+// Top-level `const` lives in the global lexical scope but is NOT a property of
+// `window`. Some call sites (and any inline on* handlers) look the engine up as
+// `window.GameEngine`, so publish it explicitly.
+if (typeof window !== 'undefined') window.GameEngine = GameEngine;
