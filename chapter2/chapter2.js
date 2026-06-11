@@ -929,6 +929,7 @@ const Chapter2 = (() => {
       { speaker:'R-3MI',    text:'„Das ist auch ein Wenn."' },
     ], () => {
       GameEngine.state.markChapterComplete('ch2');
+      try { GameEngine.audio.fanfare(); } catch(_) {}
       GameEngine.state.setFlag('has_eissplitter');
       try { GameEngine.achievements.unlock('ch2_complete'); } catch(_) {}
 

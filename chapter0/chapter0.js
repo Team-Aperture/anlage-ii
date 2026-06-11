@@ -228,6 +228,7 @@ const Chapter0 = (() => {
       ], () => {
         // Mark complete & transition
         GameEngine.state.markChapterComplete('ch0');
+        try { GameEngine.audio.fanfare(); } catch(_) {}
         showChapterComplete();
       });
     }, 1100);

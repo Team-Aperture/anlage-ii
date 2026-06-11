@@ -1091,6 +1091,7 @@ const Chapter1 = (() => {
       clearHotspots();
       addHotspot({ x:30, y:20, w:40, h:60, label:'SEKTOR 02 BETRETEN', fn:() => {
         GameEngine.state.markChapterComplete('ch1');
+        try { GameEngine.audio.fanfare(); } catch(_) {}
         document.getElementById('chapterComplete').classList.remove('hidden');
         document.getElementById('ccProgress').textContent =
           `FORTSCHRITT: ${GameEngine.state.get('chaptersCompleted').length} / 9 KAPITEL`;

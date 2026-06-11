@@ -339,7 +339,9 @@ body {
   position: fixed;
   bottom: 0; left: 0; right: 0;
   padding: var(--sp-md);
-  z-index: 50;
+  /* Above puzzle modals (200) so mid-puzzle hint dialogue is never trapped
+     behind a modal's dark backdrop; below toasts (300) and chapter-end (400). */
+  z-index: 210;
   transform: translateY(110%);
   transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
@@ -597,6 +599,40 @@ body {
   font-size: 11px;
   color: var(--accent-system);
   margin-bottom: 2px;
+}
+
+/* ─── SIGNALNISCHE GLITCH (creepy discovery) ─────────────────── */
+/* Finite, self-settling animations so the toast ends clean and the class
+   can stay on the element without re-triggering the entrance. */
+.signal-toast.glitching {
+  animation: toastIn 0.35s cubic-bezier(0.16,1,0.3,1) forwards,
+             sigFlicker 0.1s steps(2) 9;
+}
+@keyframes sigFlicker {
+  0%, 100% { filter: none; }
+  50%      { filter: brightness(1.5) contrast(1.3) hue-rotate(-18deg); }
+}
+.signal-toast .toast-title { position: relative; }
+.signal-toast.glitching .toast-title::before,
+.signal-toast.glitching .toast-title::after {
+  content: attr(data-text);
+  position: absolute; top: 0; left: 0; width: 100%;
+  overflow: hidden; pointer-events: none;
+}
+.signal-toast.glitching .toast-title::before {
+  color: var(--accent-r3mi); clip-path: inset(0 0 55% 0);
+  animation: sigSlice1 0.16s steps(2) 6 forwards;
+}
+.signal-toast.glitching .toast-title::after {
+  color: var(--accent-system); clip-path: inset(55% 0 0 0);
+  animation: sigSlice2 0.2s steps(2) 5 forwards;
+}
+@keyframes sigSlice1 { from { transform: translateX(0);  opacity: .85; } to { transform: translateX(-3px); opacity: 0; } }
+@keyframes sigSlice2 { from { transform: translateX(0);  opacity: .85; } to { transform: translateX(3px);  opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .signal-toast.glitching { animation: toastIn 0.35s cubic-bezier(0.16,1,0.3,1) forwards; }
+  .signal-toast.glitching .toast-title::before,
+  .signal-toast.glitching .toast-title::after { display: none; }
 }
 
 /* ─── PUZZLE INPUT AREA ──────────────────────────────────────── */
