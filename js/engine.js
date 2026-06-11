@@ -835,11 +835,13 @@ const GameEngine = (() => {
     // ---- HINTS ------------------------------------------------------
     function initHints(opts) {
       _hints = {
-        counts: { ...opts.counts },
-        max:    { ...opts.counts },
-        banks:  opts.banks || {},
-        names:  { r3mi: 'R-3MI', vtgm: 'V-TGM', guest: 'GAST', ...(opts.names || {}) },
-        empty:  opts.empty || {},
+        counts:  { ...opts.counts },
+        max:     { ...opts.counts },
+        banks:   opts.banks || {},
+        names:   { r3mi: 'R-3MI', vtgm: 'V-TGM', guest: 'GAST', ...(opts.names || {}) },
+        empty:   opts.empty || {},
+        onOpen:  opts.onHintOpen  || null,   // e.g. pause a timer while reading
+        onClose: opts.onHintClose || null,   // …resume it afterwards
       };
       showHintBar(true);
       updateHintBar();
@@ -847,8 +849,10 @@ const GameEngine = (() => {
     function useHint(who) {
       if (!_hints) return;
       const name = _hints.names[who] || who;
+      const done = () => { if (_hints.onClose) _hints.onClose(); };
+      if (_hints.onOpen) _hints.onOpen();
       if (_hints.counts[who] <= 0) {
-        withModalDialogue([ _hints.empty[who] || { speaker: name, text: '…' } ]);
+        withModalDialogue([ _hints.empty[who] || { speaker: name, text: '…' } ], done);
         return;
       }
       const bank = _hints.banks[who] || [];
@@ -856,8 +860,8 @@ const GameEngine = (() => {
       _hints.counts[who]--;
       updateHintBar();
       const entry = bank[idx];
-      if (!entry) return;
-      withModalDialogue([ typeof entry === 'string' ? { speaker: name, text: entry } : entry ]);
+      if (!entry) { done(); return; }
+      withModalDialogue([ typeof entry === 'string' ? { speaker: name, text: entry } : entry ], done);
     }
     function updateHintBar() {
       if (!_hints) return;
