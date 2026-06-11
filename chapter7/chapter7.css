@@ -1,0 +1,106 @@
+/* ═══════════════════════════════════════════════════════════════
+   KAPITEL 07 — VEXIERSEKTOR  (guest: F-AXN / FAXENMEIER)
+   Shared chrome lives in css/chapter.css; this file themes the guest
+   accent, the scene backgrounds, the emblem, and the VEXIERSCHLOSS.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  --accent-guest:    #ff4733;              /* F-AXN — pumpkin red */
+  --accent-guest-lo: rgba(255,71,51,0.14);
+}
+
+/* ─── PLACEHOLDER SCENES ──────────────────────────────────────── */
+.scene-ph[data-scene="vexier-dim"] {
+  background:
+    radial-gradient(ellipse at 50% 60%, #1d0a06 0%, #060302 80%),
+    linear-gradient(180deg, #120705 0%, #030101 100%);
+}
+.scene-ph[data-scene="vexier-dim"]::before {
+  content:''; position:absolute; inset:0;
+  background:
+    /* false doors painted on the walls */
+    repeating-linear-gradient(90deg, transparent 0 120px, rgba(255,71,51,0.05) 120px 122px),
+    radial-gradient(circle 3px at 30% 38%, rgba(255,120,90,0.4) 0%, transparent 100%),
+    radial-gradient(circle 2px at 70% 30%, rgba(255,120,90,0.3) 0%, transparent 100%),
+    linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 26%),
+    linear-gradient(0deg, rgba(0,0,0,0.7) 0%, transparent 26%);
+}
+.scene-ph[data-scene="vexier-lit"] {
+  background: radial-gradient(ellipse at 50% 46%, #3a1108 0%, #0a0302 82%);
+}
+.scene-ph[data-scene="vexier-lit"]::before {
+  content:''; position:absolute; inset:0;
+  background:
+    radial-gradient(ellipse 24% 30% at 50% 48%, rgba(255,71,51,0.4) 0%, transparent 70%),
+    radial-gradient(circle 5px at 50% 48%, rgba(255,180,60,0.9) 0%, transparent 100%),
+    linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 22%),
+    linear-gradient(0deg, rgba(0,0,0,0.6) 0%, transparent 22%);
+}
+
+/* ─── EMBLEM GRIN ─────────────────────────────────────────────── */
+.ch7-grin {
+  position:absolute; inset:32% 30% auto 30%; height:30%;
+  border:0 solid var(--accent-guest); border-bottom-width:3px;
+  border-radius:0 0 60% 60% / 0 0 100% 100%;
+  box-shadow: 0 0 12px var(--accent-guest);
+  animation: grinFlicker 3.2s ease-in-out infinite;
+}
+@keyframes grinFlicker { 0%,88%,100%{opacity:.95} 90%{opacity:.35} 93%{opacity:.9} }
+
+/* ═══════════════════════════════════════════════════════════════
+   VEXIERSCHLOSS
+   ═══════════════════════════════════════════════════════════════ */
+.vex-card { max-width: 440px; }
+
+/* the six lock symbols, each a distinct hue + glyph (colour-blind safe) */
+.vex-0 { color:#ff5d5d; }   /* ● */
+.vex-1 { color:#ffd23f; }   /* ▲ */
+.vex-2 { color:#3fc8ff; }   /* ■ */
+.vex-3 { color:#ff6fe0; }   /* ◆ */
+.vex-4 { color:#5dff9b; }   /* ★ */
+.vex-5 { color:#b48cff; }   /* ✚ */
+
+.vex-sym { font-size:18px; line-height:1; margin:0 2px; text-shadow:0 0 6px currentColor; }
+
+.vex-legend {
+  display:flex; align-items:center; justify-content:center; gap:4px;
+  flex-wrap:wrap; margin-bottom:var(--sp-sm);
+  padding-bottom:var(--sp-sm); border-bottom:1px solid var(--bdr-dim);
+}
+.vex-legend-label { font-size:10px; margin-right:6px; }
+
+/* feedback pips */
+.vex-pip { display:inline-block; width:9px; height:9px; border-radius:50%; margin:0 1px; vertical-align:middle; }
+.vex-pip.exact { background:var(--accent-r3mi); box-shadow:0 0 6px var(--accent-r3mi); }
+.vex-pip.misp  { background:transparent; border:1.5px solid var(--text-secondary); }
+.vex-pip.blank { background:var(--bdr-dim); opacity:.35; }
+
+/* history of past guesses */
+.vex-history {
+  max-height:168px; overflow-y:auto; margin-bottom:var(--sp-sm);
+  background:var(--bg-surface); border:1px solid var(--bdr-dim); padding:var(--sp-xs);
+}
+.vex-empty { text-align:center; font-size:11px; color:var(--text-dim); padding:var(--sp-sm); }
+.vex-row { display:flex; align-items:center; gap:var(--sp-sm); padding:3px 6px; }
+.vex-row + .vex-row { border-top:1px solid rgba(255,255,255,0.04); }
+.vex-row-n    { font-size:10px; color:var(--text-dim); min-width:14px; }
+.vex-row-syms { flex:1; letter-spacing:2px; }
+.vex-row-pips { min-width:48px; text-align:right; white-space:nowrap; }
+
+/* the current editable row */
+.vex-current { display:flex; flex-direction:column; align-items:center; gap:var(--sp-sm); margin-bottom:var(--sp-sm); }
+.vex-slots { display:flex; gap:var(--sp-sm); justify-content:center; }
+.vex-slot {
+  width:52px; height:52px; font-size:26px; line-height:1;
+  background:var(--bg-raised); border:2px solid var(--bdr-mid);
+  cursor:pointer; transition:all var(--t-fast);
+  text-shadow:0 0 8px currentColor;
+}
+.vex-slot:hover { border-color:var(--accent-guest); transform:translateY(-2px); }
+.vex-slot:active { transform:translateY(0); }
+.vex-attempts { font-size:11px; letter-spacing:.12em; color:var(--accent-guest); }
+
+@media (max-width: 600px) {
+  .vex-slot { width:46px; height:46px; font-size:22px; }
+  .vex-history { max-height:132px; }
+}

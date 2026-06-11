@@ -642,6 +642,254 @@ const GameEngine = (() => {
 
 
   // ═══════════════════════════════════════════════════════════════
+  // CHAPTER SCAFFOLD
+  // Builds the chrome every chapter shares (sys-bar, title card, scene
+  // wrapper, robot icons, choice overlay, hint bar, chapter-complete) from
+  // one config, and provides the behaviours each chapter used to re-implement
+  // (scene/hotspots, choices, title-card timing, modal-safe dialogue, hints,
+  // completion). A chapter supplies its own puzzle markup + puzzle logic only.
+  // ═══════════════════════════════════════════════════════════════
+  const chapter = (() => {
+    let _modalIds   = [];
+    let _onStart    = null;
+    let _hints      = null;   // { counts, max, banks, names, empty }
+    let _completeId = null;   // e.g. 'ch7'
+    let _completeAch= null;   // e.g. 'ch7_complete'
+    let _chapterCount = 9;    // denominator for the progress readout
+
+    const el = id => document.getElementById(id);
+
+    // ---- BUILD ------------------------------------------------------
+    function build(c) {
+      _modalIds     = c.modals || [];
+      _onStart      = c.onStart || null;
+      _completeId   = c.completeId  || null;
+      _completeAch  = c.completeAch || null;
+      if (c.chapterCount) _chapterCount = c.chapterCount;
+      if (c.title) document.title = c.title;
+      document.body.classList.add('chapter-page');
+
+      const g        = c.guest || {};
+      const guestNm  = g.name || 'GAST';
+      const reactPct = c.reactPct != null ? c.reactPct : 0;
+      const deco     = c.emblemDeco || '';
+      const sImg     = (c.scene && c.scene.img) || '';
+      const sPh      = (c.scene && c.scene.ph)  || '';
+      const next     = c.next || null;
+
+      const frag = document.createElement('div');
+      frag.innerHTML = `
+        <div class="bg-scanlines" aria-hidden="true"></div>
+
+        <header class="sys-bar">
+          <span class="sys-text">KAPITEL ${c.num} // <span class="accent-system">${c.sector}</span></span>
+          <span class="sys-text" id="reactProgress">REAKTIVIERUNG: ${reactPct}%</span>
+        </header>
+
+        <div class="ch-title-card" id="titleCard">
+          <div class="ch-emblem" aria-hidden="true">
+            <div class="ch-ring ch-ring-1"></div>
+            <div class="ch-ring ch-ring-2"></div>
+            ${deco}
+            <span class="ch-num">${c.num}</span>
+          </div>
+          <div class="ch-title-text">
+            <p class="ch-label sys-text">KAPITEL ${c.num}</p>
+            <h1 class="ch-name">${c.name}</h1>
+            <p class="ch-subline">${c.subline || ''}</p>
+          </div>
+        </div>
+
+        <div class="scene-wrapper" id="sceneWrapper">
+          <div class="scene-bg-layer" id="sceneBgLayer">
+            <img src="${sImg}" class="scene-bg" id="sceneBg" alt=""
+                 onerror="this.style.display='none'"${sImg ? '' : ' style="display:none"'}>
+            <div class="scene-ph" id="scenePh" data-scene="${sPh}"></div>
+          </div>
+          <div class="scene-hotspots" id="sceneHotspots"></div>
+
+          <div class="robot-icons hidden" id="robotIcons">
+            <button class="robot-icon r3mi-icon" data-who="r3mi" aria-label="R-3MI">
+              <div class="ri-eye ri-eye-r"></div><span class="ri-label sys-text">R-3MI</span>
+            </button>
+            <button class="robot-icon vtgm-icon" data-who="vtgm" aria-label="V-TGM">
+              <div class="ri-eye ri-eye-g"></div><span class="ri-label sys-text">V-TGM</span>
+            </button>
+            <button class="robot-icon guest-icon hidden" id="guestIcon" data-who="guest" aria-label="${guestNm}">
+              <div class="ri-eye ri-eye-guest"></div><span class="ri-label sys-text">${guestNm}</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="choice-overlay hidden" id="choiceOverlay">
+          <div class="choice-panel">
+            <div class="choice-prompt sys-text" id="choicePrompt"></div>
+            <div class="choice-buttons" id="choiceButtons"></div>
+            <div class="choice-hint sys-text" id="choiceHint"></div>
+          </div>
+        </div>
+
+        <div class="hint-bar hidden" id="hintBar">
+          <span class="sys-text hint-label" id="hintCount">HINWEISE</span>
+          <button class="ka-btn small" id="hintBtnR3MI" data-who="r3mi"><span class="accent-r3mi">[ R-3MI ]</span></button>
+          <button class="ka-btn small" id="hintBtnVTGM" data-who="vtgm"><span class="accent-vtgm">[ V-TGM ]</span></button>
+          <button class="ka-btn small" id="hintBtnGuest" data-who="guest"><span class="accent-guest">[ ${guestNm} ]</span></button>
+        </div>
+
+        ${c.puzzleHTML || ''}
+
+        <div class="chapter-complete hidden" id="chapterComplete">
+          <div class="cc-card">
+            <div class="cc-header sys-text">KAPITEL ${c.num} ABGESCHLOSSEN</div>
+            <div class="cc-title">${next ? next.title : 'SEKTOR FREIGEGEBEN'}</div>
+            <div class="cc-next">${next ? next.label : ''}</div>
+            <div class="cc-progress sys-text" id="ccProgress"></div>
+            <a class="ka-btn primary" href="${next ? next.href : '../index.html'}">[ ${next ? (next.enter || 'EINTRETEN') : 'HAUPTMENÜ'} ]</a>
+            <a class="ka-btn small" href="../index.html">[ HAUPTMENÜ ]</a>
+          </div>
+        </div>
+      `;
+      while (frag.firstChild) document.body.appendChild(frag.firstChild);
+
+      document.querySelectorAll('#robotIcons .robot-icon').forEach(b =>
+        b.addEventListener('click', () => { if (c.onRobot) c.onRobot(b.dataset.who); }));
+      [['hintBtnR3MI','r3mi'], ['hintBtnVTGM','vtgm'], ['hintBtnGuest','guest']].forEach(([id]) => {
+        const b = el(id); if (b) b.addEventListener('click', () => useHint(b.dataset.who));
+      });
+    }
+
+    // ---- SCENE ------------------------------------------------------
+    function setScene(key, imgSrc) {
+      const ph = el('scenePh'), img = el('sceneBg');
+      if (ph) ph.dataset.scene = key;
+      if (img && imgSrc) { img.src = imgSrc; img.style.display = ''; }
+    }
+    function clearHotspots() { const h = el('sceneHotspots'); if (h) h.innerHTML = ''; }
+    function addHotspot(cfg) {
+      const e = document.createElement('button');
+      e.className = 'hotspot' + (cfg.cls ? ' ' + cfg.cls : '');
+      e.setAttribute('aria-label', cfg.label || 'Interagieren');
+      e.style.cssText = `left:${cfg.x}%;top:${cfg.y}%;width:${cfg.w || 7}%;height:${cfg.h || 7}%;`;
+      if (cfg.label) {
+        const l = document.createElement('span');
+        l.className = 'hotspot-label'; l.textContent = cfg.label; e.appendChild(l);
+      }
+      e.addEventListener('click', cfg.fn);
+      el('sceneHotspots').appendChild(e);
+      return e;
+    }
+    function showRobots(v) { el('robotIcons')?.classList.toggle('hidden', !v); }
+    function showGuest(v)  { el('guestIcon')?.classList.toggle('hidden', !v); }
+    function setProgress(pct) { const e = el('reactProgress'); if (e) e.textContent = `REAKTIVIERUNG: ${pct}%`; }
+
+    // ---- CHOICES ----------------------------------------------------
+    function showChoices(cfg) {
+      const overlay = el('choiceOverlay'), btns = el('choiceButtons');
+      const prompt = el('choicePrompt'), hint = el('choiceHint');
+      prompt.textContent = cfg.prompt || 'WÄHLE EINE ANTWORT:';
+      hint.textContent   = cfg.hint   || '';
+      btns.innerHTML     = '';
+      cfg.choices.forEach(c => {
+        const btn = document.createElement('button');
+        btn.className   = 'choice-btn' + (c.seen ? ' seen' : '');
+        btn.textContent = c.label;
+        btn.addEventListener('click', () => {
+          c.seen = true; hideChoices();
+          if (c.fn) { c.fn(); return; }
+          dialogue.load(c.lines, () => { if (cfg.onAfterChoice) cfg.onAfterChoice(c.key, cfg); });
+        });
+        btns.appendChild(btn);
+      });
+      overlay.classList.remove('hidden');
+      requestAnimationFrame(() => overlay.classList.add('visible'));
+    }
+    function hideChoices() {
+      const overlay = el('choiceOverlay');
+      overlay.classList.remove('visible');
+      setTimeout(() => overlay.classList.add('hidden'), 410);
+    }
+    function allSeen(choices) { return choices.every(c => c.seen); }
+
+    // ---- TITLE CARD -------------------------------------------------
+    function start(firstScene, delay) {
+      const card = el('titleCard');
+      const fn = firstScene || _onStart;
+      setTimeout(() => {
+        card.classList.add('fading');
+        setTimeout(() => { card.style.display = 'none'; if (fn) fn(); }, 700);
+      }, delay || 3000);
+    }
+
+    // ---- MODAL-SAFE DIALOGUE ---------------------------------------
+    // Hide any open puzzle modal while a dialogue plays, then restore it,
+    // so dialogue (z-50) is never trapped behind a modal (z-200).
+    function withModalDialogue(lines, after) {
+      const open = _modalIds.map(el).find(m => m && !m.classList.contains('hidden'));
+      if (open) open.classList.add('hidden');
+      dialogue.load(lines, () => {
+        if (open) open.classList.remove('hidden');
+        if (after) after();
+      });
+    }
+
+    // ---- HINTS ------------------------------------------------------
+    function initHints(opts) {
+      _hints = {
+        counts: { ...opts.counts },
+        max:    { ...opts.counts },
+        banks:  opts.banks || {},
+        names:  { r3mi: 'R-3MI', vtgm: 'V-TGM', guest: 'GAST', ...(opts.names || {}) },
+        empty:  opts.empty || {},
+      };
+      showHintBar(true);
+      updateHintBar();
+    }
+    function useHint(who) {
+      if (!_hints) return;
+      const name = _hints.names[who] || who;
+      if (_hints.counts[who] <= 0) {
+        withModalDialogue([ _hints.empty[who] || { speaker: name, text: '…' } ]);
+        return;
+      }
+      const bank = _hints.banks[who] || [];
+      const idx  = Math.min(_hints.max[who] - _hints.counts[who], bank.length - 1);
+      _hints.counts[who]--;
+      updateHintBar();
+      const entry = bank[idx];
+      if (!entry) return;
+      withModalDialogue([ typeof entry === 'string' ? { speaker: name, text: entry } : entry ]);
+    }
+    function updateHintBar() {
+      if (!_hints) return;
+      const t = _hints.counts.r3mi + _hints.counts.vtgm + _hints.counts.guest;
+      const c = el('hintCount'); if (c) c.textContent = `HINWEISE: ${t} VERFÜGBAR`;
+      [['hintBtnR3MI','r3mi'], ['hintBtnVTGM','vtgm'], ['hintBtnGuest','guest']].forEach(([id, w]) => {
+        const b = el(id); if (b) b.disabled = _hints.counts[w] <= 0;
+      });
+    }
+    function showHintBar(v) { el('hintBar')?.classList.toggle('hidden', !v); }
+
+    // ---- COMPLETION -------------------------------------------------
+    function complete() {
+      if (_completeId)  state.markChapterComplete(_completeId);
+      if (_completeAch) { try { achievements.unlock(_completeAch); } catch (_) {} }
+      el('chapterComplete')?.classList.remove('hidden');
+      const p = el('ccProgress');
+      if (p) p.textContent = `FORTSCHRITT: ${state.get('chaptersCompleted').length} / ${_chapterCount} KAPITEL`;
+    }
+
+    return {
+      build, start,
+      setScene, clearHotspots, addHotspot, showRobots, showGuest, setProgress,
+      showChoices, hideChoices, allSeen,
+      withModalDialogue,
+      initHints, useHint, updateHintBar, showHintBar,
+      complete,
+    };
+  })();
+
+
+  // ═══════════════════════════════════════════════════════════════
   // OVERLAY UTILITIES
   // ═══════════════════════════════════════════════════════════════
   function closeOverlay() {
@@ -688,6 +936,7 @@ const GameEngine = (() => {
     scene,
     puzzle,
     audio,
+    chapter,
     closeOverlay,
     showCredits,
   };
