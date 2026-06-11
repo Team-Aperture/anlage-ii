@@ -255,6 +255,12 @@
 
     initParticles();
 
+    // Reflect the persisted mute state on the title menu toggle.
+    const at = document.getElementById('audioToggle');
+    if (at && window.GameEngine && GameEngine.audio) {
+      at.textContent = GameEngine.audio.isMuted() ? '[ TON: AUS ]' : '[ TON: AN ]';
+    }
+
     runBootSequence(() => {
       revealUI();
       updateStatusBar();

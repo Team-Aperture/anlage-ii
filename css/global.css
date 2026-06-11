@@ -28,7 +28,7 @@
   --accent-g3:  #7ab83a;   /* J4W-A3    — workshop wood-green */
   --accent-g4:  #f3c623;   /* B-RADF1SH — yellow (gelber Fisch) */
   --accent-g5:  #b89a3a;   /* T-FLON14  — forest trail gold */
-  --accent-g6:  #9a3abf;   /* ASP-1024  — steganography violet */
+  --accent-g6:  #b14ad6;   /* ASP-1024  — steganography violet */
   --accent-g7:  #3a7abf;   /* AGN-H3R   — jigsaw puzzle blue */
 
   /* Text */
@@ -393,6 +393,45 @@ body {
   font-weight: 700;
   color: var(--spk-color, var(--text-dim));
   line-height: 1;
+}
+
+/* ─── ANIMATED ROBOT FACES (dialogue portraits) ──────────────────
+   Drawn in SVG; personality lives in the eye + idle class. The face
+   glows brighter and the mouth bar oscillates while the speaker is
+   "speaking" (.dlg-portrait.speaking).                              */
+.bot-face { width: 74px; height: 82px; overflow: visible; filter: drop-shadow(0 0 3px var(--bot-color)); transition: filter var(--t-fast); }
+.bot-frame      { fill: rgba(255,255,255,0.025); stroke: var(--bot-color); stroke-width: 2; }
+.bot-eye        { fill: var(--bot-color); transform-box: fill-box; transform-origin: center; }
+.bot-eyes       { transform-box: fill-box; transform-origin: center; }
+.bot-mouth      { fill: var(--bot-color); opacity: .45; transform-box: fill-box; transform-origin: center; }
+.bot-antenna    { stroke: var(--bot-color); stroke-width: 2; }
+.bot-antenna-tip{ fill: var(--bot-color); }
+.bot-scan       { fill: var(--bot-color); opacity: .55; }
+
+.dlg-portrait.speaking .bot-face  { filter: drop-shadow(0 0 8px var(--bot-color)); }
+.dlg-portrait.speaking .bot-mouth { animation: botMouth .16s steps(2) infinite; }
+@keyframes botMouth { 0%{transform:scaleY(1)} 50%{transform:scaleY(2.6)} 100%{transform:scaleY(1)} }
+
+/* idle personalities */
+.face-calm   .bot-eye  { animation: botBlink 4.2s infinite; }
+.face-dart   .bot-eyes { animation: botDart 2.3s ease-in-out infinite; }
+.face-dart   .bot-eye  { animation: botBlink 3s infinite; }
+.face-jitter .bot-eye  { animation: botJitter .11s steps(2) infinite; }
+.face-zip    .bot-eye  { animation: botZip 1.5s ease-in-out infinite; }
+.face-slit   .bot-eye  { transform: scaleY(.18); animation: botSlit 6s ease-in-out infinite; }
+.face-bob              { animation: botBob 3.4s ease-in-out infinite; }
+.face-bob    .bot-eye  { animation: botBlink 4s infinite; }
+.face-scan   .bot-scan { animation: botScan 1.8s ease-in-out infinite; }
+
+@keyframes botBlink  { 0%,92%,100%{transform:scaleY(1)} 96%{transform:scaleY(.1)} }
+@keyframes botDart   { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-3px)} 60%{transform:translateX(3px)} }
+@keyframes botJitter { 0%{transform:translate(0,0)} 50%{transform:translate(1px,-1px)} 100%{transform:translate(-1px,1px)} }
+@keyframes botZip    { 0%,100%{transform:translateX(-6px)} 50%{transform:translateX(6px)} }
+@keyframes botSlit   { 0%,88%,100%{transform:scaleY(.18)} 93%{transform:scaleY(1)} }
+@keyframes botBob    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-2px)} }
+@keyframes botScan   { 0%,100%{opacity:.2} 50%{opacity:.85} }
+@media (prefers-reduced-motion: reduce) {
+  .bot-face, .bot-eye, .bot-eyes, .bot-mouth, .bot-scan { animation: none !important; }
 }
 
 .dlg-body {

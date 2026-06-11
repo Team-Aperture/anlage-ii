@@ -99,7 +99,7 @@ const GameEngine = (() => {
       { id: 'ch3_complete',     icon: '◎', title: 'Beobachtet',           desc: 'Kapitel 3 abgeschlossen.' },
       { id: 'ch4_complete',     icon: '⊞', title: 'Der Erste',            desc: 'Den Würfel geknackt. Als Erster.' },
       { id: 'ch5_complete',     icon: '▶', title: 'Beschleunigt',         desc: 'Den Förderlauf bestanden. Ohne stehenzubleiben.' },
-      { id: 'ch6_complete',     icon: '◫', title: 'Rutschfest',           desc: 'Kapitel 6 abgeschlossen.' },
+      { id: 'ch6_complete',     icon: '◫', title: 'Im Bild verborgen',     desc: 'Den versteckten Code in der Dunkelkammer gefunden.' },
       { id: 'ch7_complete',     icon: '▣', title: 'Defragmentiert',       desc: 'Kapitel 7 abgeschlossen.' },
       { id: 'ch8_complete',     icon: '◍', title: 'Meta',                 desc: 'Kapitel 8 abgeschlossen.' },
       { id: 'ch9_complete',     icon: '✦', title: 'Reaktivierung',        desc: 'Alle Sektoren wiederhergestellt.' },
@@ -124,6 +124,7 @@ const GameEngine = (() => {
       list.push(id);
       state.set('achievementsUnlocked', list);
       _showToast(def);
+      try { audio.achievement(); } catch (_) {}
     }
 
     function _showToast(def) {
@@ -195,13 +196,13 @@ const GameEngine = (() => {
         source: 'The Transmission // Fragment 03',
       },
       {
-        id: 'sig_04', chapter: 7, number: '04 / 05',
+        id: 'sig_04', chapter: 6, number: '04 / 05',
         title: 'Übertragung 04',
         text:  '…sie hören zu. beide. seit anfang an…',
         source: 'The Transmission // Fragment 04',
       },
       {
-        id: 'sig_05', chapter: 8, number: '05 / 05',
+        id: 'sig_05', chapter: 7, number: '05 / 05',
         title: 'Übertragung 05',
         text:  '…SSTV. frequenz unbekannt. bitte empfangen. hoffnung verbleibt…',
         source: 'The Transmission // Fragment 05',
@@ -285,6 +286,48 @@ const GameEngine = (() => {
       'AGN-H3R':   { colorVar: '--accent-g7',      placeholder: 'AG' },
     };
 
+    // Per-character animated face: personality lives in the eye + idle class.
+    const FACES = {
+      'R-3MI':     { eyes: 1, eyeR: 9, idle: 'face-dart',   antenna: true  }, // anxious — eye darts
+      'V-TGM':     { eyes: 2, eyeR: 6, idle: 'face-calm'                   }, // deadpan — steady
+      'SYSTEM':    { eyes: 0,          idle: 'face-scan'                   }, // scanlines, no eye
+      'F-RØ5CHI':  { eyes: 2, eyeR: 7, idle: 'face-bob'                    }, // warm — gentle bob
+      'L-UX':      { eyes: 1, eyeR: 8, idle: 'face-jitter', antenna: true  }, // hyper — jitter
+      'J4W-A3':    { eyes: 2, eyeR: 6, idle: 'face-calm'                   },
+      'B-RADF1SH': { eyes: 2, eyeR: 6, idle: 'face-calm'                   }, // confident — steady
+      'T-FLON14':  { eyes: 1, eyeR: 8, idle: 'face-zip'                    }, // fast — eye zips
+      'ASP-1024':  { eyes: 1, eyeR: 9, idle: 'face-slit', slit: true       }, // silent — barely open
+      'AGN-H3R':   { eyes: 2, eyeR: 6, idle: 'face-calm'                   },
+    };
+
+    function _faceSVG(speaker) {
+      const spk = SPEAKERS[speaker] || SPEAKERS['SYSTEM'];
+      const f   = FACES[speaker]    || FACES['SYSTEM'];
+      const col = `var(${spk.colorVar})`;
+      let eyes = '';
+      if (f.slit) {
+        eyes = '<ellipse class="bot-eye" cx="32" cy="32" rx="11" ry="9"/>';
+      } else if (f.eyes === 2) {
+        eyes = `<circle class="bot-eye" cx="24" cy="31" r="${f.eyeR}"/>`
+             + `<circle class="bot-eye" cx="40" cy="31" r="${f.eyeR}"/>`;
+      } else if (f.eyes === 1) {
+        eyes = `<circle class="bot-eye" cx="32" cy="31" r="${f.eyeR}"/>`;
+      } else {
+        eyes = '<rect class="bot-scan" x="14" y="22" width="36" height="3" rx="1.5"/>'
+             + '<rect class="bot-scan" x="14" y="30" width="36" height="3" rx="1.5"/>'
+             + '<rect class="bot-scan" x="14" y="38" width="36" height="3" rx="1.5"/>';
+      }
+      const antenna = f.antenna
+        ? '<line class="bot-antenna" x1="32" y1="6" x2="32" y2="-3"/><circle class="bot-antenna-tip" cx="32" cy="-4" r="2.5"/>'
+        : '';
+      return `<svg class="bot-face ${f.idle}" viewBox="-4 -10 72 78" style="--bot-color:${col}" aria-hidden="true">`
+           +   antenna
+           +   '<rect class="bot-frame" x="6" y="6" width="52" height="52" rx="12"/>'
+           +   `<g class="bot-eyes">${eyes}</g>`
+           +   '<rect class="bot-mouth" x="22" y="47" width="20" height="3" rx="1.5"/>'
+           + '</svg>';
+    }
+
     let _queue      = [];
     let _index      = 0;
     let _typing     = false;
@@ -343,7 +386,6 @@ const GameEngine = (() => {
       const spkEl   = document.getElementById('dlgSpeaker');
       const textEl  = document.getElementById('dlgText');
       const subEl   = document.getElementById('dlgSub');
-      const phEl    = document.getElementById('dlgPlaceholder');
       const advEl   = document.getElementById('dlgAdvance');
       const portEl  = document.getElementById('dlgPortrait');
 
@@ -352,37 +394,41 @@ const GameEngine = (() => {
       spkEl.style.color  = colorVal;
       textEl.textContent = '';
       subEl.textContent  = line.subtitle || '';
-      phEl.textContent   = spk.placeholder;
       advEl.style.opacity = '0';
 
-      // Portrait image
-      const existImg = portEl.querySelector('img');
-      if (existImg) existImg.remove();
+      // Portrait: a CG image if the line provides one, else an animated face.
       if (line.portrait) {
+        portEl.innerHTML = '';
         const img = document.createElement('img');
         img.src = line.portrait;
         img.alt = line.speaker;
-        img.onerror = () => img.remove();
+        img.onerror = () => { portEl.innerHTML = _faceSVG(line.speaker); };
         portEl.appendChild(img);
+      } else {
+        portEl.innerHTML = _faceSVG(line.speaker);
       }
 
       _container.classList.add('visible');
+      portEl.classList.add('speaking');
       _typing = true;
 
       _typeText(textEl, line.text, 28, () => {
         _typing = false;
+        portEl.classList.remove('speaking');
         advEl.style.opacity = '1';
-      });
+      }, line.speaker);
     }
 
-    function _typeText(el, text, speed, onDone) {
+    function _typeText(el, text, speed, onDone, speaker) {
       if (_typeTimer) clearInterval(_typeTimer);
       const full = text || '';
       let i = 0;
       el.textContent = '';
       if (!full.length) { if (onDone) onDone(); return; }
       _typeTimer = setInterval(() => {
-        el.textContent += full[i++];
+        const ch = full[i++];
+        el.textContent += ch;
+        if (ch !== ' ' && i % 3 === 0) audio.blip(speaker);
         if (i >= full.length) {
           clearInterval(_typeTimer);
           _typeTimer = null;
@@ -399,6 +445,7 @@ const GameEngine = (() => {
         _typeTimer = null;
         _typing = false;
         document.getElementById('dlgText').textContent = _queue[_index].text || '';
+        document.getElementById('dlgPortrait')?.classList.remove('speaking');
         document.getElementById('dlgAdvance').style.opacity = '1';
         return;
       }
@@ -408,6 +455,7 @@ const GameEngine = (() => {
 
     function hide() {
       _container?.classList.remove('visible');
+      document.getElementById('dlgPortrait')?.classList.remove('speaking');
     }
 
     return { load, advance, hide };
@@ -486,6 +534,75 @@ const GameEngine = (() => {
 
 
   // ═══════════════════════════════════════════════════════════════
+  // AUDIO ENGINE — procedural Web Audio, no files
+  // ═══════════════════════════════════════════════════════════════
+  const audio = (() => {
+    let ctx = null, master = null, muted = false;
+
+    function ensure() {
+      if (ctx) return ctx;
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        ctx = new AC();
+        master = ctx.createGain();
+        master.gain.value = 0.5;
+        master.connect(ctx.destination);
+      } catch (_) { ctx = null; }
+      return ctx;
+    }
+    function resume() { const c = ensure(); if (c && c.state === 'suspended') c.resume(); }
+
+    function tone(o) {
+      if (muted) return;
+      const c = ensure(); if (!c) return;
+      const { freq = 440, type = 'sine', dur = 0.08, vol = 0.25, glideTo = null, delay = 0 } = o || {};
+      const t0 = c.currentTime + delay;
+      const osc = c.createOscillator(), g = c.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t0);
+      if (glideTo) osc.frequency.exponentialRampToValueAtTime(Math.max(20, glideTo), t0 + dur);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.linearRampToValueAtTime(vol, t0 + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(g).connect(master);
+      osc.start(t0); osc.stop(t0 + dur + 0.02);
+    }
+
+    // Per-character speech voice — Portal-style chirps, one per few letters.
+    const VOICE = {
+      'R-3MI':     { base: 520, type: 'square',   spread: 70  },
+      'V-TGM':     { base: 196, type: 'sine',     spread: 24  },
+      'SYSTEM':    { base: 300, type: 'triangle', spread: 0   },
+      'F-RØ5CHI':  { base: 430, type: 'sine',     spread: 110 },
+      'L-UX':      { base: 720, type: 'square',   spread: 150 },
+      'B-RADF1SH': { base: 290, type: 'triangle', spread: 55  },
+      'T-FLON14':  { base: 470, type: 'sawtooth', spread: 80  },
+      'ASP-1024':  { base: 110, type: 'sine',     spread: 8   },
+    };
+    function blip(speaker) {
+      const v = VOICE[speaker] || VOICE['SYSTEM'];
+      tone({ freq: v.base + (Math.random() * 2 - 1) * v.spread, type: v.type, dur: 0.045, vol: 0.10 });
+    }
+    function click()       { tone({ freq: 660, type: 'square',   dur: 0.025, vol: 0.10 }); }
+    function solve()       { [523, 659, 784, 1047].forEach((f, i) => tone({ freq: f, type: 'triangle', dur: 0.2, vol: 0.16, delay: i * 0.085 })); }
+    function fail()        { tone({ freq: 180, type: 'sawtooth', dur: 0.22, vol: 0.16, glideTo: 80 }); }
+    function achievement() { [659, 880, 1318].forEach((f, i) => tone({ freq: f, type: 'sine', dur: 0.34, vol: 0.18, delay: i * 0.11 })); }
+
+    function setMuted(m) { muted = !!m; }
+    function isMuted()   { return muted; }
+    function toggleMute() {
+      muted = !muted;
+      try { state.set('muted', muted); } catch (_) {}
+      if (!muted) click();
+      return muted;
+    }
+
+    return { ensure, resume, tone, blip, click, solve, fail, achievement, setMuted, isMuted, toggleMute };
+  })();
+
+
+  // ═══════════════════════════════════════════════════════════════
   // OVERLAY UTILITIES
   // ═══════════════════════════════════════════════════════════════
   function closeOverlay() {
@@ -499,7 +616,10 @@ const GameEngine = (() => {
   }
 
   document.addEventListener('click', e => {
-    if (e.target?.id === 'overlayBackdrop') closeOverlay();
+    audio.resume();
+    if (e.target?.id === 'overlayBackdrop') { closeOverlay(); return; }
+    const btn = e.target.closest && e.target.closest('button');
+    if (btn && !btn.disabled) audio.click();
   });
 
 
@@ -508,6 +628,10 @@ const GameEngine = (() => {
   // ═══════════════════════════════════════════════════════════════
   (function init() {
     state.load();
+    audio.setMuted(!!state.get('muted'));
+    const wake = () => audio.resume();
+    document.addEventListener('pointerdown', wake);
+    document.addEventListener('keydown', wake);
     if (state.get('firstPlay')) {
       state.set('firstPlay', false);
       setTimeout(() => achievements.unlock('first_boot'), 1200);
@@ -524,6 +648,7 @@ const GameEngine = (() => {
     dialogue,
     scene,
     puzzle,
+    audio,
     closeOverlay,
     showCredits,
   };

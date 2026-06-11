@@ -268,7 +268,7 @@ const Chapter5 = (() => {
   // FÖRDERLAUF — 20 rapid mixed micro-tasks under one global clock
   // ═══════════════════════════════════════════════════════════════
   const ROUNDS    = 20;
-  const FL_TIME   = 70;   // seconds on the clock (tunable — lower = meaner)
+  const FL_TIME   = 60;   // seconds on the clock (tunable — lower = meaner)
   const FL_PENALTY = 3;   // seconds lost per wrong tap
   const TICK      = 100;
 
