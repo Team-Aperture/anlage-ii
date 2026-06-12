@@ -735,6 +735,10 @@ const GameEngine = (() => {
       const a = new Audio(BASE + TRACKS[id]);
       a.loop = opts.loop !== false;
       _vol(a, 0);
+      // A missing file errors on load → stop retrying it (no 404 spam while the
+      // soundtrack is still placeholders). Autoplay-blocked files don't error,
+      // so they stay pending and start on the next gesture.
+      a.addEventListener('error', () => { if (pending === id) pending = null; }, { once: true });
       const p = a.play();
       if (p && p.then) p.then(() => { pending = null; _fade(a, VOL, opts.fade || 900); }).catch(() => { /* blocked or missing — retry on gesture */ });
       const old = cur;
