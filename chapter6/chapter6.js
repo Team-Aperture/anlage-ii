@@ -276,19 +276,24 @@ const Chapter6 = (() => {
     const img = ctx.createImageData(STEG_W, STEG_H);
     const d = img.data;
     const t = ST.threshold;
+    const GRAIN = 44;
+    const gr = () => Math.round((Math.random() * 2 - 1) * GRAIN);
+    const clamp = v => v < 0 ? 0 : v > 255 ? 255 : v;
     for (let y = 0; y < STEG_H; y++) {
       const srcY = ST.flip ? (STEG_H - 1 - y) : y;          // FLIP mirrors the whole frame vertically
       for (let x = 0; x < STEG_W; x++) {
         const si = srcY * STEG_W + x;
         let r, g, b;
         if (ST.channel === 'rgb') {
-          r = ST.R[si]; g = ST.G[si]; b = ST.B[si];
+          // The full RGB scan is deliberately useless: heavy colour grain buries
+          // every channel's faint letter. You must take the channels apart.
+          r = clamp(ST.R[si] + gr()); g = clamp(ST.G[si] + gr()); b = clamp(ST.B[si] + gr());
           if (ST.invert) { r = 255-r; g = 255-g; b = 255-b; }
-          if (t > 0) { const lum = (r+g+b)/3; const v = lum >= t ? 255 : 0; r = g = b = v; }
         } else {
           let val = ST.channel === 'r' ? ST.R[si] : ST.channel === 'g' ? ST.G[si] : ST.B[si];
           if (ST.invert) val = 255 - val;
-          if (t > 0) val = val >= t ? 255 : 0;
+          if (t > 0) { val = val >= t ? 255 : 0; }            // clean threshold reveals the letter
+          else { val = clamp(val + gr()); }                   // raw preview is buried in grain
           r = g = b = val;
         }
         const p = (y * STEG_W + x) * 4; d[p] = r; d[p+1] = g; d[p+2] = b; d[p+3] = 255;
@@ -320,13 +325,13 @@ const Chapter6 = (() => {
     });
     GameEngine.dialogue.load([
       { speaker:'SYSTEM', text:'BILDFORENSIK // KANAL · INVERT · FLIP · SCHWELLE.' },
-      { speaker:'ASP-1024', text:'„Vier Zeichen. Jedes versteckt sich anders. Eins steht. Eins steht kopf. Eins ist umgekehrt. Eins ist beides. Lies sie der Reihe nach — von links."' },
+      { speaker:'ASP-1024', text:'„Das ganze Bild ist nur Rauschen. Nimm einen Kanal. Heb die Schwelle, bis EIN Zeichen aus dem Grau tritt. Vier Spalten, vier Wege."' },
     ], () => {
       document.getElementById('stegModal').classList.remove('hidden');
       const inp = document.getElementById('stegInput'); if (inp) inp.value = '';
       syncStegUI();
       drawCanvas();
-      setStegStatus('Vier Spalten. Vier Verstecke. Keine Ansicht zeigt alles.', '');
+      setStegStatus('Das volle Bild ist nur Statik. Nimm die Kanäle einzeln — und heb die Schwelle.', '');
     });
   }
 

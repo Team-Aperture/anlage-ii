@@ -287,7 +287,7 @@ const GameEngine = (() => {
       'T-FLON14':  { colorVar: '--accent-g5',      placeholder: 'T' },
       'ASP-1024':  { colorVar: '--accent-g6',      placeholder: 'A' },
       'AGN-H3R':   { colorVar: '--accent-g7',      placeholder: 'AG' },
-      'F-AXN':     { colorVar: '--accent-g8',      placeholder: 'FX' },
+      'FAX-N':     { colorVar: '--accent-g8',      placeholder: 'FX' },
     };
 
     // Each face echoes the character's real design (form) + a personality (idle).
@@ -302,7 +302,7 @@ const GameEngine = (() => {
       'T-FLON14':  { form: 'pan',      idle: 'face-zip'    }, // pan-bot, fast
       'ASP-1024':  { form: 'mouse',    idle: 'face-calm'   }, // mouse, silent
       'AGN-H3R':   { form: 'skull',    idle: 'face-calm'   }, // skull
-      'F-AXN':     { form: 'pumpkin',  idle: 'face-flicker'}, // jack-o'-lantern
+      'FAX-N':     { form: 'pumpkin',  idle: 'face-flicker'}, // jack-o'-lantern
     };
 
     function _faceSVG(speaker) {
@@ -623,7 +623,7 @@ const GameEngine = (() => {
       'T-FLON14':  { base: 470, type: 'sawtooth', spread: 80,  vol: 0.11 },
       'ASP-1024':  { base: 176, type: 'sine',     spread: 16,  vol: 0.16 }, // soft + low, but audible
       'AGN-H3R':   { base: 96,  type: 'sine',     spread: 14,  vol: 0.14 }, // deep, ominous (skull)
-      'F-AXN':     { base: 610, type: 'square',   spread: 200, vol: 0.12 }, // manic, playful, wide
+      'FAX-N':     { base: 610, type: 'square',   spread: 200, vol: 0.12 }, // manic, playful, wide
     };
     function blip(speaker) {
       const v = VOICE[speaker] || VOICE['SYSTEM'];
@@ -697,7 +697,7 @@ const GameEngine = (() => {
       theme_bradf1sh: 'theme_bradfisch.mp3',
       theme_tflon:    'theme_tflon14.mp3',
       theme_asp:      'theme_asp1024.mp3',
-      theme_faxn:     'theme_faxenmeier.mp3',
+      theme_faxn:     'theme_faxn.mp3',
       theme_agn:      'theme_agnher.mp3',
       // — puzzle underscores —
       puzzle_calm:    'puzzle_calm.mp3',
@@ -1025,8 +1025,45 @@ const GameEngine = (() => {
   }
 
   function showCredits() {
-    document.getElementById('creditsOverlay')?.classList.remove('hidden');
-    document.getElementById('overlayBackdrop')?.classList.remove('hidden');
+    // Build the overlay on the fly if the page doesn't have one (so credits
+    // work on chapter pages too, e.g. the Ch8 end screen). All overlay/credits
+    // CSS lives in global.css, which every page loads.
+    let back = document.getElementById('overlayBackdrop');
+    if (!back) {
+      back = document.createElement('div');
+      back.className = 'overlay-backdrop hidden';
+      back.id = 'overlayBackdrop';
+      back.addEventListener('click', closeOverlay);
+      document.body.appendChild(back);
+    }
+    let panel = document.getElementById('creditsOverlay');
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.className = 'overlay-panel hidden';
+      panel.id = 'creditsOverlay';
+      panel.setAttribute('role', 'dialog');
+      panel.setAttribute('aria-label', 'Credits');
+      panel.innerHTML = `
+        <div class="overlay-card">
+          <h2 class="overlay-title">CREDITS</h2>
+          <div class="overlay-content credits-content">
+            <div class="credits-roll">
+              <p><span class="accent-r3mi">R-3MI</span><br><span class="sys-text">Musik · Code</span></p>
+              <p class="credits-divider">──────────────────────────</p>
+              <p><span class="accent-vtgm">V-TGM</span><br><span class="sys-text">Playtesting · Story</span></p>
+              <p class="credits-divider">──────────────────────────</p>
+              <p class="sys-text">Code-Unterstützung</p>
+              <p style="font-size:13px; color:var(--text-secondary); margin-top:4px;">Claude AI — entwickelt von Anthropic<br>prüft, ob der Code funktioniert</p>
+              <p class="credits-divider">──────────────────────────</p>
+              <p class="sys-text">Ein Team_Aperture Geocaching-Projekt.</p>
+            </div>
+          </div>
+          <button class="ka-btn" onclick="GameEngine.closeOverlay()">[ SCHLIESSEN ]</button>
+        </div>`;
+      document.body.appendChild(panel);
+    }
+    panel.classList.remove('hidden');
+    back.classList.remove('hidden');
   }
 
   document.addEventListener('click', e => {

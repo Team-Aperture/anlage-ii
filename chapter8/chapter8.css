@@ -68,6 +68,20 @@
 .jig-bar { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-sm); margin-bottom: var(--sp-sm); }
 .jig-bar .sys-text { font-size: 11px; letter-spacing: .12em; color: var(--accent-agn); }
 
+/* ─── END SCREEN — coordinates + bonus teaser ─────────────────── */
+.cc-coords { text-align: center; margin: 4px 0 var(--sp-xs); }
+.cc-coords-label { font-size: 10px; letter-spacing: .25em; color: var(--accent-agn); }
+.cc-coords-value {
+  display: inline-block; margin-top: 6px; padding: 8px 16px;
+  font-family: var(--font-mono); font-size: clamp(16px, 4.5vw, 24px); letter-spacing: .06em;
+  color: #fff; text-shadow: 0 0 14px var(--accent-agn);
+  border: 1px solid var(--accent-agn); background: rgba(214,218,226,0.06);
+}
+.cc-teaser {
+  max-width: 340px; margin: 0 auto var(--sp-xs); line-height: 1.5;
+  font-size: 11px; color: var(--text-secondary);
+}
+
 @media (max-width: 600px) {
   .jig-bar .sys-text { font-size: 10px; }
 }

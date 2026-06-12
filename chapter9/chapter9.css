@@ -1,0 +1,127 @@
+/* ═══════════════════════════════════════════════════════════════
+   KAPITEL 09 — DIE KAMMER, DIE ES NICHT GIBT  (hidden bonus)
+   Shared chrome from css/chapter.css; this themes the void, the anomaly,
+   and the reveal (shaking/red dialogue, sinister portraits, dark end).
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  --accent-guest:    #b13a3a;              /* ominous red for the chrome */
+  --accent-guest-lo: rgba(177,58,58,0.14);
+}
+
+/* ─── VOID SCENE ──────────────────────────────────────────────── */
+.scene-ph[data-scene="void-dim"] {
+  background:
+    radial-gradient(ellipse at 50% 50%, #0a0608 0%, #020102 85%),
+    linear-gradient(180deg, #070406 0%, #010101 100%);
+}
+.scene-ph[data-scene="void-dim"]::before {
+  content:''; position:absolute; inset:0;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 3px, rgba(177,58,58,0.04) 3px 4px),
+    radial-gradient(circle 2px at 30% 40%, rgba(177,58,58,0.3) 0%, transparent 100%),
+    radial-gradient(circle 2px at 68% 58%, rgba(120,90,160,0.25) 0%, transparent 100%);
+  opacity: .7;
+}
+
+/* ─── EMBLEM ANOMALY ──────────────────────────────────────────── */
+.ch9-anomaly {
+  position:absolute; inset:36%;
+  background: repeating-linear-gradient(45deg, #b13a3a 0 3px, transparent 3px 6px);
+  mix-blend-mode: screen; opacity:.8;
+  animation: anomalyFlick 0.4s steps(2) infinite;
+}
+@keyframes anomalyFlick { 0%,100%{opacity:.8; transform:translate(0,0)} 50%{opacity:.3; transform:translate(2px,-1px)} }
+
+/* ─── ANOMALY HOTSPOT ─────────────────────────────────────────── */
+.hotspot.hs-anomaly::before {
+  width: 26px; height: 26px; border-radius: 0;
+  background: #b13a3a; box-shadow: 0 0 20px #ff2b2b, 0 0 40px #b13a3a;
+  animation: anomalyHs 0.22s steps(2) infinite;
+}
+@keyframes anomalyHs {
+  0%   { transform: translate(-50%,-50%) skewX(0deg)   scale(1); opacity:.9; }
+  50%  { transform: translate(-48%,-52%) skewX(12deg)  scale(1.2); opacity:.5; }
+  100% { transform: translate(-52%,-50%) skewX(-8deg)  scale(0.95); opacity:.85; }
+}
+.hotspot.hs-anomaly .hotspot-label { color:#ff5b5b; border-color:#b13a3a; }
+
+/* ═══════════════════════════════════════════════════════════════
+   THE REVEAL — body.truth-glitch
+   ═══════════════════════════════════════════════════════════════ */
+.truth-overlay {
+  position: fixed; inset: 0; z-index: 150; pointer-events: none;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 2px, rgba(255,0,0,0.05) 2px 3px),
+    radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(120,0,0,0.45) 100%);
+  mix-blend-mode: screen;
+  animation: truthPulse 0.5s ease-in-out infinite;
+}
+@keyframes truthPulse { 0%,100%{opacity:.55} 50%{opacity:.9} }
+
+body.truth-glitch #dlgBox {
+  border-color: #ff2b2b !important;
+  box-shadow: 0 0 30px rgba(255,43,43,0.45), inset 0 0 18px rgba(255,43,43,0.12);
+  animation: truthShake 0.14s steps(2) infinite;
+}
+@keyframes truthShake {
+  0%   { transform: translate(0,0); }
+  25%  { transform: translate(-2px,1px); }
+  50%  { transform: translate(2px,-1px); }
+  75%  { transform: translate(-1px,-2px); }
+  100% { transform: translate(1px,1px); }
+}
+body.truth-glitch #dlgBox::before { background: #ff2b2b !important; }
+body.truth-glitch .dlg-speaker {
+  color: #ff3b3b !important; text-shadow: -1px 0 #00fff0, 1px 0 #ff2b2b;
+}
+body.truth-glitch .dlg-text { text-shadow: -1px 0 rgba(255,43,43,0.6), 1px 0 rgba(43,255,255,0.4); }
+/* the two guides turn sinister: harsh red glow + twitch, regardless of base hue */
+body.truth-glitch .dlg-portrait .bot-face {
+  filter: drop-shadow(0 0 12px #ff2b2b) contrast(1.5) saturate(1.7) brightness(1.05);
+  animation: evilTwitch 0.18s steps(2) infinite;
+}
+@keyframes evilTwitch { 0%,100%{transform:translate(0,0)} 50%{transform:translate(1px,-1px) scale(1.04)} }
+
+@media (prefers-reduced-motion: reduce) {
+  .truth-overlay, body.truth-glitch #dlgBox, body.truth-glitch .dlg-portrait .bot-face,
+  .ch9-anomaly, .hotspot.hs-anomaly::before { animation: none !important; }
+}
+
+/* ─── LOCKED SCREEN ───────────────────────────────────────────── */
+.locked-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:var(--sp-lg); position:relative; z-index:10; }
+.locked-card { text-align:center; max-width:420px; display:flex; flex-direction:column; gap:var(--sp-md); align-items:center; }
+.locked-label { letter-spacing:.25em; color:var(--accent-warn); }
+.locked-title { font-family:var(--font-display); font-size:clamp(28px,6vw,48px); letter-spacing:.3em; color:var(--text-dim); }
+.locked-text  { font-size:14px; color:var(--text-secondary); line-height:1.6; }
+
+/* ─── DARK END ────────────────────────────────────────────────── */
+.truth-end {
+  position: fixed; inset: 0; z-index: 500; background: #060102;
+  display: flex; align-items: center; justify-content: center; padding: var(--sp-lg);
+  opacity: 0; animation: ccIn 1.6s ease forwards;
+}
+.truth-end-card { text-align:center; max-width:480px; display:flex; flex-direction:column; gap:var(--sp-md); align-items:center; }
+.truth-end-label { letter-spacing:.3em; color:#ff3b3b; }
+.truth-end-title {
+  position: relative; font-family:var(--font-display); font-weight:700;
+  font-size:clamp(24px,5vw,40px); letter-spacing:.12em; color:#fff;
+  text-shadow: 0 0 18px rgba(255,43,43,0.6);
+}
+.truth-end-title::before, .truth-end-title::after {
+  content: attr(data-text); position:absolute; top:0; left:0; width:100%; overflow:hidden;
+}
+.truth-end-title::before { color:#ff2b2b; clip-path: inset(0 0 55% 0); animation: endSlice1 2.4s steps(2) infinite; }
+.truth-end-title::after  { color:#00fff0; clip-path: inset(55% 0 0 0); animation: endSlice2 3.1s steps(2) infinite; }
+@keyframes endSlice1 { 0%,92%,100%{transform:translateX(0)} 95%{transform:translateX(-3px)} }
+@keyframes endSlice2 { 0%,90%,100%{transform:translateX(0)} 96%{transform:translateX(3px)} }
+.truth-end-text   { font-size:14px; color:var(--text-secondary); line-height:1.6; }
+.truth-end-coords { font-size:12px; color:#ff7a7a; font-family:var(--font-mono); letter-spacing:.06em; }
+.truth-end-actions { display:flex; flex-direction:column; gap:var(--sp-sm); align-items:center; margin-top:var(--sp-sm); }
+.truth-end-actions .ka-btn { min-width:240px; }
+.ka-btn.danger { border-color:#b13a3a; color:#ff6b6b; }
+.ka-btn.danger:hover { color:#fff; border-color:#ff2b2b; background:rgba(177,58,58,0.12); }
+
+@media (prefers-reduced-motion: reduce) {
+  .truth-end-title::before, .truth-end-title::after { animation: none; }
+}

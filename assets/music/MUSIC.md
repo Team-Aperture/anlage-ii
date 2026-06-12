@@ -45,7 +45,7 @@ puzzle opens, when a Signalnische is found). Suggested moments in brackets.
 | `theme_bradf1sh` | `theme_bradfisch.mp3` | B‑RADF1SH appears |
 | `theme_tflon` | `theme_tflon14.mp3` | T‑FLON14 appears |
 | `theme_asp` | `theme_asp1024.mp3` | ASP‑1024 appears |
-| `theme_faxn` | `theme_faxenmeier.mp3` | F‑AXN appears |
+| `theme_faxn` | `theme_faxn.mp3` | F‑AXN appears |
 | `theme_agn` | `theme_agnher.mp3` | AGN‑H3R appears |
 | `puzzle_calm` | `puzzle_calm.mp3` | gentle puzzle underscore |
 | `puzzle_tense` | `puzzle_tense.mp3` | hard puzzle underscore |
