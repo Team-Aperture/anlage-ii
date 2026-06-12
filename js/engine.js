@@ -516,6 +516,14 @@ const GameEngine = (() => {
     }
 
     function addHotspot(cfg) {
+      const sceneEl = document.querySelector('.scene-canvas');
+      // A code-drawn prop you click directly (the object IS the hotspot).
+      if (cfg.prop) {
+        const p = props.el(cfg.prop, { x:cfg.x, y:cfg.y, w:cfg.w, h:cfg.h, label:cfg.label, onClick:cfg.onClick, cls:cfg.className, anim:cfg.anim });
+        if (sceneEl) sceneEl.appendChild(p);
+        _hotspots.push(p);
+        return;
+      }
       const el = document.createElement('button');
       el.className = 'hotspot' + (cfg.className ? ' ' + cfg.className : '');
       el.setAttribute('aria-label', cfg.label || 'Interagieren');
@@ -528,7 +536,6 @@ const GameEngine = (() => {
       }
       el.addEventListener('click', cfg.onClick);
 
-      const sceneEl = document.querySelector('.scene-canvas');
       if (sceneEl) sceneEl.appendChild(el);
       _hotspots.push(el);
     }
@@ -553,101 +560,182 @@ const GameEngine = (() => {
       `<svg viewBox="${vb}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${inner}</svg>`;
 
     const SVG = {
-      // a console + monitor with a flickering screen and blinking cursor
+      // a console terminal: pedestal, bezel monitor, live screen w/ chart + cursor
       terminal: wrap('0 0 100 120',
-          '<rect class="prop-line" x="40" y="84" width="20" height="22"/>'
-        + '<rect class="prop-line" x="24" y="106" width="52" height="8" rx="2"/>'
-        + '<rect class="prop-line" x="12" y="14" width="76" height="62" rx="4"/>'
-        + '<rect class="prop-screen" x="18" y="20" width="64" height="50"/>'
-        + '<line class="prop-scan" x1="24" y1="30" x2="74" y2="30"/>'
-        + '<line class="prop-scan" x1="24" y1="40" x2="62" y2="40"/>'
-        + '<line class="prop-scan" x1="24" y1="50" x2="70" y2="50"/>'
-        + '<rect class="prop-cursor" x="24" y="58" width="9" height="6"/>'),
-      // a wide control desk
+          '<ellipse class="prop-inset" cx="50" cy="112" rx="32" ry="5" opacity=".6"/>'
+        + '<path class="prop-metal" d="M36 108 L40 84 h20 l4 24 Z"/>'
+        + '<rect class="prop-lite" x="40" y="84" width="4" height="24"/>'
+        + '<rect class="prop-base" x="28" y="106" width="44" height="8" rx="2"/>'
+        + '<rect class="prop-base" x="6" y="8" width="88" height="70" rx="6"/>'
+        + '<rect class="prop-lite" x="10" y="11" width="80" height="4" rx="2"/>'
+        + '<rect class="prop-screen" x="13" y="17" width="74" height="54"/>'
+        + '<line class="prop-scan" x1="19" y1="26" x2="74" y2="26"/>'
+        + '<line class="prop-scan" x1="19" y1="33" x2="60" y2="33"/>'
+        + '<rect class="prop-acc-dim" x="20" y="50" width="9" height="15"/>'
+        + '<rect class="prop-acc-dim" x="33" y="44" width="9" height="21"/>'
+        + '<rect class="prop-acc" x="46" y="38" width="9" height="27" opacity=".55"/>'
+        + '<rect class="prop-cursor" x="64" y="58" width="9" height="7"/>'
+        + '<circle class="prop-led" cx="88" cy="74" r="2.6"/>'
+        + '<line class="prop-thin" x1="42" y1="92" x2="58" y2="92"/>'
+        + '<line class="prop-thin" x1="42" y1="98" x2="58" y2="98"/>'),
+      // a wide control desk: angled body, inset screen, buttons, slider, vents
       console: wrap('0 0 140 90',
-          '<path class="prop-line" d="M10 78 L26 30 h88 l16 48 Z"/>'
-        + '<rect class="prop-screen" x="40" y="38" width="60" height="22"/>'
-        + '<circle class="prop-led" cx="30" cy="66" r="3"/>'
-        + '<circle class="prop-led prop-led-2" cx="42" cy="66" r="3"/>'
-        + '<circle class="prop-led prop-led-3" cx="54" cy="66" r="3"/>'
-        + '<rect class="prop-fill-dim" x="100" y="62" width="26" height="8" rx="2"/>'),
-      // a sliding sector door with a centre seam + status light
+          '<ellipse class="prop-inset" cx="70" cy="84" rx="56" ry="5" opacity=".6"/>'
+        + '<path class="prop-base" d="M14 82 L30 24 h80 l16 58 Z"/>'
+        + '<path class="prop-metal" d="M30 24 h80 l6 22 H24 Z"/>'
+        + '<rect class="prop-lite" x="30" y="24" width="80" height="3"/>'
+        + '<rect class="prop-screen" x="48" y="29" width="44" height="15" rx="1"/>'
+        + '<line class="prop-scan" x1="53" y1="35" x2="80" y2="35"/>'
+        + '<rect class="prop-cursor" x="82" y="38" width="5" height="4"/>'
+        + '<circle class="prop-led" cx="38" cy="58" r="3.2"/>'
+        + '<circle class="prop-led prop-led-2" cx="50" cy="58" r="3.2"/>'
+        + '<circle class="prop-led prop-led-3" cx="62" cy="58" r="3.2"/>'
+        + '<rect class="prop-acc-dim" x="76" y="55" width="30" height="7" rx="3"/>'
+        + '<rect class="prop-acc" x="88" y="52" width="6" height="13" rx="2"/>'
+        + '<line class="prop-thin" x1="28" y1="70" x2="112" y2="70"/>'
+        + '<line class="prop-thin" x1="26" y1="75" x2="114" y2="75"/>'
+        + '<rect class="prop-acc-dim" x="16" y="79" width="108" height="3"/>'),
+      // a sliding sector door: frame, twin ribbed panels, glowing seam,
+      // windows, hazard stripes, status lamp, keypad
       door: wrap('0 0 80 120',
-          '<rect class="prop-line" x="8" y="6" width="64" height="108" rx="2"/>'
-        + '<rect class="prop-fill-dim" x="14" y="12" width="24" height="96"/>'
-        + '<rect class="prop-fill-dim" x="42" y="12" width="24" height="96"/>'
-        + '<line class="prop-line" x1="40" y1="12" x2="40" y2="108"/>'
-        + '<rect class="prop-fill" x="34" y="50" width="12" height="20" rx="2"/>'
-        + '<circle class="prop-led" cx="40" cy="2" r="3"/>'),
-      // a wall control panel, grid of lights
+          '<ellipse class="prop-inset" cx="40" cy="115" rx="34" ry="4" opacity=".6"/>'
+        + '<rect class="prop-base" x="5" y="2" width="70" height="112" rx="4"/>'
+        + '<rect class="prop-inset" x="12" y="9" width="56" height="98"/>'
+        + '<rect class="prop-metal" x="13" y="10" width="26" height="96"/>'
+        + '<rect class="prop-metal" x="41" y="10" width="26" height="96"/>'
+        + '<rect class="prop-lite" x="13" y="10" width="3.5" height="96"/>'
+        + '<rect class="prop-lite" x="41" y="10" width="3.5" height="96"/>'
+        + '<line class="prop-thin" x1="13" y1="36" x2="39" y2="36"/>'
+        + '<line class="prop-thin" x1="41" y1="36" x2="67" y2="36"/>'
+        + '<line class="prop-thin" x1="13" y1="78" x2="39" y2="78"/>'
+        + '<line class="prop-thin" x1="41" y1="78" x2="67" y2="78"/>'
+        + '<rect class="prop-screen" x="28" y="46" width="8" height="13" rx="1"/>'
+        + '<rect class="prop-screen" x="44" y="46" width="8" height="13" rx="1"/>'
+        + '<line class="prop-edge" x1="40" y1="10" x2="40" y2="106" opacity=".85"/>'
+        + '<path class="prop-hazard" d="M14 106 l7 -8 h5 l-7 8 Z"/>'
+        + '<path class="prop-hazard" d="M27 106 l7 -8 h5 l-7 8 Z"/>'
+        + '<path class="prop-hazard" d="M43 106 l7 -8 h5 l-7 8 Z"/>'
+        + '<path class="prop-hazard" d="M56 106 l7 -8 h5 l-7 8 Z"/>'
+        + '<circle class="prop-led" cx="40" cy="6" r="2.8"/>'
+        + '<rect class="prop-acc-dim" x="70" y="52" width="4" height="13" rx="1"/>'),
+      // a wall control panel: housing, live screen, LED grid, sliders, cable
       panel: wrap('0 0 100 80',
-          '<rect class="prop-line" x="6" y="6" width="88" height="68" rx="3"/>'
-        + '<rect class="prop-screen" x="14" y="12" width="44" height="26"/>'
-        + '<circle class="prop-led" cx="72" cy="18" r="4"/>'
-        + '<circle class="prop-led prop-led-2" cx="84" cy="18" r="4"/>'
-        + '<circle class="prop-led prop-led-3" cx="72" cy="30" r="4"/>'
-        + '<circle class="prop-fill-dim" cx="84" cy="30" r="4"/>'
-        + '<rect class="prop-fill-dim" x="14" y="48" width="72" height="6" rx="3"/>'
-        + '<rect class="prop-fill-dim" x="14" y="60" width="52" height="6" rx="3"/>'),
-      // a small dormant maintenance unit (pod with a single eye)
+          '<rect class="prop-base" x="6" y="5" width="88" height="66" rx="5"/>'
+        + '<rect class="prop-lite" x="10" y="8" width="80" height="3.5" rx="1.5"/>'
+        + '<rect class="prop-screen" x="13" y="15" width="46" height="27"/>'
+        + '<line class="prop-scan" x1="18" y1="23" x2="52" y2="23"/>'
+        + '<line class="prop-scan" x1="18" y1="30" x2="44" y2="30"/>'
+        + '<rect class="prop-cursor" x="46" y="34" width="7" height="5"/>'
+        + '<circle class="prop-led" cx="70" cy="20" r="3.6"/>'
+        + '<circle class="prop-led prop-led-2" cx="84" cy="20" r="3.6"/>'
+        + '<circle class="prop-led prop-led-3" cx="70" cy="32" r="3.6"/>'
+        + '<circle class="prop-acc-dim" cx="84" cy="32" r="3.6"/>'
+        + '<rect class="prop-acc-dim" x="13" y="50" width="74" height="6" rx="3"/>'
+        + '<rect class="prop-acc" x="38" y="48" width="5" height="10" rx="1.5"/>'
+        + '<rect class="prop-acc-dim" x="13" y="61" width="52" height="5" rx="2.5"/>'
+        + '<path class="prop-thin" d="M50 71 q5 7 -2 12"/>'),
+      // a dormant maintenance unit: treads, capsule body, eye screen, antenna
       unit: wrap('0 0 90 110',
-          '<rect class="prop-line" x="20" y="92" width="50" height="12" rx="3"/>'
-        + '<rect class="prop-line" x="16" y="30" width="58" height="64" rx="22"/>'
-        + '<circle class="prop-screen" cx="45" cy="56" r="20"/>'
-        + '<circle class="prop-eye" cx="45" cy="56" r="8"/>'
-        + '<line class="prop-line" x1="45" y1="30" x2="45" y2="16"/>'
+          '<ellipse class="prop-inset" cx="45" cy="104" rx="34" ry="4" opacity=".6"/>'
+        + '<rect class="prop-base" x="15" y="90" width="60" height="13" rx="6"/>'
+        + '<circle class="prop-inset" cx="27" cy="96" r="4"/>'
+        + '<circle class="prop-inset" cx="45" cy="96" r="4"/>'
+        + '<circle class="prop-inset" cx="63" cy="96" r="4"/>'
+        + '<rect class="prop-metal" x="18" y="30" width="54" height="62" rx="21"/>'
+        + '<rect class="prop-lite" x="23" y="35" width="5" height="50" rx="2.5"/>'
+        + '<circle class="prop-screen" cx="45" cy="55" r="17"/>'
+        + '<circle class="prop-eye" cx="45" cy="55" r="7"/>'
+        + '<rect class="prop-metal" x="70" y="52" width="14" height="6" rx="3"/>'
+        + '<circle class="prop-lite" cx="84" cy="55" r="3"/>'
+        + '<line class="prop-thin" x1="45" y1="30" x2="45" y2="16"/>'
         + '<circle class="prop-led" cx="45" cy="13" r="3"/>'),
-      // pipes with a valve wheel
+      // pipes: body w/ highlight, flanges, valve wheel, pressure gauge, leak glow
       pipe: wrap('0 0 60 120',
-          '<rect class="prop-fill-dim" x="22" y="0" width="16" height="120"/>'
-        + '<rect class="prop-line" x="20" y="0" width="20" height="120"/>'
-        + '<rect class="prop-line" x="14" y="44" width="32" height="14" rx="2"/>'
-        + '<circle class="prop-line" cx="30" cy="80" r="12"/>'
-        + '<line class="prop-line" x1="18" y1="80" x2="42" y2="80"/>'
-        + '<line class="prop-line" x1="30" y1="68" x2="30" y2="92"/>'),
-      // a hanging light fixture with a glow
+          '<rect class="prop-metal" x="22" y="0" width="16" height="120"/>'
+        + '<rect class="prop-lite" x="22" y="0" width="4" height="120"/>'
+        + '<rect class="prop-base" x="17" y="16" width="26" height="8" rx="2"/>'
+        + '<rect class="prop-base" x="17" y="94" width="26" height="8" rx="2"/>'
+        + '<circle class="prop-base" cx="30" cy="58" r="13"/>'
+        + '<circle class="prop-edge" cx="30" cy="58" r="8.5"/>'
+        + '<line class="prop-edge" x1="30" y1="49.5" x2="30" y2="66.5"/>'
+        + '<line class="prop-edge" x1="21.5" y1="58" x2="38.5" y2="58"/>'
+        + '<circle class="prop-screen" cx="47" cy="32" r="7"/>'
+        + '<line class="prop-needle" x1="47" y1="32" x2="51" y2="27"/>'
+        + '<circle class="prop-glow" cx="30" cy="104" r="6"/>'),
+      // a hanging work light: cable, housing, hot diffuser, visible light cone
       light: wrap('0 0 80 70',
-          '<line class="prop-line" x1="40" y1="0" x2="40" y2="14"/>'
-        + '<path class="prop-line" d="M16 14 h48 l-8 22 h-32 Z"/>'
-        + '<ellipse class="prop-glow" cx="40" cy="40" rx="26" ry="10"/>'),
-      // a stacked crate / container
+          '<line class="prop-thin" x1="40" y1="0" x2="40" y2="11"/>'
+        + '<path class="prop-base" d="M18 11 h44 l-7 14 h-30 Z"/>'
+        + '<rect class="prop-lite" x="22" y="13" width="36" height="3"/>'
+        + '<path class="prop-glow" d="M27 25 L10 66 H70 L53 25 Z"/>'
+        + '<ellipse class="prop-core" cx="40" cy="25" rx="11" ry="2.6"/>'),
+      // stacked cargo crates: panels, straps, label screen, stencil, chevrons
       crate: wrap('0 0 100 90',
-          '<rect class="prop-line" x="10" y="40" width="50" height="44" rx="2"/>'
-        + '<rect class="prop-line" x="46" y="20" width="44" height="40" rx="2"/>'
-        + '<line class="prop-line" x1="10" y1="62" x2="60" y2="62"/>'
-        + '<line class="prop-line" x1="35" y1="40" x2="35" y2="84"/>'
-        + '<rect class="prop-fill-dim" x="58" y="34" width="20" height="6"/>'),
-      // a hanging sector sign
+          '<ellipse class="prop-inset" cx="50" cy="85" rx="44" ry="4" opacity=".6"/>'
+        + '<rect class="prop-metal" x="44" y="14" width="46" height="46" rx="2"/>'
+        + '<rect class="prop-lite" x="44" y="14" width="46" height="4" rx="2"/>'
+        + '<rect class="prop-acc-dim" x="52" y="24" width="15" height="5"/>'
+        + '<path class="prop-hazard" d="M46 56 l5 -6 h4 l-5 6 Z"/>'
+        + '<path class="prop-hazard" d="M58 56 l5 -6 h4 l-5 6 Z"/>'
+        + '<rect class="prop-base" x="8" y="36" width="54" height="48" rx="2"/>'
+        + '<rect class="prop-lite" x="8" y="36" width="54" height="4.5" rx="2"/>'
+        + '<rect class="prop-acc-dim" x="20" y="36" width="6" height="48"/>'
+        + '<rect class="prop-acc-dim" x="44" y="36" width="6" height="48"/>'
+        + '<rect class="prop-screen" x="29" y="56" width="14" height="10"/>'),
+      // a hanging sector sign: chains, bezel, live display w/ arrow + text
       sign: wrap('0 0 110 70',
-          '<line class="prop-line" x1="20" y1="0" x2="20" y2="14"/>'
-        + '<line class="prop-line" x1="90" y1="0" x2="90" y2="14"/>'
-        + '<rect class="prop-line" x="6" y="14" width="98" height="40" rx="3"/>'
-        + '<rect class="prop-screen" x="14" y="22" width="82" height="24"/>'
-        + '<line class="prop-scan" x1="22" y1="34" x2="88" y2="34"/>'),
-      // a glowing reactor core
+          '<line class="prop-thin" x1="22" y1="0" x2="22" y2="13"/>'
+        + '<line class="prop-thin" x1="88" y1="0" x2="88" y2="13"/>'
+        + '<circle class="prop-thin" cx="22" cy="5" r="2"/>'
+        + '<circle class="prop-thin" cx="88" cy="5" r="2"/>'
+        + '<rect class="prop-base" x="6" y="13" width="98" height="44" rx="5"/>'
+        + '<rect class="prop-lite" x="10" y="16" width="90" height="3.5" rx="1.5"/>'
+        + '<rect class="prop-screen" x="12" y="21" width="86" height="30"/>'
+        + '<path class="prop-acc" d="M20 36 h26 v-6 l14 9 -14 9 v-6 h-26 Z" opacity=".85"/>'
+        + '<rect class="prop-acc-dim" x="68" y="28" width="22" height="4"/>'
+        + '<rect class="prop-acc-dim" x="68" y="38" width="15" height="4"/>'
+        + '<circle class="prop-led" cx="100" cy="60" r="2.4"/>'),
+      // a glowing reactor core: housing, segmented ring, bolts, pulsing core
       reactor: wrap('0 0 100 100',
-          '<circle class="prop-line" cx="50" cy="50" r="42"/>'
-        + '<circle class="prop-line" cx="50" cy="50" r="30"/>'
-        + '<circle class="prop-glow" cx="50" cy="50" r="20"/>'
-        + '<circle class="prop-core" cx="50" cy="50" r="11"/>'),
-      // an isometric cube (the Würfel)
+          '<circle class="prop-base" cx="50" cy="50" r="44"/>'
+        + '<circle class="prop-thin" cx="50" cy="50" r="36" stroke-dasharray="8 5"/>'
+        + '<circle class="prop-inset" cx="50" cy="50" r="27"/>'
+        + '<circle class="prop-lite" cx="50" cy="11" r="2.6"/>'
+        + '<circle class="prop-lite" cx="50" cy="89" r="2.6"/>'
+        + '<circle class="prop-lite" cx="11" cy="50" r="2.6"/>'
+        + '<circle class="prop-lite" cx="89" cy="50" r="2.6"/>'
+        + '<circle class="prop-glow" cx="50" cy="50" r="19"/>'
+        + '<circle class="prop-core" cx="50" cy="50" r="10"/>'),
+      // an isometric cube (the Wuerfel): shaded faces, glowing edges + node
       cube: wrap('0 0 100 100',
-          '<path class="prop-fill-dim" d="M50 8 L88 30 L50 52 L12 30 Z"/>'
-        + '<path class="prop-line" d="M50 8 L88 30 L50 52 L12 30 Z"/>'
-        + '<path class="prop-line" d="M12 30 L50 52 L50 92 L12 70 Z"/>'
-        + '<path class="prop-line" d="M88 30 L50 52 L50 92 L88 70 Z"/>'
-        + '<circle class="prop-core" cx="50" cy="30" r="6"/>'),
-      // archive shelving
+          '<ellipse class="prop-inset" cx="50" cy="95" rx="38" ry="4" opacity=".6"/>'
+        + '<path class="prop-lite" d="M50 8 L88 30 L50 52 L12 30 Z"/>'
+        + '<path class="prop-metal" d="M12 30 L50 52 L50 92 L12 70 Z"/>'
+        + '<path class="prop-inset" d="M88 30 L50 52 L50 92 L88 70 Z"/>'
+        + '<path class="prop-edge" d="M50 8 L88 30 L50 52 L12 30 Z" opacity=".75"/>'
+        + '<path class="prop-edge" d="M12 30 L50 52 L50 92 L12 70 Z" opacity=".4"/>'
+        + '<path class="prop-edge" d="M88 30 L50 52 L50 92 L88 70 Z" opacity=".4"/>'
+        + '<circle class="prop-core" cx="50" cy="30" r="5"/>'),
+      // archive shelving: frame, boards, crowded varied contents
       shelf: wrap('0 0 90 120',
-          '<rect class="prop-line" x="8" y="6" width="74" height="108"/>'
-        + '<line class="prop-line" x1="8" y1="34" x2="82" y2="34"/>'
-        + '<line class="prop-line" x1="8" y1="62" x2="82" y2="62"/>'
-        + '<line class="prop-line" x1="8" y1="90" x2="82" y2="90"/>'
-        + '<rect class="prop-fill-dim" x="14" y="12" width="10" height="18"/>'
-        + '<rect class="prop-fill-dim" x="28" y="14" width="10" height="16"/>'
-        + '<rect class="prop-fill-dim" x="50" y="40" width="10" height="18"/>'
-        + '<rect class="prop-fill-dim" x="18" y="68" width="10" height="18"/>'
-        + '<rect class="prop-fill-dim" x="60" y="96" width="10" height="14"/>'),
+          '<rect class="prop-base" x="6" y="4" width="78" height="112"/>'
+        + '<rect class="prop-metal" x="6" y="32" width="78" height="4"/>'
+        + '<rect class="prop-metal" x="6" y="60" width="78" height="4"/>'
+        + '<rect class="prop-metal" x="6" y="88" width="78" height="4"/>'
+        + '<rect class="prop-acc-dim" x="12" y="13" width="9" height="19"/>'
+        + '<rect class="prop-lite" x="24" y="17" width="12" height="15"/>'
+        + '<rect class="prop-metal" x="40" y="11" width="8" height="21"/>'
+        + '<rect class="prop-acc-dim" x="52" y="19" width="17" height="13"/>'
+        + '<rect class="prop-lite" x="13" y="42" width="8" height="18" transform="rotate(7 17 51)"/>'
+        + '<rect class="prop-acc-dim" x="26" y="44" width="10" height="16"/>'
+        + '<rect class="prop-metal" x="42" y="40" width="14" height="20"/>'
+        + '<rect class="prop-lite" x="60" y="46" width="9" height="14"/>'
+        + '<rect class="prop-metal" x="14" y="68" width="16" height="20"/>'
+        + '<rect class="prop-acc-dim" x="36" y="72" width="11" height="16"/>'
+        + '<rect class="prop-lite" x="52" y="70" width="8" height="18"/>'
+        + '<rect class="prop-acc-dim" x="16" y="96" width="20" height="16"/>'
+        + '<rect class="prop-metal" x="44" y="98" width="12" height="14"/>'
+        + '<circle class="prop-led" cx="74" cy="76" r="2.4"/>'),
     };
 
     function svg(type) { return SVG[type] || SVG.panel; }
@@ -660,7 +748,7 @@ const GameEngine = (() => {
       const e = document.createElement(interactive ? 'button' : 'div');
       e.className = 'scene-prop' + (interactive ? ' prop-interactive' : '') + (cfg.anim ? ' ' + cfg.anim : '') + (cfg.cls ? ' ' + cfg.cls : '');
       e.style.cssText = `left:${cfg.x}%;top:${cfg.y}%;width:${cfg.w || 12}%;height:${cfg.h || 16}%;`;
-      e.innerHTML = svg(type);
+      e.innerHTML = '<span class="prop-shadow" aria-hidden="true"></span>' + svg(type);
       if (cfg.label) {
         const l = document.createElement('span');
         l.className = 'prop-label'; l.textContent = cfg.label; e.appendChild(l);

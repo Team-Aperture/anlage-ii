@@ -837,7 +837,17 @@ body {
   display: flex; align-items: center; justify-content: center;
   transform-origin: center;
 }
-.scene-prop svg { width: 100%; height: 100%; overflow: visible; }
+.scene-prop svg {
+  width: 100%; height: 100%; overflow: visible;
+  position: relative; z-index: 1;
+  filter: drop-shadow(0 5px 12px rgba(0,0,0,0.55));
+}
+/* soft contact shadow grounding the object on the floor */
+.prop-shadow {
+  position: absolute; left: 6%; right: 6%; bottom: -4%; height: 14%;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0.55) 0%, transparent 70%);
+  z-index: 0; pointer-events: none;
+}
 .scene-prop:not(.prop-interactive) { pointer-events: none; }
 button.scene-prop { background: none; border: none; padding: 0; cursor: pointer; }
 .prop-interactive { transition: transform var(--t-fast), filter var(--t-fast); }
@@ -851,11 +861,27 @@ button.scene-prop { background: none; border: none; padding: 0; cursor: pointer;
   white-space: nowrap; opacity: 0; transition: opacity var(--t-fast); pointer-events: none;
 }
 .prop-interactive:hover .prop-label, .prop-interactive:focus-visible .prop-label { opacity: 1; }
+/* an examined prop settles: green tick-glow instead of the system-blue hover */
+.scene-prop.found svg { filter: drop-shadow(0 5px 12px rgba(0,0,0,0.55)) drop-shadow(0 0 7px rgba(46,207,98,0.5)); }
+.scene-prop.found .prop-label { color: var(--accent-r3mi); }
 
-/* prop parts */
+/* prop parts — legacy line-art classes */
 .prop-line     { fill: none; stroke: var(--prop-color); stroke-width: 2.2; stroke-linejoin: round; }
 .prop-fill     { fill: var(--prop-color); }
 .prop-fill-dim { fill: var(--prop-color); opacity: .22; }
+
+/* prop parts — shaded "CG" material set */
+.prop-base   { fill: #0d141f; stroke: #324158; stroke-width: 1.4; }   /* dark housing */
+.prop-metal  { fill: #182334; stroke: #2a3850; stroke-width: 1; }     /* mid metal   */
+.prop-lite   { fill: #2c3d57; }                                       /* highlight   */
+.prop-inset  { fill: #04070c; }                                       /* recess/shadow */
+.prop-acc    { fill: var(--prop-color); }
+.prop-acc-dim{ fill: var(--prop-color); opacity: .3; }
+.prop-edge   { stroke: var(--prop-color); stroke-width: 2; fill: none; }
+.prop-thin   { stroke: #41546f; stroke-width: 1.2; fill: none; }
+.prop-hazard { fill: #d9b13b; opacity: .7; }
+.prop-needle { stroke: var(--prop-color); stroke-width: 2; }
+
 .prop-screen   { fill: #08131f; stroke: var(--accent-system); stroke-width: 1.5; }
 .prop-scan     { stroke: rgba(58,143,212,0.5); stroke-width: 1; }
 .prop-cursor   { fill: var(--accent-system); animation: propCursor 1.1s steps(2) infinite; }

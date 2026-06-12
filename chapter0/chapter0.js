@@ -26,7 +26,8 @@ const Chapter0 = (() => {
   const CLUES = {
     dot: {
       label: 'WARNTAFEL',
-      pos:   { x: 11, y: 48, w: 6, h: 6 },
+      prop:  'sign',
+      pos:   { x: 6, y: 42, w: 13, h: 11 },
       lines: [
         { speaker: 'SYSTEM', text: 'WARNTAFEL // VERWITTERT, DURCH EFEU VERDECKT.' },
         { speaker: 'SYSTEM', text: 'TEXT TEILWEISE LESBAR: »… STUFE 1 … KREIS …«' },
@@ -34,13 +35,15 @@ const Chapter0 = (() => {
     },
     triangle: {
       label: 'WARTUNGSPLAKETTE',
-      pos:   { x: 78, y: 21, w: 6, h: 6 },
+      prop:  'panel',
+      pos:   { x: 75, y: 17, w: 11, h: 11 },
       lines: [
         { speaker: 'SYSTEM', text: 'METALLPLAKETTE // STARK OXIDIERT.' },
         { speaker: 'SYSTEM', text: 'GRAVUR ERKENNBAR: »ZWEITER — ▲«' },
       ],
     },
     square: {
+      // a flat floor decal — stays a pulse hotspot, not a standing object
       label: 'BODENMARKIERUNG',
       pos:   { x: 41, y: 86, w: 6, h: 6 },
       lines: [
@@ -50,7 +53,9 @@ const Chapter0 = (() => {
     },
     hexagon: {
       label: 'WANDPANEEL',
-      pos:   { x: 88.7, y: 54.1, w: 6, h: 6 },
+      prop:  'panel',
+      anim:  'prop-flicker',
+      pos:   { x: 85, y: 49, w: 11, h: 11 },
       lines: [
         { speaker: 'SYSTEM', text: 'WANDPANEEL // VOLLSTÄNDIG VON EFEU ÜBERWUCHERT.' },
         { speaker: 'SYSTEM', text: 'PRÄGUNG UNTER DEN RANKEN: »STUFE 4 — HEXAGON«' },
@@ -110,6 +115,8 @@ const Chapter0 = (() => {
       hs.push({
         ...clue.pos,
         label:   clue.label,
+        prop:    clue.prop,
+        anim:    clue.anim,
         onClick: () => examineClue(key),
       });
     });
@@ -126,9 +133,9 @@ const Chapter0 = (() => {
     cluesFound[key] = true;
     updateClueProgress();
 
-    // Mark hotspot as found visually
-    document.querySelectorAll('.hotspot').forEach(el => {
-      const lbl = el.querySelector('.hotspot-label');
+    // Mark hotspot as found visually (plain pulse spots AND prop objects)
+    document.querySelectorAll('.hotspot, .scene-prop').forEach(el => {
+      const lbl = el.querySelector('.hotspot-label, .prop-label');
       if (lbl && lbl.textContent === CLUES[key].label) el.classList.add('found');
     });
 
