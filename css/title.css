@@ -146,6 +146,44 @@
   }
 }
 
+/* ─── SECTOR MAP (progress map on the menu) ──────────────────── */
+.sector-map {
+  margin: var(--sp-md) auto 0; max-width: 470px; width: 100%;
+  opacity: 0; animation: sectorIn 0.6s ease 0.5s forwards;
+}
+@keyframes sectorIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+.sector-track {
+  position: relative; display: flex; justify-content: center; align-items: center;
+  gap: 10px; padding: 0 8px; overflow-x: auto;
+}
+.sector-track::before {
+  content: ''; position: absolute; top: 50%; left: 8%; right: 8%; height: 2px;
+  background: var(--bdr-dim); transform: translateY(-50%); z-index: 0;
+}
+.sector-node {
+  position: relative; z-index: 1; flex: 0 0 auto;
+  width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 11px; border-radius: 6px;
+  border: 1px solid var(--bdr-mid); background: var(--bg-deep); color: var(--text-secondary);
+  text-decoration: none; transition: transform var(--t-fast), border-color var(--t-fast), color var(--t-fast);
+}
+a.sector-node { cursor: pointer; }
+a.sector-node:hover { transform: translateY(-3px); border-color: #fff; color: #fff; }
+.sector-node.done    { border-color: var(--accent-r3mi); color: var(--accent-r3mi); box-shadow: 0 0 8px rgba(46,207,98,0.35); }
+.sector-node.current { border-color: var(--accent-system); color: #fff; box-shadow: 0 0 12px var(--accent-system); animation: nodePulse 1.8s ease-in-out infinite; }
+.sector-node.locked  { opacity: 0.4; }
+.sector-node.bonus   { border-color: #b13a3a; color: #ff6b6b; box-shadow: 0 0 10px rgba(177,58,58,0.5); animation: nodePulse 1.4s ease-in-out infinite; }
+@keyframes nodePulse { 0%,100%{box-shadow:0 0 8px var(--accent-system)} 50%{box-shadow:0 0 16px var(--accent-system)} }
+.sector-caption { text-align: center; font-size: 10px; letter-spacing: .15em; color: var(--text-dim); margin-top: 10px; }
+@media (max-width: 420px) {
+  .sector-node { width: 26px; height: 26px; font-size: 10px; }
+  .sector-track { gap: 7px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sector-map { animation: none; opacity: 1; }
+  .sector-node.current, .sector-node.bonus { animation: none; }
+}
+
 /* Subtle parallax tilt on mouse move (set by JS) */
 .hero-logo[data-tilt] {
   transform: perspective(1200px)

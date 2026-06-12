@@ -71,7 +71,13 @@
 
     <!-- Navigation menu -->
     <nav class="title-menu" aria-label="Hauptmenü">
+      <a  class="ka-btn primary hidden"
+          id="continueBtn"
+          href="access.html">
+        [ WEITER ]
+      </a>
       <a  class="ka-btn primary"
+          id="startBtn"
           href="access.html">
         [ STARTEN ]
       </a>
@@ -96,6 +102,12 @@
         [ TON: AN ]
       </button>
     </nav>
+
+    <!-- Sector map (populated by title.js from save progress) -->
+    <section class="sector-map hidden" id="sectorMap" aria-label="Sektorkarte">
+      <div class="sector-track" id="sectorTrack"></div>
+      <div class="sector-caption sys-text" id="sectorCaption"></div>
+    </section>
 
   </main>
 
