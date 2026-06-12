@@ -80,9 +80,9 @@ const Chapter9 = (() => {
 
   function loadExhibitHotspots() {
     CH.clearHotspots();
-    CH.addHotspot({ x:20, y:46, w:11, h:20, label:'EXPONAT: FRIGO',         fn:() => clickExhibit('brainrot') });
-    CH.addHotspot({ x:46, y:42, w:11, h:20, label:'EXPONAT: FARBEN',        fn:() => clickExhibit('crypto') });
-    CH.addHotspot({ x:72, y:46, w:11, h:20, label:'EXPONAT: DIE ÜBERTRAGUNG', fn:() => clickExhibit('transmission') });
+    CH.addHotspot({ prop:'crate', x:17, y:48, w:15, h:18, label:'EXPONAT: FRIGO', fn:() => clickExhibit('brainrot') });
+    CH.addHotspot({ prop:'panel', anim:'prop-flicker', x:44, y:42, w:15, h:16, label:'EXPONAT: FARBEN', fn:() => clickExhibit('crypto') });
+    CH.addHotspot({ prop:'crate', cls:'prop-brown', x:70, y:48, w:15, h:18, label:'EXPONAT: DIE ÜBERTRAGUNG', fn:() => clickExhibit('transmission') });
   }
 
   // ─── 9.2 EXHIBITS ─────────────────────────────────────────────

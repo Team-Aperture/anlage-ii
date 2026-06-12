@@ -5,6 +5,7 @@
 :root {
   --accent-lux:    #e8893a;            /* L-UX — warm orange (= --accent-g2) */
   --accent-lux-lo: rgba(232,137,58,0.12);
+  --accent-guest:  var(--accent-lux);  /* tints the guest's key prop */
 }
 
 .chapter-page { overflow: hidden; }

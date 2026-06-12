@@ -164,10 +164,11 @@ const Chapter7 = (() => {
 
   function loadExploreHotspots() {
     CH.clearHotspots();
-    CH.addHotspot({ x:44, y:44, w:14, h:22, cls:'hs-guest', label:'VEXIERSCHLOSS', fn:() => clickExplore('lock') });
-    CH.addHotspot({ x:22, y:54, w:8,  h:18, label:'HEBEL',          fn:() => clickExplore('lever') });
-    CH.addHotspot({ x:64, y:32, w:13, h:18, label:'VEXIER-GEMÄLDE', fn:() => clickExplore('painting') });
-    CH.addHotspot({ x:84, y:60, w:7,  h:12, label:'NARRENBUCH',     fn:() => clickExplore('book') });
+    CH.addProp({ prop:'light', x:43, y:3, w:14, h:9 });
+    CH.addHotspot({ prop:'panel', cls:'prop-guest', anim:'prop-flicker', x:43, y:44, w:15, h:18, label:'VEXIERSCHLOSS', fn:() => clickExplore('lock') });
+    CH.addHotspot({ prop:'pipe', x:20, y:46, w:8, h:30, label:'HEBEL', fn:() => clickExplore('lever') });
+    CH.addHotspot({ prop:'sign', x:64, y:28, w:15, h:13, label:'VEXIER-GEMÄLDE', fn:() => clickExplore('painting') });
+    CH.addHotspot({ prop:'shelf', x:82, y:48, w:12, h:30, label:'NARRENBUCH', fn:() => clickExplore('book') });
   }
 
   function clickExplore(key) {

@@ -885,9 +885,11 @@ button.scene-prop { background: none; border: none; padding: 0; cursor: pointer;
   mask-image: linear-gradient(transparent, #000 42%);
 }
 
-/* prop colour tints (e.g. the red/green conduits) */
+/* prop colour tints (e.g. the red/green conduits, the brown box) */
 .scene-prop.prop-red   { --prop-color: #d9534f; }
 .scene-prop.prop-green { --prop-color: #3ec27a; }
+.scene-prop.prop-brown { --prop-color: #9c7748; }
+.scene-prop.prop-guest { --prop-color: var(--accent-guest, #8493a8); }
 
 @media (prefers-reduced-motion: reduce) {
   .prop-cursor, .prop-led, .prop-eye, .prop-glow, .prop-core, .prop-flicker .prop-screen { animation: none; }

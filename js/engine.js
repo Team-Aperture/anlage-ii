@@ -630,6 +630,13 @@ const GameEngine = (() => {
         + '<circle class="prop-line" cx="50" cy="50" r="30"/>'
         + '<circle class="prop-glow" cx="50" cy="50" r="20"/>'
         + '<circle class="prop-core" cx="50" cy="50" r="11"/>'),
+      // an isometric cube (the Würfel)
+      cube: wrap('0 0 100 100',
+          '<path class="prop-fill-dim" d="M50 8 L88 30 L50 52 L12 30 Z"/>'
+        + '<path class="prop-line" d="M50 8 L88 30 L50 52 L12 30 Z"/>'
+        + '<path class="prop-line" d="M12 30 L50 52 L50 92 L12 70 Z"/>'
+        + '<path class="prop-line" d="M88 30 L50 52 L50 92 L88 70 Z"/>'
+        + '<circle class="prop-core" cx="50" cy="30" r="6"/>'),
       // archive shelving
       shelf: wrap('0 0 90 120',
           '<rect class="prop-line" x="8" y="6" width="74" height="108"/>'
@@ -948,9 +955,9 @@ const GameEngine = (() => {
 
         <div class="scene-wrapper" id="sceneWrapper">
           <div class="scene-bg-layer" id="sceneBgLayer">
-            <img src="${sImg}" class="scene-bg" id="sceneBg" alt=""
-                 onerror="this.style.display='none'"${sImg ? '' : ' style="display:none"'}>
+            <!-- Rooms are code-drawn: scene-ph lighting + a perspective floor + props -->
             <div class="scene-ph" id="scenePh" data-scene="${sPh}"></div>
+            <div class="scene-floor" aria-hidden="true"></div>
           </div>
           <div class="scene-hotspots" id="sceneHotspots"></div>
 
@@ -1005,10 +1012,11 @@ const GameEngine = (() => {
     }
 
     // ---- SCENE ------------------------------------------------------
-    function setScene(key, imgSrc) {
-      const ph = el('scenePh'), img = el('sceneBg');
+    function setScene(key) {
+      // Rooms are code-drawn — switch the lighting/atmosphere key (the second
+      // arg some chapters still pass is ignored).
+      const ph = el('scenePh');
       if (ph) ph.dataset.scene = key;
-      if (img && imgSrc) { img.src = imgSrc; img.style.display = ''; }
     }
     function clearHotspots() { const h = el('sceneHotspots'); if (h) h.innerHTML = ''; }
     function addHotspot(cfg) {

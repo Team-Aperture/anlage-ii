@@ -35,14 +35,9 @@ const Chapter2 = (() => {
   // ═══════════════════════════════════════════════════════════════
   // SCENE HELPERS
   // ═══════════════════════════════════════════════════════════════
-  function setScene(key, imgSrc) {
-    const ph  = document.getElementById('scenePh');
-    const img = document.getElementById('sceneBg');
-    if (ph)  ph.dataset.scene = key;
-    if (img && imgSrc) {
-      img.src = imgSrc;
-      img.style.display = '';
-    }
+  function setScene(key) {
+    const ph = document.getElementById('scenePh');
+    if (ph) ph.dataset.scene = key;
   }
 
   function setFrostLevel(level) {
@@ -56,6 +51,11 @@ const Chapter2 = (() => {
   }
 
   function addHotspot(cfg) {
+    if (cfg.prop && window.GameEngine && GameEngine.props) {
+      const p = GameEngine.props.el(cfg.prop, { x:cfg.x, y:cfg.y, w:cfg.w, h:cfg.h, label:cfg.label, onClick:cfg.fn, cls:cfg.cls, anim:cfg.anim });
+      document.getElementById('sceneHotspots').appendChild(p);
+      return p;
+    }
     const el = document.createElement('button');
     el.className = 'hotspot' + (cfg.cls ? ' ' + cfg.cls : '');
     el.setAttribute('aria-label', cfg.label || 'Interagieren');
@@ -67,6 +67,11 @@ const Chapter2 = (() => {
     el.addEventListener('click', cfg.fn);
     document.getElementById('sceneHotspots').appendChild(el);
     return el;
+  }
+  function addProp(cfg) {
+    if (!(window.GameEngine && GameEngine.props)) return;
+    document.getElementById('sceneHotspots').appendChild(
+      GameEngine.props.el(cfg.prop, { x:cfg.x, y:cfg.y, w:cfg.w, h:cfg.h, cls:cfg.cls, anim:cfg.anim }));
   }
 
   function showRobots(v) {
@@ -291,12 +296,13 @@ const Chapter2 = (() => {
 
   function loadGardenHotspots() {
     clearHotspots();
-    addHotspot({ x:42, y:72, w:14, h:10, label:'PFLANZBECKEN', cls:'hs-froschi', fn:() => clickGarden('plants') });
-    addHotspot({ x:8,  y:35, w:6,  h:30, label:'WASSERORGEL',          fn:() => clickGarden('valves') });
-    addHotspot({ x:18, y:60, w:6,  h:8,  label:'EISVERPACKTE TAFEL',   fn:() => clickGarden('tafel') });
-    addHotspot({ x:78, y:48, w:6,  h:14, label:'EIS-SKULPTUR',         fn:() => clickGarden('ice') });
-    addHotspot({ x:62, y:80, w:5,  h:6,  label:'EISBRUNNEN',            fn:() => clickGarden('brunnen') });
-    addHotspot({ x:88, y:78, w:5,  h:8,  label:'WARTUNGSSCHACHT',      fn:() => clickGarden('vent') });
+    addProp({ prop:'light', x:43, y:3, w:13, h:8 });
+    addHotspot({ prop:'crate', x:40, y:64, w:16, h:18, label:'PFLANZBECKEN', fn:() => clickGarden('plants') });
+    addHotspot({ prop:'pipe', x:5, y:30, w:8, h:46, label:'WASSERORGEL', fn:() => clickGarden('valves') });
+    addHotspot({ prop:'sign', cls:'prop-guest', x:14, y:54, w:14, h:12, label:'EISVERPACKTE TAFEL', fn:() => clickGarden('tafel') });
+    addHotspot({ prop:'panel', x:84, y:72, w:11, h:13, label:'WARTUNGSSCHACHT', fn:() => clickGarden('vent') });
+    addHotspot({ x:78, y:48, w:6,  h:14, label:'EIS-SKULPTUR', fn:() => clickGarden('ice') });
+    addHotspot({ x:62, y:80, w:5,  h:6,  label:'EISBRUNNEN',   fn:() => clickGarden('brunnen') });
   }
 
   function clickGarden(key) {

@@ -38,16 +38,19 @@ const Chapter3 = (() => {
   // ═══════════════════════════════════════════════════════════════
   // SCENE HELPERS
   // ═══════════════════════════════════════════════════════════════
-  function setScene(key, imgSrc) {
-    const ph  = document.getElementById('scenePh');
-    const img = document.getElementById('sceneBg');
-    if (ph)  ph.dataset.scene = key;
-    if (img && imgSrc) { img.src = imgSrc; img.style.display = ''; }
+  function setScene(key) {
+    const ph = document.getElementById('scenePh');
+    if (ph) ph.dataset.scene = key;
   }
 
   function clearHotspots() { document.getElementById('sceneHotspots').innerHTML = ''; }
 
   function addHotspot(cfg) {
+    if (cfg.prop && window.GameEngine && GameEngine.props) {
+      const p = GameEngine.props.el(cfg.prop, { x:cfg.x, y:cfg.y, w:cfg.w, h:cfg.h, label:cfg.label, onClick:cfg.fn, cls:cfg.cls, anim:cfg.anim });
+      document.getElementById('sceneHotspots').appendChild(p);
+      return p;
+    }
     const el = document.createElement('button');
     el.className = 'hotspot' + (cfg.cls ? ' ' + cfg.cls : '');
     el.setAttribute('aria-label', cfg.label || 'Interagieren');
@@ -59,6 +62,11 @@ const Chapter3 = (() => {
     el.addEventListener('click', cfg.fn);
     document.getElementById('sceneHotspots').appendChild(el);
     return el;
+  }
+  function addProp(cfg) {
+    if (!(window.GameEngine && GameEngine.props)) return;
+    document.getElementById('sceneHotspots').appendChild(
+      GameEngine.props.el(cfg.prop, { x:cfg.x, y:cfg.y, w:cfg.w, h:cfg.h, cls:cfg.cls, anim:cfg.anim }));
   }
 
   function showRobots(v) { document.getElementById('robotIcons').classList.toggle('hidden', !v); }
@@ -219,10 +227,11 @@ const Chapter3 = (() => {
 
   function loadExploreHotspots() {
     clearHotspots();
-    addHotspot({ x:48, y:46, w:12, h:14, cls:'hs-lux', label:'BEOBACHTUNGSARRAY', fn:() => clickExplore('array') });
-    addHotspot({ x:16, y:38, w:7, h:18,  label:'JUSTIERSPIEGEL',     fn:() => clickExplore('mirror') });
-    addHotspot({ x:80, y:62, w:7, h:9,   label:'MESSPROTOKOLL',      fn:() => clickExplore('log') });
-    addHotspot({ x:88, y:24, w:5, h:7,   label:'FLACKERNDE LINSE',   fn:() => clickExplore('niche') });
+    addProp({ prop:'light', x:43, y:3, w:13, h:8 });
+    addHotspot({ prop:'console', cls:'prop-guest', x:42, y:44, w:20, h:22, label:'BEOBACHTUNGSARRAY', fn:() => clickExplore('array') });
+    addHotspot({ prop:'panel', x:13, y:34, w:13, h:13, label:'JUSTIERSPIEGEL', fn:() => clickExplore('mirror') });
+    addHotspot({ prop:'terminal', anim:'prop-flicker', x:78, y:48, w:13, h:24, label:'MESSPROTOKOLL', fn:() => clickExplore('log') });
+    addHotspot({ prop:'light', anim:'prop-flicker', x:85, y:20, w:10, h:8, label:'FLACKERNDE LINSE', fn:() => clickExplore('niche') });
   }
 
   function clickExplore(key) {

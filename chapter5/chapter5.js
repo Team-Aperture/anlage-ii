@@ -135,9 +135,11 @@ const Chapter5 = (() => {
 
   function loadExploreHotspots() {
     CH.clearHotspots();
-    CH.addHotspot({ x:48, y:50, w:14, h:16, cls:'hs-guest', label:'STARTLINIE', fn:() => clickExplore('band') });
-    CH.addHotspot({ x:18, y:44, w:7,  h:14, label:'STRECKENMARKER', fn:() => clickExplore('marker') });
-    CH.addHotspot({ x:82, y:60, w:7,  h:12, label:'ALTE ANZEIGETAFEL', fn:() => clickExplore('sign') });
+    CH.addProp({ prop:'light', x:44, y:3, w:14, h:9 });
+    CH.addProp({ prop:'pipe',  x:2,  y:14, w:7, h:54 });
+    CH.addHotspot({ prop:'console', cls:'prop-guest', x:42, y:46, w:20, h:22, label:'STARTLINIE', fn:() => clickExplore('band') });
+    CH.addHotspot({ prop:'sign', x:13, y:38, w:14, h:12, label:'STRECKENMARKER', fn:() => clickExplore('marker') });
+    CH.addHotspot({ prop:'sign', x:80, y:50, w:14, h:12, label:'ALTE ANZEIGETAFEL', fn:() => clickExplore('sign') });
   }
 
   function clickExplore(key) {
