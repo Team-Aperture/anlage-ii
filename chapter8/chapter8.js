@@ -383,7 +383,41 @@ const Chapter8 = (() => {
     if (allSig) {
       lines.push({ speaker:'AGN-H3R', text:'„…und du hast alle fünf Frequenzen gehört. Dann öffnet sich dir noch eine Kammer. Eine, die niemand betreten sollte. Hör auf das Terminal. Es ruft dich."' });
     }
-    GameEngine.dialogue.load(lines, () => CH.complete());
+    GameEngine.dialogue.load(lines, () => { CH.complete(); enhanceEndScreen(allSig); });
+  }
+
+  // The end screen: show the coordinates prominently, a bonus teaser, and a
+  // full-credits button (credits build themselves on chapter pages).
+  function enhanceEndScreen(allSig) {
+    const card = document.querySelector('#chapterComplete .cc-card');
+    if (!card) return;
+    const title  = card.querySelector('.cc-title');
+    const anchor = title ? title.nextSibling : null;
+
+    const coords = document.createElement('div');
+    coords.className = 'cc-coords';
+    coords.innerHTML = `<div class="cc-coords-label sys-text">ZIELDATEN</div><div class="cc-coords-value">${FINAL_COORDS}</div>`;
+    card.insertBefore(coords, anchor);
+
+    const teaser = document.createElement('div');
+    teaser.className = 'cc-teaser sys-text';
+    teaser.textContent = allSig
+      ? 'ALLE FÜNF SIGNALNISCHEN GEHÖRT. EINE VERBORGENE KAMMER HAT SICH GEÖFFNET.'
+      : 'DER BONUS WARTET — DU BRAUCHST ALLE FÜNF SIGNALNISCHEN, UM IHN ZU ÖFFNEN.';
+    card.insertBefore(teaser, anchor);
+
+    if (allSig) {
+      const bonus = document.createElement('a');
+      bonus.className = 'ka-btn primary';
+      bonus.href = '../chapter9/chapter9.html';
+      bonus.textContent = '[ ??? BETRETEN ]';
+      card.appendChild(bonus);
+    }
+    const credits = document.createElement('button');
+    credits.className = 'ka-btn small';
+    credits.textContent = '[ VOLLE CREDITS ]';
+    credits.onclick = () => GameEngine.showCredits();
+    card.appendChild(credits);
   }
 
   // ─── PUBLIC API ───────────────────────────────────────────────

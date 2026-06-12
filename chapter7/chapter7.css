@@ -1,11 +1,11 @@
 /* ═══════════════════════════════════════════════════════════════
-   KAPITEL 07 — VEXIERSEKTOR  (guest: F-AXN / FAXENMEIER)
+   KAPITEL 07 — VEXIERSEKTOR  (guest: FAX-N)
    Shared chrome lives in css/chapter.css; this file themes the guest
    accent, the scene backgrounds, the emblem, and the VEXIERSCHLOSS.
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
-  --accent-guest:    #ff4733;              /* F-AXN — pumpkin red */
+  --accent-guest:    #ff4733;              /* FAX-N — pumpkin red */
   --accent-guest-lo: rgba(255,71,51,0.14);
 }
 
