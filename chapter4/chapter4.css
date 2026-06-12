@@ -5,6 +5,7 @@
 :root {
   --accent-bradfish:    #f3c623;            /* B-RADF1SH — yellow (= --accent-g4) */
   --accent-bradfish-lo: rgba(243,198,35,0.15);
+  --accent-guest:       var(--accent-bradfish);  /* tints the guest's key prop */
 }
 
 .chapter-page { overflow: hidden; }

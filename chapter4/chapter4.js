@@ -37,14 +37,17 @@ const Chapter4 = (() => {
   };
 
   // ─── SCENE HELPERS ────────────────────────────────────────────
-  function setScene(key, imgSrc) {
-    const ph  = document.getElementById('scenePh');
-    const img = document.getElementById('sceneBg');
-    if (ph)  ph.dataset.scene = key;
-    if (img && imgSrc) { img.src = imgSrc; img.style.display = ''; }
+  function setScene(key) {
+    const ph = document.getElementById('scenePh');
+    if (ph) ph.dataset.scene = key;
   }
   function clearHotspots() { document.getElementById('sceneHotspots').innerHTML = ''; }
   function addHotspot(cfg) {
+    if (cfg.prop && window.GameEngine && GameEngine.props) {
+      const p = GameEngine.props.el(cfg.prop, { x:cfg.x, y:cfg.y, w:cfg.w, h:cfg.h, label:cfg.label, onClick:cfg.fn, cls:cfg.cls, anim:cfg.anim });
+      document.getElementById('sceneHotspots').appendChild(p);
+      return p;
+    }
     const el = document.createElement('button');
     el.className = 'hotspot' + (cfg.cls ? ' ' + cfg.cls : '');
     el.setAttribute('aria-label', cfg.label || 'Interagieren');
@@ -56,6 +59,11 @@ const Chapter4 = (() => {
     el.addEventListener('click', cfg.fn);
     document.getElementById('sceneHotspots').appendChild(el);
     return el;
+  }
+  function addProp(cfg) {
+    if (!(window.GameEngine && GameEngine.props)) return;
+    document.getElementById('sceneHotspots').appendChild(
+      GameEngine.props.el(cfg.prop, { x:cfg.x, y:cfg.y, w:cfg.w, h:cfg.h, cls:cfg.cls, anim:cfg.anim }));
   }
   function showRobots(v)   { document.getElementById('robotIcons').classList.toggle('hidden', !v); }
   function showBradfish(v) { document.getElementById('bradfishIcon').classList.toggle('hidden', !v); }
@@ -201,9 +209,11 @@ const Chapter4 = (() => {
 
   function loadExploreHotspots() {
     clearHotspots();
-    addHotspot({ x:46, y:42, w:14, h:18, cls:'hs-bradfish', label:'WÜRFEL', fn:() => clickExplore('cube') });
-    addHotspot({ x:16, y:40, w:7,  h:14, label:'LAGERPLAN',     fn:() => clickExplore('board') });
-    addHotspot({ x:85, y:78, w:6,  h:8,  label:'BRAUNER KASTEN', fn:() => clickExplore('kasten') });
+    addProp({ prop:'light', x:43, y:3, w:13, h:8 });
+    addProp({ prop:'pipe',  x:3,  y:14, w:7, h:52 });
+    addHotspot({ prop:'cube', cls:'prop-guest', x:43, y:38, w:18, h:26, label:'WÜRFEL', fn:() => clickExplore('cube') });
+    addHotspot({ prop:'panel', x:13, y:36, w:13, h:13, label:'LAGERPLAN', fn:() => clickExplore('board') });
+    addHotspot({ prop:'crate', cls:'prop-brown', x:82, y:68, w:14, h:18, label:'BRAUNER KASTEN', fn:() => clickExplore('kasten') });
   }
 
   function clickExplore(key) {

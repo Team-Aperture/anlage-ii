@@ -135,9 +135,11 @@ const Chapter8 = (() => {
 
   function loadExploreHotspots() {
     CH.clearHotspots();
-    CH.addHotspot({ x:44, y:46, w:14, h:20, cls:'hs-guest', label:'DAS ZEHNTE PUZZLE', fn:() => clickExplore('record') });
-    CH.addHotspot({ x:18, y:40, w:9,  h:24, label:'AKTENREGAL',  fn:() => clickExplore('shelf') });
-    CH.addHotspot({ x:82, y:58, w:7,  h:12, label:'AGN-H3RS HAUPTBUCH', fn:() => clickExplore('ledger') });
+    CH.addProp({ prop:'shelf', x:2,  y:18, w:11, h:54 });
+    CH.addProp({ prop:'shelf', x:87, y:18, w:11, h:54 });
+    CH.addHotspot({ prop:'panel', cls:'prop-guest', anim:'prop-flicker', x:43, y:44, w:16, h:20, label:'DAS ZEHNTE PUZZLE', fn:() => clickExplore('record') });
+    CH.addHotspot({ prop:'shelf', x:16, y:36, w:12, h:34, label:'AKTENREGAL',  fn:() => clickExplore('shelf') });
+    CH.addHotspot({ prop:'sign', x:80, y:52, w:14, h:12, label:'AGN-H3RS HAUPTBUCH', fn:() => clickExplore('ledger') });
   }
 
   function clickExplore(key) {

@@ -5,6 +5,7 @@
 :root {
   --accent-froschi:    #e84a8c;
   --accent-froschi-lo: rgba(232,74,140,0.12);
+  --accent-guest:      var(--accent-froschi);   /* tints the guest's key prop */
   --frost-pale:        #d6f2ff;
   --frost-blue:        #7fb8d4;
 }

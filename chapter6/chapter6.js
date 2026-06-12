@@ -133,9 +133,10 @@ const Chapter6 = (() => {
 
   function loadExploreHotspots() {
     CH.clearHotspots();
-    CH.addHotspot({ x:48, y:46, w:13, h:16, cls:'hs-guest', label:'BELICHTETE PLATTE', fn:() => clickExplore('plate') });
-    CH.addHotspot({ x:16, y:42, w:8,  h:18, label:'BILDARCHIV',  fn:() => clickExplore('shelf') });
-    CH.addHotspot({ x:82, y:62, w:7,  h:10, label:'ASPS LOGBUCH', fn:() => clickExplore('log') });
+    CH.addProp({ prop:'light', x:44, y:3, w:13, h:8 });
+    CH.addHotspot({ prop:'panel', anim:'prop-flicker', cls:'prop-guest', x:44, y:42, w:16, h:18, label:'BELICHTETE PLATTE', fn:() => clickExplore('plate') });
+    CH.addHotspot({ prop:'shelf', x:12, y:34, w:13, h:34, label:'BILDARCHIV',  fn:() => clickExplore('shelf') });
+    CH.addHotspot({ prop:'sign', x:80, y:54, w:14, h:12, label:'ASPS LOGBUCH', fn:() => clickExplore('log') });
   }
 
   function clickExplore(key) {
