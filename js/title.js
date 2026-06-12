@@ -238,6 +238,82 @@
     }
   }
 
+  // ─── SECTOR MAP + CONTINUE ───────────────────────────────────
+  const CHAPTERS = [
+    { id:'ch0', n:'00', name:'Rückkehr',     href:'chapter0/chapter0.html' },
+    { id:'ch1', n:'01', name:'Wartung',      href:'chapter1/chapter1.html' },
+    { id:'ch2', n:'02', name:'Garten',       href:'chapter2/chapter2.html' },
+    { id:'ch3', n:'03', name:'Beobachtung',  href:'chapter3/chapter3.html' },
+    { id:'ch4', n:'04', name:'Rätsel',       href:'chapter4/chapter4.html' },
+    { id:'ch5', n:'05', name:'Förderlauf',   href:'chapter5/chapter5.html' },
+    { id:'ch6', n:'06', name:'Dunkelkammer', href:'chapter6/chapter6.html' },
+    { id:'ch7', n:'07', name:'Vexier',       href:'chapter7/chapter7.html' },
+    { id:'ch8', n:'08', name:'Archiv',       href:'chapter8/chapter8.html' },
+  ];
+
+  function chapterNav() {
+    if (typeof GameEngine === 'undefined') return null;
+    const completed = GameEngine.state.get('chaptersCompleted') || [];
+    const nextIdx   = CHAPTERS.findIndex(c => !completed.includes(c.id));
+    const allDone   = nextIdx === -1;
+    let bonus = false;
+    try { bonus = GameEngine.signals.ALL.every(s => GameEngine.signals.isFound(s.id)); } catch (_) {}
+    return { completed, nextIdx, allDone, bonus };
+  }
+
+  function initContinue() {
+    const btn = document.getElementById('continueBtn');
+    const nav = chapterNav();
+    if (!btn || !nav) return;
+    if (nav.completed.length === 0) { btn.classList.add('hidden'); return; }  // fresh start → only STARTEN
+    document.getElementById('startBtn')?.classList.remove('primary');        // Continue becomes the primary action
+    if (!nav.allDone) {
+      btn.href = CHAPTERS[nav.nextIdx].href;
+      btn.textContent = `[ WEITER · KAP. ${CHAPTERS[nav.nextIdx].n} ]`;
+    } else if (nav.bonus) {
+      btn.href = 'chapter9/chapter9.html';
+      btn.textContent = '[ ??? ]';
+    } else {
+      btn.href = CHAPTERS[CHAPTERS.length - 1].href;
+      btn.textContent = '[ ERNEUT SPIELEN ]';
+    }
+    btn.classList.remove('hidden');
+  }
+
+  function initSectorMap() {
+    const track = document.getElementById('sectorTrack');
+    const cap   = document.getElementById('sectorCaption');
+    const map   = document.getElementById('sectorMap');
+    const nav   = chapterNav();
+    if (!track || !map || !nav) return;
+
+    track.innerHTML = '';
+    CHAPTERS.forEach((c, i) => {
+      const done    = nav.completed.includes(c.id);
+      const current = !nav.allDone && i === nav.nextIdx;
+      const locked  = !done && !current;
+      const node = document.createElement(locked ? 'span' : 'a');
+      node.className = 'sector-node ' + (done ? 'done' : current ? 'current' : 'locked');
+      node.textContent = done ? '✓' : c.n;
+      node.setAttribute('title', `Kapitel ${c.n} — ${c.name}`);
+      if (!locked) node.href = c.href;
+      track.appendChild(node);
+    });
+    if (nav.bonus) {
+      const b = document.createElement('a');
+      b.className = 'sector-node bonus';
+      b.textContent = '?'; b.href = 'chapter9/chapter9.html';
+      b.setAttribute('title', '???');
+      track.appendChild(b);
+    }
+    if (cap) {
+      cap.textContent = nav.allDone
+        ? (nav.bonus ? 'ALLE SEKTOREN ONLINE · EINE KAMMER WARTET' : 'ALLE SEKTOREN ONLINE')
+        : `NÄCHSTER SEKTOR: ${CHAPTERS[nav.nextIdx].n} — ${CHAPTERS[nav.nextIdx].name.toUpperCase()}`;
+    }
+    map.classList.remove('hidden');
+  }
+
   // ─── CHAPTER PROGRESS INDICATOR ──────────────────────────────
   function updateChapterProgress() {
     const progressEl = document.getElementById('chapterProgress');
@@ -265,12 +341,21 @@
     // the engine retries on the next user gesture). Placeholder until an mp3 exists.
     if (typeof GameEngine !== 'undefined' && GameEngine.music) GameEngine.music.play('title');
 
+    // 100% completion: once the true ending (Chapter 9) is reached, the logo
+    // glitches — a quiet sign that the facility is no longer quite right.
+    if (typeof GameEngine !== 'undefined' && GameEngine.achievements && GameEngine.achievements.isUnlocked('bonus_found')) {
+      document.getElementById('heroLogo')?.classList.add('logo-glitch');
+      document.body.classList.add('game-complete');
+    }
+
     runBootSequence(() => {
       revealUI();
       updateStatusBar();
       initLogoParallax();
       initIdleComments();
       updateChapterProgress();
+      initContinue();
+      initSectorMap();
     });
 
   });

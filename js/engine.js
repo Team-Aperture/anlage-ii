@@ -1025,9 +1025,9 @@ const GameEngine = (() => {
   }
 
   function showCredits() {
-    // Build the overlay on the fly if the page doesn't have one (so credits
-    // work on chapter pages too, e.g. the Ch8 end screen). All overlay/credits
-    // CSS lives in global.css, which every page loads.
+    // Built fresh every time (so it works on chapter pages too, and so the
+    // gated guest "special thanks" can appear once the game is finished). All
+    // overlay/credits CSS lives in global.css, which every page loads.
     let back = document.getElementById('overlayBackdrop');
     if (!back) {
       back = document.createElement('div');
@@ -1043,25 +1043,47 @@ const GameEngine = (() => {
       panel.id = 'creditsOverlay';
       panel.setAttribute('role', 'dialog');
       panel.setAttribute('aria-label', 'Credits');
-      panel.innerHTML = `
-        <div class="overlay-card">
-          <h2 class="overlay-title">CREDITS</h2>
-          <div class="overlay-content credits-content">
-            <div class="credits-roll">
-              <p><span class="accent-r3mi">R-3MI</span><br><span class="sys-text">Musik · Code</span></p>
-              <p class="credits-divider">──────────────────────────</p>
-              <p><span class="accent-vtgm">V-TGM</span><br><span class="sys-text">Playtesting · Story</span></p>
-              <p class="credits-divider">──────────────────────────</p>
-              <p class="sys-text">Code-Unterstützung</p>
-              <p style="font-size:13px; color:var(--text-secondary); margin-top:4px;">Claude AI — entwickelt von Anthropic<br>prüft, ob der Code funktioniert</p>
-              <p class="credits-divider">──────────────────────────</p>
-              <p class="sys-text">Ein Team_Aperture Geocaching-Projekt.</p>
-            </div>
-          </div>
-          <button class="ka-btn" onclick="GameEngine.closeOverlay()">[ SCHLIESSEN ]</button>
-        </div>`;
       document.body.appendChild(panel);
     }
+
+    const div = '<p class="credits-divider">──────────────────────────</p>';
+    // Guests stay hidden until the player has reached the end of the story.
+    const endgame = state.isChapterComplete('ch8');
+    const guests = endgame ? `
+      ${div}
+      <p class="sys-text">Besonderer Dank — die Gasteinheiten</p>
+      <p style="font-size:14px; color:var(--text-primary); margin-top:6px; line-height:1.8;">
+        <span style="color:var(--accent-g1)">F-RØ5CHI</span> · <span style="color:var(--accent-g2)">L-UX</span> · <span style="color:var(--accent-g4)">B-RADF1SH</span><br>
+        <span style="color:var(--accent-g5)">T-FLON14</span> · <span style="color:var(--accent-g6)">ASP-1024</span> · <span style="color:var(--accent-g8)">FAX-N</span> · <span style="color:var(--accent-g7)">AGN-H3R</span>
+      </p>
+      <p style="font-size:12px; color:var(--text-dim); font-style:italic; margin-top:6px;">…und denen, die sie inspiriert haben.</p>
+    ` : '';
+
+    panel.innerHTML = `
+      <div class="overlay-card">
+        <h2 class="overlay-title">${endgame ? 'ABSPANN' : 'CREDITS'}</h2>
+        <div class="overlay-content credits-content">
+          <div class="credits-roll">
+            <p style="font-family:var(--font-display); letter-spacing:.15em; color:var(--text-primary);">DIE KALIBRIERUNGSANLAGE II</p>
+            <p class="sys-text" style="font-style:italic;">„Die Reaktivierung"</p>
+            ${div}
+            <p class="sys-text">Entwicklung</p>
+            <p style="margin-top:6px;"><span class="accent-r3mi">R-3MI</span> &nbsp;—&nbsp; <span class="sys-text">Musik · Code</span></p>
+            <p><span class="accent-vtgm">V-TGM</span> &nbsp;—&nbsp; <span class="sys-text">Playtesting · Story</span></p>
+            ${div}
+            <p class="sys-text">Code-Unterstützung</p>
+            <p style="font-size:13px; color:var(--text-secondary); margin-top:4px;">Claude AI — entwickelt von Anthropic<br>prüft, ob der Code funktioniert</p>
+            ${guests}
+            ${div}
+            <p class="sys-text">The Transmission</p>
+            <p style="font-size:13px; color:var(--accent-system); font-style:italic; margin-top:4px;">„…Hoffnung verbleibt…"</p>
+            ${div}
+            <p class="sys-text">Ein Team_Aperture Geocaching-Projekt.</p>
+            <p class="sys-text" style="margin-top:8px; font-size:11px;">Dieses Spiel speichert keine personenbezogenen Daten.<br>Spielfortschritt wird lokal gespeichert.</p>
+          </div>
+        </div>
+        <button class="ka-btn" onclick="GameEngine.closeOverlay()">[ SCHLIESSEN ]</button>
+      </div>`;
     panel.classList.remove('hidden');
     back.classList.remove('hidden');
   }
