@@ -265,6 +265,13 @@
     // the engine retries on the next user gesture). Placeholder until an mp3 exists.
     if (typeof GameEngine !== 'undefined' && GameEngine.music) GameEngine.music.play('title');
 
+    // 100% completion: once the true ending (Chapter 9) is reached, the logo
+    // glitches — a quiet sign that the facility is no longer quite right.
+    if (typeof GameEngine !== 'undefined' && GameEngine.achievements && GameEngine.achievements.isUnlocked('bonus_found')) {
+      document.getElementById('heroLogo')?.classList.add('logo-glitch');
+      document.body.classList.add('game-complete');
+    }
+
     runBootSequence(() => {
       revealUI();
       updateStatusBar();
