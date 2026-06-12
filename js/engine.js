@@ -227,15 +227,18 @@ const GameEngine = (() => {
     }
 
     function _showDiscovery(def) {
+      try { audio.signal(); } catch (_) {}
       const t = document.createElement('div');
-      t.className = 'signal-toast';
+      t.className = 'signal-toast glitching';
       t.innerHTML = `
         <div class="toast-label">SIGNALNISCHE ENTDECKT</div>
         <div class="toast-num">[ ${def.number} ]</div>
-        <div class="toast-title">${def.title}</div>
+        <div class="toast-title" data-text="${def.title}">${def.title}</div>
         <div class="toast-text">${def.text}</div>
       `;
       document.body.appendChild(t);
+      // the glitch animations are finite and self-settle; the class stays so
+      // removing it never re-triggers the entrance animation.
       setTimeout(() => {
         t.classList.add('hiding');
         t.addEventListener('animationend', () => t.remove(), { once: true });
@@ -609,35 +612,153 @@ const GameEngine = (() => {
     }
 
     // Per-character speech voice — Portal-style chirps, one per few letters.
+    // vol balances perceived loudness (square/sawtooth read louder than sine).
     const VOICE = {
-      'R-3MI':     { base: 520, type: 'square',   spread: 70  },
-      'V-TGM':     { base: 196, type: 'sine',     spread: 24  },
-      'SYSTEM':    { base: 300, type: 'triangle', spread: 0   },
-      'F-RØ5CHI':  { base: 430, type: 'sine',     spread: 110 },
-      'L-UX':      { base: 720, type: 'square',   spread: 150 },
-      'B-RADF1SH': { base: 290, type: 'triangle', spread: 55  },
-      'T-FLON14':  { base: 470, type: 'sawtooth', spread: 80  },
-      'ASP-1024':  { base: 110, type: 'sine',     spread: 8   },
+      'R-3MI':     { base: 520, type: 'square',   spread: 70,  vol: 0.10 },
+      'V-TGM':     { base: 340, type: 'triangle', spread: 90,  vol: 0.17 }, // brighter, cheerful, louder
+      'SYSTEM':    { base: 300, type: 'triangle', spread: 0,   vol: 0.09 },
+      'F-RØ5CHI':  { base: 430, type: 'sine',     spread: 110, vol: 0.12 },
+      'L-UX':      { base: 720, type: 'square',   spread: 150, vol: 0.10 },
+      'B-RADF1SH': { base: 372, type: 'sine',     spread: 46,  vol: 0.13 }, // older, warm, not bassy
+      'T-FLON14':  { base: 470, type: 'sawtooth', spread: 80,  vol: 0.11 },
+      'ASP-1024':  { base: 176, type: 'sine',     spread: 16,  vol: 0.16 }, // soft + low, but audible
+      'AGN-H3R':   { base: 96,  type: 'sine',     spread: 14,  vol: 0.14 }, // deep, ominous (skull)
+      'F-AXN':     { base: 610, type: 'square',   spread: 200, vol: 0.12 }, // manic, playful, wide
     };
     function blip(speaker) {
       const v = VOICE[speaker] || VOICE['SYSTEM'];
-      tone({ freq: v.base + (Math.random() * 2 - 1) * v.spread, type: v.type, dur: 0.045, vol: 0.10 });
+      tone({ freq: v.base + (Math.random() * 2 - 1) * v.spread, type: v.type, dur: 0.045, vol: v.vol != null ? v.vol : 0.10 });
     }
     function click()       { tone({ freq: 660, type: 'square',   dur: 0.025, vol: 0.10 }); }
     function solve()       { [523, 659, 784, 1047].forEach((f, i) => tone({ freq: f, type: 'triangle', dur: 0.2, vol: 0.16, delay: i * 0.085 })); }
     function fail()        { tone({ freq: 180, type: 'sawtooth', dur: 0.22, vol: 0.16, glideTo: 80 }); }
     function achievement() { [659, 880, 1318].forEach((f, i) => tone({ freq: f, type: 'sine', dur: 0.34, vol: 0.18, delay: i * 0.11 })); }
 
+    // Chapter-clear jingle — three rising "dings" then a bright major resolve.
+    function fanfare() {
+      [784, 988, 1175].forEach((f, i) => tone({ freq: f, type: 'triangle', dur: 0.14, vol: 0.19, delay: i * 0.16 }));
+      // resolving chord (C-E-G-C) blooming after the dings
+      [523, 659, 784, 1047].forEach((f) => tone({ freq: f, type: 'triangle', dur: 0.9, vol: 0.13, delay: 0.56 }));
+      tone({ freq: 1568, type: 'sine', dur: 0.9, vol: 0.10, delay: 0.6 });
+    }
+
+    // Signalnische discovery — a creepy numbers-station/SSTV sting.
+    function signal() {
+      tone({ freq: 150, type: 'sawtooth', dur: 1.4, vol: 0.11, glideTo: 84 });   // descending drone
+      tone({ freq: 154, type: 'sine',     dur: 1.4, vol: 0.07 });                 // detuned beat against it
+      [672, 700, 612, 700].forEach((f, i) => tone({ freq: f, type: 'square', dur: 0.07, vol: 0.05, delay: 0.18 + i * 0.22 })); // dissonant pips
+    }
+
     function setMuted(m) { muted = !!m; }
     function isMuted()   { return muted; }
     function toggleMute() {
       muted = !muted;
       try { state.set('muted', muted); } catch (_) {}
+      try { music.setMuted(muted); } catch (_) {}   // music is defined just below; live at call time
       if (!muted) click();
       return muted;
     }
 
-    return { ensure, resume, tone, blip, click, solve, fail, achievement, setMuted, isMuted, toggleMute };
+    return { ensure, resume, tone, blip, click, solve, fail, achievement, fanfare, signal, setMuted, isMuted, toggleMute };
+  })();
+
+
+  // ═══════════════════════════════════════════════════════════════
+  // MUSIC — background soundtrack loader (mp3 placeholders)
+  // Crossfades looping tracks from assets/music/. The files are
+  // placeholders for now; a missing or autoplay-blocked track fails
+  // silently and retries on the next user gesture. Respects the mute
+  // toggle. Track slots + trigger moments are documented in
+  // assets/music/MUSIC.md — drop real .mp3s in to bring it to life.
+  // ═══════════════════════════════════════════════════════════════
+  const music = (() => {
+    const BASE = (/\/chapter\d/.test(location.pathname) ? '../' : '') + 'assets/music/';
+
+    // id → filename. Up to ~60 slots; compose freely. (See MUSIC.md.)
+    const TRACKS = {
+      // — UI / frame —
+      title:        'title_theme.mp3',
+      boot:         'boot_drone.mp3',
+      credits:      'credits_theme.mp3',
+      // — chapter ambiences —
+      ch0_ambient:  'ch0_rueckkehr.mp3',
+      ch1_ambient:  'ch1_wartung.mp3',
+      ch2_ambient:  'ch2_garten.mp3',
+      ch3_ambient:  'ch3_beobachtung.mp3',
+      ch4_ambient:  'ch4_wuerfel.mp3',
+      ch5_ambient:  'ch5_foerderlauf.mp3',
+      ch6_ambient:  'ch6_dunkelkammer.mp3',
+      ch7_ambient:  'ch7_vexier.mp3',
+      ch8_ambient:  'ch8_archiv.mp3',
+      ch9_ambient:  'ch9_bonus.mp3',
+      // — character themes (on first appearance) —
+      theme_froschi:  'theme_froschi.mp3',
+      theme_lux:      'theme_lux.mp3',
+      theme_bradf1sh: 'theme_bradfisch.mp3',
+      theme_tflon:    'theme_tflon14.mp3',
+      theme_asp:      'theme_asp1024.mp3',
+      theme_faxn:     'theme_faxenmeier.mp3',
+      theme_agn:      'theme_agnher.mp3',
+      // — puzzle underscores —
+      puzzle_calm:    'puzzle_calm.mp3',
+      puzzle_tense:   'puzzle_tense.mp3',
+      puzzle_timed:   'puzzle_timed.mp3',
+      puzzle_forensic:'puzzle_forensic.mp3',
+      puzzle_deduce:  'puzzle_deduction.mp3',
+      puzzle_finale:  'puzzle_finale.mp3',
+      countdown:      'countdown_panic.mp3',
+      // — story beats —
+      transmission:   'the_transmission.mp3',
+      signal_found:   'signal_discovery.mp3',
+      coordinates:    'coordinates_reveal.mp3',
+      reactivation:   'reactivation_100.mp3',
+      // — the bonus / dark turn —
+      bonus_intro:    'bonus_intro.mp3',
+      bonus_truth:    'bonus_truth.mp3',
+      bonus_finale:   'bonus_finale.mp3',
+    };
+
+    let cur = null, curId = null, pending = null;
+    const VOL = 0.42;
+
+    function _vol(a, v){ try { a.volume = Math.max(0, Math.min(1, v)); } catch(_){} }
+    function _fade(a, to, ms, done){
+      const steps = Math.max(1, Math.round(ms / 40)); let i = 0; const from = a.volume;
+      const t = setInterval(() => { i++; _vol(a, from + (to - from) * i / steps); if (i >= steps) { clearInterval(t); if (done) done(); } }, 40);
+    }
+    function play(id, opts) {
+      opts = opts || {};
+      if (!TRACKS[id]) return;
+      if (curId === id && cur && !cur.paused) return;
+      pending = id;
+      if (audio.isMuted()) { curId = id; return; }   // remember the choice, stay silent
+      const a = new Audio(BASE + TRACKS[id]);
+      a.loop = opts.loop !== false;
+      _vol(a, 0);
+      // A missing file errors on load → stop retrying it (no 404 spam while the
+      // soundtrack is still placeholders). Autoplay-blocked files don't error,
+      // so they stay pending and start on the next gesture.
+      a.addEventListener('error', () => { if (pending === id) pending = null; }, { once: true });
+      const p = a.play();
+      if (p && p.then) p.then(() => { pending = null; _fade(a, VOL, opts.fade || 900); }).catch(() => { /* blocked or missing — retry on gesture */ });
+      const old = cur;
+      if (old) _fade(old, 0, opts.fade || 900, () => { try { old.pause(); } catch(_){} });
+      cur = a; curId = id;
+    }
+    function stop(fade) {
+      const old = cur; cur = null; curId = null; pending = null;
+      if (old) _fade(old, 0, fade || 700, () => { try { old.pause(); } catch(_){} });
+    }
+    function setMuted(m) {
+      if (m) { if (cur) _fade(cur, 0, 300, () => { try { cur.pause(); } catch(_){} }); }
+      else if (curId) { const id = curId; cur = null; curId = null; play(id); }
+    }
+    function _retry() {   // called on user gestures: start a track that was blocked
+      if (audio.isMuted()) return;
+      if (pending) play(pending);
+      else if (cur && cur.paused) cur.play().catch(() => {});
+    }
+    return { play, stop, setMuted, _retry, TRACKS };
   })();
 
 
@@ -668,6 +789,7 @@ const GameEngine = (() => {
       if (c.chapterCount) _chapterCount = c.chapterCount;
       if (c.title) document.title = c.title;
       document.body.classList.add('chapter-page');
+      try { music.play(c.music || ('ch' + parseInt(c.num, 10) + '_ambient')); } catch (_) {}
 
       const g        = c.guest || {};
       const guestNm  = g.name || 'GAST';
@@ -877,6 +999,7 @@ const GameEngine = (() => {
     function complete() {
       if (_completeId)  state.markChapterComplete(_completeId);
       if (_completeAch) { try { achievements.unlock(_completeAch); } catch (_) {} }
+      try { audio.fanfare(); } catch (_) {}
       el('chapterComplete')?.classList.remove('hidden');
       const p = el('ccProgress');
       if (p) p.textContent = `FORTSCHRITT: ${state.get('chaptersCompleted').length} / ${_chapterCount} KAPITEL`;
@@ -908,6 +1031,7 @@ const GameEngine = (() => {
 
   document.addEventListener('click', e => {
     audio.resume();
+    try { music._retry(); } catch (_) {}
     if (e.target?.id === 'overlayBackdrop') { closeOverlay(); return; }
     const btn = e.target.closest && e.target.closest('button');
     if (btn && !btn.disabled) audio.click();
@@ -940,6 +1064,7 @@ const GameEngine = (() => {
     scene,
     puzzle,
     audio,
+    music,
     chapter,
     closeOverlay,
     showCredits,

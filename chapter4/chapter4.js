@@ -465,6 +465,7 @@ const Chapter4 = (() => {
 
   function endChapter() {
     GameEngine.state.markChapterComplete('ch4');
+    try { GameEngine.audio.fanfare(); } catch(_) {}
     try { GameEngine.achievements.unlock('ch4_complete'); } catch(_) {}
     document.getElementById('chapterComplete').classList.remove('hidden');
     document.getElementById('ccProgress').textContent =

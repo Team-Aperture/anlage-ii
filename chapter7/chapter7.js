@@ -118,9 +118,10 @@ const Chapter7 = (() => {
     who: {
       key:'who', label:'[Wer bist du?]', seen:false,
       lines:[
-        { speaker:'F-AXN', text:'„Faxenmeier! Hüter des Unsinns, Meister der falschen Fährte. Ich verstecke die Wahrheit dort, wo keiner sucht: mitten im Witz."' },
-        { speaker:'R-3MI', text:'„Er hat früher die fiesesten Scherzrätsel der Anlage gebaut. Keiner hat sie je ohne Fluchen gelöst."' },
-        { speaker:'V-TGM', text:'"He made misdirection an art. Then the facility went silent — and he kept performing. For no one."', subtitle:'Er machte Irreführung zur Kunst. Dann wurde die Anlage still — und er spielte weiter. Für niemanden.' },
+        { speaker:'F-AXN', text:'„Faxenmeier! Der Erste. IMMER der Erste. Wo ein Schloss aufgeht, war ich schon da und wieder weg, bevor du »Vexier« sagen kannst."' },
+        { speaker:'R-3MI', text:'„Er versteckt nichts und baut kaum was. Er ist einfach… schneller. Vor allen. Bei allem. Ein Veteran."' },
+        { speaker:'V-TGM', text:'"The fastest first-solver this place ever had. Then the others stopped coming — and there was no one left to race."', subtitle:'Der schnellste Erstlöser, den dieser Ort je hatte. Dann kam keiner mehr — und es war niemand mehr da, gegen den er rennen konnte.' },
+        { speaker:'F-AXN', text:'„Erster zu sein ist nur halb so schön, wenn keiner Zweiter wird. …aber pssst. Das stand nicht im Drehbuch."' },
       ],
     },
     place: {
@@ -239,6 +240,7 @@ const Chapter7 = (() => {
       guest: [
         [{ speaker:'F-AXN', text:'„Tipp von mir: Es ist auf JEDEN Fall der Stern. …oder nie der Stern. Eins von beidem. Gern geschehen!"' }],
         [{ speaker:'F-AXN', text:'„Na schön, EIN ehrlicher Satz, weil du so süß guckst: Ein Symbol… kommt vielleicht doppelt vor. Vielleicht. PAH!"' }],
+        [{ speaker:'F-AXN', text:'„Weißt du, früher bin ich mit jemandem um die Wette gerannt. Schnell. Orange. Ein Fellknäuel mit viel zu viel Strom. …ach. Lange her. Tipp endlich."' }],
       ],
     };
     const arr = byWho[who] || [];

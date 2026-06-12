@@ -205,38 +205,46 @@ const Chapter6 = (() => {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // BILDFORENSIK — steganography: a code hidden in one colour channel
+  // BILDFORENSIK — four letters, four hiding places
   // ═══════════════════════════════════════════════════════════════
   /*
-   * Real code: blue channel, small +18 delta over ±6 noise → invisible in
-   *   the colour composite; clean only when you isolate Blue and raise the
-   *   threshold into ~135–146 (text=146 ≥ T > noise≤134). Math-guaranteed.
-   * Decoy code: green channel, loud +45 delta over ±10 noise → obvious on
-   *   Green isolate. It is the trap.
-   * Red channel: pure noise. Composite: grainy static.
+   * Four letters, left to right. Each lives in ONE colour channel and is
+   * transformed differently, so no single view ever shows the whole code:
+   *   col 1  RED   · plain               (channel R, threshold)
+   *   col 2  GREEN · inverted             (channel G, INVERT, threshold)
+   *   col 3  BLUE  · upside-down          (channel B, FLIP, threshold)
+   *   col 4  RED   · inverted + flipped   ("glitched": R, INVERT, FLIP, threshold)
+   * A letter sits at 128±DELTA in its channel only; everywhere else is ±NOISE.
+   * Under the wrong channel/invert/flip it collapses into the noise floor and
+   * vanishes at threshold. Verified separable (band width ~18 at T≈140).
    */
   const STEG_W = 280, STEG_H = 110;
+  const COLS = 4, COLW = STEG_W / COLS;
   const CODE_CHARS = 'ACEFHJKLNPRTXY3479';
-  const N_RED = 10, N_GREEN = 10, N_BLUE = 6;
-  const DELTA_FAKE = 45, DELTA_REAL = 18;
+  const NOISE = 6, DELTA = 24;
 
-  let ST = null; // { channel, invert, threshold, R,G,B, codeReal, codeFake }
+  // recipe per column: carrier channel, polarity (dark needs INVERT), orientation (flip)
+  const RECIPES = [
+    { ch:'r', dark:false, flip:false },
+    { ch:'g', dark:true,  flip:false },
+    { ch:'b', dark:false, flip:true  },
+    { ch:'r', dark:true,  flip:true  },
+  ];
+
+  let ST = null; // { channel, invert, flip, threshold, R,G,B, code }
 
   function rnd(a){ return Math.round((Math.random()*2 - 1) * a); }
-  function randCode(avoid){
-    let c;
-    do { c = Array.from({length:4}, () => CODE_CHARS[Math.floor(Math.random()*CODE_CHARS.length)]).join(''); }
-    while (c === avoid);
-    return c;
-  }
+  function randChar(){ return CODE_CHARS[Math.floor(Math.random()*CODE_CHARS.length)]; }
 
-  function textMask(text) {
+  // mask for one letter, drawn in its column, optionally vertically mirrored
+  function letterMask(chr, col, flip) {
     const c = document.createElement('canvas'); c.width = STEG_W; c.height = STEG_H;
     const x = c.getContext('2d');
     x.fillStyle = '#000'; x.fillRect(0, 0, STEG_W, STEG_H);
+    if (flip) { x.translate(0, STEG_H); x.scale(1, -1); }
     x.fillStyle = '#fff'; x.textAlign = 'center'; x.textBaseline = 'middle';
-    x.font = `bold ${Math.floor(STEG_H * 0.52)}px "Share Tech Mono", monospace`;
-    x.fillText(text, STEG_W/2, STEG_H/2 + 2);
+    x.font = `bold ${Math.floor(STEG_H * 0.6)}px "Share Tech Mono", monospace`;
+    x.fillText(chr, col * COLW + COLW / 2, STEG_H / 2 + 2);
     const d = x.getImageData(0, 0, STEG_W, STEG_H).data;
     const mask = new Uint8Array(STEG_W * STEG_H);
     for (let i = 0; i < mask.length; i++) mask[i] = d[i*4] > 128 ? 1 : 0;
@@ -245,58 +253,63 @@ const Chapter6 = (() => {
 
   function buildImage() {
     const n = STEG_W * STEG_H;
-    ST.codeReal = randCode();
-    ST.codeFake = randCode(ST.codeReal);
-    const real = textMask(ST.codeReal);
-    const fake = textMask(ST.codeFake);
     ST.R = new Uint8ClampedArray(n);
     ST.G = new Uint8ClampedArray(n);
     ST.B = new Uint8ClampedArray(n);
-    for (let i = 0; i < n; i++) {
-      ST.R[i] = 128 + rnd(N_RED);
-      ST.G[i] = 128 + rnd(N_GREEN) + (fake[i] ? DELTA_FAKE : 0);
-      ST.B[i] = 128 + rnd(N_BLUE)  + (real[i] ? DELTA_REAL : 0);
-    }
+    for (let i = 0; i < n; i++) { ST.R[i] = 128 + rnd(NOISE); ST.G[i] = 128 + rnd(NOISE); ST.B[i] = 128 + rnd(NOISE); }
+    const letters = [];
+    RECIPES.forEach((r, col) => {
+      const chr = randChar();
+      letters.push(chr);
+      const mask = letterMask(chr, col, r.flip);
+      const arr  = r.ch === 'r' ? ST.R : r.ch === 'g' ? ST.G : ST.B;
+      const val  = 128 + (r.dark ? -DELTA : DELTA);
+      for (let i = 0; i < n; i++) if (mask[i]) arr[i] = val + rnd(2);
+    });
+    ST.code = letters.join('');
   }
 
   function drawCanvas() {
     const cv = document.getElementById('stegCanvas');
     if (!cv) return;
     const ctx = cv.getContext('2d');
-    const n = STEG_W * STEG_H;
     const img = ctx.createImageData(STEG_W, STEG_H);
     const d = img.data;
     const t = ST.threshold;
-    for (let i = 0; i < n; i++) {
-      let r, g, b;
-      if (ST.channel === 'rgb') {
-        r = ST.R[i]; g = ST.G[i]; b = ST.B[i];
-        if (ST.invert) { r = 255-r; g = 255-g; b = 255-b; }
-        if (t > 0) { const lum = (r+g+b)/3; const v = lum >= t ? 255 : 0; r = g = b = v; }
-      } else {
-        let val = ST.channel === 'r' ? ST.R[i] : ST.channel === 'g' ? ST.G[i] : ST.B[i];
-        if (ST.invert) val = 255 - val;
-        if (t > 0) val = val >= t ? 255 : 0;
-        r = g = b = val;
+    for (let y = 0; y < STEG_H; y++) {
+      const srcY = ST.flip ? (STEG_H - 1 - y) : y;          // FLIP mirrors the whole frame vertically
+      for (let x = 0; x < STEG_W; x++) {
+        const si = srcY * STEG_W + x;
+        let r, g, b;
+        if (ST.channel === 'rgb') {
+          r = ST.R[si]; g = ST.G[si]; b = ST.B[si];
+          if (ST.invert) { r = 255-r; g = 255-g; b = 255-b; }
+          if (t > 0) { const lum = (r+g+b)/3; const v = lum >= t ? 255 : 0; r = g = b = v; }
+        } else {
+          let val = ST.channel === 'r' ? ST.R[si] : ST.channel === 'g' ? ST.G[si] : ST.B[si];
+          if (ST.invert) val = 255 - val;
+          if (t > 0) val = val >= t ? 255 : 0;
+          r = g = b = val;
+        }
+        const p = (y * STEG_W + x) * 4; d[p] = r; d[p+1] = g; d[p+2] = b; d[p+3] = 255;
       }
-      const p = i*4; d[p] = r; d[p+1] = g; d[p+2] = b; d[p+3] = 255;
     }
     ctx.putImageData(img, 0, 0);
   }
 
   function openSteg() {
-    ST = { channel:'rgb', invert:false, threshold:0, R:null, G:null, B:null, codeReal:'', codeFake:'' };
+    ST = { channel:'rgb', invert:false, flip:false, threshold:0, R:null, G:null, B:null, code:'' };
     buildImage();
     CH.initHints({
       counts: { r3mi:1, vtgm:1, guest:2 },
       names:  { guest:'ASP-1024' },
       banks: {
-        r3mi: ['„Geh die Kanäle einzeln durch: Rot, Grün, Blau. Einer zeigt sofort etwas — trau dem nicht zu schnell."'],
-        vtgm: [{ speaker:'V-TGM', text:'"The loud channel is bait. Isolate Blue, then raise the threshold until only the letters survive."',
-                 subtitle:'Der laute Kanal ist Köder. Isoliere Blau, dann heb die Schwelle, bis nur die Buchstaben übrig bleiben.' }],
+        r3mi: ['„Vier Buchstaben, vier Verstecke — eine Spalte pro Zeichen. Nimm dir eine vor und dreh für SIE allein an Kanal, Invert und Flip, bis genau ein Zeichen scharf wird."'],
+        vtgm: [{ speaker:'V-TGM', text:'"No single view shows all four. Each letter wants its own channel, its own invert, its own flip. Read one, then change everything for the next."',
+                 subtitle:'Keine Ansicht zeigt alle vier. Jeder Buchstabe will seinen eigenen Kanal, sein eigenes Invert, seinen eigenen Flip. Lies einen, dann stell für den nächsten alles um.' }],
         guest: [
-          '„Grün schreit. Lüge. Blau flüstert."',
-          '„Blau. Schwelle hoch. Lies die vier."',
+          '„Vier. Jeder anders. Einer steht. Einer steht kopf. Einer kehrt sich um. Einer ist beides."',
+          '„Rot. Dann Grün, invertiert. Dann Blau, gekippt. Der Letzte: Rot, invertiert UND gekippt. Schwelle hoch. Lies."',
         ],
       },
       empty: {
@@ -306,14 +319,14 @@ const Chapter6 = (() => {
       },
     });
     GameEngine.dialogue.load([
-      { speaker:'SYSTEM', text:'BILDFORENSIK // KANAL ISOLIEREN · INVERTIEREN · SCHWELLE.' },
-      { speaker:'ASP-1024', text:'„Eine Farbe lügt laut. Eine flüstert wahr. Hör auf die leise. Tipp die vier Zeichen."' },
+      { speaker:'SYSTEM', text:'BILDFORENSIK // KANAL · INVERT · FLIP · SCHWELLE.' },
+      { speaker:'ASP-1024', text:'„Vier Zeichen. Jedes versteckt sich anders. Eins steht. Eins steht kopf. Eins ist umgekehrt. Eins ist beides. Lies sie der Reihe nach — von links."' },
     ], () => {
       document.getElementById('stegModal').classList.remove('hidden');
       const inp = document.getElementById('stegInput'); if (inp) inp.value = '';
       syncStegUI();
       drawCanvas();
-      setStegStatus('Drei Kanäle. Eine Schwelle. Eine Wahrheit.', '');
+      setStegStatus('Vier Spalten. Vier Verstecke. Keine Ansicht zeigt alles.', '');
     });
   }
 
@@ -322,6 +335,8 @@ const Chapter6 = (() => {
       b.classList.toggle('active', b.dataset.ch === ST.channel));
     const inv = document.getElementById('stegInvertBtn');
     if (inv) inv.classList.toggle('active', ST.invert);
+    const fl = document.getElementById('stegFlipBtn');
+    if (fl) fl.classList.toggle('active', ST.flip);
     const sl = document.getElementById('stegThreshold');
     if (sl) sl.value = ST.threshold;
     const lbl = document.getElementById('stegThreshLabel');
@@ -330,10 +345,11 @@ const Chapter6 = (() => {
 
   function stegChannel(c) { if (!ST) return; ST.channel = c; syncStegUI(); drawCanvas(); }
   function stegInvert()   { if (!ST) return; ST.invert = !ST.invert; syncStegUI(); drawCanvas(); }
+  function stegFlip()     { if (!ST) return; ST.flip = !ST.flip; syncStegUI(); drawCanvas(); }
   function stegThreshold(v){ if (!ST) return; ST.threshold = parseInt(v, 10) || 0; syncStegUI(); drawCanvas(); }
   function stegReset() {
     if (!ST) return;
-    ST.channel = 'rgb'; ST.invert = false; ST.threshold = 0;
+    ST.channel = 'rgb'; ST.invert = false; ST.flip = false; ST.threshold = 0;
     syncStegUI(); drawCanvas(); setStegStatus('Ansicht zurückgesetzt.', '');
   }
 
@@ -341,17 +357,17 @@ const Chapter6 = (() => {
     if (!ST || S.solved) return;
     const raw = (document.getElementById('stegInput').value || '').trim().toUpperCase();
     if (raw.length < 4) { setStegStatus('Vier Zeichen. Nicht weniger.', 'warn'); return; }
-    if (raw === ST.codeReal) {
+    if (raw === ST.code) {
       S.solved = true;
       setStegStatus('CODE BESTÄTIGT.', 'ok');
       playSound('ch6_ok.mp3');
       try { GameEngine.audio.solve(); } catch(_) {}
       setTimeout(() => solveSteg(), 900);
-    } else if (raw === ST.codeFake) {
-      setStegStatus('Das war der laute. Der falsche. Hör genauer hin.', 'error');
-      try { GameEngine.audio.fail(); } catch(_) {}
     } else {
-      setStegStatus('Nein. Das Bild lügt nicht. Du liest nur falsch.', 'error');
+      const hits = [...raw].filter((c, i) => c === ST.code[i]).length;
+      setStegStatus(hits >= 2
+        ? `${hits} von 4 stehen. Die anderen liest du falsch herum — Spalte für Spalte.`
+        : 'Nein. Jede Spalte braucht ihre eigene Ansicht. Eins steht, eins steht kopf.', 'error');
       try { GameEngine.audio.fail(); } catch(_) {}
     }
   }
@@ -385,6 +401,7 @@ const Chapter6 = (() => {
     init,
     stegChannel,
     stegInvert,
+    stegFlip,
     stegThreshold,
     stegReset,
     stegSubmit,

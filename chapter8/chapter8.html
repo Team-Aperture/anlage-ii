@@ -3,29 +3,47 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>KA-II // Kapitel 8</title>
-  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&family=Barlow:wght@300;400&display=swap" rel="stylesheet">
+  <title>KA-II // Kapitel 8 — Archivsektor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Barlow:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/global.css?v=20260611">
-  <style>
-    .tbc-wrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:var(--sp-lg);gap:var(--sp-md);text-align:center;position:relative;z-index:10;}
-    .tbc-label{font-family:var(--font-mono);font-size:11px;letter-spacing:.2em;color:var(--text-secondary);}
-    .tbc-title{font-family:var(--font-display);font-size:clamp(28px,5vw,48px);font-weight:700;letter-spacing:.2em;color:var(--text-primary);margin:var(--sp-md) 0;}
-    .tbc-status{font-family:var(--font-mono);font-size:13px;color:var(--accent-warn);margin:var(--sp-md) 0;letter-spacing:.1em;}
-    .tbc-guest{font-family:var(--font-mono);font-size:12px;color:var(--text-dim);margin-bottom:var(--sp-lg);}
-  </style>
+  <link rel="stylesheet" href="../css/chapter.css?v=20260611">
+  <link rel="stylesheet" href="chapter8.css?v=20260611">
 </head>
-<body>
-  <div class="bg-grid" aria-hidden="true"></div>
-  <div class="bg-scanlines" aria-hidden="true"></div>
-  <div class="bg-vignette" aria-hidden="true"></div>
-  <main class="tbc-wrap">
-    <div class="tbc-label">KAPITEL 08</div>
-    <h1 class="tbc-title">ARCHIVSEKTOR</h1>
-    <div class="tbc-guest">GASTEINHEIT: <span style="color:var(--accent-g7);">AGN-H3R</span></div>
-    <div class="tbc-status">[ IN ENTWICKLUNG ]</div>
-    <a class="ka-btn primary" href="../index.html">[ HAUPTMENÜ ]</a>
-  </main>
+<body class="chapter-page">
+
+  <!-- Shared chrome is built by GameEngine.chapter.build() in chapter8.js.
+       Only the jigsaw puzzle modal lives here. -->
+
+  <!-- ════════════════════════════════════════════════════════════
+       DAS LETZTE BILD — a real tap-to-swap jigsaw (the 10th puzzle)
+       ════════════════════════════════════════════════════════════ -->
+  <div class="puzzle-modal hidden" id="jigModal">
+    <div class="puzzle-card jig-card">
+      <div class="puzzle-card-accent"></div>
+      <div class="puzzle-header">
+        <p class="puzzle-label sys-text">DAS LETZTE BILD // AGN-H3R</p>
+        <h2 class="puzzle-title">DAS ZEHNTE PUZZLE</h2>
+        <p class="puzzle-sub sys-text">TIPPE ZWEI TEILE, UM SIE ZU TAUSCHEN</p>
+      </div>
+
+      <div class="jig-board" id="jigBoard"></div>
+
+      <div class="jig-bar">
+        <span class="sys-text" id="jigCount">0 / 16 AN ORT</span>
+        <button class="ka-btn small" id="jigPeek" onclick="Chapter8.jigPeek()">[ VORLAGE ]</button>
+      </div>
+
+      <div class="puzzle-status sys-text" id="jigStatus"></div>
+      <div class="puzzle-actions">
+        <button class="ka-btn small" onclick="Chapter8.jigShuffle()">[ NEU MISCHEN ]</button>
+      </div>
+    </div>
+  </div>
+
   <script src="../js/engine.js?v=20260611"></script>
   <script src="../js/mobile-warning.js?v=20260611"></script>
+  <script src="chapter8.js?v=20260611"></script>
 </body>
 </html>
