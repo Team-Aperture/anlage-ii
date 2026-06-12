@@ -1305,6 +1305,9 @@ const GameEngine = (() => {
             ${div}
             <p class="sys-text">Code-Unterstützung</p>
             <p style="font-size:13px; color:var(--text-secondary); margin-top:4px;">Claude AI — entwickelt von Anthropic<br>prüft, ob der Code funktioniert</p>
+            ${div}
+            <p class="sys-text">Bildgenerierung</p>
+            <p style="font-size:13px; color:var(--text-secondary); margin-top:4px;">ChatGPT — OpenAI</p>
             ${guests}
             ${div}
             <p class="sys-text">The Transmission</p>

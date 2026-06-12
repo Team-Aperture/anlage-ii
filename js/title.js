@@ -341,6 +341,29 @@
     // the engine retries on the next user gesture). Placeholder until an mp3 exists.
     if (typeof GameEngine !== 'undefined' && GameEngine.music) GameEngine.music.play('title');
 
+    // Delete-save button — two-step confirm so it can't be hit by accident.
+    const wipe = document.getElementById('wipeBtn');
+    if (wipe) {
+      let armed = false, timer = null;
+      wipe.addEventListener('click', () => {
+        if (armed) {
+          try { GameEngine.state.reset(); } catch (_) {}
+          wipe.textContent = '[ GELÖSCHT … ]';
+          setTimeout(() => location.reload(), 350);
+          return;
+        }
+        armed = true;
+        wipe.textContent = '[ WIRKLICH? NOCHMAL TIPPEN ]';
+        wipe.classList.add('danger');
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          armed = false;
+          wipe.textContent = '[ SPIELSTAND LÖSCHEN ]';
+          wipe.classList.remove('danger');
+        }, 4000);
+      });
+    }
+
     // 100% completion: once the true ending (Chapter 9) is reached, the logo
     // glitches — a quiet sign that the facility is no longer quite right.
     if (typeof GameEngine !== 'undefined' && GameEngine.achievements && GameEngine.achievements.isUnlocked('bonus_found')) {
