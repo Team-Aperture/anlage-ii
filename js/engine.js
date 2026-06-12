@@ -654,11 +654,107 @@ const GameEngine = (() => {
     function toggleMute() {
       muted = !muted;
       try { state.set('muted', muted); } catch (_) {}
+      try { music.setMuted(muted); } catch (_) {}   // music is defined just below; live at call time
       if (!muted) click();
       return muted;
     }
 
     return { ensure, resume, tone, blip, click, solve, fail, achievement, fanfare, signal, setMuted, isMuted, toggleMute };
+  })();
+
+
+  // ═══════════════════════════════════════════════════════════════
+  // MUSIC — background soundtrack loader (mp3 placeholders)
+  // Crossfades looping tracks from assets/music/. The files are
+  // placeholders for now; a missing or autoplay-blocked track fails
+  // silently and retries on the next user gesture. Respects the mute
+  // toggle. Track slots + trigger moments are documented in
+  // assets/music/MUSIC.md — drop real .mp3s in to bring it to life.
+  // ═══════════════════════════════════════════════════════════════
+  const music = (() => {
+    const BASE = (/\/chapter\d/.test(location.pathname) ? '../' : '') + 'assets/music/';
+
+    // id → filename. Up to ~60 slots; compose freely. (See MUSIC.md.)
+    const TRACKS = {
+      // — UI / frame —
+      title:        'title_theme.mp3',
+      boot:         'boot_drone.mp3',
+      credits:      'credits_theme.mp3',
+      // — chapter ambiences —
+      ch0_ambient:  'ch0_rueckkehr.mp3',
+      ch1_ambient:  'ch1_wartung.mp3',
+      ch2_ambient:  'ch2_garten.mp3',
+      ch3_ambient:  'ch3_beobachtung.mp3',
+      ch4_ambient:  'ch4_wuerfel.mp3',
+      ch5_ambient:  'ch5_foerderlauf.mp3',
+      ch6_ambient:  'ch6_dunkelkammer.mp3',
+      ch7_ambient:  'ch7_vexier.mp3',
+      ch8_ambient:  'ch8_archiv.mp3',
+      ch9_ambient:  'ch9_bonus.mp3',
+      // — character themes (on first appearance) —
+      theme_froschi:  'theme_froschi.mp3',
+      theme_lux:      'theme_lux.mp3',
+      theme_bradf1sh: 'theme_bradfisch.mp3',
+      theme_tflon:    'theme_tflon14.mp3',
+      theme_asp:      'theme_asp1024.mp3',
+      theme_faxn:     'theme_faxenmeier.mp3',
+      theme_agn:      'theme_agnher.mp3',
+      // — puzzle underscores —
+      puzzle_calm:    'puzzle_calm.mp3',
+      puzzle_tense:   'puzzle_tense.mp3',
+      puzzle_timed:   'puzzle_timed.mp3',
+      puzzle_forensic:'puzzle_forensic.mp3',
+      puzzle_deduce:  'puzzle_deduction.mp3',
+      puzzle_finale:  'puzzle_finale.mp3',
+      countdown:      'countdown_panic.mp3',
+      // — story beats —
+      transmission:   'the_transmission.mp3',
+      signal_found:   'signal_discovery.mp3',
+      coordinates:    'coordinates_reveal.mp3',
+      reactivation:   'reactivation_100.mp3',
+      // — the bonus / dark turn —
+      bonus_intro:    'bonus_intro.mp3',
+      bonus_truth:    'bonus_truth.mp3',
+      bonus_finale:   'bonus_finale.mp3',
+    };
+
+    let cur = null, curId = null, pending = null;
+    const VOL = 0.42;
+
+    function _vol(a, v){ try { a.volume = Math.max(0, Math.min(1, v)); } catch(_){} }
+    function _fade(a, to, ms, done){
+      const steps = Math.max(1, Math.round(ms / 40)); let i = 0; const from = a.volume;
+      const t = setInterval(() => { i++; _vol(a, from + (to - from) * i / steps); if (i >= steps) { clearInterval(t); if (done) done(); } }, 40);
+    }
+    function play(id, opts) {
+      opts = opts || {};
+      if (!TRACKS[id]) return;
+      if (curId === id && cur && !cur.paused) return;
+      pending = id;
+      if (audio.isMuted()) { curId = id; return; }   // remember the choice, stay silent
+      const a = new Audio(BASE + TRACKS[id]);
+      a.loop = opts.loop !== false;
+      _vol(a, 0);
+      const p = a.play();
+      if (p && p.then) p.then(() => { pending = null; _fade(a, VOL, opts.fade || 900); }).catch(() => { /* blocked or missing — retry on gesture */ });
+      const old = cur;
+      if (old) _fade(old, 0, opts.fade || 900, () => { try { old.pause(); } catch(_){} });
+      cur = a; curId = id;
+    }
+    function stop(fade) {
+      const old = cur; cur = null; curId = null; pending = null;
+      if (old) _fade(old, 0, fade || 700, () => { try { old.pause(); } catch(_){} });
+    }
+    function setMuted(m) {
+      if (m) { if (cur) _fade(cur, 0, 300, () => { try { cur.pause(); } catch(_){} }); }
+      else if (curId) { const id = curId; cur = null; curId = null; play(id); }
+    }
+    function _retry() {   // called on user gestures: start a track that was blocked
+      if (audio.isMuted()) return;
+      if (pending) play(pending);
+      else if (cur && cur.paused) cur.play().catch(() => {});
+    }
+    return { play, stop, setMuted, _retry, TRACKS };
   })();
 
 
@@ -689,6 +785,7 @@ const GameEngine = (() => {
       if (c.chapterCount) _chapterCount = c.chapterCount;
       if (c.title) document.title = c.title;
       document.body.classList.add('chapter-page');
+      try { music.play(c.music || ('ch' + parseInt(c.num, 10) + '_ambient')); } catch (_) {}
 
       const g        = c.guest || {};
       const guestNm  = g.name || 'GAST';
@@ -930,6 +1027,7 @@ const GameEngine = (() => {
 
   document.addEventListener('click', e => {
     audio.resume();
+    try { music._retry(); } catch (_) {}
     if (e.target?.id === 'overlayBackdrop') { closeOverlay(); return; }
     const btn = e.target.closest && e.target.closest('button');
     if (btn && !btn.disabled) audio.click();
@@ -962,6 +1060,7 @@ const GameEngine = (() => {
     scene,
     puzzle,
     audio,
+    music,
     chapter,
     closeOverlay,
     showCredits,

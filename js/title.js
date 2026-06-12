@@ -261,6 +261,10 @@
       at.textContent = GameEngine.audio.isMuted() ? '[ TON: AUS ]' : '[ TON: AN ]';
     }
 
+    // Start the title theme (autoplay may be blocked until the first click —
+    // the engine retries on the next user gesture). Placeholder until an mp3 exists.
+    if (typeof GameEngine !== 'undefined' && GameEngine.music) GameEngine.music.play('title');
+
     runBootSequence(() => {
       revealUI();
       updateStatusBar();
