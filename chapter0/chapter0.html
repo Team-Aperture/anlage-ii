@@ -33,17 +33,7 @@
   <div class="scene-wrapper" id="sceneWrapper">
     <div class="scene-canvas" id="sceneCanvas">
 
-      <!-- Real CG (added by user) -->
-      <img
-        src="cg/ch0_entrance.png"
-        class="scene-bg"
-        id="sceneBg"
-        alt=""
-        onload="document.getElementById('placeholderScene').style.display='none'"
-        onerror="this.remove()"
-      >
-
-      <!-- CSS-only fallback if no CG present yet -->
+      <!-- The entrance is drawn entirely in code (no images). -->
       <div class="placeholder-scene" id="placeholderScene" aria-hidden="true">
         <div class="ph-vignette"></div>
         <div class="ph-floor"></div>
@@ -64,11 +54,6 @@
         <div class="ph-vine ph-vine-1"></div>
         <div class="ph-vine ph-vine-2"></div>
         <div class="ph-vine ph-vine-3"></div>
-
-        <!-- Note for builder -->
-        <div class="ph-note sys-text">
-          [ PLATZHALTER — ERSETZE DURCH chapter0/cg/ch0_entrance.png ]
-        </div>
       </div>
 
       <!-- Hotspots are added here by Chapter0.js -->

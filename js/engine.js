@@ -543,6 +543,130 @@ const GameEngine = (() => {
 
 
   // ═══════════════════════════════════════════════════════════════
+  // PROPS — code-drawn facility objects (no images)
+  // SVG line-art themed via --prop-color, with idle micro-animations
+  // (CSS in global.css). A prop can be decorative or interactive (a
+  // hotspot you can actually SEE — the object is the clickable thing).
+  // ═══════════════════════════════════════════════════════════════
+  const props = (() => {
+    const wrap = (vb, inner) =>
+      `<svg viewBox="${vb}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${inner}</svg>`;
+
+    const SVG = {
+      // a console + monitor with a flickering screen and blinking cursor
+      terminal: wrap('0 0 100 120',
+          '<rect class="prop-line" x="40" y="84" width="20" height="22"/>'
+        + '<rect class="prop-line" x="24" y="106" width="52" height="8" rx="2"/>'
+        + '<rect class="prop-line" x="12" y="14" width="76" height="62" rx="4"/>'
+        + '<rect class="prop-screen" x="18" y="20" width="64" height="50"/>'
+        + '<line class="prop-scan" x1="24" y1="30" x2="74" y2="30"/>'
+        + '<line class="prop-scan" x1="24" y1="40" x2="62" y2="40"/>'
+        + '<line class="prop-scan" x1="24" y1="50" x2="70" y2="50"/>'
+        + '<rect class="prop-cursor" x="24" y="58" width="9" height="6"/>'),
+      // a wide control desk
+      console: wrap('0 0 140 90',
+          '<path class="prop-line" d="M10 78 L26 30 h88 l16 48 Z"/>'
+        + '<rect class="prop-screen" x="40" y="38" width="60" height="22"/>'
+        + '<circle class="prop-led" cx="30" cy="66" r="3"/>'
+        + '<circle class="prop-led prop-led-2" cx="42" cy="66" r="3"/>'
+        + '<circle class="prop-led prop-led-3" cx="54" cy="66" r="3"/>'
+        + '<rect class="prop-fill-dim" x="100" y="62" width="26" height="8" rx="2"/>'),
+      // a sliding sector door with a centre seam + status light
+      door: wrap('0 0 80 120',
+          '<rect class="prop-line" x="8" y="6" width="64" height="108" rx="2"/>'
+        + '<rect class="prop-fill-dim" x="14" y="12" width="24" height="96"/>'
+        + '<rect class="prop-fill-dim" x="42" y="12" width="24" height="96"/>'
+        + '<line class="prop-line" x1="40" y1="12" x2="40" y2="108"/>'
+        + '<rect class="prop-fill" x="34" y="50" width="12" height="20" rx="2"/>'
+        + '<circle class="prop-led" cx="40" cy="2" r="3"/>'),
+      // a wall control panel, grid of lights
+      panel: wrap('0 0 100 80',
+          '<rect class="prop-line" x="6" y="6" width="88" height="68" rx="3"/>'
+        + '<rect class="prop-screen" x="14" y="12" width="44" height="26"/>'
+        + '<circle class="prop-led" cx="72" cy="18" r="4"/>'
+        + '<circle class="prop-led prop-led-2" cx="84" cy="18" r="4"/>'
+        + '<circle class="prop-led prop-led-3" cx="72" cy="30" r="4"/>'
+        + '<circle class="prop-fill-dim" cx="84" cy="30" r="4"/>'
+        + '<rect class="prop-fill-dim" x="14" y="48" width="72" height="6" rx="3"/>'
+        + '<rect class="prop-fill-dim" x="14" y="60" width="52" height="6" rx="3"/>'),
+      // a small dormant maintenance unit (pod with a single eye)
+      unit: wrap('0 0 90 110',
+          '<rect class="prop-line" x="20" y="92" width="50" height="12" rx="3"/>'
+        + '<rect class="prop-line" x="16" y="30" width="58" height="64" rx="22"/>'
+        + '<circle class="prop-screen" cx="45" cy="56" r="20"/>'
+        + '<circle class="prop-eye" cx="45" cy="56" r="8"/>'
+        + '<line class="prop-line" x1="45" y1="30" x2="45" y2="16"/>'
+        + '<circle class="prop-led" cx="45" cy="13" r="3"/>'),
+      // pipes with a valve wheel
+      pipe: wrap('0 0 60 120',
+          '<rect class="prop-fill-dim" x="22" y="0" width="16" height="120"/>'
+        + '<rect class="prop-line" x="20" y="0" width="20" height="120"/>'
+        + '<rect class="prop-line" x="14" y="44" width="32" height="14" rx="2"/>'
+        + '<circle class="prop-line" cx="30" cy="80" r="12"/>'
+        + '<line class="prop-line" x1="18" y1="80" x2="42" y2="80"/>'
+        + '<line class="prop-line" x1="30" y1="68" x2="30" y2="92"/>'),
+      // a hanging light fixture with a glow
+      light: wrap('0 0 80 70',
+          '<line class="prop-line" x1="40" y1="0" x2="40" y2="14"/>'
+        + '<path class="prop-line" d="M16 14 h48 l-8 22 h-32 Z"/>'
+        + '<ellipse class="prop-glow" cx="40" cy="40" rx="26" ry="10"/>'),
+      // a stacked crate / container
+      crate: wrap('0 0 100 90',
+          '<rect class="prop-line" x="10" y="40" width="50" height="44" rx="2"/>'
+        + '<rect class="prop-line" x="46" y="20" width="44" height="40" rx="2"/>'
+        + '<line class="prop-line" x1="10" y1="62" x2="60" y2="62"/>'
+        + '<line class="prop-line" x1="35" y1="40" x2="35" y2="84"/>'
+        + '<rect class="prop-fill-dim" x="58" y="34" width="20" height="6"/>'),
+      // a hanging sector sign
+      sign: wrap('0 0 110 70',
+          '<line class="prop-line" x1="20" y1="0" x2="20" y2="14"/>'
+        + '<line class="prop-line" x1="90" y1="0" x2="90" y2="14"/>'
+        + '<rect class="prop-line" x="6" y="14" width="98" height="40" rx="3"/>'
+        + '<rect class="prop-screen" x="14" y="22" width="82" height="24"/>'
+        + '<line class="prop-scan" x1="22" y1="34" x2="88" y2="34"/>'),
+      // a glowing reactor core
+      reactor: wrap('0 0 100 100',
+          '<circle class="prop-line" cx="50" cy="50" r="42"/>'
+        + '<circle class="prop-line" cx="50" cy="50" r="30"/>'
+        + '<circle class="prop-glow" cx="50" cy="50" r="20"/>'
+        + '<circle class="prop-core" cx="50" cy="50" r="11"/>'),
+      // archive shelving
+      shelf: wrap('0 0 90 120',
+          '<rect class="prop-line" x="8" y="6" width="74" height="108"/>'
+        + '<line class="prop-line" x1="8" y1="34" x2="82" y2="34"/>'
+        + '<line class="prop-line" x1="8" y1="62" x2="82" y2="62"/>'
+        + '<line class="prop-line" x1="8" y1="90" x2="82" y2="90"/>'
+        + '<rect class="prop-fill-dim" x="14" y="12" width="10" height="18"/>'
+        + '<rect class="prop-fill-dim" x="28" y="14" width="10" height="16"/>'
+        + '<rect class="prop-fill-dim" x="50" y="40" width="10" height="18"/>'
+        + '<rect class="prop-fill-dim" x="18" y="68" width="10" height="18"/>'
+        + '<rect class="prop-fill-dim" x="60" y="96" width="10" height="14"/>'),
+    };
+
+    function svg(type) { return SVG[type] || SVG.panel; }
+
+    // Build a positioned prop element. With onClick it becomes an interactive,
+    // visible hotspot; otherwise it's decorative (no pointer events).
+    function el(type, cfg) {
+      cfg = cfg || {};
+      const interactive = typeof cfg.onClick === 'function';
+      const e = document.createElement(interactive ? 'button' : 'div');
+      e.className = 'scene-prop' + (interactive ? ' prop-interactive' : '') + (cfg.anim ? ' ' + cfg.anim : '') + (cfg.cls ? ' ' + cfg.cls : '');
+      e.style.cssText = `left:${cfg.x}%;top:${cfg.y}%;width:${cfg.w || 12}%;height:${cfg.h || 16}%;`;
+      e.innerHTML = svg(type);
+      if (cfg.label) {
+        const l = document.createElement('span');
+        l.className = 'prop-label'; l.textContent = cfg.label; e.appendChild(l);
+      }
+      if (interactive) { e.setAttribute('aria-label', cfg.label || type); e.addEventListener('click', cfg.onClick); }
+      return e;
+    }
+
+    return { svg, el, types: () => Object.keys(SVG) };
+  })();
+
+
+  // ═══════════════════════════════════════════════════════════════
   // PUZZLE ENGINE
   // ═══════════════════════════════════════════════════════════════
   const puzzle = (() => {
@@ -888,6 +1012,12 @@ const GameEngine = (() => {
     }
     function clearHotspots() { const h = el('sceneHotspots'); if (h) h.innerHTML = ''; }
     function addHotspot(cfg) {
+      // A prop hotspot is a visible, code-drawn object you click directly.
+      if (cfg.prop) {
+        const p = props.el(cfg.prop, { x:cfg.x, y:cfg.y, w:cfg.w, h:cfg.h, label:cfg.label, onClick:cfg.fn, cls:cfg.cls, anim:cfg.anim });
+        el('sceneHotspots').appendChild(p);
+        return p;
+      }
       const e = document.createElement('button');
       e.className = 'hotspot' + (cfg.cls ? ' ' + cfg.cls : '');
       e.setAttribute('aria-label', cfg.label || 'Interagieren');
@@ -899,6 +1029,12 @@ const GameEngine = (() => {
       e.addEventListener('click', cfg.fn);
       el('sceneHotspots').appendChild(e);
       return e;
+    }
+    // Decorative (non-interactive) code-drawn scenery.
+    function addProp(cfg) {
+      const p = props.el(cfg.prop, { x:cfg.x, y:cfg.y, w:cfg.w, h:cfg.h, cls:cfg.cls, anim:cfg.anim });
+      el('sceneHotspots').appendChild(p);
+      return p;
     }
     function showRobots(v) { el('robotIcons')?.classList.toggle('hidden', !v); }
     function showGuest(v)  { el('guestIcon')?.classList.toggle('hidden', !v); }
@@ -1007,7 +1143,7 @@ const GameEngine = (() => {
 
     return {
       build, start,
-      setScene, clearHotspots, addHotspot, showRobots, showGuest, setProgress,
+      setScene, clearHotspots, addHotspot, addProp, showRobots, showGuest, setProgress,
       showChoices, hideChoices, allSeen,
       withModalDialogue,
       initHints, useHint, updateHintBar, showHintBar,
@@ -1121,6 +1257,7 @@ const GameEngine = (() => {
     signals,
     dialogue,
     scene,
+    props,
     puzzle,
     audio,
     music,

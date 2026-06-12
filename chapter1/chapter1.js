@@ -27,14 +27,10 @@ const Chapter1 = (() => {
   // ═══════════════════════════════════════════════════════════════
   // SCENE HELPERS
   // ═══════════════════════════════════════════════════════════════
-  function setScene(key, imgSrc) {
-    const ph  = document.getElementById('scenePh');
-    const img = document.getElementById('sceneBg');
-    if (ph)  ph.dataset.scene = key;
-    if (img && imgSrc) {
-      img.src = imgSrc;
-      img.style.display = '';
-    }
+  function setScene(key) {
+    // Rooms are code-drawn now — just switch the lighting/atmosphere key.
+    const ph = document.getElementById('scenePh');
+    if (ph) ph.dataset.scene = key;
   }
 
   function clearHotspots() {
@@ -42,6 +38,12 @@ const Chapter1 = (() => {
   }
 
   function addHotspot(cfg) {
+    // A code-drawn prop you can click directly (no images).
+    if (cfg.prop && window.GameEngine && GameEngine.props) {
+      const p = GameEngine.props.el(cfg.prop, { x:cfg.x, y:cfg.y, w:cfg.w, h:cfg.h, label:cfg.label, onClick:cfg.fn, cls:cfg.cls, anim:cfg.anim });
+      document.getElementById('sceneHotspots').appendChild(p);
+      return p;
+    }
     const el = document.createElement('button');
     el.className = 'hotspot' + (cfg.cls ? ' ' + cfg.cls : '');
     el.setAttribute('aria-label', cfg.label || 'Interagieren');
@@ -53,6 +55,12 @@ const Chapter1 = (() => {
     el.addEventListener('click', cfg.fn);
     document.getElementById('sceneHotspots').appendChild(el);
     return el;
+  }
+  // Decorative (non-interactive) code-drawn scenery.
+  function addProp(cfg) {
+    if (!(window.GameEngine && GameEngine.props)) return;
+    document.getElementById('sceneHotspots').appendChild(
+      GameEngine.props.el(cfg.prop, { x:cfg.x, y:cfg.y, w:cfg.w, h:cfg.h, cls:cfg.cls, anim:cfg.anim }));
   }
 
   function addAdvance(fn) {
@@ -151,11 +159,17 @@ const Chapter1 = (() => {
 
   function loadHall1Hotspots() {
     clearHotspots();
-    addHotspot({ x:82, y:25, label:'TÜR', fn:() => clickHall1('door') });
-    addHotspot({ x:40, y:72, label:'BODENPLATTEN', fn:() => clickHall1('floor') });
-    addHotspot({ x:18, y:45, label:'TESTSCHILD', fn:() => clickHall1('sign') });
-    addHotspot({ x:50, y:55, label:'TERMINAL', fn:() => clickHall1('terminal') });
-    addHotspot({ x:50, y:30, w:14, h:20, label:'DUNKLER KORRIDOR', fn:() => clickHall1('corridor') });
+    // scenery (decorative, code-drawn)
+    addProp({ prop:'light', x:30, y:5,  w:14, h:9 });
+    addProp({ prop:'pipe',  x:3,  y:12, w:7,  h:56 });
+    addProp({ prop:'panel', x:67, y:30, w:13, h:12, anim:'prop-flicker' });
+    // interactive props — the object IS the hotspot
+    addHotspot({ prop:'terminal', anim:'prop-flicker', x:43, y:48, w:13, h:24, label:'TERMINAL', fn:() => clickHall1('terminal') });
+    addHotspot({ prop:'door', x:80, y:22, w:12, h:38, label:'TÜR', fn:() => clickHall1('door') });
+    addHotspot({ prop:'sign', x:11, y:33, w:15, h:13, label:'TESTSCHILD', fn:() => clickHall1('sign') });
+    // non-object spots stay as subtle pulse hotspots
+    addHotspot({ x:38, y:74, label:'BODENPLATTEN', fn:() => clickHall1('floor') });
+    addHotspot({ x:52, y:28, w:12, h:18, label:'DUNKLER KORRIDOR', fn:() => clickHall1('corridor') });
   }
 
   function clickHall1(key) {
@@ -399,10 +413,12 @@ const Chapter1 = (() => {
 
   function loadRoomAHotspots() {
     clearHotspots();
-    addHotspot({ x:68, y:55, w:6, h:8, label:'TERMINAL',        fn:() => clickRoomA('terminal') });
-    addHotspot({ x:22, y:40, w:6, h:8, label:'WANDKRATZER',      fn:() => clickRoomA('scratch') });
-    addHotspot({ x:15, y:60, w:6, h:8, label:'TESTSCHILD',       fn:() => clickRoomA('sign') });
-    addHotspot({ x:78, y:35, w:6, h:10, label:'INNERES TOR',     fn:() => clickRoomA('gate') });
+    addProp({ prop:'light', x:42, y:4,  w:14, h:9 });
+    addProp({ prop:'crate', x:30, y:62, w:16, h:18 });
+    addHotspot({ prop:'terminal', anim:'prop-flicker', x:62, y:48, w:13, h:24, label:'TERMINAL', fn:() => clickRoomA('terminal') });
+    addHotspot({ prop:'door', x:78, y:28, w:12, h:38, label:'INNERES TOR', fn:() => clickRoomA('gate') });
+    addHotspot({ prop:'sign', x:9, y:52, w:14, h:12, label:'TESTSCHILD', fn:() => clickRoomA('sign') });
+    addHotspot({ x:22, y:40, label:'WANDKRATZER', fn:() => clickRoomA('scratch') });
   }
 
   function clickRoomA(key) {
@@ -713,12 +729,13 @@ const Chapter1 = (() => {
 
   function loadRoomBHotspots() {
     clearHotspots();
-    addHotspot({ x:46, y:40, w:8, h:10, label:'ZENTRALE KONSOLE', fn:() => clickRoomB('console') });
-    addHotspot({ x:12, y:35, w:6, h:30, label:'ROTE LEITUNG',     fn:() => clickRoomB('red') });
-    addHotspot({ x:82, y:35, w:6, h:30, label:'GRÜNE LEITUNG',    fn:() => clickRoomB('green') });
-    addHotspot({ x:25, y:72, w:8, h:8,  label:'ALTES POSTER',     fn:() => clickRoomB('poster') });
-    addHotspot({ x:58, y:18, w:16, h:14, label:'SEKTOR-02-TÜR',   fn:() => clickRoomB('door') });
-    addHotspot({ x:88, y:70, w:5, h:6,  label:'LÜFTUNGSSCHACHT',  fn:() => clickRoomB('vent') });
+    addProp({ prop:'light', x:43, y:3, w:14, h:9 });
+    addHotspot({ prop:'console', x:39, y:46, w:22, h:22, label:'ZENTRALE KONSOLE', fn:() => clickRoomB('console') });
+    addHotspot({ prop:'pipe', cls:'prop-red',   x:8,  y:26, w:9, h:48, label:'ROTE LEITUNG',  fn:() => clickRoomB('red') });
+    addHotspot({ prop:'pipe', cls:'prop-green', x:82, y:26, w:9, h:48, label:'GRÜNE LEITUNG', fn:() => clickRoomB('green') });
+    addHotspot({ prop:'door', x:62, y:12, w:13, h:32, label:'SEKTOR-02-TÜR', fn:() => clickRoomB('door') });
+    addHotspot({ prop:'panel', x:84, y:74, w:10, h:12, label:'LÜFTUNGSSCHACHT', fn:() => clickRoomB('vent') });
+    addHotspot({ x:25, y:74, label:'ALTES POSTER', fn:() => clickRoomB('poster') });
   }
 
   function clickRoomB(key) {
@@ -1089,7 +1106,7 @@ const Chapter1 = (() => {
       { speaker:'R-3MI',  text:'„Das ist das Problem."' },
     ], () => {
       clearHotspots();
-      addHotspot({ x:30, y:20, w:40, h:60, label:'SEKTOR 02 BETRETEN', fn:() => {
+      addHotspot({ prop:'door', x:42, y:16, w:16, h:54, label:'SEKTOR 02 BETRETEN', fn:() => {
         GameEngine.state.markChapterComplete('ch1');
         try { GameEngine.audio.fanfare(); } catch(_) {}
         document.getElementById('chapterComplete').classList.remove('hidden');
