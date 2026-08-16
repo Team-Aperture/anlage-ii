@@ -361,3 +361,22 @@ a.sector-node:hover { transform: translateY(-3px); border-color: #fff; color: #f
   .title-main { padding: 60px var(--sp-md) 80px; gap: var(--sp-lg); }
   .hero-tagline { font-size: 13px; }
 }
+
+/* ─── SHORT VIEWPORTS ────────────────────────────────────────────
+   On common laptop heights (768/800/900) the hero pushed the menu and
+   the sector map below the fold. Tighten the vertical rhythm and cap the
+   logo height so the whole title screen fits on one screen.            */
+@media (max-height: 900px) {
+  .title-main    { padding: 46px var(--sp-lg) 40px; gap: var(--sp-md); }
+  .hero-section  { gap: var(--sp-sm); }
+  .hero-logo-wrap{ padding: 0; }
+  .hero-logo     { max-height: 40vh; width: auto; max-width: 100%; }
+  .sector-map    { margin-top: var(--sp-sm); }
+}
+@media (max-height: 780px) {
+  .title-main    { padding: 40px var(--sp-md) 32px; gap: var(--sp-sm); }
+  .hero-logo     { max-height: 34vh; }
+  .hero-tagline  { font-size: 13px; margin: 0; }
+  .title-menu    { gap: var(--sp-sm); }
+  .sector-map    { margin-top: 4px; }
+}

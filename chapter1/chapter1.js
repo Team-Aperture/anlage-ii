@@ -76,9 +76,7 @@ const Chapter1 = (() => {
     document.getElementById('robotIcons').classList.toggle('hidden', !v);
   }
 
-  function playSound(src) {
-    try { const a = new Audio(`audio/${src}`); a.play(); } catch(_) {}
-  }
+  function playSound(src) { try { GameEngine.audio.sfx(src); } catch(_) {} }
 
   function setProgress(pct) {
     const el = document.getElementById('reactProgress');

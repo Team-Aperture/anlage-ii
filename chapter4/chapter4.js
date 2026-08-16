@@ -68,7 +68,7 @@ const Chapter4 = (() => {
   function showRobots(v)   { document.getElementById('robotIcons').classList.toggle('hidden', !v); }
   function showBradfish(v) { document.getElementById('bradfishIcon').classList.toggle('hidden', !v); }
   function setProgress(pct){ const el = document.getElementById('reactProgress'); if (el) el.textContent = `REAKTIVIERUNG: ${pct}%`; }
-  function playSound(src)  { try { const a = new Audio(`audio/${src}`); a.play(); } catch(_) {} }
+  function playSound(src)  { try { GameEngine.audio.sfx(src); } catch(_) {} }
 
   // ─── CHOICE SYSTEM ────────────────────────────────────────────
   function showChoices(cfg) {

@@ -102,7 +102,7 @@ const GameEngine = (() => {
       { id: 'ch6_complete',     icon: '◫', title: 'Im Bild verborgen',     desc: 'Den versteckten Code in der Dunkelkammer gefunden.' },
       { id: 'ch7_complete',     icon: '▣', title: 'Defragmentiert',       desc: 'Kapitel 7 abgeschlossen.' },
       { id: 'ch8_complete',     icon: '◍', title: 'Meta',                 desc: 'Kapitel 8 abgeschlossen.' },
-      { id: 'ch9_complete',     icon: '✦', title: 'Reaktivierung',        desc: 'Alle Sektoren wiederhergestellt.' },
+      { id: 'ch9_complete',     icon: '✦', title: 'Reaktivierung',        desc: 'Alle Sektoren, alle Frequenzen, die ganze Wahrheit. 100%.' },
       { id: 'signal_first',     icon: '◈', title: 'Frequenz',             desc: 'Erste Signalnische entdeckt.' },
       { id: 'signal_all',       icon: '▲', title: 'Die Übertragung',      desc: 'Alle Signalnischen gefunden.' },
       { id: 'italian_brainrot', icon: '🐪', title: 'Frigo Camelo',        desc: 'F–R–I–G–O. Du weißt, was du getan hast.' },
@@ -125,6 +125,20 @@ const GameEngine = (() => {
       state.set('achievementsUnlocked', list);
       _showToast(def);
       try { audio.achievement(); } catch (_) {}
+      if (id !== 'ch9_complete') checkPlatinum();
+    }
+
+    // The 100% capstone: every chapter cleared, every Signalnische heard, and
+    // the hidden chamber seen. Checked after any unlock / chapter / signal.
+    function checkPlatinum() {
+      if (isUnlocked('ch9_complete')) return;
+      const done = state.get('chaptersCompleted') || [];
+      const allCh = ['ch0','ch1','ch2','ch3','ch4','ch5','ch6','ch7','ch8'].every(c => done.includes(c));
+      if (!allCh) return;
+      const sigs = state.get('signalsFound') || [];
+      if (sigs.length < signals.ALL.length) return;
+      if (!isUnlocked('bonus_found')) return;
+      setTimeout(() => unlock('ch9_complete'), 1500);   // let the prior toast land first
     }
 
     function _showToast(def) {
@@ -167,7 +181,7 @@ const GameEngine = (() => {
       if (back) back.classList.remove('hidden');
     }
 
-    return { ALL, isUnlocked, unlock, showOverlay };
+    return { ALL, isUnlocked, unlock, showOverlay, checkPlatinum };
   })();
 
 
@@ -221,6 +235,7 @@ const GameEngine = (() => {
 
       if (list.length === 1)        achievements.unlock('signal_first');
       if (list.length === ALL.length) achievements.unlock('signal_all');
+      try { achievements.checkPlatinum(); } catch (_) {}
 
       const def = ALL.find(s => s.id === id);
       if (def) _showDiscovery(def);
@@ -870,6 +885,22 @@ const GameEngine = (() => {
 
     function setMuted(m) { muted = !!m; }
     function isMuted()   { return muted; }
+
+    // One-shot sound file (chapter sfx). HTMLAudioElement.play() rejects
+    // ASYNCHRONOUSLY when the file is missing or autoplay is blocked, so a
+    // plain try/catch never sees it — that produced unhandled rejections in
+    // the console for every not-yet-recorded sfx. Swallow it properly.
+    function sfx(src, base) {
+      if (muted) return;
+      try {
+        const a = new Audio((base || 'audio/') + src);
+        a.volume = 0.6;
+        const p = a.play();
+        if (p && typeof p.catch === 'function') p.catch(() => {});
+        a.addEventListener('error', () => {}, { once: true });
+      } catch (_) {}
+    }
+
     function toggleMute() {
       muted = !muted;
       try { state.set('muted', muted); } catch (_) {}
@@ -878,7 +909,7 @@ const GameEngine = (() => {
       return muted;
     }
 
-    return { ensure, resume, tone, blip, click, solve, fail, achievement, fanfare, signal, setMuted, isMuted, toggleMute };
+    return { ensure, resume, tone, blip, click, solve, fail, achievement, fanfare, signal, sfx, setMuted, isMuted, toggleMute };
   })();
 
 
@@ -978,6 +1009,51 @@ const GameEngine = (() => {
       else if (cur && cur.paused) cur.play().catch(() => {});
     }
     return { play, stop, setMuted, _retry, TRACKS };
+  })();
+
+
+  // ═══════════════════════════════════════════════════════════════
+  // FX — small reusable "juice" helpers (CSS-driven, no dependencies)
+  // ═══════════════════════════════════════════════════════════════
+  const fx = (() => {
+    // A soft full-screen bloom, used when something important resolves.
+    function flash(color, ms) {
+      try {
+        const el = document.createElement('div');
+        el.className = 'fx-flash';
+        if (color) el.style.setProperty('--fx-color', color);
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), ms || 900);
+      } catch (_) {}
+    }
+    // Shake any element (wrong answer, refused input).
+    function shake(target) {
+      try {
+        const el = typeof target === 'string' ? document.querySelector(target) : target;
+        if (!el) return;
+        el.classList.remove('fx-shake');
+        void el.offsetWidth;              // restart the animation
+        el.classList.add('fx-shake');
+        setTimeout(() => el.classList.remove('fx-shake'), 420);
+      } catch (_) {}
+    }
+    // Brief green pulse on a solved object.
+    function pulse(target) {
+      try {
+        const el = typeof target === 'string' ? document.querySelector(target) : target;
+        if (!el) return;
+        el.classList.add('fx-pulse');
+        setTimeout(() => el.classList.remove('fx-pulse'), 900);
+      } catch (_) {}
+    }
+    // Fade the page out before navigating (used by chapter exit links).
+    function leave(href) {
+      try {
+        document.body.classList.add('fx-leaving');
+        setTimeout(() => { window.location.href = href; }, 420);
+      } catch (_) { window.location.href = href; }
+    }
+    return { flash, shake, pulse, leave };
   })();
 
 
@@ -1232,6 +1308,8 @@ const GameEngine = (() => {
       if (_completeId)  state.markChapterComplete(_completeId);
       if (_completeAch) { try { achievements.unlock(_completeAch); } catch (_) {} }
       try { audio.fanfare(); } catch (_) {}
+      try { fx.flash('rgba(46,207,98,0.30)', 1100); } catch (_) {}
+      try { achievements.checkPlatinum(); } catch (_) {}
       el('chapterComplete')?.classList.remove('hidden');
       const p = el('ccProgress');
       if (p) p.textContent = `FORTSCHRITT: ${state.get('chaptersCompleted').length} / ${_chapterCount} KAPITEL`;
@@ -1357,6 +1435,7 @@ const GameEngine = (() => {
     dialogue,
     scene,
     props,
+    fx,
     puzzle,
     audio,
     music,

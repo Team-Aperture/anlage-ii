@@ -26,7 +26,7 @@ const Chapter5 = (() => {
     solved: false,
   };
 
-  function playSound(src){ try { const a = new Audio(`audio/${src}`); a.play(); } catch(_) {} }
+  function playSound(src){ try { GameEngine.audio.sfx(src); } catch(_) {} }
 
   // ─── BUILD ────────────────────────────────────────────────────
   function buildChapter() {
