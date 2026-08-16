@@ -75,7 +75,7 @@ const Chapter3 = (() => {
     const el = document.getElementById('reactProgress');
     if (el) el.textContent = `REAKTIVIERUNG: ${pct}%`;
   }
-  function playSound(src) { try { const a = new Audio(`audio/${src}`); a.play(); } catch(_) {} }
+  function playSound(src) { try { GameEngine.audio.sfx(src); } catch(_) {} }
 
   // ═══════════════════════════════════════════════════════════════
   // CHOICE SYSTEM

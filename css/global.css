@@ -911,6 +911,63 @@ button.scene-prop { background: none; border: none; padding: 0; cursor: pointer;
   mask-image: linear-gradient(transparent, #000 42%);
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   FX LAYER — reusable juice (GameEngine.fx)
+   ═══════════════════════════════════════════════════════════════ */
+.fx-flash {
+  position: fixed; inset: 0; z-index: 600; pointer-events: none;
+  --fx-color: rgba(46,207,98,0.28);
+  background: radial-gradient(ellipse at center, var(--fx-color) 0%, transparent 70%);
+  animation: fxFlash 0.9s ease-out forwards;
+}
+@keyframes fxFlash { 0%{opacity:0} 18%{opacity:1} 100%{opacity:0} }
+
+.fx-shake { animation: fxShake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+@keyframes fxShake {
+  10%,90% { transform: translateX(-2px); }
+  20%,80% { transform: translateX(4px); }
+  30%,50%,70% { transform: translateX(-7px); }
+  40%,60% { transform: translateX(7px); }
+}
+
+.fx-pulse { animation: fxPulse 0.9s ease-out; }
+@keyframes fxPulse {
+  0%   { filter: drop-shadow(0 0 0 rgba(46,207,98,0)); transform: scale(1); }
+  35%  { filter: drop-shadow(0 0 14px rgba(46,207,98,0.85)); transform: scale(1.06); }
+  100% { filter: drop-shadow(0 0 0 rgba(46,207,98,0)); transform: scale(1); }
+}
+
+/* page-exit fade (GameEngine.fx.leave) */
+body.fx-leaving { animation: fxLeave 0.42s ease forwards; }
+@keyframes fxLeave { to { opacity: 0; } }
+
+/* every button gets a tiny press response */
+.ka-btn { transition: border-color var(--t-fast), color var(--t-fast), transform 0.08s ease; }
+.ka-btn:active { transform: translateY(1px) scale(0.985); }
+
+/* chapter-complete card: stagger its children in instead of one flat fade */
+.cc-card > * { animation: ccRise 0.55s cubic-bezier(0.16,1,0.3,1) both; }
+.cc-card > *:nth-child(1){animation-delay:.15s} .cc-card > *:nth-child(2){animation-delay:.28s}
+.cc-card > *:nth-child(3){animation-delay:.41s} .cc-card > *:nth-child(4){animation-delay:.54s}
+.cc-card > *:nth-child(5){animation-delay:.67s} .cc-card > *:nth-child(6){animation-delay:.80s}
+.cc-card > *:nth-child(7){animation-delay:.93s}
+@keyframes ccRise { from { opacity:0; transform: translateY(14px); } to { opacity:1; transform:none; } }
+
+/* sector-map nodes pop in one after another */
+.sector-node { animation: nodePop 0.4s cubic-bezier(0.16,1,0.3,1) both; }
+.sector-node:nth-child(1){animation-delay:.05s} .sector-node:nth-child(2){animation-delay:.10s}
+.sector-node:nth-child(3){animation-delay:.15s} .sector-node:nth-child(4){animation-delay:.20s}
+.sector-node:nth-child(5){animation-delay:.25s} .sector-node:nth-child(6){animation-delay:.30s}
+.sector-node:nth-child(7){animation-delay:.35s} .sector-node:nth-child(8){animation-delay:.40s}
+.sector-node:nth-child(9){animation-delay:.45s} .sector-node:nth-child(10){animation-delay:.50s}
+@keyframes nodePop { from { opacity:0; transform: scale(0.6) translateY(6px); } to { opacity:1; transform:none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-flash, .fx-shake, .fx-pulse, body.fx-leaving,
+  .cc-card > *, .sector-node { animation: none !important; }
+  .ka-btn:active { transform: none; }
+}
+
 /* prop colour tints (e.g. the red/green conduits, the brown box) */
 .scene-prop.prop-red   { --prop-color: #d9534f; }
 .scene-prop.prop-green { --prop-color: #3ec27a; }
