@@ -43,9 +43,9 @@ const Chapter0 = (() => {
       ],
     },
     square: {
-      // a flat floor decal — stays a pulse hotspot, not a standing object
       label: 'BODENMARKIERUNG',
-      pos:   { x: 41, y: 86, w: 6, h: 6 },
+      prop:  'decal',
+      pos:   { x: 38, y: 78, w: 20, h: 13 },
       lines: [
         { speaker: 'SYSTEM', text: 'BODENMARKIERUNG // STARK VERBLASST.' },
         { speaker: 'SYSTEM', text: 'AUFSCHRIFT: »POSITION 3 — VIERECK«' },
@@ -107,7 +107,19 @@ const Chapter0 = (() => {
 
   // ─── HOTSPOTS ────────────────────────────────────────────────
   function loadHotspots() {
+    // Decorative set dressing — no onClick, so these render as scenery only.
+    // The entrance foyer: overgrown, half-collapsed, long abandoned.
     const hs = [
+      { prop:'ivy',    x: 0,  y: 2,  w: 11, h: 42 },
+      { prop:'ivy',    x: 89, y: 0,  w: 11, h: 46 },
+      { prop:'ivy',    x: 22, y: 0,  w: 9,  h: 26 },
+      { prop:'column', x: 12, y: 16, w: 7,  h: 58 },
+      { prop:'column', x: 81, y: 16, w: 7,  h: 58 },
+      { prop:'pipe',   x: 5,  y: 46, w: 6,  h: 38 },
+      { prop:'light',  x: 44, y: 1,  w: 11, h: 7  },
+      { prop:'debris', x: 60, y: 80, w: 17, h: 9  },
+      { prop:'debris', x: 16, y: 84, w: 14, h: 8  },
+      { prop:'crate',  x: 68, y: 66, w: 12, h: 13 },
       { ...DOOR_HOTSPOT.pos, label: DOOR_HOTSPOT.label,
         className: DOOR_HOTSPOT.className, onClick: DOOR_HOTSPOT.onClick },
     ];

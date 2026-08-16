@@ -157,17 +157,25 @@ const Chapter1 = (() => {
 
   function loadHall1Hotspots() {
     clearHotspots();
-    // scenery (decorative, code-drawn)
-    addProp({ prop:'light', x:30, y:5,  w:14, h:9 });
-    addProp({ prop:'pipe',  x:3,  y:12, w:7,  h:56 });
-    addProp({ prop:'panel', x:67, y:30, w:13, h:12, anim:'prop-flicker' });
-    // interactive props — the object IS the hotspot
-    addHotspot({ prop:'terminal', anim:'prop-flicker', x:43, y:48, w:13, h:24, label:'TERMINAL', fn:() => clickHall1('terminal') });
-    addHotspot({ prop:'door', x:80, y:22, w:12, h:38, label:'TÜR', fn:() => clickHall1('door') });
-    addHotspot({ prop:'sign', x:11, y:33, w:15, h:13, label:'TESTSCHILD', fn:() => clickHall1('sign') });
-    // non-object spots stay as subtle pulse hotspots
-    addHotspot({ x:38, y:74, label:'BODENPLATTEN', fn:() => clickHall1('floor') });
-    addHotspot({ x:52, y:28, w:12, h:18, label:'DUNKLER KORRIDOR', fn:() => clickHall1('corridor') });
+    // ── set dressing: ceiling → walls → floor, so the hall reads as a real room
+    addProp({ prop:'duct',   x:10, y:0,  w:56, h:7, cls:'prop-far' });
+    addProp({ prop:'light',  x:26, y:4,  w:11, h:8  });
+    addProp({ prop:'light',  x:58, y:4,  w:11, h:8  });
+    addProp({ prop:'column', x:1,  y:14, w:7,  h:60 });
+    addProp({ prop:'pipe',   x:9,  y:10, w:6,  h:50 });
+    addProp({ prop:'ivy',    x:17, y:4,  w:9,  h:30, cls:'prop-far' });
+    addProp({ prop:'ivy',    x:90, y:4,  w:10, h:40, cls:'prop-far' });
+    addProp({ prop:'cables', x:70, y:6,  w:10, h:28, cls:'prop-far' });
+    addProp({ prop:'panel',  x:64, y:36, w:12, h:11, anim:'prop-flicker' });
+    addProp({ prop:'crate',  x:64, y:58, w:14, h:15 });
+    addProp({ prop:'barrel', x:88, y:64, w:8,  h:15 });
+    addProp({ prop:'debris', x:19, y:78, w:16, h:8  });
+    // ── interactive: every one is a visible object you click directly
+    addHotspot({ prop:'opening',  x:46, y:24, w:14, h:30, label:'DUNKLER KORRIDOR', fn:() => clickHall1('corridor') });
+    addHotspot({ prop:'terminal', anim:'prop-flicker', x:31, y:40, w:13, h:26, label:'TERMINAL', fn:() => clickHall1('terminal') });
+    addHotspot({ prop:'door',     x:80, y:24, w:12, h:38, label:'TÜR',          fn:() => clickHall1('door') });
+    addHotspot({ prop:'sign',     x:15, y:52, w:14, h:12, label:'TESTSCHILD',   fn:() => clickHall1('sign') });
+    addHotspot({ prop:'decal',    x:42, y:74, w:20, h:13, label:'BODENPLATTEN', fn:() => clickHall1('floor') });
   }
 
   function clickHall1(key) {
@@ -411,12 +419,23 @@ const Chapter1 = (() => {
 
   function loadRoomAHotspots() {
     clearHotspots();
-    addProp({ prop:'light', x:42, y:4,  w:14, h:9 });
-    addProp({ prop:'crate', x:30, y:62, w:16, h:18 });
-    addHotspot({ prop:'terminal', anim:'prop-flicker', x:62, y:48, w:13, h:24, label:'TERMINAL', fn:() => clickRoomA('terminal') });
-    addHotspot({ prop:'door', x:78, y:28, w:12, h:38, label:'INNERES TOR', fn:() => clickRoomA('gate') });
-    addHotspot({ prop:'sign', x:9, y:52, w:14, h:12, label:'TESTSCHILD', fn:() => clickRoomA('sign') });
-    addHotspot({ x:22, y:40, label:'WANDKRATZER', fn:() => clickRoomA('scratch') });
+    // ── set dressing
+    addProp({ prop:'duct',    x:14, y:0,  w:52, h:7, cls:'prop-far' });
+    addProp({ prop:'light',   x:40, y:4,  w:12, h:8  });
+    addProp({ prop:'light',   x:8,  y:5,  w:10, h:7  });
+    addProp({ prop:'column',  x:88, y:12, w:8,  h:58 });
+    addProp({ prop:'cables',  x:56, y:6,  w:9,  h:26, cls:'prop-far' });
+    addProp({ prop:'monitors',x:36, y:32, w:17, h:15 });
+    addProp({ prop:'ivy',     x:0,  y:6,  w:9,  h:28, cls:'prop-far' });
+    addProp({ prop:'crate',   x:26, y:62, w:15, h:16 });
+    addProp({ prop:'barrel',  x:44, y:64, w:8,  h:15 });
+    addProp({ prop:'railing', x:56, y:70, w:24, h:11 });
+    addProp({ prop:'debris',  x:66, y:80, w:15, h:8  });
+    // ── interactive
+    addHotspot({ prop:'terminal', anim:'prop-flicker', x:62, y:44, w:13, h:26, label:'TERMINAL', fn:() => clickRoomA('terminal') });
+    addHotspot({ prop:'door',     x:76, y:24, w:12, h:38, label:'INNERES TOR', fn:() => clickRoomA('gate') });
+    addHotspot({ prop:'sign',     x:10, y:56, w:14, h:12, label:'TESTSCHILD',  fn:() => clickRoomA('sign') });
+    addHotspot({ prop:'scratch',  x:12, y:38, w:18, h:13, label:'WANDKRATZER', fn:() => clickRoomA('scratch') });
   }
 
   function clickRoomA(key) {
@@ -727,13 +746,23 @@ const Chapter1 = (() => {
 
   function loadRoomBHotspots() {
     clearHotspots();
-    addProp({ prop:'light', x:43, y:3, w:14, h:9 });
-    addHotspot({ prop:'console', x:39, y:46, w:22, h:22, label:'ZENTRALE KONSOLE', fn:() => clickRoomB('console') });
-    addHotspot({ prop:'pipe', cls:'prop-red',   x:8,  y:26, w:9, h:48, label:'ROTE LEITUNG',  fn:() => clickRoomB('red') });
-    addHotspot({ prop:'pipe', cls:'prop-green', x:82, y:26, w:9, h:48, label:'GRÜNE LEITUNG', fn:() => clickRoomB('green') });
-    addHotspot({ prop:'door', x:62, y:12, w:13, h:32, label:'SEKTOR-02-TÜR', fn:() => clickRoomB('door') });
-    addHotspot({ prop:'panel', x:84, y:74, w:10, h:12, label:'LÜFTUNGSSCHACHT', fn:() => clickRoomB('vent') });
-    addHotspot({ x:25, y:74, label:'ALTES POSTER', fn:() => clickRoomB('poster') });
+    // ── set dressing: the technical "machine heart" room
+    addProp({ prop:'duct',    x:16, y:0,  w:52, h:7, cls:'prop-far' });
+    addProp({ prop:'light',   x:42, y:4,  w:12, h:8  });
+    addProp({ prop:'monitors',x:20, y:20, w:18, h:16 });
+    addProp({ prop:'cables',  x:74, y:6,  w:9,  h:24, cls:'prop-far' });
+    addProp({ prop:'column',  x:0,  y:10, w:7,  h:62 });
+    addProp({ prop:'column',  x:93, y:10, w:7,  h:62 });
+    addProp({ prop:'railing', x:22, y:66, w:26, h:12 });
+    addProp({ prop:'barrel',  x:64, y:62, w:8,  h:15 });
+    addProp({ prop:'debris',  x:48, y:82, w:15, h:8  });
+    // ── interactive  (R-3MI = GREEN, V-TGM = RED — see the conduit dialogue)
+    addHotspot({ prop:'console', x:39, y:44, w:22, h:23, label:'ZENTRALE KONSOLE', fn:() => clickRoomB('console') });
+    addHotspot({ prop:'pipe', cls:'prop-red',   x:9,  y:24, w:9, h:46, label:'ROTE LEITUNG',  fn:() => clickRoomB('red') });
+    addHotspot({ prop:'pipe', cls:'prop-green', x:83, y:24, w:9, h:46, label:'GRÜNE LEITUNG', fn:() => clickRoomB('green') });
+    addHotspot({ prop:'door',    x:62, y:12, w:13, h:32, label:'SEKTOR-02-TÜR',    fn:() => clickRoomB('door') });
+    addHotspot({ prop:'vent',    x:82, y:74, w:12, h:12, label:'LÜFTUNGSSCHACHT',  fn:() => clickRoomB('vent') });
+    addHotspot({ prop:'poster',  x:24, y:38, w:12, h:22, label:'ALTES POSTER',     fn:() => clickRoomB('poster') });
   }
 
   function clickRoomB(key) {
@@ -751,16 +780,17 @@ const Chapter1 = (() => {
       red: {
         1: [
           { speaker:'SYSTEM', text:'Eine rote Leitung läuft vom Boden bis zur Konsole. Sie pulsiert in einem unruhigen Rhythmus.' },
-          { speaker:'R-3MI',  text:'„Das ist vermutlich meine Seite."' },
-          { speaker:'V-TGM',  text:'"Because it is red?"', subtitle:'Weil sie rot ist?' },
-          { speaker:'R-3MI',  text:'„Und dramatisch."' },
+          { speaker:'V-TGM',  text:'"That one is mine."', subtitle:'Die gehört mir.' },
+          { speaker:'R-3MI',  text:'„Sie pulsiert völlig undiszipliniert. Das passt überhaupt nicht zu dir."' },
+          { speaker:'V-TGM',  text:'"I know. It is the one thing about me that panics."', subtitle:'Ich weiß. Sie ist das Einzige an mir, das in Panik gerät.' },
         ],
       },
       green: {
         1: [
           { speaker:'SYSTEM', text:'Eine grüne Leitung führt sauber an der Wand entlang. Im Vergleich zur roten wirkt sie fast höflich.' },
-          { speaker:'V-TGM',  text:'"That one is mine."', subtitle:'Die gehört mir.' },
-          { speaker:'R-3MI',  text:'„Natürlich ist deine Leitung stabiler."' },
+          { speaker:'R-3MI',  text:'„Und die hier ist meine. Ordentlich. Höflich. Vorbildlich."' },
+          { speaker:'V-TGM',  text:'"It is the calmest thing about you."', subtitle:'Sie ist das Ruhigste an dir.' },
+          { speaker:'R-3MI',  text:'„Das nehme ich als Kompliment."' },
         ],
       },
       poster: {
@@ -830,7 +860,9 @@ const Chapter1 = (() => {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // PUZZLE 2 — DUAL SIGNAL (R-3MI red + V-TGM green)
+  // PUZZLE 2 — DUAL SIGNAL (two signal paths: a red one and a green one.
+  // NOTE: these are SIGNAL colours, not robot colours.
+  // Canonical: R-3MI = GREEN (#2ecf62), V-TGM = RED (#c0322c).)
   // ═══════════════════════════════════════════════════════════════
   /*
    * 4×4 grid. Two signal sources, two terminals.

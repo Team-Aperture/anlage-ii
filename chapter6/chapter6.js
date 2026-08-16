@@ -133,7 +133,14 @@ const Chapter6 = (() => {
 
   function loadExploreHotspots() {
     CH.clearHotspots();
-    CH.addProp({ prop:'light', x:44, y:3, w:13, h:8 });
+    // ── set dressing: a hushed darkroom, prints hanging everywhere
+    CH.addProp({ prop:'light',    x:44, y:2,  w:11, h:7  });
+    CH.addProp({ prop:'cables',   x:28, y:2,  w:9,  h:26, cls:'prop-far' });
+    CH.addProp({ prop:'cables',   x:64, y:2,  w:9,  h:22, cls:'prop-far' });
+    CH.addProp({ prop:'monitors', x:62, y:26, w:16, h:14 });
+    CH.addProp({ prop:'shelf',    x:0,  y:16, w:10, h:50 });
+    CH.addProp({ prop:'barrel',   x:30, y:70, w:8,  h:15 });
+    CH.addProp({ prop:'crate',    x:66, y:70, w:12, h:13 });
     CH.addHotspot({ prop:'panel', anim:'prop-flicker', cls:'prop-guest', x:44, y:42, w:16, h:18, label:'BELICHTETE PLATTE', fn:() => clickExplore('plate') });
     CH.addHotspot({ prop:'shelf', x:12, y:34, w:13, h:34, label:'BILDARCHIV',  fn:() => clickExplore('shelf') });
     CH.addHotspot({ prop:'sign', x:80, y:54, w:14, h:12, label:'ASPS LOGBUCH', fn:() => clickExplore('log') });

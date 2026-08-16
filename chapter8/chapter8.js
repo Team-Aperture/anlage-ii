@@ -135,8 +135,15 @@ const Chapter8 = (() => {
 
   function loadExploreHotspots() {
     CH.clearHotspots();
-    CH.addProp({ prop:'shelf', x:2,  y:18, w:11, h:54 });
-    CH.addProp({ prop:'shelf', x:87, y:18, w:11, h:54 });
+    // ── set dressing: a cathedral-scale archive
+    CH.addProp({ prop:'shelf',  x:2,  y:18, w:11, h:54 });
+    CH.addProp({ prop:'shelf',  x:87, y:18, w:11, h:54 });
+    CH.addProp({ prop:'shelf',  x:30, y:14, w:10, h:44 });
+    CH.addProp({ prop:'shelf',  x:62, y:14, w:10, h:44 });
+    CH.addProp({ prop:'light',  x:44, y:1,  w:11, h:7  });
+    CH.addProp({ prop:'ladder', x:22, y:22, w:6,  h:48 });
+    CH.addProp({ prop:'crate',  x:74, y:70, w:12, h:13 });
+    CH.addProp({ prop:'debris', x:14, y:82, w:14, h:8  });
     CH.addHotspot({ prop:'panel', cls:'prop-guest', anim:'prop-flicker', x:43, y:44, w:16, h:20, label:'DAS ZEHNTE PUZZLE', fn:() => clickExplore('record') });
     CH.addHotspot({ prop:'shelf', x:16, y:36, w:12, h:34, label:'AKTENREGAL',  fn:() => clickExplore('shelf') });
     CH.addHotspot({ prop:'sign', x:80, y:52, w:14, h:12, label:'AGN-H3RS HAUPTBUCH', fn:() => clickExplore('ledger') });

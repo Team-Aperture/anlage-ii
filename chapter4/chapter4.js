@@ -209,8 +209,16 @@ const Chapter4 = (() => {
 
   function loadExploreHotspots() {
     clearHotspots();
-    addProp({ prop:'light', x:43, y:3, w:13, h:8 });
-    addProp({ prop:'pipe',  x:3,  y:14, w:7, h:52 });
+    // ── set dressing: a heavy reinforced vault
+    addProp({ prop:'light',   x:43, y:2,  w:12, h:8  });
+    addProp({ prop:'pipe',    x:3,  y:14, w:7,  h:52 });
+    addProp({ prop:'duct',    x:14, y:0,  w:50, h:6, cls:'prop-far' });
+    addProp({ prop:'column',  x:24, y:10, w:7,  h:56 });
+    addProp({ prop:'column',  x:70, y:10, w:7,  h:56 });
+    addProp({ prop:'cables',  x:60, y:6,  w:8,  h:22, cls:'prop-far' });
+    addProp({ prop:'barrel',  x:14, y:64, w:8,  h:15 });
+    addProp({ prop:'crate',   x:62, y:66, w:13, h:14 });
+    addProp({ prop:'debris',  x:32, y:82, w:15, h:8  });
     addHotspot({ prop:'cube', cls:'prop-guest', x:43, y:38, w:18, h:26, label:'WÜRFEL', fn:() => clickExplore('cube') });
     addHotspot({ prop:'panel', x:13, y:36, w:13, h:13, label:'LAGERPLAN', fn:() => clickExplore('board') });
     addHotspot({ prop:'crate', cls:'prop-brown', x:82, y:68, w:14, h:18, label:'BRAUNER KASTEN', fn:() => clickExplore('kasten') });

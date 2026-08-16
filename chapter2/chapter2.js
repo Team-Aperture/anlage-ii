@@ -294,13 +294,24 @@ const Chapter2 = (() => {
 
   function loadGardenHotspots() {
     clearHotspots();
-    addProp({ prop:'light', x:43, y:3, w:13, h:8 });
-    addHotspot({ prop:'crate', x:40, y:64, w:16, h:18, label:'PFLANZBECKEN', fn:() => clickGarden('plants') });
-    addHotspot({ prop:'pipe', x:5, y:30, w:8, h:46, label:'WASSERORGEL', fn:() => clickGarden('valves') });
-    addHotspot({ prop:'sign', cls:'prop-guest', x:14, y:54, w:14, h:12, label:'EISVERPACKTE TAFEL', fn:() => clickGarden('tafel') });
-    addHotspot({ prop:'panel', x:84, y:72, w:11, h:13, label:'WARTUNGSSCHACHT', fn:() => clickGarden('vent') });
-    addHotspot({ x:78, y:48, w:6,  h:14, label:'EIS-SKULPTUR', fn:() => clickGarden('ice') });
-    addHotspot({ x:62, y:80, w:5,  h:6,  label:'EISBRUNNEN',   fn:() => clickGarden('brunnen') });
+    // ── set dressing: a frozen glass-roofed garden, overgrown and iced over
+    addProp({ prop:'light',  x:43, y:2,  w:12, h:8  });
+    addProp({ prop:'light',  x:12, y:4,  w:10, h:7  });
+    addProp({ prop:'duct',   x:56, y:0,  w:40, h:6, cls:'prop-far' });
+    addProp({ prop:'ivy',    x:0,  y:4,  w:11, h:40, cls:'prop-far' });
+    addProp({ prop:'ivy',    x:66, y:2,  w:11, h:34, cls:'prop-far' });
+    addProp({ prop:'ivy',    x:90, y:8,  w:10, h:36, cls:'prop-far' });
+    addProp({ prop:'column', x:30, y:14, w:7,  h:54 });
+    addProp({ prop:'cables', x:56, y:8,  w:8,  h:22, cls:'prop-far' });
+    addProp({ prop:'crate',  x:18, y:70, w:13, h:14 });
+    addProp({ prop:'debris', x:60, y:84, w:15, h:8  });
+    // ── interactive — every one a visible object
+    addHotspot({ prop:'crate',     x:40, y:64, w:16, h:18, label:'PFLANZBECKEN', fn:() => clickGarden('plants') });
+    addHotspot({ prop:'pipe',      x:5,  y:46, w:8,  h:40, label:'WASSERORGEL',  fn:() => clickGarden('valves') });
+    addHotspot({ prop:'sign', cls:'prop-guest', x:14, y:52, w:14, h:12, label:'EISVERPACKTE TAFEL', fn:() => clickGarden('tafel') });
+    addHotspot({ prop:'vent',      x:84, y:72, w:12, h:12, label:'WARTUNGSSCHACHT', fn:() => clickGarden('vent') });
+    addHotspot({ prop:'sculpture', x:74, y:40, w:12, h:30, label:'EIS-SKULPTUR', fn:() => clickGarden('ice') });
+    addHotspot({ prop:'fountain',  x:60, y:70, w:11, h:14, label:'EISBRUNNEN',   fn:() => clickGarden('brunnen') });
   }
 
   function clickGarden(key) {

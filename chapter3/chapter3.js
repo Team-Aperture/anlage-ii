@@ -227,11 +227,19 @@ const Chapter3 = (() => {
 
   function loadExploreHotspots() {
     clearHotspots();
-    addProp({ prop:'light', x:43, y:3, w:13, h:8 });
+    // ── set dressing: an optics lab, instruments everywhere
+    addProp({ prop:'light',    x:43, y:2,  w:12, h:8  });
+    addProp({ prop:'duct',     x:8,  y:0,  w:46, h:6, cls:'prop-far' });
+    addProp({ prop:'monitors', x:26, y:22, w:17, h:15 });
+    addProp({ prop:'cables',   x:64, y:6,  w:9,  h:24, cls:'prop-far' });
+    addProp({ prop:'column',   x:0,  y:12, w:7,  h:58 });
+    addProp({ prop:'railing',  x:24, y:70, w:26, h:12 });
+    addProp({ prop:'crate',    x:60, y:70, w:13, h:14 });
+    addProp({ prop:'barrel',   x:6,  y:66, w:8,  h:15 });
     addHotspot({ prop:'console', cls:'prop-guest', x:42, y:44, w:20, h:22, label:'BEOBACHTUNGSARRAY', fn:() => clickExplore('array') });
     addHotspot({ prop:'panel', x:13, y:34, w:13, h:13, label:'JUSTIERSPIEGEL', fn:() => clickExplore('mirror') });
     addHotspot({ prop:'terminal', anim:'prop-flicker', x:78, y:48, w:13, h:24, label:'MESSPROTOKOLL', fn:() => clickExplore('log') });
-    addHotspot({ prop:'light', anim:'prop-flicker', x:85, y:20, w:10, h:8, label:'FLACKERNDE LINSE', fn:() => clickExplore('niche') });
+    addHotspot({ prop:'light', anim:'prop-flicker', x:86, y:20, w:6, h:8, label:'FLACKERNDE LINSE', fn:() => clickExplore('niche') });
   }
 
   function clickExplore(key) {

@@ -135,8 +135,16 @@ const Chapter5 = (() => {
 
   function loadExploreHotspots() {
     CH.clearHotspots();
-    CH.addProp({ prop:'light', x:44, y:3, w:14, h:9 });
-    CH.addProp({ prop:'pipe',  x:2,  y:14, w:7, h:54 });
+    // ── set dressing: an endless conveyor corridor
+    CH.addProp({ prop:'light',   x:44, y:2,  w:12, h:8  });
+    CH.addProp({ prop:'light',   x:20, y:5,  w:9,  h:6  });
+    CH.addProp({ prop:'pipe',    x:2,  y:14, w:7,  h:54 });
+    CH.addProp({ prop:'duct',    x:12, y:0,  w:56, h:6, cls:'prop-far' });
+    CH.addProp({ prop:'railing', x:6,  y:66, w:28, h:12 });
+    CH.addProp({ prop:'railing', x:66, y:66, w:28, h:12 });
+    CH.addProp({ prop:'crate',   x:66, y:34, w:12, h:13 });
+    CH.addProp({ prop:'crate',   x:24, y:34, w:12, h:13 });
+    CH.addProp({ prop:'barrel',  x:88, y:60, w:8,  h:15 });
     CH.addHotspot({ prop:'console', cls:'prop-guest', x:42, y:46, w:20, h:22, label:'STARTLINIE', fn:() => clickExplore('band') });
     CH.addHotspot({ prop:'sign', x:13, y:38, w:14, h:12, label:'STRECKENMARKER', fn:() => clickExplore('marker') });
     CH.addHotspot({ prop:'sign', x:80, y:50, w:14, h:12, label:'ALTE ANZEIGETAFEL', fn:() => clickExplore('sign') });
