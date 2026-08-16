@@ -66,8 +66,8 @@
 
     const COUNT  = 28;
     const COLORS = [
-      'rgba(46,207,98,0.25)',   // vtgm green
-      'rgba(217,51,51,0.15)',   // r3mi red
+      'rgba(46,207,98,0.25)',   // R-3MI green
+      'rgba(217,51,51,0.15)',   // V-TGM red
       'rgba(58,143,212,0.2)',   // system blue
       'rgba(184,156,58,0.15)',  // amber
     ];

@@ -109,7 +109,7 @@ const Chapter7 = (() => {
       { speaker:'FAX-N', text:'„Ein Schloss. Vier Siegel. Ich kenne die Lösung — ihr nicht. Ist das nicht herrlich ungerecht?"' },
       { speaker:'R-3MI', text:'„Er lügt in drei von vier Sätzen. Das Problem: man weiß nie, in welchen."' },
       { speaker:'V-TGM', text:'"His lock is honest. Only his mouth lies. Trust the lock."', subtitle:'Sein Schloss ist ehrlich. Nur sein Mund lügt. Vertrau dem Schloss.' },
-      { speaker:'FAX-N', text:'„Pssst! Verrate doch nicht die Pointe, du grüner Spielverderber!"' },
+      { speaker:'FAX-N', text:'„Pssst! Verrate doch nicht die Pointe, du roter Spielverderber!"' },
     ], () => scene_7_3_choice1());
   }
 
@@ -164,7 +164,14 @@ const Chapter7 = (() => {
 
   function loadExploreHotspots() {
     CH.clearHotspots();
-    CH.addProp({ prop:'light', x:43, y:3, w:14, h:9 });
+    // ── set dressing: a trick stage full of false doors
+    CH.addProp({ prop:'light',  x:43, y:2,  w:12, h:8  });
+    CH.addProp({ prop:'door',   x:4,  y:20, w:11, h:34 });
+    CH.addProp({ prop:'door',   x:88, y:20, w:11, h:34 });
+    CH.addProp({ prop:'duct',   x:16, y:0,  w:50, h:6, cls:'prop-far' });
+    CH.addProp({ prop:'poster', x:32, y:22, w:10, h:18 });
+    CH.addProp({ prop:'crate',  x:8,  y:70, w:12, h:13 });
+    CH.addProp({ prop:'debris', x:60, y:82, w:15, h:8  });
     CH.addHotspot({ prop:'panel', cls:'prop-guest', anim:'prop-flicker', x:43, y:44, w:15, h:18, label:'VEXIERSCHLOSS', fn:() => clickExplore('lock') });
     CH.addHotspot({ prop:'pipe', x:20, y:46, w:8, h:30, label:'HEBEL', fn:() => clickExplore('lever') });
     CH.addHotspot({ prop:'sign', x:64, y:28, w:15, h:13, label:'VEXIER-GEMÄLDE', fn:() => clickExplore('painting') });

@@ -751,6 +751,143 @@ const GameEngine = (() => {
         + '<rect class="prop-acc-dim" x="16" y="96" width="20" height="16"/>'
         + '<rect class="prop-metal" x="44" y="98" width="12" height="14"/>'
         + '<circle class="prop-led" cx="74" cy="76" r="2.4"/>'),
+
+      // ── FLAT / ARCHITECTURAL (these give invisible hotspots a real body) ──
+      // painted floor marking — drawn in perspective so it reads as "on the floor"
+      decal: wrap('0 0 120 60',
+          '<path class="prop-acc-dim" d="M18 52 L34 10 H86 L102 52 Z"/>'
+        + '<path class="prop-edge" d="M18 52 L34 10 H86 L102 52 Z" opacity=".55" stroke-dasharray="7 5"/>'
+        + '<path class="prop-hazard" d="M52 40 V22 h-7 l15 -13 l15 13 h-7 v18 Z" opacity=".5"/>'),
+      // a deliberate scratch carved into concrete: starts sharp, goes wobbly, stops
+      scratch: wrap('0 0 100 70',
+          '<path class="prop-inset" d="M10 26 h74 v6 h-74 Z" opacity=".5"/>'
+        + '<path class="prop-thin" d="M10 30 H44 q6 4 12 -1 q7 5 13 -2 q6 6 11 0 l6 2" stroke-width="2.4"/>'
+        + '<path class="prop-lite" d="M10 33 H42" opacity=".5"/>'
+        + '<circle class="prop-inset" cx="86" cy="31" r="2.5"/>'),
+      // dark passage mouth — depth lines receding into black
+      opening: wrap('0 0 100 120',
+          '<path class="prop-base" d="M8 118 V34 q42 -30 84 0 v84 Z"/>'
+        + '<path class="prop-inset" d="M18 118 V40 q32 -22 64 0 v78 Z"/>'
+        + '<path class="prop-thin" d="M30 118 V50 q20 -13 40 0 v68 Z" opacity=".45"/>'
+        + '<path class="prop-thin" d="M42 118 V62 q8 -6 16 0 v56 Z" opacity=".3"/>'
+        + '<rect class="prop-lite" x="8" y="30" width="84" height="5" rx="2"/>'),
+      // wall poster, faded, one corner curling
+      poster: wrap('0 0 90 110',
+          '<path class="prop-metal" d="M8 6 H82 V96 L64 104 H8 Z"/>'
+        + '<path class="prop-inset" d="M82 96 L64 104 V92 Z"/>'
+        + '<rect class="prop-acc-dim" x="18" y="18" width="54" height="7"/>'
+        + '<rect class="prop-acc-dim" x="18" y="34" width="44" height="5" opacity=".5"/>'
+        + '<rect class="prop-acc-dim" x="18" y="45" width="50" height="5" opacity=".5"/>'
+        + '<rect class="prop-acc-dim" x="18" y="56" width="36" height="5" opacity=".4"/>'
+        + '<rect class="prop-lite" x="18" y="72" width="26" height="14"/>'),
+      // grated vent, dark behind the slats
+      vent: wrap('0 0 90 80',
+          '<rect class="prop-base" x="6" y="6" width="78" height="68" rx="3"/>'
+        + '<rect class="prop-inset" x="13" y="13" width="64" height="54"/>'
+        + '<rect class="prop-metal" x="15" y="17" width="60" height="5"/>'
+        + '<rect class="prop-metal" x="15" y="27" width="60" height="5"/>'
+        + '<rect class="prop-metal" x="15" y="37" width="60" height="5"/>'
+        + '<rect class="prop-metal" x="15" y="47" width="60" height="5"/>'
+        + '<rect class="prop-metal" x="15" y="57" width="60" height="5"/>'
+        + '<circle class="prop-lite" cx="11" cy="11" r="2"/><circle class="prop-lite" cx="79" cy="11" r="2"/>'
+        + '<circle class="prop-lite" cx="11" cy="69" r="2"/><circle class="prop-lite" cx="79" cy="69" r="2"/>'),
+      // faceted ice sculpture
+      sculpture: wrap('0 0 90 120',
+          '<ellipse class="prop-inset" cx="45" cy="114" rx="30" ry="5" opacity=".6"/>'
+        + '<path class="prop-base" d="M26 112 h38 l-5 -12 h-28 Z"/>'
+        + '<path class="prop-lite" d="M45 8 L64 52 L56 100 H34 L26 52 Z" opacity=".55"/>'
+        + '<path class="prop-edge" d="M45 8 L64 52 L56 100 H34 L26 52 Z" opacity=".8"/>'
+        + '<path class="prop-edge" d="M45 8 V100 M26 52 H64" opacity=".4"/>'
+        + '<path class="prop-glow" d="M45 20 L57 54 L52 92 H38 L33 54 Z"/>'),
+      // basin fountain with a low column
+      fountain: wrap('0 0 120 90',
+          '<ellipse class="prop-inset" cx="60" cy="80" rx="48" ry="8" opacity=".6"/>'
+        + '<path class="prop-base" d="M14 62 q46 16 92 0 l-6 16 q-40 12 -80 0 Z"/>'
+        + '<ellipse class="prop-metal" cx="60" cy="62" rx="46" ry="11"/>'
+        + '<ellipse class="prop-glow" cx="60" cy="62" rx="38" ry="8"/>'
+        + '<rect class="prop-base" x="52" y="26" width="16" height="34" rx="3"/>'
+        + '<ellipse class="prop-lite" cx="60" cy="26" rx="14" ry="4"/>'),
+
+      // ── SET DRESSING (fills the room; decorative only) ──
+      railing: wrap('0 0 160 70',
+          '<rect class="prop-metal" x="4" y="10" width="152" height="5" rx="2"/>'
+        + '<rect class="prop-lite" x="4" y="10" width="152" height="2" rx="1"/>'
+        + '<rect class="prop-metal" x="4" y="36" width="152" height="4" rx="2"/>'
+        + '<rect class="prop-base" x="10" y="12" width="6" height="54" rx="2"/>'
+        + '<rect class="prop-base" x="60" y="12" width="6" height="54" rx="2"/>'
+        + '<rect class="prop-base" x="110" y="12" width="6" height="54" rx="2"/>'
+        + '<rect class="prop-base" x="146" y="12" width="6" height="54" rx="2"/>'),
+      cables: wrap('0 0 90 130',
+          '<path class="prop-thin" d="M12 0 q10 46 -2 84 q-4 20 8 44" stroke-width="3"/>'
+        + '<path class="prop-thin" d="M32 0 q-8 52 4 92 q4 16 -4 36" stroke-width="2.4"/>'
+        + '<path class="prop-thin" d="M54 0 q12 40 0 78 q-6 22 6 50" stroke-width="3.4" opacity=".8"/>'
+        + '<path class="prop-thin" d="M74 0 q-6 44 2 80" stroke-width="2"/>'
+        + '<rect class="prop-metal" x="6" y="30" width="74" height="7" rx="3"/>'
+        + '<rect class="prop-metal" x="6" y="86" width="74" height="7" rx="3"/>'),
+      barrel: wrap('0 0 80 110',
+          '<ellipse class="prop-inset" cx="40" cy="104" rx="28" ry="5" opacity=".6"/>'
+        + '<rect class="prop-base" x="10" y="14" width="60" height="88" rx="6"/>'
+        + '<ellipse class="prop-metal" cx="40" cy="16" rx="30" ry="7"/>'
+        + '<rect class="prop-lite" x="14" y="18" width="6" height="82" rx="3"/>'
+        + '<rect class="prop-metal" x="10" y="36" width="60" height="6"/>'
+        + '<rect class="prop-metal" x="10" y="72" width="60" height="6"/>'
+        + '<path class="prop-hazard" d="M32 52 h16 l-8 16 Z" opacity=".65"/>'),
+      column: wrap('0 0 80 140',
+          '<rect class="prop-base" x="16" y="0" width="48" height="140"/>'
+        + '<rect class="prop-lite" x="20" y="0" width="8" height="140" opacity=".7"/>'
+        + '<rect class="prop-metal" x="10" y="10" width="60" height="9" rx="2"/>'
+        + '<rect class="prop-metal" x="10" y="120" width="60" height="11" rx="2"/>'
+        + '<circle class="prop-inset" cx="24" cy="15" r="2"/><circle class="prop-inset" cx="56" cy="15" r="2"/>'
+        + '<circle class="prop-inset" cx="24" cy="125" r="2"/><circle class="prop-inset" cx="56" cy="125" r="2"/>'),
+      monitors: wrap('0 0 130 90',
+          '<rect class="prop-base" x="4" y="4" width="60" height="40" rx="3"/>'
+        + '<rect class="prop-screen" x="9" y="9" width="50" height="30"/>'
+        + '<line class="prop-scan" x1="14" y1="18" x2="48" y2="18"/><line class="prop-scan" x1="14" y1="26" x2="40" y2="26"/>'
+        + '<rect class="prop-base" x="68" y="4" width="58" height="40" rx="3"/>'
+        + '<rect class="prop-screen" x="73" y="9" width="48" height="30"/>'
+        + '<rect class="prop-cursor" x="78" y="28" width="7" height="5"/>'
+        + '<rect class="prop-base" x="4" y="50" width="58" height="36" rx="3"/>'
+        + '<rect class="prop-screen" x="9" y="55" width="48" height="26"/>'
+        + '<line class="prop-scan" x1="14" y1="64" x2="46" y2="64"/>'
+        + '<rect class="prop-base" x="68" y="50" width="58" height="36" rx="3"/>'
+        + '<rect class="prop-inset" x="73" y="55" width="48" height="26"/>'
+        + '<circle class="prop-led" cx="118" cy="47" r="2.4"/>'),
+      ladder: wrap('0 0 60 140',
+          '<rect class="prop-metal" x="8" y="0" width="7" height="140" rx="2"/>'
+        + '<rect class="prop-metal" x="45" y="0" width="7" height="140" rx="2"/>'
+        + '<rect class="prop-lite" x="8" y="0" width="2.5" height="140"/>'
+        + '<rect class="prop-metal" x="8" y="16" width="44" height="5" rx="2"/>'
+        + '<rect class="prop-metal" x="8" y="44" width="44" height="5" rx="2"/>'
+        + '<rect class="prop-metal" x="8" y="72" width="44" height="5" rx="2"/>'
+        + '<rect class="prop-metal" x="8" y="100" width="44" height="5" rx="2"/>'
+        + '<rect class="prop-metal" x="8" y="128" width="44" height="5" rx="2"/>'),
+      ivy: wrap('0 0 100 130',
+          '<path class="prop-vine" d="M20 0 q8 34 -2 60 q-8 22 4 48"/>'
+        + '<path class="prop-vine" d="M52 0 q-10 40 2 70 q6 18 -2 44"/>'
+        + '<path class="prop-vine" d="M80 0 q6 30 -4 56 q-6 18 2 40"/>'
+        + '<ellipse class="prop-leaf" cx="14" cy="24" rx="9" ry="5" transform="rotate(-25 14 24)"/>'
+        + '<ellipse class="prop-leaf" cx="28" cy="46" rx="8" ry="4.5" transform="rotate(20 28 46)"/>'
+        + '<ellipse class="prop-leaf" cx="16" cy="76" rx="9" ry="5" transform="rotate(-15 16 76)"/>'
+        + '<ellipse class="prop-leaf" cx="46" cy="30" rx="8" ry="4.5" transform="rotate(15 46 30)"/>'
+        + '<ellipse class="prop-leaf" cx="58" cy="60" rx="9" ry="5" transform="rotate(-20 58 60)"/>'
+        + '<ellipse class="prop-leaf" cx="48" cy="94" rx="8" ry="4.5" transform="rotate(25 48 94)"/>'
+        + '<ellipse class="prop-leaf" cx="86" cy="26" rx="8" ry="4.5" transform="rotate(-18 86 26)"/>'
+        + '<ellipse class="prop-leaf" cx="74" cy="58" rx="9" ry="5" transform="rotate(22 74 58)"/>'
+        + '<ellipse class="prop-leaf" cx="84" cy="92" rx="8" ry="4.5" transform="rotate(-12 84 92)"/>'),
+      debris: wrap('0 0 130 60',
+          '<ellipse class="prop-inset" cx="65" cy="52" rx="58" ry="7" opacity=".5"/>'
+        + '<path class="prop-metal" d="M12 50 l14 -20 l18 8 l-6 12 Z"/>'
+        + '<path class="prop-base" d="M40 50 l10 -26 l22 6 l-4 20 Z"/>'
+        + '<path class="prop-metal" d="M74 50 l8 -14 l20 4 l2 10 Z"/>'
+        + '<rect class="prop-lite" x="52" y="30" width="14" height="4" transform="rotate(-12 59 32)"/>'
+        + '<rect class="prop-metal" x="98" y="40" width="22" height="6" rx="2" transform="rotate(8 109 43)"/>'),
+      duct: wrap('0 0 170 60',
+          '<rect class="prop-base" x="0" y="12" width="170" height="34" rx="4"/>'
+        + '<rect class="prop-lite" x="0" y="14" width="170" height="5"/>'
+        + '<rect class="prop-metal" x="24" y="10" width="9" height="38" rx="2"/>'
+        + '<rect class="prop-metal" x="72" y="10" width="9" height="38" rx="2"/>'
+        + '<rect class="prop-metal" x="120" y="10" width="9" height="38" rx="2"/>'
+        + '<rect class="prop-inset" x="140" y="20" width="22" height="18"/>'),
     };
 
     function svg(type) { return SVG[type] || SVG.panel; }
@@ -1121,6 +1258,7 @@ const GameEngine = (() => {
           <div class="scene-bg-layer" id="sceneBgLayer">
             <!-- Rooms are code-drawn: scene-ph lighting + a perspective floor + props -->
             <div class="scene-ph" id="scenePh" data-scene="${sPh}"></div>
+            <div class="scene-room" aria-hidden="true"><div class="room-ceil"></div><div class="room-wall room-wall-l"></div><div class="room-wall room-wall-r"></div><div class="room-back"></div></div>
             <div class="scene-floor" aria-hidden="true"></div>
           </div>
           <div class="scene-hotspots" id="sceneHotspots"></div>

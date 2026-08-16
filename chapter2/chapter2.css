@@ -229,6 +229,8 @@
 .froschi-icon:hover { border-color:var(--accent-froschi); background:rgba(232,74,140,0.08); }
 
 .ri-eye { width:14px; height:14px; border-radius:50%; }
+/* CANONICAL COLOURS: R-3MI = GREEN (--accent-r3mi), V-TGM = RED (--accent-vtgm).
+   The -r / -g suffixes below mean r3mi / vtgm, NOT red / green. */
 .ri-eye-r { background:var(--accent-r3mi); box-shadow:0 0 8px var(--accent-r3mi); animation:eyeR 2.4s ease-in-out infinite; }
 .ri-eye-g { background:var(--accent-vtgm); box-shadow:0 0 8px var(--accent-vtgm); animation:eyeG 2.8s ease-in-out infinite; }
 .ri-eye-p { background:var(--accent-froschi); box-shadow:0 0 8px var(--accent-froschi); animation:eyeP 2.6s ease-in-out infinite; }

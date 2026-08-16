@@ -80,6 +80,13 @@ const Chapter9 = (() => {
 
   function loadExhibitHotspots() {
     CH.clearHotspots();
+    // ── set dressing: a private trophy vault that should not exist
+    CH.addProp({ prop:'column', x:0,  y:8,  w:7,  h:64 });
+    CH.addProp({ prop:'column', x:93, y:8,  w:7,  h:64 });
+    CH.addProp({ prop:'light',  x:44, y:1,  w:11, h:7  });
+    CH.addProp({ prop:'shelf',  x:9,  y:14, w:9,  h:30 });
+    CH.addProp({ prop:'shelf',  x:82, y:14, w:9,  h:30 });
+    CH.addProp({ prop:'debris', x:36, y:84, w:15, h:8  });
     CH.addHotspot({ prop:'crate', x:17, y:48, w:15, h:18, label:'EXPONAT: FRIGO', fn:() => clickExhibit('brainrot') });
     CH.addHotspot({ prop:'panel', anim:'prop-flicker', x:44, y:42, w:15, h:16, label:'EXPONAT: FARBEN', fn:() => clickExhibit('crypto') });
     CH.addHotspot({ prop:'crate', cls:'prop-brown', x:70, y:48, w:15, h:18, label:'EXPONAT: DIE ÜBERTRAGUNG', fn:() => clickExhibit('transmission') });
