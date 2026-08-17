@@ -8,6 +8,14 @@
   --accent-guest:  var(--accent-lux);  /* tints the guest's key prop */
 }
 
+/* room shell tint for this sector */
+.scene-room {
+  --room-line: rgba(215,160,110,0.12);
+  --room-glow: rgba(232,137,58,0.10);
+  --room-strip: rgba(255,185,110,0.45);
+}
+
+
 .chapter-page { overflow: hidden; }
 
 /* ─── SCENE BASE ──────────────────────────────────────────────── */

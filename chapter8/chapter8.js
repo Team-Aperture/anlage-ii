@@ -189,11 +189,11 @@ const Chapter8 = (() => {
     const n = S.hotspots[who];
     const byWho = {
       r3mi: [
-        [{ speaker:'R-3MI', text:'„Tipp zwei Teile an, dann tauschen sie den Platz. Fang mit den Ecken an — die sind am leichtesten zu erkennen."' }],
+        [{ speaker:'R-3MI', text:'„Neun fertige Bilder. Und er hat auf jemanden gewartet, der das zehnte legt. Jahrelang."' }],
         [{ speaker:'R-3MI', text:'„Lass dich von seinem Gerede nicht aus dem Konzept bringen. Bild legen. Fertig. Heimgehen."' }],
       ],
       vtgm: [
-        [{ speaker:'V-TGM', text:'"Solve the border first, then work inward. Same as any picture worth seeing."', subtitle:'Erst den Rand, dann nach innen. Wie bei jedem Bild, das sich lohnt.' }],
+        [{ speaker:'V-TGM', text:'"He filed every single thing we ever did. Including the parts we would rather forget."', subtitle:'Er hat alles abgelegt, was wir je getan haben. Auch das, was wir lieber vergessen würden.' }],
         [{ speaker:'V-TGM', text:'"He keeps saying „ask us“. …finish the picture first. Please."', subtitle:'Er sagt ständig »frag uns«. …leg erst das Bild. Bitte.' }],
       ],
       guest: [

@@ -239,15 +239,15 @@ const Chapter7 = (() => {
     const byWho = {
       r3mi: [
         [{ speaker:'R-3MI', text:'„Vier Siegel, sechs mögliche Symbole. Das sind… ziemlich viele Kombinationen. Rate nicht. RECHNE."' }],
-        [{ speaker:'R-3MI', text:'„Jeder Versuch ist Information. Selbst ein völlig falscher schließt Möglichkeiten aus. Verschwende keinen."' }],
+        [{ speaker:'R-3MI', text:'„Er redet, damit du nicht denkst. Das ist sein ganzer Trick. Und er ist gut darin."' }],
       ],
       vtgm: [
-        [{ speaker:'V-TGM', text:'"Read the pips. Filled means right symbol, right place. Hollow means right symbol, wrong place."', subtitle:'Lies die Punkte. Gefüllt = richtiges Symbol, richtiger Platz. Hohl = richtiges Symbol, falscher Platz.' }],
+        [{ speaker:'V-TGM', text:'"He was the fastest here once. Now he performs for an empty room."', subtitle:'Er war hier einmal der Schnellste. Jetzt spielt er vor einem leeren Raum.' }],
         [{ speaker:'V-TGM', text:'"He will taunt you. The numbers will not. Believe the numbers."', subtitle:'Er wird dich verhöhnen. Die Zahlen nicht. Glaub den Zahlen.' }],
       ],
       guest: [
         [{ speaker:'FAX-N', text:'„Tipp von mir: Es ist auf JEDEN Fall der Stern. …oder nie der Stern. Eins von beidem. Gern geschehen!"' }],
-        [{ speaker:'FAX-N', text:'„Na schön, EIN ehrlicher Satz, weil du so süß guckst: Ein Symbol… kommt vielleicht doppelt vor. Vielleicht. PAH!"' }],
+        [{ speaker:'FAX-N', text:'„Ein ehrlicher Satz, weil du so süß guckst: … nein, doch nicht. Fast! Beinahe! PAH!"' }],
         [{ speaker:'FAX-N', text:'„Weißt du, früher bin ich mit jemandem um die Wette gerannt. Schnell. Orange. Ein Fellknäuel mit viel zu viel Strom. …ach. Lange her. Tipp endlich."' }],
       ],
     };

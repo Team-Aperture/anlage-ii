@@ -252,11 +252,15 @@ const GameEngine = (() => {
         <div class="toast-text">${def.text}</div>
       `;
       document.body.appendChild(t);
-      // the glitch animations are finite and self-settle; the class stays so
-      // removing it never re-triggers the entrance animation.
       setTimeout(() => {
+        // Drop .glitching FIRST: its rule is declared after .hiding with equal
+        // specificity, so leaving it on would win the cascade, toastOut would
+        // never run, animationend would never fire and the toast would stay
+        // on screen forever.
+        t.classList.remove('glitching');
         t.classList.add('hiding');
         t.addEventListener('animationend', () => t.remove(), { once: true });
+        setTimeout(() => t.remove(), 1200);   // belt-and-braces: never get stuck
       }, 5000);
     }
 
@@ -1392,12 +1396,11 @@ const GameEngine = (() => {
     // Hide any open puzzle modal while a dialogue plays, then restore it,
     // so dialogue (z-50) is never trapped behind a modal (z-200).
     function withModalDialogue(lines, after) {
-      const open = _modalIds.map(el).find(m => m && !m.classList.contains('hidden'));
-      if (open) open.classList.add('hidden');
-      dialogue.load(lines, () => {
-        if (open) open.classList.remove('hidden');
-        if (after) after();
-      });
+      // The dialogue box sits at z-index 210, ABOVE puzzle modals (200), so it
+      // no longer needs the old hide/re-show workaround. Hiding the modal made
+      // the puzzle visibly vanish mid-solve (and re-render), so we just play
+      // the dialogue over the top and leave the puzzle exactly as it was.
+      dialogue.load(lines, after);
     }
 
     // ---- HINTS ------------------------------------------------------

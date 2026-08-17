@@ -10,6 +10,14 @@
   --frost-blue:        #7fb8d4;
 }
 
+/* room shell tint for this sector */
+.scene-room {
+  --room-line: rgba(170,215,235,0.15);
+  --room-glow: rgba(150,205,235,0.13);
+  --room-strip: rgba(190,235,255,0.5);
+}
+
+
 .chapter-page { overflow: hidden; }
 
 /* ─── SCENE BASE ──────────────────────────────────────────────── */

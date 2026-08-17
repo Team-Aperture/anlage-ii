@@ -9,6 +9,14 @@
   --accent-guest-lo: rgba(255,71,51,0.14);
 }
 
+/* room shell tint for this sector */
+.scene-room {
+  --room-line: rgba(215,120,95,0.12);
+  --room-glow: rgba(255,71,51,0.09);
+  --room-strip: rgba(255,140,110,0.42);
+}
+
+
 /* ─── PLACEHOLDER SCENES ──────────────────────────────────────── */
 .scene-ph[data-scene="vexier-dim"] {
   background:

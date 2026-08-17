@@ -437,13 +437,9 @@ const Chapter3 = (() => {
   // The puzzle modal (z-index 200) sits above the dialogue box (z-index 50),
   // so any dialogue shown mid-puzzle must hide the modal first, then reopen it.
   function withModalDialogue(lines, after) {
-    const modal = document.getElementById('belModal');
-    const wasOpen = modal && !modal.classList.contains('hidden');
-    if (wasOpen) modal.classList.add('hidden');
-    GameEngine.dialogue.load(lines, () => {
-      if (wasOpen && !S.puzzleSolved) modal.classList.remove('hidden');
-      if (after) after();
-    });
+    // Dialogue renders above puzzle modals (z 210 > 200), so never hide the
+    // puzzle — that made it disappear mid-solve.
+    GameEngine.dialogue.load(lines, after);
   }
 
   // ─── Rendering ────────────────────────────────────────────────
