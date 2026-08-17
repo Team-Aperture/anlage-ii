@@ -2,13 +2,31 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>KA-II // Kapitel 0 — Rückkehr</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Barlow:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/global.css?v=20260613">
   <link rel="stylesheet" href="chapter0.css?v=20260613">
+  <script>
+    /* Authorisation gate. Runs before the scene paints so an unverified visitor
+       never sees the entrance. Reads the save directly because the engine has
+       not loaded yet; Chapter0.init() re-checks through GameEngine.state.
+       A missing or corrupted save must fail closed (redirect), not open. */
+    (function () {
+      var verified = false;
+      try {
+        var raw  = localStorage.getItem('ka2_save_v1');
+        var data = raw ? JSON.parse(raw) : null;
+        verified = !!(data && data.flags && data.flags.ka1_verified);
+      } catch (_) { verified = false; }
+      if (!verified) {
+        document.documentElement.className = 'gate-blocked';
+        location.replace('../access.html');
+      }
+    })();
+  </script>
 </head>
 <body class="chapter-page">
 
@@ -33,13 +51,14 @@
   <div class="scene-wrapper" id="sceneWrapper">
     <div class="scene-canvas" id="sceneCanvas">
 
-      <!-- The entrance is drawn entirely in code (no images). -->
+      <!-- Stylised entrance, drawn in CSS: overgrown threshold, sealed ring. -->
       <div class="placeholder-scene" id="placeholderScene" aria-hidden="true">
         <div class="ph-vignette"></div>
         <div class="ph-floor"></div>
 
         <!-- Sealed door silhouette -->
-        <div class="ph-door">
+        <div class="ph-door" id="phDoor">
+          <div class="ph-corridor"></div>
           <div class="ph-door-ring ph-door-ring-1"></div>
           <div class="ph-door-ring ph-door-ring-2"></div>
           <div class="ph-door-ring ph-door-ring-3"></div>
@@ -54,6 +73,9 @@
         <div class="ph-vine ph-vine-1"></div>
         <div class="ph-vine ph-vine-2"></div>
         <div class="ph-vine ph-vine-3"></div>
+
+        <!-- dust shaken loose when the seal finally moves -->
+        <div class="ph-dust" id="phDust"></div>
       </div>
 
       <!-- Hotspots are added here by Chapter0.js -->
@@ -61,24 +83,31 @@
     </div>
   </div>
 
-  <!-- ── HUD: HINWEIS BUTTON + PROGRESS ──────────────────────── -->
+  <!-- ── HUD: OBJECTIVE + HINT + REFERENCES ──────────────────── -->
   <div class="chapter-hud">
-    <button class="ka-btn small" onclick="Chapter0.showHint()" aria-label="Hinweis anzeigen">
-      [ HINWEIS ]
-    </button>
-    <span class="sys-text" id="cluesProgress">HINWEISE: 0 / 4</span>
+    <div class="hud-objective">
+      <span class="hud-objective-label sys-text">ZIEL</span>
+      <span class="hud-objective-text sys-text" id="objectiveText">SCHLEUSE MANUELL FREIGEBEN</span>
+    </div>
+    <div class="hud-row">
+      <button class="ka-btn small" id="hintBtn" aria-label="Hinweis anzeigen">
+        [ HINWEIS ]
+      </button>
+      <span class="sys-text" id="cluesProgress">REFERENZEN: 0 / 4</span>
+    </div>
   </div>
 
   <!-- ════════════════════════════════════════════════════════════
-       PUZZLE MODAL — Sealed door access panel
+       SCHLEUSENRING — close-up of the manual release mechanism
        ════════════════════════════════════════════════════════════ -->
-  <div class="puzzle-modal hidden" id="puzzleModal" role="dialog" aria-label="Schleusensteuerung">
+  <div class="puzzle-modal hidden" id="puzzleModal" role="dialog" aria-modal="true"
+       aria-labelledby="puzzleTitle" aria-describedby="puzzleSublabel">
     <div class="puzzle-card">
 
       <div class="puzzle-header">
-        <div class="puzzle-label sys-text">SCHLEUSENSTEUERUNG // SEKTOR 7C</div>
-        <div class="puzzle-title">ZUGRIFFSCODE</div>
-        <div class="puzzle-sublabel sys-text">VIER-SYMBOL-SEQUENZ ERFORDERLICH</div>
+        <div class="puzzle-label sys-text">SCHLEUSENRING // SEKTOR 7C</div>
+        <div class="puzzle-title" id="puzzleTitle">MANUELLE FREIGABE</div>
+        <div class="puzzle-sublabel sys-text" id="puzzleSublabel">VIER REFERENZEN IN PRÜFREIHENFOLGE</div>
       </div>
 
       <div class="puzzle-display" id="puzzleDisplay">
@@ -88,18 +117,27 @@
         <span class="puzzle-slot">_</span>
       </div>
 
-      <div class="puzzle-status sys-text" id="puzzleStatus">BEREIT.</div>
+      <div class="puzzle-status sys-text" id="puzzleStatus" role="status" aria-live="polite">BEREIT.</div>
+      <div class="puzzle-note sys-text" id="puzzleNote" aria-live="polite"></div>
 
-      <div class="puzzle-buttons">
-        <button class="puzzle-key" data-symbol="●">●</button>
-        <button class="puzzle-key" data-symbol="▲">▲</button>
-        <button class="puzzle-key" data-symbol="■">■</button>
-        <button class="puzzle-key" data-symbol="⬡">⬡</button>
+      <!-- the physical ring: glyphs sit where they sit on the door itself -->
+      <div class="ring-input" id="ringInput">
+        <div class="ring-plate" aria-hidden="true"></div>
+        <button class="puzzle-key ring-left"   data-symbol="⬡" aria-label="Referenz Hexagon auswählen">⬡</button>
+        <button class="puzzle-key ring-top"    data-symbol="●" aria-label="Referenz Punkt auswählen">●</button>
+        <button class="puzzle-key ring-right"  data-symbol="▲" aria-label="Referenz Dreieck auswählen">▲</button>
+        <button class="puzzle-key ring-bottom" data-symbol="■" aria-label="Referenz Viereck auswählen">■</button>
+      </div>
+
+      <!-- what the player has already read, so nothing has to be memorised -->
+      <div class="ref-panel" id="refPanel" hidden>
+        <div class="ref-panel-label sys-text">ERFASSTE REFERENZEN</div>
+        <ul class="ref-list" id="refList"></ul>
       </div>
 
       <div class="puzzle-actions">
-        <button class="ka-btn small" onclick="Chapter0.resetPuzzle()">[ ZURÜCKSETZEN ]</button>
-        <button class="ka-btn small" onclick="Chapter0.closePuzzle()">[ ABBRECHEN ]</button>
+        <button class="ka-btn small" id="puzzleResetBtn">[ ZURÜCKSETZEN ]</button>
+        <button class="ka-btn small" id="puzzleCloseBtn">[ ABBRECHEN ]</button>
       </div>
 
     </div>
@@ -110,10 +148,19 @@
     <div class="cc-card">
       <div class="cc-glitch">SCHLEUSE GEÖFFNET</div>
       <div class="cc-divider">──────────────</div>
-      <div class="cc-chapter sys-text">KAPITEL 00 ABGESCHLOSSEN</div>
-      <div class="cc-next">KAPITEL 01 — DIE WARTUNGSEINHEITEN</div>
+      <div class="cc-chapter sys-text">KAPITEL 00 // RÜCKKEHR</div>
+      <div class="cc-next">SEKTOR 01 — ERREICHBAR</div>
       <div class="cc-progress sys-text" id="ccProgress"></div>
-      <a class="ka-btn primary" href="../chapter1/chapter1.html">[ EINTRETEN ]</a>
+      <a class="ka-btn primary" id="ccEnter" href="../chapter1/chapter1.html">[ EINTRETEN ]</a>
+      <a class="ka-btn small" href="../index.html">[ HAUPTMENÜ ]</a>
+    </div>
+  </div>
+
+  <!-- ── FAULT FALLBACK (only shown if the chapter fails to start) ── -->
+  <div class="ch0-fault hidden" id="ch0Fault">
+    <div class="cc-card">
+      <div class="cc-chapter sys-text">SCHLEUSENSTEUERUNG NICHT VERFÜGBAR.</div>
+      <a class="ka-btn primary" href="chapter0.html">[ NEU LADEN ]</a>
       <a class="ka-btn small" href="../index.html">[ HAUPTMENÜ ]</a>
     </div>
   </div>

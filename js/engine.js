@@ -93,7 +93,7 @@ const GameEngine = (() => {
     const ALL = [
       { id: 'first_boot',       icon: '◈', title: 'Erstkontakt',         desc: 'Das System erwacht.' },
       { id: 'ka1_veteran',      icon: '✦', title: 'Veteran',              desc: 'Teil I wurde abgeschlossen. Du weißt, was hier passiert.' },
-      { id: 'ch0_complete',     icon: '⬡', title: 'Rückkehr',            desc: 'Kapitel 0 abgeschlossen.' },
+      { id: 'ch0_complete',     icon: '⬡', title: 'Wieder da',            desc: 'Die Anlage hat dich wiedererkannt.' },
       { id: 'ch1_complete',     icon: '◉', title: 'Wartungsprotokoll',    desc: 'Kapitel 1 abgeschlossen.' },
       { id: 'ch2_complete',     icon: '❧', title: 'Wartungsgartenpflege', desc: 'Kapitel 2 abgeschlossen.' },
       { id: 'ch3_complete',     icon: '◎', title: 'Beobachtet',           desc: 'Kapitel 3 abgeschlossen.' },
@@ -538,14 +538,17 @@ const GameEngine = (() => {
       const sceneEl = document.querySelector('.scene-canvas');
       // A code-drawn prop you click directly (the object IS the hotspot).
       if (cfg.prop) {
-        const p = props.el(cfg.prop, { x:cfg.x, y:cfg.y, w:cfg.w, h:cfg.h, label:cfg.label, onClick:cfg.onClick, cls:cfg.className, anim:cfg.anim });
+        const p = props.el(cfg.prop, { x:cfg.x, y:cfg.y, w:cfg.w, h:cfg.h, label:cfg.label, aria:cfg.aria, onClick:cfg.onClick, cls:cfg.className, anim:cfg.anim });
         if (sceneEl) sceneEl.appendChild(p);
         _hotspots.push(p);
         return;
       }
       const el = document.createElement('button');
       el.className = 'hotspot' + (cfg.className ? ' ' + cfg.className : '');
-      el.setAttribute('aria-label', cfg.label || 'Interagieren');
+      // `aria` is an optional descriptive override (a verb phrase, e.g.
+      // "Warntafel untersuchen") for screen readers; `label` alone still
+      // drives the visible on-hover/focus tag.
+      el.setAttribute('aria-label', cfg.aria || cfg.label || 'Interagieren');
       el.style.cssText = `left:${cfg.x}%;top:${cfg.y}%;width:${cfg.w||6}%;height:${cfg.h||6}%;`;
       if (cfg.label) {
         const lbl = document.createElement('span');
@@ -909,7 +912,7 @@ const GameEngine = (() => {
         const l = document.createElement('span');
         l.className = 'prop-label'; l.textContent = cfg.label; e.appendChild(l);
       }
-      if (interactive) { e.setAttribute('aria-label', cfg.label || type); e.addEventListener('click', cfg.onClick); }
+      if (interactive) { e.setAttribute('aria-label', cfg.aria || cfg.label || type); e.addEventListener('click', cfg.onClick); }
       return e;
     }
 
@@ -928,12 +931,17 @@ const GameEngine = (() => {
     function submit(answer) {
       if (!_current) return false;
       const norm = answer.trim().toLowerCase().replace(/\s+/g, '');
-      const sols = (Array.isArray(_current.solution)
-        ? _current.solution
-        : [_current.solution]
-      ).map(s => s.toLowerCase().replace(/\s+/g, ''));
 
-      if (sols.includes(norm)) {
+      // A puzzle may supply either a literal solution (string / array of
+      // strings) or a `validate(answer)` predicate, for locks whose rule is
+      // derived rather than memorised.
+      const ok = typeof _current.validate === 'function'
+        ? !!_current.validate(answer)
+        : (Array.isArray(_current.solution) ? _current.solution : [_current.solution])
+            .map(s => String(s).toLowerCase().replace(/\s+/g, ''))
+            .includes(norm);
+
+      if (ok) {
         state.markPuzzleSolved(_current.id);
         if (_current.achievementId) achievements.unlock(_current.achievementId);
         if (_current.onSolve) _current.onSolve();
