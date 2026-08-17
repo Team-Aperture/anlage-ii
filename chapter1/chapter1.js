@@ -61,12 +61,37 @@ const Chapter1 = (() => {
     document.getElementById('sceneHotspots').innerHTML = '';
   }
 
+  /** True while a dialogue line is on screen. */
+  function dialogueBusy() {
+    const c = document.querySelector('.dlg-container');
+    return !!(c && c.classList.contains('visible'));
+  }
+
+  /**
+   * While a dialogue is running, a tap anywhere in the scene advances it
+   * instead of starting a new interaction.
+   *
+   * The dialogue box only covers the bottom strip, so every hotspot stays
+   * physically tappable underneath it — and the engine keeps exactly ONE
+   * completion callback. Starting a new line from a hotspot mid-dialogue
+   * therefore silently discarded whatever the running dialogue was going to
+   * do next, which is how the player could strand themselves. Forwarding the
+   * tap (rather than swallowing it) keeps the obvious mobile gesture working:
+   * tapping repeatedly reads on instead of doing nothing.
+   */
+  function guarded(fn) {
+    return (...args) => {
+      if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch(_) {} return; }
+      return fn(...args);
+    };
+  }
+
   function addHotspot(cfg) {
     // A code-drawn prop you click directly (no images).
     if (cfg.prop && window.GameEngine && GameEngine.props) {
       const p = GameEngine.props.el(cfg.prop, {
         x:cfg.x, y:cfg.y, w:cfg.w, h:cfg.h,
-        label:cfg.label, aria:cfg.aria, onClick:cfg.fn, cls:cfg.cls, anim:cfg.anim,
+        label:cfg.label, aria:cfg.aria, onClick:guarded(cfg.fn), cls:cfg.cls, anim:cfg.anim,
       });
       document.getElementById('sceneHotspots').appendChild(p);
       return p;
@@ -79,7 +104,7 @@ const Chapter1 = (() => {
       const lbl = document.createElement('span');
       lbl.className = 'hotspot-label'; lbl.textContent = cfg.label; el.appendChild(lbl);
     }
-    el.addEventListener('click', cfg.fn);
+    el.addEventListener('click', guarded(cfg.fn));
     document.getElementById('sceneHotspots').appendChild(el);
     return el;
   }
@@ -222,8 +247,15 @@ const Chapter1 = (() => {
   }
 
   function addCorridorHotspot() {
-    addHotspot({ prop:'opening', x:46, y:24, w:14, h:30,
+    if (document.querySelector('.ch1-corridor')) return;   // idempotent
+    addHotspot({ prop:'opening', cls:'ch1-corridor', x:46, y:24, w:14, h:30,
       label:'DUNKLER KORRIDOR', aria:'Dunklen Korridor betreten', fn:() => act2_distant() });
+  }
+
+  /** The one state change that lets Act 1 end. Never put this in a callback. */
+  function openCorridor() {
+    S.corridorOpen = true;
+    addCorridorHotspot();
   }
 
   const ACT1_LINES = {
@@ -290,11 +322,19 @@ const Chapter1 = (() => {
     const n = bump('a1_' + key);
     S.act1Seen[key] = n;
 
-    const lines = pick(ACT1_LINES[key], n);
-    const distinct = Object.keys(S.act1Seen).length;
+    // Self-heal: if the corridor is supposed to be open but the node is gone
+    // for any reason, put it back rather than leaving the player stranded.
+    if (S.corridorOpen) addCorridorHotspot();
 
-    // After enough poking around, something in the next room answers.
-    const shouldKlonk = !S.klonkDone && distinct >= 3;
+    const lines = pick(ACT1_LINES[key], n);
+    const distinct  = Object.keys(S.act1Seen).length;
+    const evidence  = EVIDENCE.filter(k => S.act1Seen[k]).length;
+
+    // What turns Act 1 is the evidence of recent activity — not click volume.
+    // Optional scenery can never gate the trigger, and never substitutes for
+    // it either. (With 3 evidence objects out of 6, the distinct>=5 failsafe
+    // already implies at least two of them, so it cannot bypass the story.)
+    const shouldKlonk = !S.klonkDone && (evidence >= 2 || distinct >= 5);
 
     say(lines, () => {
       if (shouldKlonk) ambientKlonk();
@@ -303,20 +343,25 @@ const Chapter1 = (() => {
 
   /** The "wait, what?" beat — no jumpscare, no explanation. */
   function ambientKlonk() {
+    if (S.klonkDone) return;
     S.klonkDone = true;
     setTimeout(() => {
       playSound('ch1_metal_jump_01.mp3');
       tone({ freq: 92, type:'sine', dur: 0.9, vol: 0.16, glideTo: 55 });
       try { GameEngine.fx.shake('#sceneHotspots'); } catch(_) {}
 
+      // Open the way out BEFORE the beat plays. The lines below are
+      // atmosphere; the corridor is progression, and progression must not
+      // depend on a dialogue callback surviving — `klonkDone` is already
+      // latched here, so losing the callback would strand the player in
+      // Act 1 with no trigger left to fire.
+      openCorridor();
+
       say([
         { speaker:'SYSTEM', text:'*KLONK.*' },
         { speaker:'SYSTEM', text:'Metallisches Klackern aus dem Nebenraum. Kurz. Dann nichts mehr.' },
         { speaker:'SYSTEM', text:'Es klang nicht, als wäre etwas heruntergefallen. Es klang, als hätte etwas aufgehört, sich zu bewegen.' },
-      ], () => {
-        S.corridorOpen = true;
-        addCorridorHotspot();
-      });
+      ]);
     }, 420);
   }
 
@@ -471,6 +516,9 @@ const Chapter1 = (() => {
 
   function clickRobot(who) {
     if (!S.metRobots) return;
+    // Same reason as the scene hotspots: talking over a running dialogue
+    // would discard the continuation it is holding (see `guarded`).
+    if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch(_) {} return; }
     const topics = TALK[who] || [];
     const choices = topics.map(t => {
       const seen = !!S.talkSeen[who + ':' + t.key];
