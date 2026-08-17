@@ -7,7 +7,7 @@ curve. From Chapter 1 the baseline is **4.5/10**, rising **+0.75 per chapter**.
 | Chapter | Target | Status | Puzzles (rough) |
 |---------|--------|--------|-----------------|
 | Ch0 — Rückkehr            | ~2.0 (tutorial) | done | Symbol door — clues spell out the order |
-| Ch1 — Wartungseinheiten   | **4.5** | done | P1 pipe path ~4 · P2 dual-signal ~5 (4 hints) |
+| Ch1 — Wartungssektor      | **4.5** | done | P1 pipe path ~4 · P2 dual-signal ~5. One shared 3-step hint ladder *per puzzle* (`HINT_MAX` in `chapter1.js`) — observation → relationship → method; either unit can voice the next step, so asking both no longer doubles the budget |
 | Ch2 — Wartungsgarten      | **5.25** | done | P1 Tau-Sequenz ~5 · P2 Frostmuster ~5.5–6 (6 fixed walls → unique solution, cap 18) |
 | Ch3 — Beobachtungssektor  | **6.0** | done | One multi-stage Belichtung puzzle (logic dials → spectrum match) under a draining exposure meter |
 | Ch4 — Rätselsektor (Armin/B-RADF1SH) | **6.75** | done | Dual-projection maze (2D↔3D): warm-up ~5 (3×3×3, min 2 switches) · der Würfel ~7.5 (3×4×4 staircase, min 6 switches, budget 7) |
@@ -26,9 +26,10 @@ second ~0.5 above, bracketing it — the chapter *average* is the number above.
 
 ## Difficulty knobs (cheapest → most structural)
 
-1. **Hint budget.** Most direct lever. Ch1 P2 = 4 hints (`P2_HINT_MAX` in
-   `chapter1.js`); Ch2 = 4 hints (`S.hints` r3mi/vtgm/froschi in `chapter2.js`).
-   Fewer hints → harder.
+1. **Hint budget.** Most direct lever. Ch1 = one shared 3-step ladder per puzzle
+   (`HINT_MAX` in `chapter1.js`) — the two units are two *voices* on the same
+   ladder, not two separate budgets; Ch2 = 4 hints (`S.hints` r3mi/vtgm/froschi
+   in `chapter2.js`). Fewer steps → harder.
 2. **Tolerance / feedback.** e.g. Ch2 Tau-Sequenz uses `TOLERANCE = 1`; tightening
    it or hiding live feedback raises difficulty.
 3. **Scramble / fixed tiles.** Ch1 pipe puzzles: more rotatable (non-`*_FIXED`)

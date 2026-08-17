@@ -105,7 +105,7 @@ No drums, steady loopable texture, no fade out.
 ```
 `EXCLUDE:` `drums, vocals, melody, upbeat`
 
-## `ch1_wartung.mp3` — Kapitel 1: Wartungseinheiten
+## `ch1_wartung.mp3` — Kapitel 1: Wartungssektor
 **Slot:** `ch1_ambient` · **Länge:** ~2:00 · **Instrumental: AN**
 ```
 Industrial ambient with the first signs of life, 70 BPM, A minor. Low synth pad,
