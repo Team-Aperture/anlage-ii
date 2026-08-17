@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>KA-II // Kapitel 1 — Die Wartungseinheiten</title>
+  <title>KA-II // Kapitel 1 — Wartungssektor</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Barlow:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
@@ -15,7 +15,7 @@
   <div class="bg-scanlines" aria-hidden="true"></div>
 
   <header class="sys-bar">
-    <span class="sys-text">KAPITEL 01 // <span class="accent-system">DIE WARTUNGSEINHEITEN</span></span>
+    <span class="sys-text">KAPITEL 01 // <span class="accent-system">WARTUNGSSEKTOR</span></span>
     <span class="sys-text" id="reactProgress">REAKTIVIERUNG: 0%</span>
   </header>
 
@@ -30,8 +30,8 @@
     </div>
     <div class="ch-title-text">
       <p class="ch-label sys-text">KAPITEL 01</p>
-      <h1 class="ch-name">Die Wartungseinheiten</h1>
-      <p class="ch-subline">&bdquo;Nicht alles, was dir hilft, ist hilflos.&ldquo;</p>
+      <h1 class="ch-name">Wartungssektor</h1>
+      <p class="ch-subline">&bdquo;Angehalten ist nicht dasselbe wie leer.&ldquo;</p>
     </div>
   </div>
 
@@ -69,10 +69,10 @@
   <!-- HINT BAR -->
   <div class="hint-bar hidden" id="hintBar">
     <span class="sys-text hint-label" id="hintCount">HINWEISE: 3 VERFÜGBAR</span>
-    <button class="ka-btn small" id="hintBtnR3MI" onclick="Chapter1.useHint('r3mi')">
+    <button class="ka-btn small hint-btn" id="hintBtnR3MI" onclick="Chapter1.useHint('r3mi')">
       <span class="accent-r3mi">[ R-3MI ]</span>
     </button>
-    <button class="ka-btn small" id="hintBtnVTGM" onclick="Chapter1.useHint('vtgm')">
+    <button class="ka-btn small hint-btn" id="hintBtnVTGM" onclick="Chapter1.useHint('vtgm')">
       <span class="accent-vtgm">[ V-TGM ]</span>
     </button>
   </div>
@@ -82,7 +82,7 @@
     <div class="puzzle-card">
       <div class="puzzle-card-accent p1-accent"></div>
       <div class="puzzle-header">
-        <p class="puzzle-label sys-text">TERMINAL 01 // ENERGIEWEGLEITUNG</p>
+        <p class="puzzle-label sys-text">LEITUNG 03-B // NOTREPARATUR</p>
         <h2 class="puzzle-title">GRUNDVERSORGUNG</h2>
         <p class="puzzle-sub sys-text">VERBINDE ENERGIEQUELLE MIT DEM TERMINAL — KLICK ZUM DREHEN</p>
       </div>
@@ -118,7 +118,7 @@
       <div class="cc-title">SEKTOR 02 FREIGEGEBEN</div>
       <div class="cc-next">WARTUNGSGARTEN</div>
       <div class="cc-progress sys-text" id="ccProgress"></div>
-      <a class="ka-btn primary" href="../chapter2/chapter2.html">[ EINTRETEN ]</a>
+      <a class="ka-btn primary" id="ccEnter" href="../chapter2/chapter2.html">[ EINTRETEN ]</a>
       <a class="ka-btn small"   href="../index.html">[ HAUPTMENÜ ]</a>
     </div>
   </div>

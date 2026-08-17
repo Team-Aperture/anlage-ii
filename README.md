@@ -22,7 +22,7 @@
 │   ├── logo.png            ← Title logo
 │   └── portraits/          ← Speaker portraits (optional per dialogue line)
 ├── chapter0/               ← Kapitel 0: Rückkehr (implemented)
-├── chapter1/               ← Kapitel 1: Die Wartungseinheiten (implemented)
+├── chapter1/               ← Kapitel 1: Wartungssektor (implemented)
 ├── chapter2/               ← Kapitel 2: Wartungsgarten (implemented)
 └── chapter3/               ← Kapitel 3: Beobachtungssektor (stub — in Entwicklung)
     (chapter4/ … chapter9/ to follow)

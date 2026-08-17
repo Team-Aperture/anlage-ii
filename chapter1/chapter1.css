@@ -1,6 +1,14 @@
 /* ═══════════════════════════════════════════════════════════════
-   KAPITEL 01 — DIE WARTUNGSEINHEITEN
+   KAPITEL 01 — WARTUNGSSEKTOR
    ═══════════════════════════════════════════════════════════════ */
+
+/* Chapter-local feedback tokens. Kept separate from the character accents
+   (--accent-r3mi = green, --accent-vtgm = red) so success/failure styling
+   never has to borrow a character's colour and read as "that unit". */
+:root {
+  --ok-green:   #2ecf62;   /* connected / calibrated / done */
+  --bad-red:    #c0322c;   /* interference / refused */
+}
 
 .chapter-page { overflow: hidden; }
 
@@ -256,7 +264,7 @@
 .choice-btn:hover { border-color:var(--accent-system); background:var(--bg-raised); }
 .choice-btn:hover::before { color:var(--accent-system); }
 .choice-btn.seen { color:var(--text-secondary); border-color:var(--bdr-dim); }
-.choice-btn.seen::before { content:'✓  '; color:var(--accent-vtgm); }
+.choice-btn.seen::before { content:'✓  '; color:var(--ok-green); }
 
 .choice-hint { font-size:10px; margin-top:var(--sp-sm); color:var(--text-dim); }
 
@@ -294,8 +302,8 @@
 .puzzle-sub    { font-size:10px; color:var(--text-dim); }
 
 .puzzle-status { text-align:center; margin:var(--sp-md) 0 var(--sp-sm); font-size:11px; min-height:16px; transition:color var(--t-mid); }
-.puzzle-status.ok    { color:var(--accent-vtgm); }
-.puzzle-status.error { color:var(--accent-r3mi); }
+.puzzle-status.ok    { color:var(--ok-green); }
+.puzzle-status.error { color:var(--bad-red); }
 .puzzle-actions { display:flex; justify-content:center; }
 
 /* ─── PIPE GRID ───────────────────────────────────────────────── */
@@ -349,9 +357,12 @@
 .pipe-tile.terminal2g { border-color:var(--accent-vtgm); }
 .pipe-tile.terminal2g .pipe-center { background:var(--accent-vtgm); box-shadow:0 0 10px var(--accent-vtgm); border-radius:3px; }
 
-/* Connected states */
-.pipe-tile.conn .pipe-arm  { background:var(--accent-vtgm); }
-.pipe-tile.conn .pipe-center { background:var(--accent-vtgm); box-shadow:0 0 8px rgba(217,51,51,0.5); }
+/* Connected states.
+   Repair 1 has a single line, so "carrying power" reads as success green.
+   Repair 2's two colours are SIGNAL colours identifying which line is which:
+   conn-r is R-3MI's line (green), conn-g is V-TGM's (red). */
+.pipe-tile.conn .pipe-arm  { background:var(--ok-green); }
+.pipe-tile.conn .pipe-center { background:var(--ok-green); box-shadow:0 0 8px rgba(46,207,98,0.5); }
 
 .pipe-tile.conn-r .pipe-arm  { background:var(--accent-r3mi); }
 .pipe-tile.conn-r .pipe-center { background:var(--accent-r3mi); box-shadow:0 0 8px rgba(46,207,98,0.5); }
@@ -372,7 +383,7 @@
 
 .cc-card { text-align:center; display:flex; flex-direction:column; align-items:center; gap:var(--sp-md); max-width:480px; }
 .cc-header { letter-spacing:.2em; }
-.cc-title  { font-family:var(--font-display); font-size:clamp(26px,4vw,44px); font-weight:700; letter-spacing:.2em; color:var(--accent-vtgm); text-shadow:0 0 16px rgba(46,207,98,0.5); }
+.cc-title  { font-family:var(--font-display); font-size:clamp(26px,4vw,44px); font-weight:700; letter-spacing:.2em; color:var(--ok-green); text-shadow:0 0 16px rgba(46,207,98,0.5); }
 .cc-next   { font-family:var(--font-display); font-size:20px; letter-spacing:.15em; color:var(--text-primary); }
 .cc-progress { margin-bottom:var(--sp-md); }
 .cc-card .ka-btn { min-width:200px; }
