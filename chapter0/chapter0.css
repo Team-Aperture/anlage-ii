@@ -635,34 +635,6 @@ html.gate-blocked body { visibility: hidden; }
   gap: var(--sp-sm);
 }
 
-/* ─── REFERENCE PANEL — what has actually been read, verbatim ──── */
-.ref-panel {
-  margin-bottom: var(--sp-md);
-  padding: var(--sp-sm);
-  background: var(--bg-surface);
-  border: 1px solid var(--bdr-dim);
-}
-.ref-panel-label {
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  color: var(--text-dim);
-  margin-bottom: 4px;
-}
-.ref-list {
-  list-style: none;
-  margin: 0; padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.ref-item {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  color: var(--text-secondary);
-}
-.ref-item::before { content: '· '; color: var(--accent-system); }
-
 /* ─── CHAPTER COMPLETE OVERLAY ───────────────────────────────── */
 .chapter-complete {
   position: fixed;

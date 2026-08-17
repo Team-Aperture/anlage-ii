@@ -70,7 +70,6 @@ const Chapter0 = (() => {
       aria:    'Verwitterte Warntafel untersuchen',
       prop:    'sign',
       pos:     { x: 1, y: 47, w: 12, h: 11 },
-      extract: 'MANUELLE REFERENZFOLGE · AUFSTEIGEND',
       lines: [
         { speaker: 'SYSTEM', text: 'WARNTAFEL // VERWITTERT, TEILWEISE VON EFEU VERDECKT.' },
         { speaker: 'SYSTEM', text: 'TEXTFRAGMENT LESBAR: »… MANUELLE REFERENZFOLGE … AUFSTEIGEND …«' },
@@ -84,7 +83,6 @@ const Chapter0 = (() => {
       aria:    'Wartungsplakette untersuchen',
       prop:    'panel',
       pos:     { x: 67, y: 15, w: 11, h: 11 },
-      extract: 'FORMKENNZAHL = MARKIERTE ECKPUNKTE · REFERENZPUNKT ● = 1',
       lines: [
         { speaker: 'SYSTEM', text: 'METALLPLAKETTE // STARK OXIDIERT. FORMTABELLE TEILWEISE ERHALTEN.' },
         { speaker: 'SYSTEM', text: 'GRAVUR: »FORMKENNZAHL = MARKIERTE ECKPUNKTE«' },
@@ -99,7 +97,6 @@ const Chapter0 = (() => {
       aria:    'Bodenmarkierung untersuchen',
       prop:    'decal',
       pos:     { x: 40, y: 76, w: 20, h: 12 },
-      extract: 'PRÜFREIHENFOLGE · 1 · 3 · 4 · 6',
       lines: [
         { speaker: 'SYSTEM', text: 'BODENMARKIERUNG // SCHABLONE, STARK VERBLASST.' },
         { speaker: 'SYSTEM', text: 'PRÜFREIHENFOLGE LESBAR: 1 · 3 · 4 · 6' },
@@ -112,7 +109,6 @@ const Chapter0 = (() => {
       label:   'SCHLEUSENRING',
       aria:    'Schleusenring untersuchen',
       pos:     { x: 37.5, y: 26, w: 24, h: 44 },
-      extract: 'SCHLEUSENRING · ● ▲ ■ ⬡',
       lines: [
         { speaker: 'SYSTEM', text: 'EXTERNE TESTSIGNATUR // GÜLTIG.' },
         { speaker: 'SYSTEM', text: 'SCHLEUSENRING // MANUELL VERRIEGELT.' },
@@ -394,23 +390,6 @@ const Chapter0 = (() => {
       else if (found > 0)  objective.textContent = 'REFERENZFOLGE REKONSTRUIEREN';
       else                 objective.textContent = 'SCHLEUSE MANUELL FREIGEBEN';
     }
-    renderReferencePanel();
-  }
-
-  /** The ring overlay lists what has actually been read, so nothing has to be
-   *  memorised. It shows the fragments verbatim — it never assembles them. */
-  function renderReferencePanel() {
-    const panel = document.getElementById('refPanel');
-    const list  = document.getElementById('refList');
-    if (!panel || !list) return;
-
-    const found = REFERENCE_ORDER.filter(k => S.referencesFound[k]);
-    if (!found.length) { panel.hidden = true; list.innerHTML = ''; return; }
-
-    panel.hidden = false;
-    list.innerHTML = found
-      .map(k => `<li class="ref-item">${REFERENCES[k].extract}</li>`)
-      .join('');
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -486,7 +465,6 @@ const Chapter0 = (() => {
     if (!modal) return;
     modal.classList.remove('hidden');
     resetPuzzle();
-    renderReferencePanel();
     setTimeout(() => modal.querySelector('.puzzle-key')?.focus(), 60);
   }
 
