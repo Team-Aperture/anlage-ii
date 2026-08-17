@@ -4,6 +4,14 @@
 
 .chapter-page { overflow: hidden; }
 
+/* room shell tint for this sector */
+.scene-room {
+  --room-line: rgba(140,175,215,0.13);
+  --room-glow: rgba(120,160,210,0.10);
+  --room-strip: rgba(150,195,240,0.45);
+}
+
+
 /* ─── SCENE ───────────────────────────────────────────────────── */
 .scene-wrapper {
   position: fixed; inset: 0; z-index: 5;

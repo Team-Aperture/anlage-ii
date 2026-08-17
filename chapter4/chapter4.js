@@ -102,13 +102,9 @@ const Chapter4 = (() => {
   function allSeen(choices) { return choices.every(c => c.seen); }
 
   function withModalDialogue(lines, after) {
-    const modal = document.getElementById('persModal');
-    const wasOpen = modal && !modal.classList.contains('hidden');
-    if (wasOpen) modal.classList.add('hidden');
-    GameEngine.dialogue.load(lines, () => {
-      if (wasOpen) modal.classList.remove('hidden');
-      if (after) after();
-    });
+    // Dialogue renders above puzzle modals (z 210 > 200), so never hide the
+    // puzzle — that made it disappear mid-solve.
+    GameEngine.dialogue.load(lines, after);
   }
 
   // ─── SCENE 4.0 — TITLE CARD ───────────────────────────────────
@@ -275,11 +271,11 @@ const Chapter4 = (() => {
     const byWho = {
       r3mi: [
         [{ speaker:'R-3MI', text:'„Armin ist… eigentlich nett. Das ist das Verstörende daran. Nette Leute, die unlösbare Rätsel bauen."' }],
-        [{ speaker:'R-3MI', text:'„Vorne Höhe, oben Tiefe. Sag es dir vor wie ein Gebet. Es hilft. Mir nicht, aber dir vielleicht."' }],
+        [{ speaker:'R-3MI', text:'„Ich habe diesen Würfel schon hundertmal angeschaut. Er schaut immer zurück. Das gefällt mir nicht."' }],
       ],
       vtgm: [
         [{ speaker:'V-TGM', text:'"He has waited a long time for someone to finish his cube."', subtitle:'Er hat lange auf jemanden gewartet, der seinen Würfel löst.' }],
-        [{ speaker:'V-TGM', text:'"Plan the whole route before you move. Switches are precious."', subtitle:'Plane die ganze Route, bevor du dich bewegst. Wechsel sind kostbar.' }],
+        [{ speaker:'V-TGM', text:'"He built it the year everything stopped. Nobody ever saw the inside."', subtitle:'Er hat ihn in dem Jahr gebaut, in dem alles stehenblieb. Niemand hat je das Innere gesehen.' }],
       ],
       bradfish: [
         [{ speaker:'B-RADF1SH', text:'„Brauchst du einen Tipp? Ich gebe gute Tipps. Sie führen nur selten direkt zur Lösung. Das ist Absicht. Mit Liebe."' }],

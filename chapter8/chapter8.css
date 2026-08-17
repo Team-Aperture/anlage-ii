@@ -11,6 +11,14 @@
   --accent-guest-lo: var(--accent-agn-lo);
 }
 
+/* room shell tint for this sector */
+.scene-room {
+  --room-line: rgba(185,195,215,0.12);
+  --room-glow: rgba(214,218,226,0.09);
+  --room-strip: rgba(215,225,240,0.4);
+}
+
+
 /* ─── PLACEHOLDER SCENES ──────────────────────────────────────── */
 .scene-ph[data-scene="archive-dim"] {
   background:

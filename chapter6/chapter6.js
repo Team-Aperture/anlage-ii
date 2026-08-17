@@ -196,15 +196,15 @@ const Chapter6 = (() => {
     const byWho = {
       r3mi: [
         [{ speaker:'R-3MI', text:'„Ich rede mit ihm seit Jahren. Er hat mir 36 Sätze geschenkt. Ich zähle sie."' }],
-        [{ speaker:'R-3MI', text:'„Die laute Farbe ist immer die Falle. Bei ihm ist nichts laut, was wichtig ist."' }],
+        [{ speaker:'R-3MI', text:'„Er hat mir mal drei Stunden lang nichts gesagt. Es war das netteste Gespräch des Jahres."' }],
       ],
       vtgm: [
-        [{ speaker:'V-TGM', text:'"Isolate each channel. The truth hides in the quiet one."', subtitle:'Isoliere jeden Kanal. Die Wahrheit versteckt sich im leisen.' }],
-        [{ speaker:'V-TGM', text:'"Raise the threshold until noise dies and only the shape remains."', subtitle:'Erhöhe die Schwelle, bis das Rauschen stirbt und nur die Form bleibt.' }],
+        [{ speaker:'V-TGM', text:'"He has been sitting in this room since before the lights went out."', subtitle:'Er sitzt in diesem Raum, seit die Lichter ausgingen.' }],
+        [{ speaker:'V-TGM', text:'"Do not mistake his silence for indifference. He is simply done explaining."', subtitle:'Halte sein Schweigen nicht für Gleichgültigkeit. Er ist nur fertig mit Erklären.' }],
       ],
       guest: [
-        [{ speaker:'ASP-1024', text:'„Drei Farben. Eine schreit. Ignorier sie."' }],
-        [{ speaker:'ASP-1024', text:'„Blau ist leise. Heb die Schwelle. Dann lies."' }],
+        [{ speaker:'ASP-1024', text:'„Setz dich. Schau. Warte. So geht das."' }],
+        [{ speaker:'ASP-1024', text:'„Ich rede nicht viel. Du brauchst es nicht."' }],
       ],
     };
     const arr = byWho[who] || [];

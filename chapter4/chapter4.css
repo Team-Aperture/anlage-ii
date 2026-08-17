@@ -8,6 +8,14 @@
   --accent-guest:       var(--accent-bradfish);  /* tints the guest's key prop */
 }
 
+/* room shell tint for this sector */
+.scene-room {
+  --room-line: rgba(215,190,110,0.12);
+  --room-glow: rgba(243,198,35,0.09);
+  --room-strip: rgba(255,220,120,0.4);
+}
+
+
 .chapter-page { overflow: hidden; }
 
 /* ─── SCENE BASE ──────────────────────────────────────────────── */
