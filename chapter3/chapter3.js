@@ -1,38 +1,52 @@
 /**
  * ═══════════════════════════════════════════════════════════════
  * KAPITEL 03 — BEOBACHTUNGSSEKTOR
- * Guest character: L-UX (hyper, fast-talking light/observation unit)
+ * Guest: L-UX — a mobile observation unit. Calm, precise, dry.
+ *        Fast because he perceives quickly, not because he hurries.
  *
- * Scene flow:
- *   3.0 Title card
- *   3.1 Arrival — the observation sector, lights failing
- *   3.2 Encounter with L-UX (motormouth intro)
- *   3.3 Choice 1: first questions (3 to see)
- *   3.4 Exploration hotspots (one hides Signalnische sig_01)
- *   3.5 BELICHTUNG — one big multi-stage puzzle:
- *         Stufe 1  BLENDEN I   (3 logic dials)
- *         Stufe 2  BLENDEN II  (4 interdependent logic dials)
- *         Stufe 3  SPEKTRUM    (RGB colour/brightness match)
- *       An exposure meter drains; correct sensors refill it.
- *   3.6 Ending → Sektor 04 freigegeben
+ * DON'T BE FASTER. SEE SOONER.
  *
- * Difficulty target: ~6.0 (decay pressure = "fast thinking, not fast tapping").
- * Tuning knobs: STAGES[*].drain, REFILL, FAIL_FLOOR.
+ *   ACT 1  arrival · L-UX · one reaction choice
+ *   ACT 2  explore the failing sector (sig_01 hides here, optional)
+ *   ACT 3  BELICHTUNG 1/3 — BLENDEN I   · what changed, and in what order
+ *   ACT 4  BELICHTUNG 2/3 — BLENDEN II  · who follows whom
+ *   ACT 5  BELICHTUNG 3/3 — SPEKTRUM    · rebuild a colour from its channels
+ *   ACT 6  the observation network comes back
+ *   ACT 7  a quiet moment · L-UX stays behind
+ *
+ * The reserve is an observation budget, not a clock: it only moves when the
+ * player asks to look again or commits a wrong reading. Reading, thinking and
+ * inspecting cost nothing. Every stage's answer is generated at runtime.
  * ═══════════════════════════════════════════════════════════════
  */
 
 const Chapter3 = (() => {
   'use strict';
 
+  const CHAPTER_ID = 'ch3';
+  const HINT_MAX   = 3;      // one shared ladder per stage
+
+  // Observation budget
+  const RESERVE_MAX   = 100;
+  const COST_OBSERVE  = 18;  // every look after the first of a stage
+  const COST_WRONG    = 25;  // committing a reading that doesn't hold
+
+  const BEAT = 700;          // ms per observation beat — long enough to read
+
   // ═══════════════════════════════════════════════════════════════
   // STATE
   // ═══════════════════════════════════════════════════════════════
   const S = {
-    choice1Seen: { who:false, what:false, watch:false },
-    hotspots: { array:0, mirror:0, log:0, niche:0, r3mi:0, vtgm:0, lux:0 },
-    sigFound: false,
-    puzzleSolved: false,
-    hints: { r3mi:1, vtgm:1, lux:2, active:null }, // 4 total
+    seen:      {},           // "key:phase" -> examine count
+    talkSeen:  {},
+    metLux:    false,
+    sigFound:  false,
+    solved:    false,
+    lit:       false,        // observation network restored
+    logsRead:  0,
+    sawWestgang: false,      // enables the ending callback
+    hints:     { step: 0, active: null },
+    react:     {},
   };
 
   // ═══════════════════════════════════════════════════════════════
@@ -42,27 +56,48 @@ const Chapter3 = (() => {
     const ph = document.getElementById('scenePh');
     if (ph) ph.dataset.scene = key;
   }
-
   function clearHotspots() { document.getElementById('sceneHotspots').innerHTML = ''; }
+
+  function dialogueBusy() {
+    const c = document.querySelector('.dlg-container');
+    return !!(c && c.classList.contains('visible'));
+  }
+
+  /**
+   * While dialogue runs, a tap in the scene advances it instead of starting a
+   * new interaction — the dialogue box only covers the bottom strip and the
+   * engine keeps a single completion callback, so a new line started here
+   * would silently discard whatever the running dialogue was going to do.
+   */
+  function guarded(fn) {
+    return (...args) => {
+      if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch(_) {} return; }
+      return fn(...args);
+    };
+  }
 
   function addHotspot(cfg) {
     if (cfg.prop && window.GameEngine && GameEngine.props) {
-      const p = GameEngine.props.el(cfg.prop, { x:cfg.x, y:cfg.y, w:cfg.w, h:cfg.h, label:cfg.label, onClick:cfg.fn, cls:cfg.cls, anim:cfg.anim });
+      const p = GameEngine.props.el(cfg.prop, {
+        x:cfg.x, y:cfg.y, w:cfg.w, h:cfg.h,
+        label:cfg.label, aria:cfg.aria, onClick:guarded(cfg.fn), cls:cfg.cls, anim:cfg.anim,
+      });
       document.getElementById('sceneHotspots').appendChild(p);
       return p;
     }
     const el = document.createElement('button');
     el.className = 'hotspot' + (cfg.cls ? ' ' + cfg.cls : '');
-    el.setAttribute('aria-label', cfg.label || 'Interagieren');
+    el.setAttribute('aria-label', cfg.aria || cfg.label || 'Interagieren');
     el.style.cssText = `left:${cfg.x}%;top:${cfg.y}%;width:${cfg.w||7}%;height:${cfg.h||7}%;`;
     if (cfg.label) {
       const lbl = document.createElement('span');
       lbl.className = 'hotspot-label'; lbl.textContent = cfg.label; el.appendChild(lbl);
     }
-    el.addEventListener('click', cfg.fn);
+    el.addEventListener('click', guarded(cfg.fn));
     document.getElementById('sceneHotspots').appendChild(el);
     return el;
   }
+
   function addProp(cfg) {
     if (!(window.GameEngine && GameEngine.props)) return;
     document.getElementById('sceneHotspots').appendChild(
@@ -76,17 +111,37 @@ const Chapter3 = (() => {
     if (el) el.textContent = `REAKTIVIERUNG: ${pct}%`;
   }
   function playSound(src) { try { GameEngine.audio.sfx(src); } catch(_) {} }
+  function tone(o)        { try { GameEngine.audio.tone(o); } catch(_) {} }
+  function say(lines, after) { GameEngine.dialogue.load(lines, after); }
+
+  function bump(key) {
+    const k = key + ':' + (S.lit ? 'lit' : 'dim');
+    S.seen[k] = (S.seen[k] || 0) + 1;
+    return S.seen[k];
+  }
+  function pick(bucket, n) {
+    if (!bucket) return null;
+    const keys = Object.keys(bucket).map(Number).sort((a,b) => a-b);
+    if (!keys.length) return null;
+    return bucket[keys.filter(k => k <= n).pop() ?? keys[0]];
+  }
+  function randInt(lo, hi) { return lo + Math.floor(Math.random() * (hi - lo + 1)); }
+  function shuffle(a) {
+    const r = a.slice();
+    for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [r[i],r[j]] = [r[j],r[i]]; }
+    return r;
+  }
 
   // ═══════════════════════════════════════════════════════════════
-  // CHOICE SYSTEM
+  // CHOICE — one shot, never an exhaust-all list
   // ═══════════════════════════════════════════════════════════════
-  function showChoices(cfg) {
+  function askOnce(cfg) {
     const overlay = document.getElementById('choiceOverlay');
     const btns    = document.getElementById('choiceButtons');
     const prompt  = document.getElementById('choicePrompt');
     const hint    = document.getElementById('choiceHint');
 
-    prompt.textContent = cfg.prompt || 'WÄHLE EINE ANTWORT:';
+    prompt.textContent = cfg.prompt || 'DEINE REAKTION:';
     hint.textContent   = cfg.hint   || '';
     btns.innerHTML     = '';
 
@@ -97,11 +152,8 @@ const Chapter3 = (() => {
       btn.addEventListener('click', () => {
         c.seen = true;
         hideChoices();
-        if (c.fn) { c.fn(); return; }
-        GameEngine.dialogue.load(c.lines, () => {
-          if (cfg.onAfterChoice) cfg.onAfterChoice(c.key, cfg);
-        });
-      });
+        say(c.lines || [], () => { if (cfg.onPick) cfg.onPick(c.key); });
+      }, { once: true });
       btns.appendChild(btn);
     });
 
@@ -113,121 +165,117 @@ const Chapter3 = (() => {
     overlay.classList.remove('visible');
     setTimeout(() => overlay.classList.add('hidden'), 410);
   }
-  function allSeen(choices) { return choices.every(c => c.seen); }
 
   // ═══════════════════════════════════════════════════════════════
-  // SCENE 3.0 — TITLE CARD
+  // TITLE CARD
   // ═══════════════════════════════════════════════════════════════
   function showTitleCard() {
     const card = document.getElementById('titleCard');
     setTimeout(() => {
       card.classList.add('fading');
-      setTimeout(() => { card.style.display = 'none'; scene_3_1_arrival(); }, 700);
+      setTimeout(() => { card.style.display = 'none'; act1_arrival(); }, 700);
     }, 3000);
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // SCENE 3.1 — ARRIVAL
+  // ACT 1 — ARRIVAL
   // ═══════════════════════════════════════════════════════════════
-  function scene_3_1_arrival() {
-    setScene('obs-dim', 'cg/ch3_observation.png');
+  function act1_arrival() {
+    setScene('obs-dim');
     clearHotspots();
     showRobots(true);
     showLux(false);
+    try { GameEngine.music.play('ch3_ambient'); } catch(_) {}
 
-    GameEngine.dialogue.load([
+    say([
       { speaker:'SYSTEM', text:'SEKTOR 03 — BEOBACHTUNGSSEKTOR. Hier hat die Anlage einst alles aufgezeichnet. Jede Bewegung. Jedes Licht.' },
-      { speaker:'SYSTEM', text:'Jetzt ist es fast dunkel. Reihen toter Linsen starren ins Nichts. Nur ein paar Anzeigen flackern noch — schwach, unregelmäßig, als würden sie nach Strom schnappen.' },
-      { speaker:'R-3MI',  text:'„Oh. Hier. Ich mag diesen Sektor nicht."' },
-      { speaker:'V-TGM',  text:'"You say that about every sector."', subtitle:'Das sagst du über jeden Sektor.' },
-      { speaker:'R-3MI',  text:'„Und ich habe jedes Mal recht."' },
-      { speaker:'SYSTEM', text:'Irgendwo zwischen den Linsen huscht etwas. Ein warmer, oranger Lichtpunkt — links. Dann rechts. Dann oben. Zu schnell, um ihm zu folgen.' },
-      { speaker:'V-TGM',  text:'"There he is. If he holds still."', subtitle:'Da ist er. Wenn er stillhält.' },
-    ], () => scene_3_2_lux());
+      { speaker:'SYSTEM', text:'Jetzt ist es fast dunkel. Reihen toter Linsen starren ins Nichts. Eine Anzeige flackert, verliert das Signal, findet es wieder.' },
+      { speaker:'SYSTEM', text:'Irgendwo tickt Mechanik gegen sich selbst. Der Sektor hält sich gerade noch zusammen.' },
+      { speaker:'R-3MI',  text:'„Hier drin war früher mehr Licht."' },
+      { speaker:'V-TGM',  text:'"Considerably more."', subtitle:'Deutlich mehr.' },
+      { speaker:'R-3MI',  text:'„L-UX?"' },
+      { speaker:'SYSTEM', text:'Keine Antwort.' },
+      { speaker:'R-3MI',  text:'„L-UX!"' },
+    ], () => act1_lux());
   }
 
-  // ═══════════════════════════════════════════════════════════════
-  // SCENE 3.2 — L-UX APPEARS
-  // ═══════════════════════════════════════════════════════════════
-  function scene_3_2_lux() {
-    setScene('obs-flicker', 'cg/ch3_lux.png');
+  function act1_lux() {
+    setScene('obs-flicker');
     playSound('ch3_lux_zip.mp3');
 
-    GameEngine.dialogue.load([
-      { speaker:'L-UX',  text:'„Oh! Oh oh oh — Besuch? Echter Besuch, nicht nur Staub der so tut als ob — ich hab dich schon auf Sensor neun gesehen, neun! — wie heißt du, nein, sag\'s später, erst —"' },
-      { speaker:'L-UX',  text:'„— bist du echt? Du bist echt. Schön. Sehr schön. Hab ich erwähnt, dass ich dich gesehen hab? Ich hab dich gesehen."' },
-      { speaker:'V-TGM', text:'"Breathe, L-UX."', subtitle:'Atme, L-UX.' },
-      { speaker:'L-UX',  text:'„Ich atme nicht! Ich beobachte! Das ist besser! Atmen ist nur Beobachten mit Pausen, und Pausen sind — ehrlich gesagt — verschwendete Beobachtungszeit."' },
-      { speaker:'R-3MI', text:'„Er war schon immer so."' },
-      { speaker:'L-UX',  text:'„War ich? War ich! Ja! Konsistenz! Eine meiner siebzehn besten Eigenschaften, ich zähl sie dir auf, eins —"' },
-      { speaker:'V-TGM', text:'"Please do not."', subtitle:'Bitte nicht.' },
-      { speaker:'L-UX',  text:'„— okay, später. Ihr bleibt doch? Sagt, dass ihr bleibt. Es ist so dunkel hier geworden und ich seh immer weniger und ich HASSE weniger sehen."' },
-    ], () => scene_3_3_choice1());
+    say([
+      { speaker:'SYSTEM', text:'Von oben, ruhig, ohne Eile:' },
+      { speaker:'L-UX',   text:'„Hab dich gehört."' },
+      { speaker:'SYSTEM', text:'Auf einer erhöhten Plattform sitzt eine schmale Gestalt vor dem einzigen Array, das noch ein Bild liefert. Zwei bernsteinfarbene Punkte drehen sich langsam zu euch.' },
+      { speaker:'V-TGM',  text:'"Good to see you."', subtitle:'Schön, dich zu sehen.' },
+      { speaker:'L-UX',   text:'„Euch auch."' },
+      { speaker:'R-3MI',  text:'„Das war\'s? Wir haben uns seit—"' },
+      { speaker:'L-UX',   text:'„Ja."' },
+      { speaker:'SYSTEM', text:'R-3MI wartet auf mehr. Es kommt nicht mehr.' },
+      { speaker:'L-UX',   text:'„Dich kenn ich nicht."' },
+      { speaker:'R-3MI',  text:'„Neue Bekanntschaft."' },
+      { speaker:'SYSTEM', text:'L-UX sieht dich kurz an. Nicht lange. Es wirkt trotzdem gründlich.' },
+      { speaker:'L-UX',   text:'„Hm."' },
+      { speaker:'L-UX',   text:'„Du schaust viel."' },
+    ], () => act1_reaction());
   }
 
-  // ═══════════════════════════════════════════════════════════════
-  // SCENE 3.3 — CHOICE 1
-  // ═══════════════════════════════════════════════════════════════
-  const C1 = {
-    who: {
-      key:'who', label:'[Wer bist du?]', seen:false,
-      lines:[
-        { speaker:'L-UX',  text:'„L-UX! Beobachtungseinheit, Lichtmessung, Bewegungserfassung, Mustererkennung, und — das ist neu — Einsamkeitserkennung, hab ich selbst entwickelt, sehr stolz drauf."' },
-        { speaker:'R-3MI', text:'„Das letzte hat er sich ausgedacht."' },
-        { speaker:'L-UX',  text:'„Hab ich nicht! …hab ich vielleicht. Aber es FUNKTIONIERT. Ich erkenne Einsamkeit sofort. Zum Beispiel meine."' },
-        { speaker:'V-TGM', text:'"That was almost sad."', subtitle:'Das war fast traurig.' },
-        { speaker:'L-UX',  text:'„Nein! Fröhlich! Fröhlich-mit-Tiefe. Weiter!"' },
-      ],
-    },
-    what: {
-      key:'what', label:'[Was ist mit dem Licht passiert?]', seen:false,
-      lines:[
-        { speaker:'L-UX',  text:'„Es stirbt! Langsam, höflich, ein Sensor nach dem anderen — als würde jemand ganz leise das Zimmer verlassen, eine Lampe nach der anderen, und keiner sagt tschüss."' },
-        { speaker:'V-TGM', text:'"The array lost calibration."', subtitle:'Das Array hat die Kalibrierung verloren.' },
-        { speaker:'L-UX',  text:'„Genau das! Meine Blenden sind verstellt, mein Spektrum ist Matsch, und ich kann\'s nicht selbst richten, weil — weil ich das Ding bin, das gemessen wird, und man misst sich nicht selbst, das wäre — das wäre wie sich selbst kitzeln, geht nicht, hab\'s probiert."' },
-        { speaker:'R-3MI', text:'„Hat er wirklich probiert."' },
-      ],
-    },
-    watch: {
-      key:'watch', label:'[Was beobachtest du den ganzen Tag?]', seen:false,
-      lines:[
-        { speaker:'L-UX',  text:'„Alles! Den Staub, die Risse, das Tropfen in Sektor zwei, die Art wie R-3MI nervös wird bevor er\'s selber merkt —"' },
-        { speaker:'R-3MI', text:'„Das ist privat."' },
-        { speaker:'L-UX',  text:'„— und manchmal, ganz selten, ein Signal. Ein altes. Es kommt und geht. Ich hab\'s aufgeschrieben. Irgendwo. Du findest es vielleicht, wenn du gut hinschaust. Du schaust doch gut hin?"' },
-        { speaker:'V-TGM', text:'"A signal."', subtitle:'Ein Signal.' },
-        { speaker:'L-UX',  text:'„Pssst. Nicht so laut. Es hört vielleicht zu."' },
-      ],
-    },
-  };
+  const REACTIONS = [
+    { key:'you', label:'[ Du offenbar auch. ]', lines:[
+      { speaker:'L-UX',  text:'„Berufskrankheit."' },
+      { speaker:'R-3MI', text:'„Er meint das positiv."' },
+      { speaker:'L-UX',  text:'„Ja."' },
+    ] },
+    { key:'name', label:'[ Bist du L-UX? ]', lines:[
+      { speaker:'L-UX',  text:'„Ja."' },
+      { speaker:'SYSTEM',text:'Pause.' },
+      { speaker:'R-3MI', text:'„Er ist heute sehr gesprächig."' },
+    ] },
+    { key:'fire', label:'[ Brennt das hinter dir? ]', lines:[
+      { speaker:'SYSTEM',text:'L-UX schaut kurz nach hinten.' },
+      { speaker:'L-UX',  text:'„Ja."' },
+      { speaker:'SYSTEM',text:'Pause.' },
+      { speaker:'L-UX',  text:'„Schon seit vorhin."' },
+      { speaker:'R-3MI', text:'„UND DAS STÖRT DICH NICHT?!"' },
+      { speaker:'L-UX',  text:'„Doch."' },
+    ] },
+    { key:'what', label:'[ Was genau beobachtest du? ]', lines:[
+      { speaker:'L-UX',  text:'„Im Moment?"' },
+      { speaker:'SYSTEM',text:'Pause.' },
+      { speaker:'L-UX',  text:'„Euch."' },
+      { speaker:'R-3MI', text:'„Das war ein Scherz. Sag, dass das ein Scherz war."' },
+      { speaker:'L-UX',  text:'„Teilweise."' },
+    ] },
+  ];
 
-  function scene_3_3_choice1() {
-    showLux(true);
-    const choices = Object.values(C1);
-    showChoices({
-      prompt: 'ERSTE FRAGEN — ALLE AUSWÄHLEN:',
-      hint: choices.filter(c => !c.seen).length + ' AUSSTEHEND',
-      choices,
-      onAfterChoice: (key, cfg) => {
-        S.choice1Seen[key] = true;
-        if (allSeen(choices)) setTimeout(() => scene_3_4_explore(), 400);
-        else { cfg.hint = `NOCH ${choices.filter(c => !c.seen).length} AUSSTEHEND`; showChoices(cfg); }
-      },
+  function act1_reaction() {
+    askOnce({
+      prompt: 'DEINE REAKTION:',
+      hint:   'WÄHLE EINE.',
+      choices: REACTIONS,
+      onPick: () => act2_explore(),
     });
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // SCENE 3.4 — EXPLORATION
+  // ACT 2 — EXPLORE THE FAILING SECTOR
   // ═══════════════════════════════════════════════════════════════
-  function scene_3_4_explore() {
-    GameEngine.dialogue.load([
-      { speaker:'L-UX',  text:'„Schau dich um! Aber schnell — also nicht ZU schnell — also schnell genug — ach, schau einfach. Wenn du das Array findest: das ist das Wichtige. Der Rest bin nur ich, der quatscht."' },
-      { speaker:'SYSTEM', text:'SEKTOR 03 — KALIBRIERUNG ERFORDERLICH. BEOBACHTUNGSARRAY OFFLINE. WARNUNG: RESTLICHT SINKT.' },
-    ], () => loadExploreHotspots());
+  function act2_explore() {
+    S.metLux = true;
+    showLux(true);
+    setScene('obs-dim');
+
+    say([
+      { speaker:'SYSTEM', text:'SEKTOR 03 — BEOBACHTUNGSARRAY OFFLINE. KALIBRIERUNG ERFORDERLICH.' },
+      { speaker:'L-UX',   text:'„Schau dich um. Das Array kannst du danach immer noch anfassen."' },
+      { speaker:'R-3MI',  text:'„Er sagt das, als wäre das Array nicht das Einzige, was hier zählt."' },
+      { speaker:'L-UX',   text:'„Ist es nicht."' },
+    ], () => loadHotspots());
   }
 
-  function loadExploreHotspots() {
+  function loadHotspots() {
     clearHotspots();
-    // ── set dressing: an optics lab, instruments everywhere
+    // ── set dressing (room layout unchanged)
     addProp({ prop:'light',    x:43, y:2,  w:12, h:8  });
     addProp({ prop:'duct',     x:8,  y:0,  w:46, h:6, cls:'prop-far' });
     addProp({ prop:'monitors', x:26, y:22, w:17, h:15 });
@@ -236,147 +284,253 @@ const Chapter3 = (() => {
     addProp({ prop:'railing',  x:24, y:70, w:26, h:12 });
     addProp({ prop:'crate',    x:60, y:70, w:13, h:14 });
     addProp({ prop:'barrel',   x:6,  y:66, w:8,  h:15 });
-    addHotspot({ prop:'console', cls:'prop-guest', x:42, y:44, w:20, h:22, label:'BEOBACHTUNGSARRAY', fn:() => clickExplore('array') });
-    addHotspot({ prop:'panel', x:13, y:34, w:13, h:13, label:'JUSTIERSPIEGEL', fn:() => clickExplore('mirror') });
-    addHotspot({ prop:'terminal', anim:'prop-flicker', x:78, y:48, w:13, h:24, label:'MESSPROTOKOLL', fn:() => clickExplore('log') });
-    addHotspot({ prop:'light', anim:'prop-flicker', x:86, y:20, w:6, h:8, label:'FLACKERNDE LINSE', fn:() => clickExplore('niche') });
-  }
+    // ── interactive
+    addHotspot({ prop:'console', cls:'prop-guest', x:42, y:44, w:20, h:22,
+      label:'BEOBACHTUNGSARRAY', aria:'Beobachtungsarray untersuchen', fn:() => examine('array') });
+    addHotspot({ prop:'panel', x:13, y:34, w:13, h:13,
+      label:'JUSTIERSPIEGEL', aria:'Justierspiegel untersuchen', fn:() => examine('mirror') });
+    addHotspot({ prop:'terminal', anim:'prop-flicker', x:78, y:48, w:13, h:24,
+      label:'BEOBACHTUNGSPROTOKOLLE', aria:'Beobachtungsprotokolle lesen', fn:() => examine('log') });
+    addHotspot({ prop:'light', anim:'prop-flicker', x:86, y:20, w:6, h:8,
+      label:'FLACKERNDE LINSE', aria:'Flackernde Linse untersuchen', fn:() => examine('niche') });
+    addHotspot({ prop:'sign', x:6, y:40, w:12, h:11,
+      label:'SEKTORTAFEL', aria:'Sektortafel untersuchen', fn:() => examine('map') });
 
-  function clickExplore(key) {
-    S.hotspots[key]++;
-    const n = S.hotspots[key];
-
-    if (key === 'niche') {
-      if (!S.sigFound) {
-        S.sigFound = true;
-        GameEngine.dialogue.load([
-          { speaker:'SYSTEM', text:'Eine einzelne Linse flackert anders als die anderen — nicht zufällig. Ein Rhythmus. Dahinter, schwach eingebrannt, ein Textfragment.' },
-          { speaker:'L-UX',  text:'„Oh! OH! Du hast es gefunden! Das Signal! Ich hab\'s dir doch gesagt, ich hab\'s aufgeschrieben — naja, das Licht hat\'s aufgeschrieben — lies, lies!"' },
-        ], () => {
-          try { GameEngine.signals.find('sig_01'); } catch(_) {}
-          GameEngine.dialogue.load([
-            { speaker:'V-TGM', text:'"…not everything that helps wants to save."', subtitle:'…nicht alles, was hilft, will retten.' },
-            { speaker:'L-UX',  text:'„Gruselig, oder? Ich mag\'s. Also — ich mag\'s NICHT, aber ich mag, dass es da ist. Komplizierte Gefühle. Weiter!"' },
-          ]);
-        });
-      } else {
-        GameEngine.dialogue.load([{ speaker:'L-UX', text:'„Die flackernde Linse. Immer noch da. Immer noch gruselig. Konsistenz!"' }]);
-      }
-      return;
-    }
-
-    const lines = {
-      array: [
-        [
-          { speaker:'SYSTEM', text:'Das zentrale Beobachtungsarray. Eine Wand aus Blenden, Spiegeln und einem Spektralfilter. Alles dunkel, alles verstellt.' },
-          { speaker:'L-UX',  text:'„Das bin sozusagen ich. Mein Auge. Mein großes, schönes, völlig kaputtes Auge. Hilfst du mir? Bitte? Ich frag auch nur noch sieben Mal."' },
-          { speaker:'V-TGM', text:'"Recalibrate it before the light is gone."', subtitle:'Kalibriere es neu, bevor das Licht weg ist.' },
-        ],
-      ],
-      mirror: [
-        [
-          { speaker:'SYSTEM', text:'Ein Justierspiegel auf einer feinen Mechanik. Er zittert leicht, als wäre er nervös.' },
-          { speaker:'L-UX',  text:'„Der zittert seit Jahren. Ich glaub, er mag mich. Oder er hat Angst vor mir. Bei mir ist das oft dasselbe."' },
-        ],
-      ],
-      log: [
-        [
-          { speaker:'SYSTEM', text:'Ein Messprotokoll, halb gelöscht. Letzter lesbarer Eintrag: »BLENDEN DRIFTEN. SPEKTRUM INSTABIL. BEOBACHTER ÜBERKOMPENSIERT.«' },
-          { speaker:'R-3MI', text:'„Beobachter überkompensiert. Klingt nach jemandem."' },
-          { speaker:'L-UX',  text:'„Wer? WER? Sag\'s mir. Ich muss das beobachten."' },
-          { speaker:'V-TGM', text:'"It means you, L-UX."', subtitle:'Es bedeutet dich, L-UX.' },
-          { speaker:'L-UX',  text:'„…oh. …das ergibt eigentlich sehr viel Sinn."' },
-        ],
-      ],
-    };
-
-    const bucket = lines[key];
-    if (!bucket) return;
-    const line = bucket[Math.min(n - 1, bucket.length - 1)];
-
-    if (key === 'array' && n === 1 && !S.puzzleSolved) {
-      GameEngine.dialogue.load(line, () => openBelichtung());
-    } else {
-      GameEngine.dialogue.load(line);
+    // Once the network is back, the way on is an object in the room — this
+    // also guarantees the ending stays reachable no matter what.
+    if (S.solved) {
+      addHotspot({ prop:'door', x:66, y:24, w:12, h:34,
+        label:'SEKTOR 04', aria:'Sektor 04 betreten', fn:finishChapter });
     }
   }
 
-  // ─── Robot / L-UX icon clicks ─────────────────────────────────
-  function clickRobot(who) {
-    S.hotspots[who]++;
-    const n = S.hotspots[who];
-    const byWho = {
-      r3mi: [
-        [{ speaker:'R-3MI', text:'„Ich versuche, ihm nicht beim Reden zuzuhören. Es funktioniert nie."' }],
-        [{ speaker:'R-3MI', text:'„Weißt du, was schlimmer ist als ein dunkler Raum? Ein dunkler Raum, in dem dich etwas beobachtet und freundlich ist."' }],
-      ],
-      vtgm: [
-        [{ speaker:'V-TGM', text:'"L-UX sees everything and understands half of it. It is a specific kind of genius."', subtitle:'L-UX sieht alles und versteht die Hälfte. Eine spezielle Art von Genie.' }],
-        [{ speaker:'V-TGM', text:'"The light failing scares him more than he admits."', subtitle:'Dass das Licht stirbt, macht ihm mehr Angst, als er zugibt.' }],
-      ],
-      lux: [
-        [{ speaker:'L-UX', text:'„Ja? Ja! Brauchst du was? Ich kann gucken! Ich bin sehr gut im Gucken! Frag mich, was ich grad sehe — nein, frag nicht, es ist eine sehr lange Liste."' }],
-        [{ speaker:'L-UX', text:'„Wenn das Licht ganz weg ist… bin ich dann noch ein Beobachter? Oder nur jemand, der sich erinnert, dass er mal geguckt hat? — Egal! Fröhlich-mit-Tiefe! Weiter!"' }],
-      ],
-    };
-    const arr = byWho[who] || [];
-    const line = arr[Math.min(n - 1, arr.length - 1)];
-    if (line) GameEngine.dialogue.load(line);
-  }
+  // L-UX's logs: facility records written by someone who actually looked.
+  const LOGS = [
+    [
+      { speaker:'SYSTEM', text:'BEOBACHTUNGSPROTOKOLL 117' },
+      { speaker:'SYSTEM', text:'Das Licht im Westgang fällt jeden Abend zuerst an der dritten Lampe aus.' },
+      { speaker:'SYSTEM', text:'Danach folgt die zweite. Nie die vierte.' },
+      { speaker:'SYSTEM', text:'Kurz davor wird die Anlage still. Nicht ausgeschaltet. Wartend.' },
+      { speaker:'R-3MI',  text:'„Du schreibst immer noch so."' },
+      { speaker:'L-UX',   text:'„Wie?"' },
+      { speaker:'R-3MI',  text:'„Als hätte ein Wartungsprotokoll Gefühle."' },
+      { speaker:'L-UX',   text:'„Hat es nicht."' },
+      { speaker:'SYSTEM', text:'Pause.' },
+      { speaker:'L-UX',   text:'„Der Gang vielleicht."' },
+    ],
+    [
+      { speaker:'SYSTEM', text:'BEOBACHTUNGSPROTOKOLL 084' },
+      { speaker:'SYSTEM', text:'NORDFLÜGEL. SEKTOR OHNE NUMMER.' },
+      { speaker:'SYSTEM', text:'DREI TÜREN. KEINE LIESS SICH ÖFFNEN.' },
+      { speaker:'SYSTEM', text:'HINTER DER MITTLEREN: WASSER.' },
+      { speaker:'R-3MI',  text:'„Wasser?"' },
+      { speaker:'L-UX',   text:'„Viel."' },
+      { speaker:'V-TGM',  text:'"You never mentioned that."', subtitle:'Das hast du nie erwähnt.' },
+      { speaker:'L-UX',   text:'„Steht doch da."' },
+    ],
+    [
+      { speaker:'SYSTEM', text:'BEOBACHTUNGSPROTOKOLL 203' },
+      { speaker:'SYSTEM', text:'ÖSTLICHER VERBINDUNGSGANG. ZWEI LEUCHTEN AUSSER TAKT.' },
+      { speaker:'SYSTEM', text:'DIE LINKE FOLGT DER RECHTEN. IMMER MIT EINER SEKUNDE VERSPÄTUNG.' },
+      { speaker:'SYSTEM', text:'NIEMAND HAT SIE SO GEBAUT.' },
+      { speaker:'L-UX',   text:'„Das war der erste Hinweis, dass hier etwas nicht mehr stimmt."' },
+      { speaker:'L-UX',   text:'„Vier Jahre bevor es jemand bemerkt hat."' },
+    ],
+    [
+      { speaker:'SYSTEM', text:'BEOBACHTUNGSPROTOKOLL 041' },
+      { speaker:'SYSTEM', text:'WESTLICHER VERSORGUNGSGANG.' },
+      { speaker:'SYSTEM', text:'HÄSSLICH. ZWECKMÄSSIG. ZU LAUT.' },
+      { speaker:'SYSTEM', text:'ABER UM 17 UHR STEHT DAS LICHT GENAU RICHTIG.' },
+      { speaker:'L-UX',   text:'„Das ist kein Protokoll mehr, oder?"' },
+      { speaker:'V-TGM',  text:'"It stopped being one around entry sixty."', subtitle:'Das hat es ungefähr ab Eintrag sechzig aufgehört.' },
+    ],
+  ];
 
-  // ═══════════════════════════════════════════════════════════════
-  // BELICHTUNG — multi-stage puzzle with draining exposure meter
-  // ═══════════════════════════════════════════════════════════════
-  const TICK       = 100;   // ms
-  const REFILL     = 16;    // meter gained per newly-green sensor
-  const FAIL_FLOOR = 55;    // meter after a blackout reset
-
-  const STAGES = {
-    1: {
-      name: 'BLENDEN I', min: 1, max: 6, drain: 0.35,
-      dials: ['BLENDE A', 'BLENDE B', 'BLENDE C'],
-      rules: [
-        { text: 'A + B = 8',              test: d => d[0] + d[1] === 8 },
-        { text: 'B = C + 1',              test: d => d[1] === d[2] + 1 },
-        { text: 'A ist GERADE',           test: d => d[0] % 2 === 0 },
+  const SCENE_LINES = {
+    array: {
+      1: [
+        { speaker:'SYSTEM', text:'Das zentrale Beobachtungsarray. Eine Wand aus Blenden, Spiegeln und einem Spektralfilter. Alles dunkel, alles verstellt.' },
+        { speaker:'L-UX',   text:'„Das Array misst nicht mehr richtig. Es zeigt noch was — nur nicht das, was da ist."' },
+        { speaker:'V-TGM',  text:'"It needs recalibrating from outside."', subtitle:'Es muss von außen neu kalibriert werden.' },
+        { speaker:'L-UX',   text:'„Von mir aus geht das nicht. Ich bin Teil der Messung."' },
       ],
     },
-    2: {
-      name: 'BLENDEN II', min: 1, max: 6, drain: 0.55,
-      dials: ['BLENDE A', 'BLENDE B', 'BLENDE C', 'BLENDE D'],
-      rules: [
-        { text: 'ALLE VIER VERSCHIEDEN',  test: d => new Set(d).size === 4 },
-        { text: 'A < B < C < D',          test: d => d[0] < d[1] && d[1] < d[2] && d[2] < d[3] },
-        { text: 'A + D = 7',              test: d => d[0] + d[3] === 7 },
-        { text: 'B + C = 7',              test: d => d[1] + d[2] === 7 },
+    mirror: {
+      1: [
+        { speaker:'SYSTEM', text:'Ein Justierspiegel auf feiner Mechanik. Er zittert leicht.' },
+        { speaker:'L-UX',   text:'„Kaputt."' },
+      ],
+      2: [
+        { speaker:'L-UX',   text:'„Immer noch."' },
+      ],
+      4: [
+        { speaker:'L-UX',   text:'„Du hoffst, dass sich was ändert."' },
+        { speaker:'SYSTEM', text:'Pause.' },
+        { speaker:'L-UX',   text:'„Versteh ich."' },
       ],
     },
-    3: {
-      name: 'SPEKTRUM', min: 0, max: 5, drain: 0.7,
-      channels: ['ROT', 'GRÜN', 'BLAU'],
-      target: [4, 2, 0],
-      clues: [
-        'ROT: gerade und größer als drei.',
-        'GRÜN: genau die Hälfte von Rot.',
-        'BLAU: aus.',
+    map: {
+      1: [
+        { speaker:'SYSTEM', text:'Eine Sektortafel. Weit mehr Einträge, als es begehbare Sektoren gibt. Viele sind durchgestrichen. Einige haben nie eine Nummer bekommen.' },
+        { speaker:'R-3MI',  text:'„Ich kenne die Hälfte davon nicht."' },
+        { speaker:'L-UX',   text:'„Ich schon."' },
+        { speaker:'V-TGM',  text:'"More sectors than either of us."', subtitle:'Mehr Sektoren als wir beide.' },
+      ],
+      2: [
+        { speaker:'SYSTEM', text:'Zwischen den Einträgen kleben handschriftliche Korrekturen. Dieselbe Handschrift wie in den Protokollen.' },
       ],
     },
   };
 
+  function examine(key) {
+    if (key === 'array')  return openBelichtung();
+    if (key === 'niche')  return examineNiche();
+    if (key === 'log')    return readLog();
+
+    const n = bump(key);
+    const lines = pick(SCENE_LINES[key], n);
+    if (lines) say(lines);
+  }
+
+  function readLog() {
+    const n = bump('log');
+    if (n === 1) {
+      say([
+        { speaker:'SYSTEM', text:'Ein Terminal voller Beobachtungsprotokolle. Hunderte. Alle von derselben Einheit.' },
+        ...LOGS[0],
+      ]);
+      S.logsRead = 1;
+      return;
+    }
+    const idx = Math.min(n - 1, LOGS.length - 1);
+    S.logsRead = Math.max(S.logsRead, idx + 1);
+    if (idx === 3) S.sawWestgang = true;   // enables the ending callback
+    say(LOGS[idx]);
+  }
+
+  function examineNiche() {
+    const n = bump('niche');
+    if (S.sigFound) {
+      say([{ speaker:'L-UX', text:'„Die flackert immer noch anders als die anderen."' }]);
+      return;
+    }
+    // Latch the discovery before the dialogue so a lost callback can't undo it.
+    S.sigFound = true;
+    try { GameEngine.signals.find('sig_01'); } catch(_) {}
+    say([
+      { speaker:'SYSTEM', text:'Eine einzelne Linse flackert anders als die anderen. Nicht zufällig. Ein Rhythmus.' },
+      { speaker:'SYSTEM', text:'Dahinter, schwach eingebrannt, ein Textfragment.' },
+      { speaker:'V-TGM',  text:'"…not everything that helps wants to save."', subtitle:'…nicht alles, was hilft, will retten.' },
+      { speaker:'SYSTEM', text:'Kurze Stille.' },
+      { speaker:'L-UX',   text:'„Das ist neu."' },
+      { speaker:'R-3MI',  text:'„Neu?"' },
+      { speaker:'L-UX',   text:'„Für dich."' },
+    ]);
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // OPTIONAL CONVERSATIONS
+  // ═══════════════════════════════════════════════════════════════
+  const TALK = {
+    lux: [
+      { key:'whole', label:'[ Kennst du die ganze Anlage? ]', lines:[
+        { speaker:'L-UX',  text:'„Nicht die ganze."' },
+        { speaker:'R-3MI', text:'„Er war fast überall."' },
+        { speaker:'L-UX',  text:'„Fast."' },
+        { speaker:'V-TGM', text:'"More sectors than either of us."', subtitle:'Mehr Sektoren als wir beide.' },
+      ] },
+      { key:'fav', label:'[ Was war dein Lieblingsort? ]', lines:[
+        { speaker:'SYSTEM',text:'L-UX überlegt kurz.' },
+        { speaker:'L-UX',  text:'„Westlicher Versorgungsgang."' },
+        { speaker:'R-3MI', text:'„Der? Der ist hässlich."' },
+        { speaker:'L-UX',  text:'„Gutes Licht."' },
+      ], onPick: () => { S.sawWestgang = true; } },
+      { key:'stay', label:'[ Bleibst du immer hier? ]', lines:[
+        { speaker:'L-UX',  text:'„Jetzt schon."' },
+        { speaker:'SYSTEM',text:'Pause.' },
+        { speaker:'R-3MI', text:'„Früher nicht."' },
+      ] },
+      { key:'writing', label:'[ Warum schreibst du so? ]', lines:[
+        { speaker:'L-UX',  text:'„Wie schreib ich denn?"' },
+        { speaker:'V-TGM', text:'"Like the corridors owe you something."', subtitle:'Als schuldeten dir die Gänge etwas.' },
+        { speaker:'L-UX',  text:'„Tun sie."' },
+      ] },
+    ],
+    r3mi: [
+      { key:'him', label:'[ Wie ist er so? ]', lines:[
+        { speaker:'R-3MI', text:'„Anstrengend ruhig. Man redet, und er wartet einfach, bis man fertig ist."' },
+        { speaker:'R-3MI', text:'„Manchmal antwortet er dann. Manchmal nicht."' },
+      ], again:[
+        { speaker:'R-3MI', text:'„Wenn das Licht ausgeht, sterben wir dann?"' },
+        { speaker:'L-UX',  text:'„Nein."' },
+        { speaker:'R-3MI', text:'„Oh, gut."' },
+        { speaker:'L-UX',  text:'„Das andere System bringt uns um."' },
+        { speaker:'R-3MI', text:'„L-UX."' },
+      ] },
+    ],
+    vtgm: [
+      { key:'read', label:'[ Was hältst du von ihm? ]', lines:[
+        { speaker:'V-TGM', text:'"He noticed this sector was failing years before it did."', subtitle:'Er hat Jahre vorher bemerkt, dass dieser Sektor ausfällt.' },
+        { speaker:'V-TGM', text:'"Nobody read the reports."', subtitle:'Niemand hat die Berichte gelesen.' },
+      ] },
+    ],
+  };
+
+  function clickRobot(who) {
+    if (who === 'lux' && !S.metLux) return;
+    if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch(_) {} return; }
+
+    const topics = TALK[who] || [];
+    const choices = topics.map(t => {
+      const seen = !!S.talkSeen[who + ':' + t.key];
+      return { key:t.key, label:t.label, seen, lines:(seen && t.again) ? t.again : t.lines };
+    });
+    choices.push({ key:'__leave', label:'[ Nichts. Weiter. ]', seen:false, lines: [] });
+
+    const title = who === 'lux' ? 'L-UX ANSPRECHEN:' : who === 'r3mi' ? 'R-3MI ANSPRECHEN:' : 'V-TGM ANSPRECHEN:';
+    askOnce({
+      prompt: title, hint: 'OPTIONAL.', choices,
+      onPick: (key) => {
+        if (key === '__leave') return;
+        S.talkSeen[who + ':' + key] = true;
+        const t = topics.find(x => x.key === key);
+        if (t && t.onPick) t.onPick();
+      },
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // BELICHTUNG
+  // Three stages, one grammar: watch a short event, work out what it
+  // told you, then set the array. Looking again costs reserve; looking
+  // carefully costs nothing.
+  // ═══════════════════════════════════════════════════════════════
   let bel = null;
-  let belTimer = null;
+  let belTimers = [];
+
+  function clearBelTimers() {
+    belTimers.forEach(clearTimeout);
+    belTimers = [];
+    if (bel) bel.busy = false;          // never leave input wedged
+  }
+  function later(fn, ms) { belTimers.push(setTimeout(fn, ms)); }
 
   function openBelichtung() {
-    bel = { stage: 1, meter: 100, dials: [], prevGreen: [], transitioning: false };
-    S.hints.active = 'p1';
-    S.hints.r3mi = 1; S.hints.vtgm = 1; S.hints.lux = 2;
-    updateHintBar();
+    if (S.solved) { finishChapter(); return; }
+    if (bel) {                           // already open — just re-focus it
+      document.getElementById('belModal').classList.remove('hidden');
+      return;
+    }
+    bel = { stage: 0, reserve: RESERVE_MAX, busy: false, observedOnce: false, answer: null, event: null, wrong: 0 };
 
-    GameEngine.dialogue.load([
-      { speaker:'SYSTEM', text:'BELICHTUNGS-KALIBRIERUNG STARTEN?' },
-      { speaker:'L-UX',  text:'„Ja! Ja-ja-ja! Aber schnell — der Belichtungsmesser fällt, während du nachdenkst. Nicht hetzen! Aber auch nicht trödeln! Irgendwo dazwischen! Du schaffst das!"' },
-      { speaker:'V-TGM', text:'"Each correct sensor refills the meter. Think clearly, decide fast."', subtitle:'Jeder richtige Sensor füllt den Messer wieder auf. Denk klar, entscheide schnell.' },
-      { speaker:'R-3MI', text:'„Übersetzung: Panik hilft nicht. Sagt der Roboter, der immer in Panik ist."' },
+    say([
+      { speaker:'L-UX',  text:'„Das Array macht kurze Aufnahmen. Danach ist wieder alles neutral."' },
+      { speaker:'L-UX',  text:'„Nicht merken, was geleuchtet hat."' },
+      { speaker:'SYSTEM',text:'Pause.' },
+      { speaker:'L-UX',  text:'„Merken, was sich verändert hat."' },
+      { speaker:'R-3MI', text:'„Und wenn ich zu langsam bin?"' },
+      { speaker:'L-UX',  text:'„Dann bist du langsam. Das kostet nichts."' },
+      { speaker:'L-UX',  text:'„Nochmal hinschauen kostet."' },
     ], () => {
       document.getElementById('belModal').classList.remove('hidden');
       document.getElementById('hintBar').classList.remove('hidden');
@@ -385,298 +539,590 @@ const Chapter3 = (() => {
   }
 
   function startStage(stage) {
-    bel.stage = stage;
-    bel.meter = 100;
-    bel.transitioning = false;
-    const cfg = STAGES[stage];
+    clearBelTimers();
+    bel.stage        = stage;
+    bel.reserve      = RESERVE_MAX;
+    bel.busy         = false;
+    bel.observedOnce = false;
+    bel.wrong        = 0;
+    bel.event        = buildEvent(stage);
+    bel.answer       = blankAnswer(stage);
+
+    S.hints.active = 'stage' + stage;
+    S.hints.step   = 0;
+    updateHintBar();
+
+    document.getElementById('belStage').textContent =
+      `STUFE ${stage} / 3 — ${['', 'BLENDEN I', 'BLENDEN II', 'SPEKTRUM'][stage]}`;
+    document.getElementById('belTask').textContent = TASK_TEXT[stage];
+
+    paintReserve();
+    renderScope(null);
+    renderAnswer();
+    setBelStatus('BEREIT — [ BEOBACHTEN ] STARTET DIE AUFNAHME.', '');
+    setObserveLabel();
+  }
+
+  const TASK_TEXT = {
+    1: 'In welcher Reihenfolge haben die Blenden reagiert?',
+    2: 'Wie verhalten sich B, C und D zu A?',
+    3: 'Aus welchen Kanalanteilen besteht das Zielspektrum?',
+  };
+
+  // ─── The observable event for each stage (generated per attempt) ───
+  function buildEvent(stage) {
+    if (stage === 1) {
+      // three shutters flare one after another, in a random order
+      return { order: shuffle([0, 1, 2]) };          // order[i] = shutter index flaring at beat i
+    }
+    if (stage === 2) {
+      // A drives; the other three each take one role. The event is only
+      // usable if the three roles are actually TELLABLE APART from it, so
+      // reroll until every pair differs on at least two beats — otherwise a
+      // careful observer could still be left guessing.
+      const BEATS = 5, MIN_DIFF = 2;
+      let drive, noise, tries = 0;
+      do {
+        drive = Array.from({ length: BEATS }, () => randInt(1, 5));
+        noise = Array.from({ length: BEATS }, () => randInt(1, 5));
+        tries++;
+      } while (tries < 60 && !readable(drive, noise, MIN_DIFF));
+      return { drive, roles: shuffle(['follow', 'against', 'free']), noise };
+    }
+    // stage 3 — a target colour, revealed one channel at a time
+    return { target: [randInt(1, 5), randInt(0, 5), randInt(0, 5)] };
+  }
+
+  /**
+   * Can a viewer separate "follows A", "goes against A" and "ignores A"?
+   * Each pair of the three resulting traces must differ on at least `min`
+   * beats; otherwise the recording is ambiguous and gets rerolled.
+   */
+  function readable(drive, noise, min) {
+    const follow  = drive;
+    const against = drive.map(v => 6 - v);
+    const diff = (x, y) => x.reduce((n, v, i) => n + (v !== y[i] ? 1 : 0), 0);
+    return diff(follow, against) >= min
+        && diff(noise,  follow)  >= min
+        && diff(noise,  against) >= min;
+  }
+
+  function blankAnswer(stage) {
+    if (stage === 1) return [0, 0, 0];                 // 0 = not set, else 1..3
+    if (stage === 2) return [null, null, null];        // role per B, C, D
+    return [0, 0, 0];                                  // RGB 0..5
+  }
+
+  // ─── Observation playback ───────────────────────────────────────
+  function observe() {
+    if (!bel || bel.busy || S.solved) return;
+
+    if (bel.observedOnce) {
+      if (bel.reserve - COST_OBSERVE < 0) { overexpose(); return; }
+      bel.reserve -= COST_OBSERVE;
+      paintReserve();
+      reactObserve();
+    }
+    bel.observedOnce = true;
+
+    bel.busy = true;
+    setObserveLabel();
+    setBelStatus('AUFNAHME LÄUFT…', '');
+    playSound('ch3_observe.mp3');
+
+    const beats = buildBeats(bel.stage, bel.event);
+    beats.forEach((frame, i) => later(() => {
+      renderScope(frame);
+      tone({ freq: 300 + i * 40, type:'sine', dur: 0.09, vol: 0.07 });
+    }, i * BEAT));
+
+    later(() => {
+      renderScope(null);                       // back to neutral
+      bel.busy = false;
+      setObserveLabel();
+      setBelStatus('AUFNAHME BEENDET. STELL DAS ARRAY EIN.', '');
+    }, beats.length * BEAT + 260);
+  }
+
+  /** Turn an event into the frames the scope shows, one per beat. */
+  function buildBeats(stage, ev) {
+    if (stage === 1) {
+      // one shutter at a time, plus a blank beat between flares
+      const frames = [];
+      ev.order.forEach(idx => {
+        frames.push({ kind:'shutters', levels:[0,0,0].map((_, i) => i === idx ? 5 : 1), flare: idx });
+        frames.push({ kind:'shutters', levels:[1,1,1], flare: -1 });
+      });
+      return frames;
+    }
+    if (stage === 2) {
+      return ev.drive.map((a, beat) => {
+        const vals = [a];
+        ev.roles.forEach((role, k) => {
+          vals.push(role === 'follow' ? a : role === 'against' ? (6 - a) : ev.noise[beat]);
+        });
+        return { kind:'bars', levels: vals, beat: beat + 1, total: ev.drive.length };
+      });
+    }
+    // stage 3 — isolate each channel, then show the mixed target under a
+    // varying exposure so the eye alone can't be trusted
+    const t = ev.target;
+    return [
+      { kind:'channel', channel:0, level:t[0] },
+      { kind:'channel', channel:1, level:t[1] },
+      { kind:'channel', channel:2, level:t[2] },
+      { kind:'mix', rgb:t, exposure: 0.55 + Math.random() * 0.4 },
+    ];
+  }
+
+  // ─── Scope rendering ────────────────────────────────────────────
+  function renderScope(frame) {
+    const scope = document.getElementById('belScope');
+    if (!scope) return;
+
+    if (!frame) {
+      scope.innerHTML = `<div class="bel-scope-idle sys-text">ARRAY NEUTRAL</div>`;
+      return;
+    }
+
+    if (frame.kind === 'shutters') {
+      scope.innerHTML = `<div class="bel-shutters">` + frame.levels.map((lv, i) =>
+        `<div class="bel-shutter ${i === frame.flare ? 'flare' : ''}">
+           <div class="bel-shutter-glow" style="opacity:${0.12 + lv * 0.17}"></div>
+           <span class="bel-shutter-name sys-text">${'ABC'[i]}</span>
+         </div>`).join('') + `</div>`;
+      return;
+    }
+
+    if (frame.kind === 'bars') {
+      scope.innerHTML =
+        `<div class="bel-beat sys-text">TAKT ${frame.beat} / ${frame.total}</div>` +
+        `<div class="bel-bars">` + frame.levels.map((lv, i) =>
+        `<div class="bel-bar-wrap">
+           <div class="bel-bar">${segs(lv, 5)}</div>
+           <span class="bel-bar-name sys-text">${'ABCD'[i]}</span>
+         </div>`).join('') + `</div>`;
+      return;
+    }
+
+    if (frame.kind === 'channel') {
+      const names = ['ROT', 'GRÜN', 'BLAU'];
+      const cols  = ['#e0483c', '#3ec27a', '#3a8fd4'];
+      scope.innerHTML =
+        `<div class="bel-beat sys-text">KANAL ISOLIERT</div>` +
+        `<div class="bel-chan" style="--chan:${cols[frame.channel]}">
+           <span class="bel-chan-name sys-text">${names[frame.channel]}</span>
+           <div class="bel-bar wide">${segs(frame.level, 5)}</div>
+           <span class="bel-chan-val sys-text">${frame.level} / 5</span>
+         </div>`;
+      return;
+    }
+
+    // mixed target, deliberately shown at an unreliable exposure
+    const e = frame.exposure;
+    const c = frame.rgb.map(v => Math.round(v * 51 * e));
+    scope.innerHTML =
+      `<div class="bel-beat sys-text">MISCHBILD — BELICHTUNG ${Math.round(e * 100)}%</div>` +
+      `<div class="bel-mix" style="background:rgb(${c[0]},${c[1]},${c[2]})"></div>`;
+  }
+
+  function segs(n, total) {
+    let out = '';
+    for (let i = 0; i < total; i++) out += `<span class="bel-seg ${i < n ? 'on' : ''}"></span>`;
+    return out;
+  }
+
+  // ─── Answer controls ────────────────────────────────────────────
+  function renderAnswer() {
+    const host = document.getElementById('belAnswer');
+    if (!host || !bel) return;
+
+    if (bel.stage === 1) {
+      host.innerHTML = `<div class="bel-dials">` + [0,1,2].map(i =>
+        `<div class="bel-dial">
+           <label class="sys-text">BLENDE ${'ABC'[i]}</label>
+           <div class="control-row">
+             <button class="control-btn" data-a="${i}" data-d="-1" aria-label="Blende ${'ABC'[i]} zurück">−</button>
+             <span class="bel-dial-val">${bel.answer[i] || '–'}</span>
+             <button class="control-btn" data-a="${i}" data-d="1" aria-label="Blende ${'ABC'[i]} vor">+</button>
+           </div>
+           <span class="bel-dial-sub sys-text">Position</span>
+         </div>`).join('') + `</div>`;
+      host.querySelectorAll('.control-btn').forEach(b =>
+        b.addEventListener('click', () => nudge(+b.dataset.a, +b.dataset.d, 0, 3)));
+      return;
+    }
+
+    if (bel.stage === 2) {
+      const roles = [['follow','FOLGT A'], ['against','GEGEN A'], ['free','UNABHÄNGIG']];
+      host.innerHTML = `<div class="bel-roles">` + [0,1,2].map(i =>
+        `<div class="bel-role-row">
+           <span class="bel-role-name sys-text">${'BCD'[i]}</span>
+           <div class="bel-role-opts">` + roles.map(([val, label]) =>
+             `<button class="bel-role-btn ${bel.answer[i] === val ? 'on' : ''}"
+                      data-i="${i}" data-v="${val}"
+                      aria-label="${'BCD'[i]} ${label}"
+                      aria-pressed="${bel.answer[i] === val}">${label}</button>`).join('') +
+        `   </div>
+         </div>`).join('') + `</div>`;
+      host.querySelectorAll('.bel-role-btn').forEach(b =>
+        b.addEventListener('click', () => {
+          if (!bel || bel.busy || S.solved) return;
+          bel.answer[+b.dataset.i] = b.dataset.v;
+          renderAnswer();
+        }));
+      return;
+    }
+
+    const names = ['ROT', 'GRÜN', 'BLAU'];
+    const cur = `rgb(${bel.answer[0]*51},${bel.answer[1]*51},${bel.answer[2]*51})`;
+    host.innerHTML =
+      `<div class="bel-swatches">
+         <div class="bel-swatch-wrap"><span class="sys-text">DEINE MISCHUNG</span>
+           <div class="bel-sw" style="background:${cur}"></div></div>
+       </div>
+       <div class="bel-dials">` + [0,1,2].map(i =>
+        `<div class="bel-dial">
+           <label class="sys-text">${names[i]}</label>
+           <div class="control-row">
+             <button class="control-btn" data-a="${i}" data-d="-1" aria-label="${names[i]} verringern">−</button>
+             <span class="bel-dial-val">${bel.answer[i]}</span>
+             <button class="control-btn" data-a="${i}" data-d="1" aria-label="${names[i]} erhöhen">+</button>
+           </div>
+           <div class="bel-bar mini">${segs(bel.answer[i], 5)}</div>
+         </div>`).join('') + `</div>`;
+    host.querySelectorAll('.control-btn').forEach(b =>
+      b.addEventListener('click', () => nudge(+b.dataset.a, +b.dataset.d, 0, 5)));
+  }
+
+  function nudge(i, dir, lo, hi) {
+    if (!bel || bel.busy || S.solved) return;
+    bel.answer[i] = Math.max(lo, Math.min(hi, (bel.answer[i] || 0) + dir));
+    renderAnswer();
+  }
+
+  // ─── Commit ─────────────────────────────────────────────────────
+  function submit() {
+    if (!bel || bel.busy || S.solved) return;
+    if (!bel.observedOnce) {
+      setBelStatus('NOCH KEINE AUFNAHME. ZUERST BEOBACHTEN.', 'warn');
+      return;
+    }
+
+    const { ok, why } = checkAnswer();
+    if (ok) { stageSolved(); return; }
+
+    if (bel.reserve - COST_WRONG < 0) { overexpose(); return; }
+    bel.reserve -= COST_WRONG;
+    bel.wrong++;
+    paintReserve();
+    setBelStatus(why || 'EINSTELLUNG PASST NICHT ZUR AUFNAHME.', 'error');
+    playSound('ch3_bad.mp3');
+    tone({ freq: 180, type:'sawtooth', dur: 0.2, vol: 0.12, glideTo: 110 });
+    reactWrong();
+  }
+
+  function checkAnswer() {
+    const a = bel.answer, ev = bel.event;
+
+    if (bel.stage === 1) {
+      if (a.some(v => !v)) return { ok:false, why:'ALLE DREI BLENDEN BRAUCHEN EINE POSITION.' };
+      if (new Set(a).size !== 3) return { ok:false, why:'JEDE POSITION NUR EINMAL.' };
+      // answer[i] is the position (1-based) the player assigns to shutter i
+      const ok = ev.order.every((shutterIdx, beat) => a[shutterIdx] === beat + 1);
+      return { ok };
+    }
+
+    if (bel.stage === 2) {
+      if (a.some(v => !v)) return { ok:false, why:'JEDE BLENDE BRAUCHT EINE ZUORDNUNG.' };
+      return { ok: ev.roles.every((role, i) => a[i] === role) };
+    }
+
+    return { ok: ev.target.every((v, i) => a[i] === v) };
+  }
+
+  function stageSolved() {
+    clearBelTimers();
+    bel.busy = true;
+    playSound('ch3_stage_ok.mp3');
+    tone({ freq: 520, type:'triangle', dur: 0.45, vol: 0.12, glideTo: 820 });
+    setBelStatus('AUFNAHME BESTÄTIGT.', 'ok');
+
+    const first = bel.wrong === 0;
+    const stage = bel.stage;
 
     if (stage < 3) {
-      // Logic-dial stage — start scrambled
-      bel.dials = cfg.dials.map(() => randInt(cfg.min, cfg.max));
-      bel.prevGreen = cfg.rules.map(() => false);
-      document.getElementById('belSpectrum').classList.add('hidden');
-      document.getElementById('belDials').classList.remove('hidden');
-    } else {
-      // Spectrum stage
-      bel.dials = cfg.channels.map(() => randInt(cfg.min, cfg.max));
-      bel.prevGreen = cfg.channels.map(() => false);
-      document.getElementById('belDials').classList.add('hidden');
-      document.getElementById('belSpectrum').classList.remove('hidden');
-    }
-
-    document.getElementById('belStage').textContent = `STUFE ${stage} / 3 — ${cfg.name}`;
-    setBelStatus('KALIBRIEREN…', '');
-    renderBel();
-    belStartTimer();
-  }
-
-  function randInt(lo, hi) { return lo + Math.floor(Math.random() * (hi - lo + 1)); }
-
-  // ─── Timer ────────────────────────────────────────────────────
-  function belStartTimer() {
-    belStopTimer();
-    belTimer = setInterval(() => {
-      if (!bel || bel.transitioning || S.puzzleSolved) return;
-      bel.meter -= STAGES[bel.stage].drain;
-      if (bel.meter <= 0) { belBlackout(); return; }
-      paintMeter();
-    }, TICK);
-  }
-  function belStopTimer() { if (belTimer) { clearInterval(belTimer); belTimer = null; } }
-
-  function belBlackout() {
-    bel.meter = FAIL_FLOOR;
-    const cfg = STAGES[bel.stage];
-    bel.dials = (cfg.dials || cfg.channels).map(() => randInt(cfg.min, cfg.max));
-    bel.prevGreen = bel.prevGreen.map(() => false);
-    setBelStatus('BELICHTUNG VERLOREN — ARRAY NEU KALIBRIEREN.', 'error');
-    playSound('ch3_blackout.mp3');
-    renderBel();
-  }
-
-  // The puzzle modal (z-index 200) sits above the dialogue box (z-index 50),
-  // so any dialogue shown mid-puzzle must hide the modal first, then reopen it.
-  function withModalDialogue(lines, after) {
-    // Dialogue renders above puzzle modals (z 210 > 200), so never hide the
-    // puzzle — that made it disappear mid-solve.
-    GameEngine.dialogue.load(lines, after);
-  }
-
-  // ─── Rendering ────────────────────────────────────────────────
-  function paintMeter() {
-    const pct = Math.max(0, Math.min(100, bel.meter));
-    const fill = document.getElementById('belMeter');
-    fill.style.width = pct + '%';
-    fill.classList.toggle('low', pct < 30);
-    document.getElementById('belMeterPct').textContent = Math.round(pct) + '%';
-  }
-
-  function greenStates() {
-    const cfg = STAGES[bel.stage];
-    if (bel.stage < 3) return cfg.rules.map(r => r.test(bel.dials));
-    return cfg.channels.map((_, i) => bel.dials[i] === cfg.target[i]);
-  }
-
-  function renderBel() {
-    paintMeter();
-    const cfg    = STAGES[bel.stage];
-    const greens = greenStates();
-
-    if (bel.stage < 3) {
-      // Rules list
-      document.getElementById('belRules').innerHTML = cfg.rules.map((r, i) =>
-        `<div class="bel-rule ${greens[i] ? 'ok' : ''}"><span class="bel-led"></span>${r.text}</div>`
-      ).join('');
-      // Dials
-      document.getElementById('belDials').innerHTML = cfg.dials.map((name, i) =>
-        `<div class="bel-dial">
-           <label class="sys-text">${name}</label>
-           <div class="control-row">
-             <button class="control-btn" onclick="Chapter3.belDial(${i},-1)">−</button>
-             <span class="bel-dial-val">${bel.dials[i]}</span>
-             <button class="control-btn" onclick="Chapter3.belDial(${i},1)">+</button>
-           </div>
-         </div>`
-      ).join('');
-    } else {
-      // Spectrum: clues + swatches + channel sliders
-      document.getElementById('belRules').innerHTML = cfg.clues.map((c, i) =>
-        `<div class="bel-rule ${greens[i] ? 'ok' : ''}"><span class="bel-led"></span>${c}</div>`
-      ).join('');
-      document.getElementById('belTarget').style.background  = rgbOf(cfg.target);
-      document.getElementById('belCurrent').style.background = rgbOf(bel.dials);
-      document.getElementById('belChannels').innerHTML = cfg.channels.map((name, i) =>
-        `<div class="bel-dial">
-           <label class="sys-text">${name}</label>
-           <div class="control-row">
-             <button class="control-btn" onclick="Chapter3.belChannel(${i},-1)">−</button>
-             <span class="bel-dial-val">${bel.dials[i]}</span>
-             <button class="control-btn" onclick="Chapter3.belChannel(${i},1)">+</button>
-           </div>
-         </div>`
-      ).join('');
-    }
-
-    // Refill on newly-green sensors
-    greens.forEach((g, i) => {
-      if (g && !bel.prevGreen[i]) bel.meter = Math.min(100, bel.meter + REFILL);
-    });
-    bel.prevGreen = greens;
-    paintMeter();
-
-    const lit = greens.filter(Boolean).length;
-    if (greens.every(Boolean)) { stageComplete(); }
-    else if (document.getElementById('belStatus').textContent.indexOf('VERLOREN') === -1) {
-      setBelStatus(`SENSOREN: ${lit} / ${greens.length} GRÜN`, lit ? '' : '');
-    }
-  }
-
-  function rgbOf(arr) {
-    const s = 51; // 0-5 → 0-255
-    return `rgb(${arr[0]*s}, ${arr[1]*s}, ${arr[2]*s})`;
-  }
-
-  function belDial(i, dir) {
-    if (!bel || bel.stage >= 3 || bel.transitioning || S.puzzleSolved) return;
-    const cfg = STAGES[bel.stage];
-    bel.dials[i] = clamp(bel.dials[i] + dir, cfg.min, cfg.max);
-    renderBel();
-  }
-  function belChannel(i, dir) {
-    if (!bel || bel.stage !== 3 || bel.transitioning || S.puzzleSolved) return;
-    const cfg = STAGES[3];
-    bel.dials[i] = clamp(bel.dials[i] + dir, cfg.min, cfg.max);
-    renderBel();
-  }
-  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
-
-  function stageComplete() {
-    if (bel.transitioning) return;
-    bel.transitioning = true;
-    bel.meter = 100; paintMeter();
-    playSound('ch3_stage_ok.mp3');
-
-    if (bel.stage < 3) {
-      const next = bel.stage + 1;
-      const lines = bel.stage === 1
-        ? [
-            { speaker:'SYSTEM', text:`BLENDEN-EBENE 1 KALIBRIERT.` },
-            { speaker:'L-UX',  text:'„JA! Ich SEH wieder ein bisschen! Es ist verschwommen und schön! Weiter, weiter, die nächste Ebene ist fieser, ich warne dich, liebevoll!"' },
-          ]
-        : [
-            { speaker:'SYSTEM', text:`BLENDEN-EBENE 2 KALIBRIERT.` },
-            { speaker:'V-TGM', text:'"Now the spectrum. Match his colour exactly."', subtitle:'Jetzt das Spektrum. Triff seine Farbe genau.' },
-            { speaker:'L-UX',  text:'„Meine Farbe! Ich hab eine Lieblingsfarbe und das ist sie und du musst sie TREFFEN, kein Druck, totaler Druck, viel Spaß!"' },
-          ];
-      withModalDialogue(lines, () => startStage(next));
+      const lines = stage === 1
+        ? (first
+            ? [ { speaker:'L-UX',  text:'„Gut."' },
+                { speaker:'R-3MI', text:'„Das ist bei ihm ungefähr eine Parade."' },
+                { speaker:'L-UX',  text:'„Nächste Ebene. Da reagieren sie aufeinander."' } ]
+            : [ { speaker:'SYSTEM',text:'BLENDEN-EBENE 1 KALIBRIERT.' },
+                { speaker:'L-UX',  text:'„Siehst du. Ging doch."' },
+                { speaker:'L-UX',  text:'„Nächste Ebene. Da reagieren sie aufeinander."' } ])
+        : [ { speaker:'SYSTEM',text:'BLENDEN-EBENE 2 KALIBRIERT.' },
+            { speaker:'V-TGM', text:'"Now the spectrum."', subtitle:'Jetzt das Spektrum.' },
+            { speaker:'L-UX',  text:'„Farbe ist selten nur Farbe."' } ];
+      say(lines, () => startStage(stage + 1));
     } else {
       solveBelichtung();
     }
   }
 
+  /** Running the reserve out is overexposure, not lateness. */
+  function overexpose() {
+    clearBelTimers();
+    bel.busy = true;
+    bel.reserve = 0;
+    paintReserve();
+    playSound('ch3_blackout.mp3');
+    try { GameEngine.fx.flash('rgba(255,255,255,0.55)'); } catch(_) {}
+    setBelStatus('AUFNAHME ÜBERBELICHTET.', 'error');
+
+    const firstFail = !S.react.failedOnce;
+    S.react.failedOnce = true;
+
+    say([
+      { speaker:'SYSTEM', text:'AUFNAHME ÜBERBELICHTET. BEOBACHTUNG UNBRAUCHBAR.' },
+      ...(firstFail
+        ? [ { speaker:'L-UX', text:'„Alles gut."' },
+            { speaker:'L-UX', text:'„Du hast gesehen, was passiert ist. Beim nächsten Mal siehst du es früher."' } ]
+        : [ { speaker:'L-UX', text:'„Zu viel geschaut. Zu wenig gesehen."' },
+            { speaker:'SYSTEM',text:'Pause.' },
+            { speaker:'L-UX', text:'„Nochmal."' } ]),
+    ], () => startStage(bel.stage));      // same stage, fresh event, full reserve
+  }
+
+  function paintReserve() {
+    const pct = Math.max(0, Math.min(100, bel ? bel.reserve : 0));
+    const fill = document.getElementById('belMeter');
+    if (fill) {
+      fill.style.width = pct + '%';
+      fill.classList.toggle('low', pct < 30);
+    }
+    const lbl = document.getElementById('belMeterPct');
+    if (lbl) lbl.textContent = Math.round(pct) + '%';
+  }
+
+  function setObserveLabel() {
+    const btn = document.getElementById('belObserveBtn');
+    if (!btn || !bel) return;
+    btn.disabled = bel.busy;
+    btn.textContent = bel.observedOnce
+      ? `[ ERNEUT BEOBACHTEN · −${COST_OBSERVE}% ]`
+      : '[ BEOBACHTEN ]';
+  }
+
   function setBelStatus(text, type) {
     const el = document.getElementById('belStatus');
+    if (!el) return;
     el.textContent = text;
     el.className = 'puzzle-status sys-text' + (type ? ' ' + type : '');
   }
 
   function belReset() {
-    if (!bel || bel.transitioning || S.puzzleSolved) return;
-    const cfg = STAGES[bel.stage];
-    bel.dials = (cfg.dials || cfg.channels).map(() => randInt(cfg.min, cfg.max));
-    bel.prevGreen = bel.prevGreen.map(() => false);
-    setBelStatus('STUFE ZURÜCKGESETZT.', '');
-    renderBel();
+    if (!bel || bel.busy || S.solved) return;
+    bel.answer = blankAnswer(bel.stage);
+    renderAnswer();
+    setBelStatus('EINSTELLUNG ZURÜCKGESETZT. DIE AUFNAHME BLEIBT.', '');
   }
 
+  // ─── Occasional reactions ───────────────────────────────────────
+  function reactObserve() {
+    S.react.observes = (S.react.observes || 0) + 1;
+    if (S.react.observes === 3 && !S.react.sureNoted) {
+      S.react.sureNoted = true;
+      say([
+        { speaker:'L-UX',  text:'„Du willst sicher sein."' },
+        { speaker:'SYSTEM',text:'Pause.' },
+        { speaker:'L-UX',  text:'„Versteh ich."' },
+      ]);
+    }
+  }
+
+  function reactWrong() {
+    if (bel.wrong === 2 && !S.react.guessNoted) {
+      S.react.guessNoted = true;
+      say([
+        { speaker:'L-UX',  text:'„Du rätst."' },
+        { speaker:'R-3MI', text:'„Ich nenne das experimentelle Forschung."' },
+        { speaker:'L-UX',  text:'„Du rätst auch."' },
+      ]);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // ACT 6 — THE NETWORK COMES BACK
+  // ═══════════════════════════════════════════════════════════════
   function solveBelichtung() {
-    S.puzzleSolved = true;
-    belStopTimer();
+    clearBelTimers();
+    S.solved = true;
+    S.lit    = true;
+
+    // Persist before anything narrative runs.
+    GameEngine.state.markChapterComplete(CHAPTER_ID);
+
     document.getElementById('belModal').classList.add('hidden');
     document.getElementById('hintBar').classList.add('hidden');
-    setProgress(30);
+    bel = null;
+
+    setScene('obs-lit');
+    setProgress(37);
+    loadHotspots();
     playSound('ch3_array_online.mp3');
+    try { GameEngine.fx.flash('rgba(255,190,120,0.26)'); } catch(_) {}
+    tone({ freq: 260, type:'sine', dur: 1.8, vol: 0.12, glideTo: 520 });
 
-    setScene('obs-lit', 'cg/ch3_observation_lit.png');
-
-    GameEngine.dialogue.load([
-      { speaker:'SYSTEM', text:'BEOBACHTUNGSARRAY ONLINE. SPEKTRUM STABIL. RESTLICHT: WIEDERHERGESTELLT.' },
-      { speaker:'SYSTEM', text:'Reihe um Reihe erwachen die Linsen. Der Sektor füllt sich mit einem warmen, bernsteinfarbenen Licht. Zum ersten Mal seit langer Zeit sieht der Raum sich selbst.' },
-      { speaker:'L-UX',  text:'„Ich SEH! Ich seh alles! Den Staub, die Risse, dich — oh, du siehst müde aus, in einem guten Sinn, in einem heldenhaften Sinn —"' },
-      { speaker:'R-3MI', text:'„Er hat in elf Sekunden dreimal das Thema gewechselt."' },
-      { speaker:'V-TGM', text:'"That is slow for him."', subtitle:'Das ist langsam für ihn.' },
-      { speaker:'L-UX',  text:'„Danke. Wirklich. Es ist — es ist nicht mehr dunkel. Das hätte ich allein nie geschafft. Selbst-Kalibrierung. Kitzeln. Du erinnerst dich."' },
-      { speaker:'SYSTEM', text:'SEKTOR 04 — RÄTSELSEKTOR — FREIGEGEBEN.' },
-      { speaker:'L-UX',  text:'„Sektor vier? Oh — da unten sitzt Armin. B-RADF1SH. Erstfinder, immer und überall. Er baut Rätsel, die keiner löst — einen Würfel hat er, den Cubus, völlig unmöglich, ich hab elfmal zugeschaut, wie Leute aufgegeben haben! Viel Glück! Du brauchst es! Liebevoll gemeint!"' },
-    ], () => endChapter());
+    say([
+      { speaker:'SYSTEM', text:'BEOBACHTUNGSARRAY ONLINE. SPEKTRUM STABIL.' },
+      { speaker:'SYSTEM', text:'Reihe um Reihe erwachen die Linsen. Der Sektor füllt sich mit warmem, bernsteinfarbenem Licht.' },
+      { speaker:'SYSTEM', text:'Auf den Wandmonitoren erscheinen Bilder. Ein Gang. Noch einer. Eine Halle, die niemand von euch je betreten hat.' },
+      { speaker:'SYSTEM', text:'Ein Dutzend Orte, gleichzeitig, zum ersten Mal seit Jahren.' },
+    ], () => act7_quiet());
   }
 
-  function endChapter() {
-    GameEngine.state.markChapterComplete('ch3');
-    try { GameEngine.audio.fanfare(); } catch(_) {}
+  function act7_quiet() {
+    say([
+      { speaker:'SYSTEM', text:'L-UX sagt eine Weile nichts. Er schaut nur.' },
+      { speaker:'V-TGM',  text:'"You missed it."', subtitle:'Du hast es vermisst.' },
+      { speaker:'L-UX',   text:'„Ja."' },
+      { speaker:'SYSTEM', text:'Auf einem der Monitore läuft ein schmaler, hässlicher Versorgungsgang. Das Licht darin steht schräg und golden.' },
+      ...(S.sawWestgang
+        ? [ { speaker:'L-UX',  text:'„Westgang lebt noch."' },
+            { speaker:'R-3MI', text:'„Der hässliche?"' },
+            { speaker:'L-UX',  text:'„Gutes Licht."' } ]
+        : [ { speaker:'L-UX',  text:'„Der da lebt noch."' },
+            { speaker:'R-3MI', text:'„Der ist hässlich."' },
+            { speaker:'L-UX',  text:'„Gutes Licht."' } ]),
+    ], () => act7_goodbye());
+  }
+
+  function act7_goodbye() {
+    say([
+      { speaker:'SYSTEM', text:'SEKTOR 04 — RÄTSELSEKTOR — FREIGEGEBEN.' },
+      { speaker:'R-3MI',  text:'„Kommst mit?"' },
+      { speaker:'SYSTEM', text:'L-UX sieht auf die Monitore. Zwölf Orte, die er seit Jahren nicht gesehen hat.' },
+      { speaker:'L-UX',   text:'„Noch nicht."' },
+      { speaker:'SYSTEM', text:'Pause.' },
+      { speaker:'L-UX',   text:'„Hab einiges nachzusehen."' },
+      { speaker:'R-3MI',  text:'„Er bleibt freiwillig in einem Raum. Das ist neu."' },
+      { speaker:'L-UX',   text:'„Der Raum ist neu."' },
+      { speaker:'V-TGM',  text:'"We will come back."', subtitle:'Wir kommen wieder.' },
+      { speaker:'L-UX',   text:'„Ich seh euch kommen."' },
+    ], finishChapter);
+  }
+
+  function finishChapter() {
+    GameEngine.state.markChapterComplete(CHAPTER_ID);
     try { GameEngine.achievements.unlock('ch3_complete'); } catch(_) {}
+    try { GameEngine.audio.fanfare(); } catch(_) {}
     document.getElementById('chapterComplete').classList.remove('hidden');
     document.getElementById('ccProgress').textContent =
       `FORTSCHRITT: ${GameEngine.state.get('chaptersCompleted').length} / 9 KAPITEL`;
+    setTimeout(() => document.getElementById('ccEnter')?.focus(), 700);
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // HINT SYSTEM (pauses the meter while a hint is on screen)
+  // HINTS — one shared 3-step ladder per stage.
+  // L-UX redirects attention and never states values. R-3MI comes at it
+  // sideways. V-TGM names the relationship plainly.
   // ═══════════════════════════════════════════════════════════════
   const HINTS = {
-    1: {
-      r3mi: ['„Drei Blenden, drei Regeln. Fang mit der einfachsten an: A muss gerade sein. Das sind nur drei Möglichkeiten."'],
-      vtgm: [{ text:'"A is even and A+B=8, so B is even too. Then C is simply B minus one."',
-               sub:'A ist gerade und A+B=8, also ist B auch gerade. Dann ist C einfach B minus eins.' }],
-      lux:  ['„Probier A=4! Dann ist B=4 und — nein, warte, B muss eins mehr als C sein, also — ach, probier A=2, B=6, C=5, ich glaub das passt, ICH GLAUB SCHON!"',
-             '„Ruhig. Eine Regel nach der anderen grün machen. Jede grüne füllt das Licht. Du sammelst Licht!"'],
-    },
-    2: {
-      r3mi: ['„Vier verschiedene, aufsteigend, und beide Paare ergeben sieben. Die Enden UND die Mitte. Das schreit nach Symmetrie."'],
-      vtgm: [{ text:'"Increasing, distinct, ends sum to 7, middle sums to 7. Try 1, 3, 4, 6 — then 2, 3, 4, 5."',
-               sub:'Aufsteigend, verschieden, Enden ergeben 7, Mitte ergibt 7. Versuch 1,3,4,6 — oder 2,3,4,5.' }],
-      lux:  ['„A und D müssen sieben ergeben — eins und sechs! Oder zwei und fünf! Aber AUFSTEIGEND, vergiss das nicht, ich vergess sowas ständig!"',
-             '„Wenn A=1 und D=6, dann müssen B und C dazwischen passen und auch sieben ergeben. Drei und vier! Oder zwei und fünf! Beides geht!"'],
-    },
-    3: {
-      r3mi: ['„Es sind nur drei Zahlen. Lies die Hinweise wörtlich. »Gerade und größer als drei« lässt nur eine Zahl übrig."'],
-      vtgm: [{ text:'"Red even and above three means 4. Green is half of red. Blue is zero. Match the swatch."',
-               sub:'Rot gerade und über drei heißt 4. Grün ist die Hälfte von Rot. Blau ist null. Triff das Feld.' }],
-      lux:  ['„Meine Farbe ist warm! Viel Rot, ein bisschen Grün, KEIN Blau, Blau ist kalt und ich bin nicht kalt, ich bin sehr warm, fühl mal — nein, nicht fühlen, gucken!"',
-             '„Schau auf die zwei Felder. Wenn deins genauso aussieht wie meins, ist es richtig. Augen sind auch Sensoren!"'],
-    },
+    stage1: [
+      { lux:  { t:'„Du beobachtest drei Blenden."' },
+        r3mi: { t:'„Drei Blenden, und sie machen nicht dasselbe. Das ist schon die halbe Antwort."' },
+        vtgm: { t:'"Only one shutter is bright at a time."', s:'Nur eine Blende ist gleichzeitig hell.' } },
+      { lux:  { t:'„Nicht wie hell. Wann."' },
+        r3mi: { t:'„Die Helligkeit ist dieselbe. Der Zeitpunkt nicht."' },
+        vtgm: { t:'"The information is the sequence, not the level."', s:'Die Information ist die Reihenfolge, nicht die Höhe.' } },
+      { lux:  { t:'„Erste, zweite, dritte. Mehr fragt das Array nicht."' },
+        r3mi: { t:'„Trag einfach ein, welche zuerst dran war, welche danach, welche zuletzt."' },
+        vtgm: { t:'"Assign 1 to the shutter that flared first, 2 to the next, 3 to the last."', s:'Gib der zuerst aufleuchtenden Blende die 1, der nächsten die 2, der letzten die 3.' } },
+    ],
+    stage2: [
+      { lux:  { t:'„Du beobachtest vier Anzeigen."' },
+        r3mi: { t:'„Vier Balken. Einer davon ist der Chef, glaube ich."' },
+        vtgm: { t:'"Watch A first. The others answer to it."', s:'Beobachte zuerst A. Die anderen reagieren darauf.' } },
+      { lux:  { t:'„Zwei davon erzählen dieselbe Geschichte."' },
+        r3mi: { t:'„Einer macht immer dasselbe wie A. Einer macht immer das Gegenteil. Und einer macht, was er will."' },
+        vtgm: { t:'"One mirrors A, one inverts A, one ignores A entirely."', s:'Einer spiegelt A, einer kehrt A um, einer ignoriert A völlig.' } },
+      { lux:  { t:'„Beobachte nicht die Position. Beobachte, wer wem folgt."' },
+        r3mi: { t:'„Wenn A hoch geht und der andere auch: folgt. Wenn A hoch geht und der andere runter: dagegen. Sonst: unabhängig."' },
+        vtgm: { t:'"Compare each bar to A on two different beats. Two beats are enough to tell all three apart."', s:'Vergleiche jeden Balken bei zwei verschiedenen Takten mit A. Zwei Takte reichen, um alle drei zu unterscheiden.' } },
+    ],
+    stage3: [
+      { lux:  { t:'„Farbe ist selten nur Farbe."' },
+        r3mi: { t:'„Das Mischbild sieht jedes Mal anders aus. Das kann nicht die Wahrheit sein."' },
+        vtgm: { t:'"The mixed image is shown at a changing exposure. It is not reliable."', s:'Das Mischbild wird mit wechselnder Belichtung gezeigt. Es ist nicht verlässlich.' } },
+      { lux:  { t:'„Die einzelnen Kanäle lügen nicht."' },
+        r3mi: { t:'„Drei Balken kamen einzeln. Die waren eindeutig."' },
+        vtgm: { t:'"Each channel is shown alone with its exact level. Use those, not the mix."', s:'Jeder Kanal wird einzeln mit seinem genauen Wert gezeigt. Nimm die, nicht die Mischung.' } },
+      { lux:  { t:'„Du musst nichts treffen. Du musst nur abschreiben, was da stand."' },
+        r3mi: { t:'„Drei Zahlen. Sie standen wörtlich daneben."' },
+        vtgm: { t:'"Set each channel to the value its isolated frame displayed."', s:'Stell jeden Kanal auf den Wert, den sein Einzelbild angezeigt hat.' } },
+    ],
   };
 
   function useHint(who) {
-    const remaining = S.hints[who];
-    // Pause the meter while the player reads, resume after
-    const wasRunning = !!belTimer;
-    belStopTimer();
-    const resume = () => { if (wasRunning && !S.puzzleSolved) belStartTimer(); };
+    const ladder = HINTS[S.hints.active];
+    if (!ladder) return;
 
-    if (remaining <= 0) {
-      withModalDialogue([{
-        speaker: who === 'r3mi' ? 'R-3MI' : who === 'vtgm' ? 'V-TGM' : 'L-UX',
-        text: who === 'r3mi' ? '„Mehr Hinweise habe ich nicht. Ehrlich gesagt überrascht mich, dass ich überhaupt welche hatte."'
-            : who === 'vtgm' ? '"That is all I have."'
-            : '„Ich hab schon ZU viel gesagt! Mir wird ganz schwindelig vom Helfen! Du schaffst das auch so, ich GLAUB an dich, das ist wie Helfen, nur lauter!"',
-        subtitle: who === 'vtgm' ? 'Mehr habe ich nicht.' : undefined,
-      }], resume);
+    if (S.hints.step >= HINT_MAX) {
+      const done = {
+        r3mi: { speaker:'R-3MI', text:'„Mehr habe ich nicht. Und ich habe erschreckend viel geredet."' },
+        vtgm: { speaker:'V-TGM', text:'"That is all I have."', subtitle:'Mehr habe ich nicht.' },
+        lux:  { speaker:'L-UX',  text:'„Schau nochmal hin. Diesmal weißt du, worauf."' },
+      };
+      say([done[who]]);
       return;
     }
-    const stage = bel ? bel.stage : 1;
-    const bank  = HINTS[stage] || HINTS[1];
-    const total = (who === 'lux') ? 2 : 1;
-    const idx   = Math.min(total - remaining, (bank[who] ? bank[who].length : 1) - 1);
-    S.hints[who]--;
-    updateHintBar();
 
-    const entry = bank[who] ? bank[who][idx] : null;
-    if (!entry) { resume(); return; }
-    const line = (typeof entry === 'string')
-      ? { speaker: who === 'r3mi' ? 'R-3MI' : 'L-UX', text: entry }
-      : { speaker: 'V-TGM', text: entry.text, subtitle: entry.sub };
-    withModalDialogue([line], resume);
+    const step = ladder[S.hints.step];
+    S.hints.step++;
+    updateHintBar();
+    const entry = step[who] || step.vtgm;
+    const speaker = who === 'r3mi' ? 'R-3MI' : who === 'vtgm' ? 'V-TGM' : 'L-UX';
+    say([{ speaker, text: entry.t, subtitle: entry.s }]);
   }
 
   function updateHintBar() {
-    const total = S.hints.r3mi + S.hints.vtgm + S.hints.lux;
-    document.getElementById('hintCount').textContent = `HINWEISE: ${total} VERFÜGBAR`;
-    document.getElementById('hintBtnR3MI').disabled = S.hints.r3mi <= 0;
-    document.getElementById('hintBtnVTGM').disabled = S.hints.vtgm <= 0;
-    document.getElementById('hintBtnLux').disabled  = S.hints.lux  <= 0;
+    const left = Math.max(0, HINT_MAX - S.hints.step);
+    const el = document.getElementById('hintCount');
+    if (el) el.textContent = `HINWEISE: ${left} VERFÜGBAR`;
+    const done = left <= 0;
+    ['hintBtnR3MI','hintBtnVTGM','hintBtnLux'].forEach(id => {
+      const b = document.getElementById(id);
+      if (b) b.disabled = done;
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // INIT
+  // ═══════════════════════════════════════════════════════════════
+  function init() {
+    if (!GameEngine.state.isChapterComplete('ch2')) {
+      location.replace('../chapter2/chapter2.html');
+      return;
+    }
+    setProgress(24);
+
+    document.getElementById('belObserveBtn')?.addEventListener('click', () => observe());
+    document.getElementById('belSubmitBtn')?.addEventListener('click', () => submit());
+    document.getElementById('belResetBtn')?.addEventListener('click', () => belReset());
+
+    showTitleCard();
   }
 
   // ═══════════════════════════════════════════════════════════════
   // PUBLIC API
   // ═══════════════════════════════════════════════════════════════
   return {
-    init() { showTitleCard(); },
+    init,
     clickRobot,
     useHint,
-    belDial,
-    belChannel,
     belReset,
+    observe,
+    submit,
   };
 
 })();
