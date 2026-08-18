@@ -10,7 +10,7 @@ curve. From Chapter 1 the baseline is **4.5/10**, rising **+0.75 per chapter**.
 | Ch1 — Wartungssektor      | **4.5** | done | P1 pipe path ~4 · P2 dual-signal ~5. One shared 3-step hint ladder *per puzzle* (`HINT_MAX` in `chapter1.js`) — observation → relationship → method; either unit can voice the next step, so asking both no longer doubles the budget |
 | Ch2 — Wartungsgarten      | **5.25** | done | P1 Tau-Sequenz ~5 (order forced by the ambient shift; exactly one plant order works) · P2 Frostmuster ~5.5–6 (6 pre-carved walls + an 18-cut cap = the minimum possible; **81 valid layouts** remain, so it stays a multi-solution puzzle by design). One shared 4-step hint ladder per puzzle (`HINT_MAX` in `chapter2.js`) — observation → relationship → method → last resort, voiced by whichever of the three you ask |
 | Ch3 — Beobachtungssektor  | **6.0** | done | BELICHTUNG, three observation stages, each a step up in *inference* rather than in speed: **1** the array pulses in unison and exactly one blend breaks rank for exactly one beat — say which and when (20 possible answers, nothing to memorise, you either catch it or look again); **2** four traces, one drives and the others follow / oppose / ignore it — name each relationship; **3** two calibration passes reveal that the array answers by **rank** (one channel always takes the strongest input, one the middle, one the weakest) — deduce the wiring, then apply it to a *new* stimulus that stays on screen. Stage 3 cannot be beaten by copying: the target never reuses an example's values (verified 0/400k). Every instance is generated at runtime and rerolled until unambiguous. Pressure is an **observation budget**, not a clock (`COST_OBSERVE` / `COST_WRONG` in `chapter3.js`): the first look at each stage is free, looking again or committing a wrong reading spends reserve, and reading/thinking/hints cost nothing. An incomplete answer is free — only a *wrong* one is charged. Running the reserve out is overexposure: same stage, fresh recording, full reserve, no lost progress. One shared 3-step hint ladder **per stage** (`HINT_MAX`) |
-| Ch4 — Rätselsektor (Armin/B-RADF1SH) | **6.75** | done | Dual-projection maze (2D↔3D): warm-up ~5 (3×3×3, min 2 switches) · der Würfel ~7.5 (3×4×4 staircase, min 6 switches, budget 7) |
+| Ch4 — Rätselsektor (B-RADF1SH) | **6.75** | done | DAS VIERFACH-SCHLOSS: one mechanism, four independently solvable subsystems (MUSTER, GEWICHT, TAKT, AUSRICHTUNG), each producing a reference value for a small final alignment. Difficulty comes from decomposition and integrating four outputs, not from spatial/UI confusion — see the module writeups in `chapter4/chapter4.js` |
 | Ch5 — Fördersektor (T-FLON14) | **7.5** | done | FÖRDERLAUF: 20 rapid mixed micro-tasks (odd-one / match / tap-all / count / odd-colour) under one global clock (FL_TIME=60, −3s per miss). Rounds 11-20 mix look-alike filled/outline twins; odd-colour always uses distinct colours |
 | Ch6 — Dunkelkammer (ASP-1024) | **8.25** | done | BILDFORENSIK: one steganography puzzle — a 4-char code hidden in the blue channel (+18 over ±6 noise, math-clean at threshold); isolate R/G/B + invert + threshold, past a loud green decoy code |
 | Ch7 — Vexiersektor (FAX-N) | **9.0** | done | VEXIERSCHLOSS: a deduction lock (Mastermind-style) — 4 seals · 6 symbols · 8 tries. Feedback ● richtig / ○ verschoben. A lying host, an honest lock. Budget 8 proven crackable by pure logic (20k-trial sim: worst case 8, avg 4.6). First chapter built on the shared `GameEngine.chapter` scaffold |
@@ -47,9 +47,12 @@ second ~0.5 above, bracketing it — the chapter *average* is the number above.
    the player to get more out of a single viewing. Deliberately **not** a
    decaying timer — that taught "click faster", which is the opposite of this
    chapter's lesson. Anything that punishes reading belongs nowhere in Ch3.
-6. **Resource budget.** Ch4 Cubus: a hard cap on `MAZES.cubus.budget`
-   (view-switches) in `chapter4.js`. The maze's minimum is 6 (BFS-verified);
-   budget 7 = brutal, 8 = one scouting peek. Lower budget → harder.
+6. **Constraint count.** Ch4's TAKT module prunes its generated clue set down
+   to the minimum that still pins a unique piston order (`buildTiming` in
+   `chapter4.js`); GEWICHT caps weighings at `WEIGH_MAX` (5 — the
+   information-theoretic minimum to fully order 4 items). Fewer clues /
+   weighings → harder, down to the point where the puzzle stops being
+   uniquely solvable.
 
 These are all simple constants — tune, playtest, repeat. Ratings are estimates;
 expect to nudge them after a real playthrough.
