@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Barlow:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/global.css?v=20260613">
-  <link rel="stylesheet" href="chapter4.css?v=20260613">
+  <link rel="stylesheet" href="chapter4.css?v=20260818">
 </head>
 <body class="chapter-page">
 
@@ -16,7 +16,7 @@
 
   <header class="sys-bar">
     <span class="sys-text">KAPITEL 04 // <span class="accent-system">RÄTSELSEKTOR</span></span>
-    <span class="sys-text" id="reactProgress">REAKTIVIERUNG: 30%</span>
+    <span class="sys-text" id="reactProgress">REAKTIVIERUNG: 37%</span>
   </header>
 
   <!-- TITLE CARD -->
@@ -24,13 +24,13 @@
     <div class="ch-emblem ch4-emblem" aria-hidden="true">
       <div class="ch-ring ch-ring-1"></div>
       <div class="ch-ring ch-ring-2"></div>
-      <div class="ch4-cube"></div>
+      <div class="ch4-lock"><i></i><i></i><i></i><i></i></div>
       <span class="ch-num">04</span>
     </div>
     <div class="ch-title-text">
       <p class="ch-label sys-text">KAPITEL 04</p>
       <h1 class="ch-name">Rätselsektor</h1>
-      <p class="ch-subline">&bdquo;Zuerst da. Wie immer.&ldquo;</p>
+      <p class="ch-subline">&bdquo;Groß heißt nicht kompliziert.&ldquo;</p>
     </div>
   </div>
 
@@ -38,22 +38,22 @@
   <div class="scene-wrapper" id="sceneWrapper">
     <div class="scene-bg-layer" id="sceneBgLayer">
       <!-- Code-drawn room: scene-ph lighting + perspective floor + props -->
-      <div class="scene-ph" id="scenePh" data-scene="vault-dim"></div>
+      <div class="scene-ph" id="scenePh" data-scene="werk-dim"></div>
       <div class="scene-room" aria-hidden="true"><div class="room-ceil"></div><div class="room-wall room-wall-l"></div><div class="room-wall room-wall-r"></div><div class="room-back"></div></div>
       <div class="scene-floor" aria-hidden="true"></div>
     </div>
     <div class="scene-hotspots" id="sceneHotspots"></div>
 
     <div class="robot-icons hidden" id="robotIcons">
-      <button class="robot-icon r3mi-icon" onclick="Chapter4.clickRobot('r3mi')" aria-label="R-3MI">
+      <button class="robot-icon r3mi-icon" onclick="Chapter4.clickRobot('r3mi')" aria-label="R-3MI ansprechen">
         <div class="ri-eye ri-eye-r"></div>
         <span class="ri-label sys-text">R-3MI</span>
       </button>
-      <button class="robot-icon vtgm-icon" onclick="Chapter4.clickRobot('vtgm')" aria-label="V-TGM">
+      <button class="robot-icon vtgm-icon" onclick="Chapter4.clickRobot('vtgm')" aria-label="V-TGM ansprechen">
         <div class="ri-eye ri-eye-g"></div>
         <span class="ri-label sys-text">V-TGM</span>
       </button>
-      <button class="robot-icon bradfish-icon hidden" id="bradfishIcon" onclick="Chapter4.clickRobot('bradfish')" aria-label="B-RADF1SH">
+      <button class="robot-icon bradfish-icon hidden" id="bradfishIcon" onclick="Chapter4.clickRobot('bradfish')" aria-label="B-RADF1SH ansprechen">
         <div class="ri-eye ri-eye-b"></div>
         <span class="ri-label sys-text">B-RADF1SH</span>
       </button>
@@ -71,53 +71,35 @@
 
   <!-- HINT BAR -->
   <div class="hint-bar hidden" id="hintBar">
-    <span class="sys-text hint-label" id="hintCount">HINWEISE: 4 VERFÜGBAR</span>
-    <button class="ka-btn small" id="hintBtnR3MI" onclick="Chapter4.useHint('r3mi')">
+    <span class="sys-text hint-label" id="hintCount">HINWEISE: 3 VERFÜGBAR</span>
+    <button class="ka-btn small hint-btn" id="hintBtnR3MI" onclick="Chapter4.useHint('r3mi')">
       <span class="accent-r3mi">[ R-3MI ]</span>
     </button>
-    <button class="ka-btn small" id="hintBtnVTGM" onclick="Chapter4.useHint('vtgm')">
+    <button class="ka-btn small hint-btn" id="hintBtnVTGM" onclick="Chapter4.useHint('vtgm')">
       <span class="accent-vtgm">[ V-TGM ]</span>
     </button>
-    <button class="ka-btn small" id="hintBtnBradfish" onclick="Chapter4.useHint('bradfish')">
+    <button class="ka-btn small hint-btn" id="hintBtnBradfish" onclick="Chapter4.useHint('bradfish')">
       <span class="accent-bradfish">[ B-RADF1SH ]</span>
     </button>
   </div>
 
   <!-- ════════════════════════════════════════════════════════════
-       PUZZLE — PERSPEKTIVE / DER WÜRFEL  (2D↔3D dual-projection maze)
+       DAS VIERFACH-SCHLOSS — one panel, four subsystems and the
+       central alignment. Contents are rendered by chapter4.js.
        ════════════════════════════════════════════════════════════ -->
-  <div class="puzzle-modal hidden" id="persModal">
-    <div class="puzzle-card pers-card">
+  <div class="puzzle-modal hidden" id="modModal">
+    <div class="puzzle-card mod-card">
       <div class="puzzle-card-accent bradfish-accent"></div>
       <div class="puzzle-header">
-        <p class="puzzle-label sys-text" id="persTitle">DER WÜRFEL</p>
-        <h2 class="puzzle-title">PERSPEKTIVE</h2>
-        <p class="puzzle-sub sys-text" id="persSub">NAVIGIERE DEN WÜRFEL</p>
+        <p class="puzzle-label sys-text" id="modLabel">TEILSYSTEM</p>
+        <h2 class="puzzle-title" id="modTitle">&mdash;</h2>
+        <p class="puzzle-sub sys-text" id="modSub"></p>
       </div>
 
-      <div class="pers-bar">
-        <span class="sys-text" id="persView">VORDERANSICHT</span>
-        <span class="sys-text" id="persSwitches">WECHSEL: 0</span>
-      </div>
-      <div class="pers-axes sys-text" id="persAxes">◀▶ BREITE   ▲▼ HÖHE</div>
+      <div class="mod-body" id="modBody"></div>
 
-      <div class="pers-stage"><div class="pers-grid" id="persGrid"></div></div>
-      <div class="pers-readout sys-text" id="persReadout"></div>
-
-      <div class="pers-controls">
-        <div class="pers-dpad">
-          <button class="control-btn dpad-up"    onclick="Chapter4.persMove('up')"    aria-label="hoch">▲</button>
-          <button class="control-btn dpad-left"  onclick="Chapter4.persMove('left')"  aria-label="links">◀</button>
-          <button class="control-btn dpad-right" onclick="Chapter4.persMove('right')" aria-label="rechts">▶</button>
-          <button class="control-btn dpad-down"  onclick="Chapter4.persMove('down')"  aria-label="runter">▼</button>
-        </div>
-        <button class="ka-btn primary pers-switch-btn" onclick="Chapter4.persSwitch()">[ PERSPEKTIVE WECHSELN ]</button>
-      </div>
-
-      <div class="puzzle-status sys-text" id="persStatus"></div>
-      <div class="puzzle-actions">
-        <button class="ka-btn small" onclick="Chapter4.persReset()">[ ZURÜCKSETZEN ]</button>
-      </div>
+      <div class="puzzle-status sys-text" id="modStatus"></div>
+      <div class="puzzle-actions" id="modActions"></div>
     </div>
   </div>
 
@@ -128,13 +110,13 @@
       <div class="cc-title">SEKTOR 05 FREIGEGEBEN</div>
       <div class="cc-next">FÖRDERSEKTOR</div>
       <div class="cc-progress sys-text" id="ccProgress"></div>
-      <a class="ka-btn primary" href="../chapter5/chapter5.html">[ EINTRETEN ]</a>
+      <a class="ka-btn primary" id="ccEnter" href="../chapter5/chapter5.html">[ EINTRETEN ]</a>
       <a class="ka-btn small"   href="../index.html">[ HAUPTMENÜ ]</a>
     </div>
   </div>
 
   <script src="../js/engine.js?v=20260613"></script>
   <script src="../js/mobile-warning.js?v=20260613"></script>
-  <script src="chapter4.js?v=20260613"></script>
+  <script src="chapter4.js?v=20260818"></script>
 </body>
 </html>

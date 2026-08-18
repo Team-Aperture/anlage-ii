@@ -97,7 +97,7 @@ const GameEngine = (() => {
       { id: 'ch1_complete',     icon: '◉', title: 'Wartungsprotokoll',    desc: 'Kapitel 1 abgeschlossen.' },
       { id: 'ch2_complete',     icon: '❧', title: 'Wartungsgartenpflege', desc: 'Kapitel 2 abgeschlossen.' },
       { id: 'ch3_complete',     icon: '◎', title: 'Beobachtet',           desc: 'Kapitel 3 abgeschlossen.' },
-      { id: 'ch4_complete',     icon: '⊞', title: 'Der Erste',            desc: 'Den Würfel geknackt. Als Erster.' },
+      { id: 'ch4_complete',     icon: '⊞', title: 'Groß, nicht kompliziert', desc: 'Das Vierfach-Schloss geöffnet.' },
       { id: 'ch5_complete',     icon: '▶', title: 'Beschleunigt',         desc: 'Den Förderlauf bestanden. Ohne stehenzubleiben.' },
       { id: 'ch6_complete',     icon: '◫', title: 'Im Bild verborgen',     desc: 'Den versteckten Code in der Dunkelkammer gefunden.' },
       { id: 'ch7_complete',     icon: '▣', title: 'Defragmentiert',       desc: 'Kapitel 7 abgeschlossen.' },
@@ -728,7 +728,7 @@ const GameEngine = (() => {
         + '<circle class="prop-lite" cx="89" cy="50" r="2.6"/>'
         + '<circle class="prop-glow" cx="50" cy="50" r="19"/>'
         + '<circle class="prop-core" cx="50" cy="50" r="10"/>'),
-      // an isometric cube (the Wuerfel): shaded faces, glowing edges + node
+      // generic isometric cube: shaded faces, glowing edges + node
       cube: wrap('0 0 100 100',
           '<ellipse class="prop-inset" cx="50" cy="95" rx="38" ry="4" opacity=".6"/>'
         + '<path class="prop-lite" d="M50 8 L88 30 L50 52 L12 30 Z"/>'
@@ -1084,7 +1084,7 @@ const GameEngine = (() => {
       ch1_ambient:  'ch1_wartung.mp3',
       ch2_ambient:  'ch2_garten.mp3',
       ch3_ambient:  'ch3_beobachtung.mp3',
-      ch4_ambient:  'ch4_wuerfel.mp3',
+      ch4_ambient:  'ch4_werkstatt.mp3',
       ch5_ambient:  'ch5_foerderlauf.mp3',
       ch6_ambient:  'ch6_dunkelkammer.mp3',
       ch7_ambient:  'ch7_vexier.mp3',

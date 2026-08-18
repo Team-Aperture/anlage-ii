@@ -1,9 +1,12 @@
 /* ═══════════════════════════════════════════════════════════════
-   KAPITEL 04 — RÄTSELSEKTOR  (guest: B-RADF1SH / Armin)
+   KAPITEL 04 — RÄTSELSEKTOR  (guest: B-RADF1SH — Verschlussprüfer)
+   Setting: a working / half-repaired mechanism workshop, not a
+   ceremonial vault. DAS VIERFACH-SCHLOSS dominates the room; four
+   subsystem hotspots surround it and stay legible in every state.
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
-  --accent-bradfish:    #f3c623;            /* B-RADF1SH — yellow (= --accent-g4) */
+  --accent-bradfish:    #f3c623;            /* B-RADF1SH — yellow */
   --accent-bradfish-lo: rgba(243,198,35,0.15);
   --accent-guest:       var(--accent-bradfish);  /* tints the guest's key prop */
 }
@@ -25,35 +28,65 @@
 .scene-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
 .scene-hotspots { position: absolute; inset: 0; z-index: 10; }
 
-/* ─── PLACEHOLDER SCENES ──────────────────────────────────────── */
+/* ─── PLACEHOLDER SCENES — a workshop that visibly wakes up ─────
+   werk-dim  → nothing solved yet, cold and cluttered
+   werk-warm → 2+ modules solved, the machine starts to glow
+   werk-lit  → all 4 solved, waiting for the final alignment
+   werk-open → the lock stands open                                */
 .scene-ph { position: absolute; inset: 0; z-index: 0; transition: background 1.2s ease; }
-.scene-ph[data-scene="vault-dim"] {
+.scene-ph[data-scene="werk-dim"] {
   background:
-    radial-gradient(ellipse at 50% 48%, #221426 0%, #0a050c 75%),
-    linear-gradient(180deg, #160a18 0%, #06030a 100%);
+    radial-gradient(ellipse at 50% 48%, #221a12 0%, #0a0805 75%),
+    linear-gradient(180deg, #17120a 0%, #060402 100%);
 }
-.scene-ph[data-scene="vault-dim"]::before {
+.scene-ph[data-scene="werk-dim"]::before {
   content:''; position:absolute; inset:0;
   background:
-    /* the cube silhouette in the middle */
-    linear-gradient(135deg, rgba(243,198,35,0.18) 0%, transparent 60%),
-    radial-gradient(ellipse 16% 22% at 50% 52%, rgba(243,198,35,0.22) 0%, transparent 70%),
-    /* floor grid hint */
-    repeating-linear-gradient(90deg, transparent 0 38px, rgba(243,198,35,0.05) 38px 39px),
+    linear-gradient(135deg, rgba(243,198,35,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 20% 26% at 50% 50%, rgba(243,198,35,0.14) 0%, transparent 70%),
+    repeating-linear-gradient(90deg, transparent 0 38px, rgba(243,198,35,0.04) 38px 39px),
     linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 22%),
     linear-gradient(0deg, rgba(0,0,0,0.6) 0%, transparent 22%);
 }
-.scene-ph[data-scene="vault-lit"] {
-  background: radial-gradient(ellipse at 50% 48%, #3a1f3e 0%, #0c0610 75%);
+.scene-ph[data-scene="werk-warm"] {
+  background: radial-gradient(ellipse at 50% 48%, #2c2013 0%, #0b0805 75%);
 }
-.scene-ph[data-scene="vault-lit"]::before {
+.scene-ph[data-scene="werk-warm"]::before {
   content:''; position:absolute; inset:0;
   background:
-    radial-gradient(ellipse 18% 24% at 50% 52%, rgba(243,198,35,0.4) 0%, transparent 70%),
-    radial-gradient(circle 5px at 30% 40%, rgba(255,224,107,0.8) 0%, transparent 100%),
-    radial-gradient(circle 5px at 70% 44%, rgba(255,224,107,0.7) 0%, transparent 100%),
+    radial-gradient(ellipse 22% 28% at 50% 50%, rgba(243,198,35,0.26) 0%, transparent 70%),
+    radial-gradient(circle 4px at 34% 42%, rgba(255,224,107,0.6) 0%, transparent 100%),
+    radial-gradient(circle 4px at 66% 44%, rgba(255,224,107,0.5) 0%, transparent 100%),
+    repeating-linear-gradient(90deg, transparent 0 38px, rgba(243,198,35,0.05) 38px 39px),
+    linear-gradient(180deg, rgba(0,0,0,0.65) 0%, transparent 20%),
+    linear-gradient(0deg, rgba(0,0,0,0.55) 0%, transparent 20%);
+}
+.scene-ph[data-scene="werk-lit"] {
+  background: radial-gradient(ellipse at 50% 48%, #3a2c17 0%, #0d0906 75%);
+}
+.scene-ph[data-scene="werk-lit"]::before {
+  content:''; position:absolute; inset:0;
+  background:
+    radial-gradient(ellipse 26% 32% at 50% 50%, rgba(243,198,35,0.42) 0%, transparent 72%),
+    radial-gradient(circle 6px at 30% 40%, rgba(255,224,107,0.85) 0%, transparent 100%),
+    radial-gradient(circle 6px at 70% 40%, rgba(255,224,107,0.8) 0%, transparent 100%),
+    radial-gradient(circle 6px at 50% 62%, rgba(255,224,107,0.75) 0%, transparent 100%),
     linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent 20%),
     linear-gradient(0deg, rgba(0,0,0,0.5) 0%, transparent 20%);
+}
+.scene-ph[data-scene="werk-open"] {
+  background: radial-gradient(ellipse at 50% 46%, #4a3a1e 0%, #100b06 78%);
+}
+.scene-ph[data-scene="werk-open"]::before {
+  content:''; position:absolute; inset:0;
+  background:
+    radial-gradient(ellipse 32% 38% at 50% 48%, rgba(255,224,140,0.5) 0%, transparent 74%),
+    radial-gradient(circle 7px at 30% 38%, rgba(255,236,170,0.95) 0%, transparent 100%),
+    radial-gradient(circle 7px at 70% 38%, rgba(255,236,170,0.9) 0%, transparent 100%),
+    radial-gradient(circle 7px at 30% 60%, rgba(255,236,170,0.9) 0%, transparent 100%),
+    radial-gradient(circle 7px at 70% 60%, rgba(255,236,170,0.85) 0%, transparent 100%),
+    linear-gradient(180deg, rgba(0,0,0,0.55) 0%, transparent 20%),
+    linear-gradient(0deg, rgba(0,0,0,0.45) 0%, transparent 20%);
 }
 
 /* ─── TITLE CARD ──────────────────────────────────────────────── */
@@ -72,14 +105,20 @@
 @keyframes spinCW  { to{transform:rotate(360deg)} }
 @keyframes spinCCW { to{transform:rotate(-360deg)} }
 .ch4-emblem .ch-num { color: var(--accent-bradfish); text-shadow: 0 0 12px rgba(243,198,35,0.6); position: relative; z-index: 1; }
-.ch4-cube {
-  position: absolute; width: 44px; height: 44px;
-  border: 2px solid rgba(243,198,35,0.55);
-  transform: rotate(45deg);
-  box-shadow: inset 0 0 10px rgba(243,198,35,0.4);
-  animation: cubeSpin 9s linear infinite;
+
+/* the four-ring lock mark: a hub with four small rings orbiting it */
+.ch4-lock { position: absolute; width: 56px; height: 56px; animation: lockTurn 12s linear infinite; }
+.ch4-lock i {
+  position: absolute; width: 12px; height: 12px; margin: -6px;
+  border: 2px solid rgba(243,198,35,0.7); border-radius: 50%;
+  box-shadow: 0 0 8px rgba(243,198,35,0.5);
 }
-@keyframes cubeSpin { to { transform: rotate(405deg); } }
+.ch4-lock i:nth-child(1) { top: 0;   left: 50%; }
+.ch4-lock i:nth-child(2) { top: 50%; left: 100%; }
+.ch4-lock i:nth-child(3) { top: 100%; left: 50%; }
+.ch4-lock i:nth-child(4) { top: 50%; left: 0; }
+@keyframes lockTurn { to { transform: rotate(360deg); } }
+
 .ch-title-text { text-align: center; }
 .ch-label  { letter-spacing:.25em; margin-bottom:var(--sp-xs); }
 .ch-name   { font-family:var(--font-display); font-size:clamp(24px,4vw,42px); font-weight:700; letter-spacing:.15em; color:var(--text-primary); margin:var(--sp-xs) 0; }
@@ -108,7 +147,20 @@
   white-space:nowrap; opacity:0; transition:opacity var(--t-fast); pointer-events:none;
 }
 .hotspot:hover .hotspot-label { opacity:1; }
-.hotspot.hs-bradfish::before { background: var(--accent-bradfish); box-shadow: 0 0 14px var(--accent-bradfish); }
+
+/* the central lock, always visible, colour tells its stage */
+.scene-prop.hs-lock .prop-glow, .scene-prop.hs-lock .prop-core { opacity: .8; }
+.scene-prop.hs-lock:not(.hs-open) svg { filter: drop-shadow(0 6px 14px rgba(0,0,0,0.6)) drop-shadow(0 0 10px rgba(243,198,35,0.35)); }
+.scene-prop.hs-open svg { filter: drop-shadow(0 6px 16px rgba(0,0,0,0.55)) drop-shadow(0 0 18px rgba(255,224,140,0.75)); }
+.scene-prop.hs-open .prop-label { color: var(--accent-bradfish); }
+
+/* the four subsystem hotspots — idle / in-progress / solved read at a glance,
+   redundantly (border colour AND the ✔ / ◐ / ○ mark baked into the label) */
+.scene-prop.hs-mod.hs-idle svg  { filter: drop-shadow(0 5px 12px rgba(0,0,0,0.5)); opacity: .82; }
+.scene-prop.hs-mod.hs-work svg  { filter: drop-shadow(0 5px 12px rgba(0,0,0,0.5)) drop-shadow(0 0 8px rgba(58,143,212,0.45)); }
+.scene-prop.hs-mod.hs-done svg  { filter: drop-shadow(0 5px 12px rgba(0,0,0,0.5)) drop-shadow(0 0 10px rgba(46,207,98,0.55)); }
+.scene-prop.hs-mod.hs-done .prop-label { color: var(--accent-r3mi); }
+.scene-prop.hs-mod.hs-work .prop-label { color: var(--accent-system); }
 
 /* ─── ROBOT ICONS ─────────────────────────────────────────────── */
 .robot-icons { position: absolute; bottom:var(--sp-lg); right:var(--sp-lg); display:flex; gap:var(--sp-sm); z-index:20; }
@@ -155,61 +207,155 @@
 .hint-label { font-size:10px; }
 .ka-btn.small { font-size:10px; padding:4px 12px; }
 button.ka-btn:disabled { opacity:.3; pointer-events:none; }
+/* B-RADF1SH's hint button never disables — past the formal ladder it
+   switches to unlimited contextual coaching, so it stays live. */
+.hint-bar .hint-btn#hintBtnBradfish { opacity: 1; pointer-events: auto; }
 
-/* ─── PUZZLE MODAL ────────────────────────────────────────────── */
+/* ─── PUZZLE MODAL SHELL ──────────────────────────────────────── */
 .puzzle-modal { position: fixed; inset:0; background:rgba(0,0,0,0.88); backdrop-filter:blur(6px); z-index:200; display:flex; align-items:center; justify-content:center; padding:var(--sp-md); overflow-y:auto; }
 .puzzle-card { background:var(--bg-panel); border:1px solid var(--bdr-bright); padding:var(--sp-lg); position:relative; max-width:540px; width:100%; margin:auto; }
+.mod-card { max-width: 620px; }
 .puzzle-card-accent { position:absolute; top:0; left:0; right:0; height:2px; }
 .bradfish-accent { background:linear-gradient(90deg, var(--accent-bradfish), #ffe9a8); }
 .puzzle-header { text-align:center; margin-bottom:var(--sp-md); }
 .puzzle-label  { margin-bottom:var(--sp-xs); }
 .puzzle-title  { font-family:var(--font-display); font-size:22px; font-weight:700; letter-spacing:.2em; color:var(--text-primary); margin:var(--sp-xs) 0; }
-.puzzle-sub    { font-size:10px; color:var(--text-dim); }
+.puzzle-sub    { font-size:10px; color:var(--text-dim); letter-spacing:.1em; }
 .puzzle-status { text-align:center; margin:var(--sp-md) 0 var(--sp-sm); font-size:11px; min-height:16px; transition:color var(--t-mid); }
 .puzzle-status.ok    { color:var(--accent-r3mi); }
 .puzzle-status.error { color:var(--accent-vtgm); }
 .puzzle-status.warn  { color:var(--accent-warn); }
-.puzzle-actions { display:flex; justify-content:center; gap:var(--sp-sm); margin-top:var(--sp-sm); }
-.control-btn { background:var(--bg-surface); border:1px solid var(--bdr-mid); color:var(--text-primary); font-family:var(--font-display); font-size:16px; width:40px; height:40px; cursor:pointer; transition:all var(--t-fast); }
-.control-btn:hover { border-color:var(--accent-bradfish); background:var(--bg-raised); }
+.puzzle-actions { display:flex; justify-content:center; flex-wrap:wrap; gap:var(--sp-sm); margin-top:var(--sp-sm); }
 
-/* ─── PUZZLE: PERSPEKTIVE / CUBUS (dual-projection maze) ───────── */
-.pers-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--sp-sm); }
-.pers-bar .sys-text { font-size:10px; letter-spacing:.1em; color:var(--accent-bradfish); }
-.pers-bar #persSwitches.low { color:var(--accent-vtgm); }
+.mod-body { max-height: 58vh; overflow-y: auto; padding-right: 2px; }
+.vs-note { font-size:10px; letter-spacing:.08em; color:var(--text-secondary); margin:var(--sp-sm) 0 var(--sp-xs); text-align:center; }
+.vs-tafel-mini { line-height: 1.5; }
+.vs-inline { display:flex; justify-content:center; gap:var(--sp-sm); margin:var(--sp-sm) 0; flex-wrap:wrap; }
 
-.pers-axes { text-align:center; font-size:10px; letter-spacing:.18em; color:var(--accent-bradfish); margin-bottom:var(--sp-sm); }
-.pers-stage { perspective:700px; perspective-origin:50% 38%; width:max-content; margin:0 auto var(--sp-sm); }
-.pers-grid {
-  display:grid; grid-template-columns:repeat(var(--cols,3), 46px);
-  gap:4px; justify-content:center;
-  transform-style:preserve-3d; transform-origin:center center;
+/* generic small chip button, reused across modules for symbols / rings /
+   weights — text-labelled as well as shaped, never colour-only */
+.vs-chiprow { display:flex; justify-content:center; gap:var(--sp-xs); flex-wrap:wrap; margin-bottom:var(--sp-sm); }
+.vs-chip {
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  background:var(--bg-surface); border:1px solid var(--bdr-mid); color:var(--text-primary);
+  padding:8px 10px; min-width:56px; cursor:pointer; transition:all var(--t-fast);
 }
-.mz-cell {
-  width:46px; height:46px; border:1px solid var(--bdr-dim); border-radius:3px;
-  background:rgba(255,255,255,0.03); position:relative; transition:all var(--t-fast);
-}
-.mz-cell.wall {
-  background:repeating-linear-gradient(45deg, var(--accent-bradfish-lo) 0 6px, transparent 6px 12px);
-  border-color:var(--accent-bradfish);
-}
-.mz-cell.avatar { background:var(--accent-bradfish); box-shadow:0 0 12px var(--accent-bradfish); border-color:#fff3c0; }
-.mz-cell.goal::after,
-.mz-cell.goal-ghost::after {
-  content:'◎'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:26px;
-}
-.mz-cell.goal::after       { color:var(--accent-r3mi); text-shadow:0 0 8px var(--accent-r3mi); }
-.mz-cell.goal-ghost::after { content:'◌'; color:var(--text-dim); }
+.vs-chip:hover { border-color:var(--accent-bradfish); }
+.vs-chip.on { border-color:var(--accent-bradfish); background:var(--accent-bradfish-lo); box-shadow:0 0 10px rgba(243,198,35,0.25); }
+.vs-chip-glyph { font-size:20px; line-height:1; }
+.vs-chip-name  { font-size:8px; letter-spacing:.08em; color:var(--text-dim); }
+.vs-chip.on .vs-chip-name { color:var(--accent-bradfish); }
 
-.pers-readout { text-align:center; font-size:11px; letter-spacing:.12em; color:var(--text-secondary); margin-bottom:var(--sp-sm); }
+/* ─── MODULE A — MUSTER ───────────────────────────────────────── */
+.mus-strip { display:flex; justify-content:center; gap:5px; flex-wrap:wrap; margin-bottom:var(--sp-sm); }
+.mus-plate {
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  width:52px; padding:6px 2px; background:var(--bg-surface); border:1px solid var(--bdr-mid);
+}
+.mus-idx  { font-size:8px; color:var(--text-dim); }
+.mus-glyph{ font-size:22px; line-height:1.1; color:var(--text-primary); }
+.mus-name { font-size:7px; letter-spacing:.05em; color:var(--text-dim); }
+.mus-plate.mus-dmg { border-style:dashed; border-color:var(--bdr-dim); }
+.mus-plate.mus-dmg .mus-glyph { color:var(--text-dim); opacity:.5; }
+.mus-plate.mus-out { border-color:var(--accent-bradfish); background:var(--accent-bradfish-lo); }
+.mus-plate.mus-out .mus-glyph { color:var(--accent-bradfish); }
+.mus-plate.mus-out.set { box-shadow:0 0 10px rgba(243,198,35,0.3); }
 
-.pers-controls { display:flex; flex-direction:column; align-items:center; gap:var(--sp-sm); }
-.pers-dpad { display:grid; grid-template-columns:repeat(3,44px); grid-template-rows:repeat(3,44px); gap:6px; }
-.dpad-up    { grid-column:2; grid-row:1; }
-.dpad-left  { grid-column:1; grid-row:2; }
-.dpad-right { grid-column:3; grid-row:2; }
-.dpad-down  { grid-column:2; grid-row:3; }
-.pers-switch-btn { width:100%; max-width:300px; }
+/* ─── MODULE B — GEWICHT ──────────────────────────────────────── */
+.vs-balance { display:flex; align-items:flex-end; justify-content:center; gap:0; margin:var(--sp-sm) 0; height:74px; }
+.vs-pan {
+  width:70px; height:44px; display:flex; align-items:center; justify-content:center;
+  background:var(--bg-surface); border:1px solid var(--bdr-mid); border-radius:0 0 20px 20px;
+  transition: transform .35s ease;
+}
+.vs-pan-val { font-family:var(--font-display); font-size:15px; color:var(--text-primary); }
+.vs-beam { width:60px; display:flex; align-items:flex-start; justify-content:center; padding-top:2px; }
+.vs-fulcrum { color:var(--accent-bradfish); font-size:14px; }
+.vs-balance[data-tilt="-1"] .vs-pan-l { transform: translateY(14px); }
+.vs-balance[data-tilt="-1"] .vs-pan-r { transform: translateY(-6px); }
+.vs-balance[data-tilt="1"]  .vs-pan-r { transform: translateY(14px); }
+.vs-balance[data-tilt="1"]  .vs-pan-l { transform: translateY(-6px); }
+
+/* ─── SHARED: LOG / ORDER GRID (used by GEWICHT + TAKT) ─────────── */
+.vs-log { list-style:none; margin:0 0 var(--sp-sm); padding:var(--sp-sm); background:var(--bg-surface); border:1px solid var(--bdr-dim); max-height:120px; overflow-y:auto; }
+.vs-log li { font-size:11px; color:var(--text-secondary); padding:3px 0; border-bottom:1px solid var(--bdr-dim); }
+.vs-log li:last-child { border-bottom:none; }
+.vs-log-empty { color:var(--text-dim); font-style:italic; }
+.vs-clues li { color:var(--text-primary); }
+
+.vs-order { display:flex; flex-direction:column; gap:6px; margin-bottom:var(--sp-sm); }
+.vs-order-row { display:flex; align-items:center; gap:var(--sp-sm); }
+.vs-order-lab { flex:0 0 84px; font-size:9px; letter-spacing:.06em; color:var(--text-dim); text-align:right; }
+.vs-order-opts { display:flex; gap:5px; flex:1; }
+.vs-slot {
+  flex:1; min-height:36px; background:var(--bg-surface); border:1px solid var(--bdr-mid); color:var(--text-primary);
+  font-family:var(--font-display); font-size:14px; cursor:pointer; transition:all var(--t-fast);
+}
+.vs-slot:hover { border-color:var(--accent-bradfish); }
+.vs-slot.on { border-color:var(--accent-bradfish); background:var(--accent-bradfish-lo); color:var(--accent-bradfish); box-shadow:0 0 8px rgba(243,198,35,0.25); }
+
+/* ─── MODULE C — TAKT ─────────────────────────────────────────── */
+.vs-pistons { display:flex; justify-content:center; gap:var(--sp-md); margin:var(--sp-sm) 0; }
+.vs-piston { display:flex; flex-direction:column; align-items:center; gap:4px; }
+.vs-piston-rod {
+  display:block; width:16px; height:34px; background:var(--bg-surface); border:1px solid var(--bdr-mid);
+  transition: all .18s ease;
+}
+.vs-piston.fire .vs-piston-rod { background:var(--accent-bradfish); border-color:#ffe9a8; box-shadow:0 0 12px rgba(243,198,35,0.6); transform:translateY(-6px); }
+.vs-piston-lab { font-size:9px; color:var(--text-dim); }
+.vs-piston.fire .vs-piston-lab { color:var(--accent-bradfish); }
+
+/* ─── MODULE D — AUSRICHTUNG ──────────────────────────────────── */
+.vs-train { display:flex; flex-direction:column; gap:2px; margin:var(--sp-sm) 0; }
+.vs-elem {
+  display:flex; align-items:center; justify-content:space-between; gap:var(--sp-sm);
+  padding:8px var(--sp-sm); background:var(--bg-surface); border:1px solid var(--bdr-dim);
+}
+.vs-elem.fixed { border-color:var(--accent-bradfish); background:var(--accent-bradfish-lo); }
+.vs-elem-name { font-size:11px; color:var(--text-primary); }
+.vs-elem-name em { font-style:normal; font-size:8px; letter-spacing:.06em; color:var(--accent-bradfish); margin-left:4px; }
+.vs-elem-dir { display:flex; gap:5px; }
+.vs-dir {
+  width:32px; height:32px; background:var(--bg-panel); border:1px solid var(--bdr-mid); color:var(--text-primary);
+  font-size:16px; cursor:pointer; transition:all var(--t-fast);
+}
+.vs-dir:hover { border-color:var(--accent-bradfish); }
+.vs-dir.on { border-color:var(--accent-bradfish); background:var(--accent-bradfish-lo); color:var(--accent-bradfish); }
+.vs-dir.locked { cursor:default; border-color:var(--accent-r3mi); color:var(--accent-r3mi); background:var(--accent-r3mi-lo); }
+.vs-link { display:flex; align-items:center; justify-content:center; gap:8px; padding:3px 0; }
+.vs-link-glyph { font-size:12px; color:var(--text-dim); letter-spacing:.1em; }
+.vs-link-name  { font-size:8px; letter-spacing:.08em; color:var(--text-dim); }
+.vs-link.worn .vs-link-glyph { color:var(--accent-vtgm); font-size:15px; }
+.vs-link.worn .vs-link-name  { color:var(--accent-vtgm); }
+
+/* ─── SOLVED MODULE READOUT ───────────────────────────────────── */
+.vs-done { text-align:center; padding:var(--sp-lg) 0; }
+.vs-done-mark { color:var(--accent-r3mi); font-size:11px; letter-spacing:.15em; margin-bottom:var(--sp-sm); }
+.vs-done-out  { font-size:9px; letter-spacing:.12em; color:var(--text-dim); margin-bottom:2px; }
+.vs-done-val  { font-family:var(--font-display); font-size:20px; letter-spacing:.1em; color:var(--accent-bradfish); text-shadow:0 0 10px rgba(243,198,35,0.35); }
+
+/* ─── ZENTRALABGLEICH ─────────────────────────────────────────── */
+.vs-tafel { background:var(--bg-surface); border:1px solid var(--bdr-mid); padding:var(--sp-sm) var(--sp-md); margin-bottom:var(--sp-sm); }
+.vs-tafel-h { text-align:center; letter-spacing:.15em; color:var(--accent-bradfish); margin-bottom:var(--sp-xs); }
+.vs-tafel-list { margin:0; padding-left:1.1em; font-size:12px; color:var(--text-secondary); line-height:1.55; }
+.vs-tafel-list b { color:var(--text-primary); }
+.vs-kranz { text-align:center; margin-top:var(--sp-xs); color:var(--text-dim); letter-spacing:.08em; }
+
+.vs-ref { display:flex; flex-direction:column; gap:2px; margin-bottom:var(--sp-sm); }
+.vs-ref-row { display:flex; justify-content:space-between; padding:4px var(--sp-sm); background:var(--bg-surface); border:1px solid var(--bdr-dim); font-size:10px; }
+.vs-ref-row .sys-text { color:var(--text-dim); letter-spacing:.08em; }
+.vs-ref-val { color:var(--accent-bradfish); }
+
+.vs-rings { display:flex; justify-content:center; gap:var(--sp-sm); flex-wrap:wrap; margin-bottom:var(--sp-xs); }
+.vs-ring {
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  width:80px; padding:10px 4px; background:var(--bg-surface); border:1px solid var(--bdr-mid);
+  cursor:pointer; transition:all var(--t-fast);
+}
+.vs-ring:hover { border-color:var(--accent-bradfish); }
+.vs-ring-num   { font-size:8px; letter-spacing:.08em; color:var(--text-dim); }
+.vs-ring-glyph { font-size:28px; color:var(--text-primary); }
+.vs-ring-name  { font-size:8px; letter-spacing:.05em; color:var(--text-dim); }
 
 /* ─── CHAPTER COMPLETE ────────────────────────────────────────── */
 .chapter-complete { position:fixed; inset:0; background:var(--bg-deep); z-index:400; display:flex; align-items:center; justify-content:center; padding:var(--sp-lg); opacity:0; animation:ccIn 1.2s ease forwards; }
@@ -223,9 +369,27 @@ button.ka-btn:disabled { opacity:.3; pointer-events:none; }
 
 /* ─── RESPONSIVE ──────────────────────────────────────────────── */
 @media (max-width: 600px) {
-  .pers-grid { grid-template-columns:repeat(var(--cols,3), 40px); }
-  .mz-cell { width:40px; height:40px; }
-  .pers-dpad { grid-template-columns:repeat(3,40px); grid-template-rows:repeat(3,40px); }
   .hint-bar { top:38px; flex-wrap:wrap; max-width:calc(100% - 16px); }
   .hint-bar .hint-label { width:100%; }
+
+  .mod-card { padding: var(--sp-md); }
+  .mod-body { max-height: 62vh; }
+
+  .mus-plate { width:44px; padding:5px 2px; }
+  .mus-glyph { font-size:18px; }
+
+  .vs-chip { min-width:48px; padding:6px 8px; }
+  .vs-chip-glyph { font-size:17px; }
+
+  .vs-order-lab { flex-basis:64px; font-size:8px; }
+  .vs-slot { min-height:40px; font-size:13px; }
+
+  .vs-elem { flex-wrap:wrap; gap:6px; }
+  .vs-dir { width:38px; height:38px; }
+
+  .vs-ring { width:70px; }
+  .vs-ring-glyph { font-size:24px; }
+
+  .vs-pan { width:56px; height:38px; }
+  .vs-beam { width:44px; }
 }
