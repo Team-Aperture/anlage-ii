@@ -249,11 +249,91 @@ button.ka-btn:disabled { opacity:.3; pointer-events:none; }
 .control-btn:hover { border-color:var(--accent-lux); background:var(--bg-raised); }
 .bel-dial-val { min-width:28px; text-align:center; font-family:var(--font-display); font-size:18px; font-weight:600; color:var(--accent-lux); }
 
+.bel-dial-sub { font-size:9px; color:var(--text-dim); letter-spacing:.1em; }
+
+/* ─── OBSERVATION SCOPE ───────────────────────────────────────────
+   The window the array plays its short recordings into. Every readout
+   is countable (lit segments), never colour-only. */
+.bel-scope {
+  position:relative; min-height:150px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:var(--sp-sm);
+  background:#05080e; border:1px solid var(--bdr-mid); border-radius:3px;
+  padding:var(--sp-md); margin-bottom:var(--sp-sm); overflow:hidden;
+}
+.bel-scope-idle { font-size:10px; letter-spacing:.2em; color:var(--text-dim); }
+.bel-beat { font-size:9px; letter-spacing:.2em; color:var(--accent-lux); }
+
+/* stage 1 — three shutters, one flares at a time */
+.bel-shutters { display:flex; gap:var(--sp-md); align-items:flex-end; }
+.bel-shutter {
+  position:relative; width:52px; height:76px;
+  background:#0a1119; border:1px solid var(--bdr-mid); border-radius:3px;
+  display:flex; align-items:flex-end; justify-content:center; padding-bottom:4px;
+}
+.bel-shutter-glow {
+  position:absolute; inset:3px; border-radius:2px;
+  background:radial-gradient(ellipse at 50% 40%, var(--accent-lux) 0%, transparent 72%);
+  transition:opacity 0.18s linear;
+}
+.bel-shutter.flare { border-color:var(--accent-lux); box-shadow:0 0 14px rgba(232,137,58,0.55); }
+.bel-shutter-name { position:relative; font-size:10px; letter-spacing:.14em; }
+
+/* stages 2 + 3 — segmented bars (readable without colour) */
+.bel-bars { display:flex; gap:var(--sp-md); align-items:flex-end; }
+.bel-bar-wrap { display:flex; flex-direction:column; align-items:center; gap:5px; }
+.bel-bar { display:flex; flex-direction:column-reverse; gap:3px; }
+.bel-bar.wide  { flex-direction:row; gap:4px; }
+.bel-bar.mini  { flex-direction:row; gap:2px; margin-top:4px; }
+.bel-seg {
+  width:26px; height:11px; border-radius:2px;
+  background:#111d29; border:1px solid #1e2c3a; transition:all var(--t-fast);
+}
+.bel-bar.mini .bel-seg { width:10px; height:7px; }
+.bel-seg.on { background:var(--accent-lux); border-color:var(--accent-lux); box-shadow:0 0 6px rgba(232,137,58,0.6); }
+.bel-bar-name { font-size:10px; letter-spacing:.14em; }
+
+/* stage 3 — isolated channel + the (unreliable) mixed frame */
+.bel-chan { display:flex; flex-direction:column; align-items:center; gap:6px; }
+.bel-chan .bel-seg.on { background:var(--chan); border-color:var(--chan); box-shadow:0 0 8px var(--chan); }
+.bel-chan-name { font-size:12px; letter-spacing:.2em; color:var(--chan); }
+.bel-chan-val  { font-size:11px; color:var(--text-secondary); }
+.bel-mix { width:110px; height:70px; border:1px solid var(--bdr-bright); border-radius:4px; }
+
+.bel-task {
+  text-align:center; font-size:11px; letter-spacing:.06em;
+  color:var(--text-secondary); margin-bottom:var(--sp-sm);
+}
+
+/* stage 2 — role assignment */
+.bel-roles { display:flex; flex-direction:column; gap:var(--sp-sm); margin-bottom:var(--sp-sm); }
+.bel-role-row { display:flex; align-items:center; gap:var(--sp-sm); }
+.bel-role-name { min-width:20px; font-size:14px; color:var(--accent-lux); font-weight:600; }
+.bel-role-opts { display:flex; gap:6px; flex:1; flex-wrap:wrap; }
+.bel-role-btn {
+  flex:1; min-width:88px; min-height:38px;
+  background:var(--bg-surface); border:1px solid var(--bdr-mid); color:var(--text-secondary);
+  font-family:var(--font-mono); font-size:10px; letter-spacing:.08em;
+  cursor:pointer; transition:all var(--t-fast); padding:6px 8px;
+  touch-action:manipulation;
+}
+.bel-role-btn:hover { border-color:var(--accent-lux); color:var(--text-primary); }
+.bel-role-btn.on {
+  border-color:var(--accent-lux); color:var(--text-primary);
+  background:var(--accent-lux-lo); box-shadow:0 0 8px rgba(232,137,58,0.35);
+}
+
 /* Spectrum stage */
 .bel-swatches { display:flex; justify-content:center; gap:var(--sp-lg); margin-bottom:var(--sp-md); }
 .bel-swatch-wrap { display:flex; flex-direction:column; align-items:center; gap:4px; }
 .bel-swatch-wrap .sys-text { font-size:10px; }
 .bel-sw { width:72px; height:72px; border:1px solid var(--bdr-bright); border-radius:4px; transition:background var(--t-fast); }
+
+/* Observation cues must not depend on motion to be readable. */
+@media (prefers-reduced-motion: reduce) {
+  .bel-shutter-glow, .bel-seg, .bel-meter-fill { transition:none; }
+  .bel-meter-fill.low { animation:none; }
+  .scene-ph[data-scene="obs-flicker"]::before { animation:none; }
+}
 
 /* ─── CHAPTER COMPLETE ────────────────────────────────────────── */
 .chapter-complete {
@@ -271,8 +351,29 @@ button.ka-btn:disabled { opacity:.3; pointer-events:none; }
 
 /* ─── RESPONSIVE ──────────────────────────────────────────────── */
 @media (max-width: 600px) {
-  .bel-dials { grid-template-columns:repeat(2, 1fr); }
+  .bel-dials { grid-template-columns:repeat(3, 1fr); gap:var(--sp-xs); }
   .bel-sw { width:56px; height:56px; }
   .hint-bar { top:38px; flex-wrap:wrap; max-width:calc(100% - 16px); }
   .hint-bar .hint-label { width:100%; }
+
+  /* keep the scope readable and the controls thumb-sized on a phone */
+  .bel-scope { min-height:132px; padding:var(--sp-sm); }
+  .bel-shutter { width:42px; height:64px; }
+  .bel-shutters { gap:var(--sp-sm); }
+  .bel-bars { gap:var(--sp-sm); }
+  .bel-seg { width:20px; height:9px; }
+  .bel-bar.wide .bel-seg { width:22px; height:14px; }
+  .bel-mix { width:92px; height:58px; }
+  .control-btn { width:40px; height:40px; }
+  .bel-role-opts { gap:4px; }
+  .bel-role-btn { min-width:0; font-size:9px; padding:6px 4px; }
+  /* [ BEOBACHTEN ] is the chapter's main interaction — it must be a
+     comfortable thumb target, not a 20px strip. */
+  .puzzle-actions { flex-wrap:wrap; gap:var(--sp-xs); }
+  .puzzle-actions .ka-btn {
+    flex:1 1 auto; min-height:42px; padding:10px 12px;
+    display:inline-flex; align-items:center; justify-content:center;
+    touch-action:manipulation;
+  }
+  .hint-bar .ka-btn { min-height:34px; display:inline-flex; align-items:center; }
 }

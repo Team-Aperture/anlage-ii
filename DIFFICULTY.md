@@ -9,7 +9,7 @@ curve. From Chapter 1 the baseline is **4.5/10**, rising **+0.75 per chapter**.
 | Ch0 — Rückkehr            | ~2.0 (tutorial) | done | Symbol door — clues spell out the order |
 | Ch1 — Wartungssektor      | **4.5** | done | P1 pipe path ~4 · P2 dual-signal ~5. One shared 3-step hint ladder *per puzzle* (`HINT_MAX` in `chapter1.js`) — observation → relationship → method; either unit can voice the next step, so asking both no longer doubles the budget |
 | Ch2 — Wartungsgarten      | **5.25** | done | P1 Tau-Sequenz ~5 (order forced by the ambient shift; exactly one plant order works) · P2 Frostmuster ~5.5–6 (6 pre-carved walls + an 18-cut cap = the minimum possible; **81 valid layouts** remain, so it stays a multi-solution puzzle by design). One shared 4-step hint ladder per puzzle (`HINT_MAX` in `chapter2.js`) — observation → relationship → method → last resort, voiced by whichever of the three you ask |
-| Ch3 — Beobachtungssektor  | **6.0** | done | One multi-stage Belichtung puzzle (logic dials → spectrum match) under a draining exposure meter |
+| Ch3 — Beobachtungssektor  | **6.0** | done | BELICHTUNG, three observation stages: read the order a change happened in → infer which shutter follows / opposes / ignores the driver → rebuild a colour from its isolated channels. Every stage's answer is generated at runtime. Pressure is an **observation budget**, not a clock (`COST_OBSERVE` / `COST_WRONG` in `chapter3.js`): the first look at each stage is free, looking again or committing a wrong reading spends reserve, and reading/thinking/hints cost nothing. Running it out is overexposure — same stage, fresh recording, full reserve, no lost progress. One shared 3-step hint ladder **per stage** (`HINT_MAX`) |
 | Ch4 — Rätselsektor (Armin/B-RADF1SH) | **6.75** | done | Dual-projection maze (2D↔3D): warm-up ~5 (3×3×3, min 2 switches) · der Würfel ~7.5 (3×4×4 staircase, min 6 switches, budget 7) |
 | Ch5 — Fördersektor (T-FLON14) | **7.5** | done | FÖRDERLAUF: 20 rapid mixed micro-tasks (odd-one / match / tap-all / count / odd-colour) under one global clock (FL_TIME=60, −3s per miss). Rounds 11-20 mix look-alike filled/outline twins; odd-colour always uses distinct colours |
 | Ch6 — Dunkelkammer (ASP-1024) | **8.25** | done | BILDFORENSIK: one steganography puzzle — a 4-char code hidden in the blue channel (+18 over ±6 noise, math-clean at threshold); isolate R/G/B + invert + threshold, past a loud green decoy code |
@@ -40,10 +40,13 @@ second ~0.5 above, bracketing it — the chapter *average* is the number above.
    `FROST_FIXED` walls cut that to 144, and the 18-cut cap (the minimum any
    layout needs) to **81**. It is deliberately *not* unique — the chapter's
    dialogue leans on that. More fixed walls / a tighter cap → harder.
-5. **Time pressure (decay).** Ch3 Belichtung: an exposure meter drains while you
-   think; correct sensors refill it. Per-stage `STAGES[*].drain`, `REFILL`, and
-   `FAIL_FLOOR` in `chapter3.js` are the dials — faster drain / smaller refill =
-   harder. This raises difficulty without adding puzzle complexity.
+5. **Information budget (not time).** Ch3 BELICHTUNG charges for *looking*,
+   never for thinking: `COST_OBSERVE` (each replay after the first of a stage)
+   and `COST_WRONG` (a committed reading that doesn't hold) in `chapter3.js`.
+   Raising either, or shortening `BEAT`, makes the chapter harder by forcing
+   the player to get more out of a single viewing. Deliberately **not** a
+   decaying timer — that taught "click faster", which is the opposite of this
+   chapter's lesson. Anything that punishes reading belongs nowhere in Ch3.
 6. **Resource budget.** Ch4 Cubus: a hard cap on `MAZES.cubus.budget`
    (view-switches) in `chapter4.js`. The maze's minimum is 6 (BFS-verified);
    budget 7 = brutal, 8 = one scouting peek. Lower budget → harder.

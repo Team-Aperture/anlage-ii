@@ -16,7 +16,7 @@
 
   <header class="sys-bar">
     <span class="sys-text">KAPITEL 03 // <span class="accent-system">BEOBACHTUNGSSEKTOR</span></span>
-    <span class="sys-text" id="reactProgress">REAKTIVIERUNG: 18%</span>
+    <span class="sys-text" id="reactProgress">REAKTIVIERUNG: 24%</span>
   </header>
 
   <!-- TITLE CARD -->
@@ -31,7 +31,7 @@
     <div class="ch-title-text">
       <p class="ch-label sys-text">KAPITEL 03</p>
       <h1 class="ch-name">Beobachtungssektor</h1>
-      <p class="ch-subline">&bdquo;Wer alles sieht, sieht auch, dass es dunkel wird.&ldquo;</p>
+      <p class="ch-subline">&bdquo;Nicht schneller. Genauer.&ldquo;</p>
     </div>
   </div>
 
@@ -92,45 +92,35 @@
     <div class="puzzle-card bel-card">
       <div class="puzzle-card-accent bel-accent"></div>
       <div class="puzzle-header">
-        <p class="puzzle-label sys-text" id="belLabel">BEOBACHTUNGSARRAY // L-UX</p>
+        <p class="puzzle-label sys-text" id="belLabel">BEOBACHTUNGSARRAY // SEKTOR 03</p>
         <h2 class="puzzle-title">BELICHTUNG</h2>
-        <p class="puzzle-sub sys-text">KALIBRIERE, BEVOR DAS LICHT STIRBT — RICHTIGE SENSOREN GEBEN LICHT ZURÜCK</p>
+        <p class="puzzle-sub sys-text">BEOBACHTEN · VERSTEHEN · EINSTELLEN</p>
       </div>
 
-      <!-- Exposure meter -->
+      <!-- Observation budget. Not a clock: it only moves when you look
+           again or commit a reading that doesn't hold. -->
       <div class="bel-meter">
-        <span class="sys-text">BELICHTUNG</span>
+        <span class="sys-text">RESERVE</span>
         <div class="bel-meter-bar"><div class="bel-meter-fill" id="belMeter"></div></div>
         <span class="sys-text" id="belMeterPct">100%</span>
       </div>
 
       <div class="bel-stage sys-text" id="belStage">STUFE 1 / 3 — BLENDEN I</div>
 
-      <!-- Rules / clues -->
-      <div class="bel-rules" id="belRules"></div>
+      <!-- The observation window -->
+      <div class="bel-scope" id="belScope" role="img" aria-label="Beobachtungsfenster"></div>
 
-      <!-- Logic dials (stages 1-2) -->
-      <div class="bel-dials" id="belDials"></div>
+      <div class="bel-task sys-text" id="belTask"></div>
 
-      <!-- Spectrum (stage 3) -->
-      <div class="bel-spectrum hidden" id="belSpectrum">
-        <div class="bel-swatches">
-          <div class="bel-swatch-wrap">
-            <span class="sys-text">ZIEL</span>
-            <div class="bel-sw" id="belTarget"></div>
-          </div>
-          <div class="bel-swatch-wrap">
-            <span class="sys-text">DEINS</span>
-            <div class="bel-sw" id="belCurrent"></div>
-          </div>
-        </div>
-        <div class="bel-dials" id="belChannels"></div>
-      </div>
+      <!-- Answer controls, rebuilt per stage -->
+      <div class="bel-answer" id="belAnswer"></div>
 
-      <div class="puzzle-status sys-text" id="belStatus">BEREIT.</div>
+      <div class="puzzle-status sys-text" id="belStatus" role="status" aria-live="polite">BEREIT.</div>
 
       <div class="puzzle-actions">
-        <button class="ka-btn small" onclick="Chapter3.belReset()">[ STUFE ZURÜCKSETZEN ]</button>
+        <button class="ka-btn small" id="belObserveBtn">[ BEOBACHTEN ]</button>
+        <button class="ka-btn primary" id="belSubmitBtn">[ ÜBERNEHMEN ]</button>
+        <button class="ka-btn small" id="belResetBtn">[ EINSTELLUNG LÖSCHEN ]</button>
       </div>
     </div>
   </div>
@@ -144,7 +134,7 @@
       <div class="cc-title">SEKTOR 04 FREIGEGEBEN</div>
       <div class="cc-next">RÄTSELSEKTOR</div>
       <div class="cc-progress sys-text" id="ccProgress"></div>
-      <a class="ka-btn primary" href="../chapter4/chapter4.html">[ EINTRETEN ]</a>
+      <a class="ka-btn primary" id="ccEnter" href="../chapter4/chapter4.html">[ EINTRETEN ]</a>
       <a class="ka-btn small"   href="../index.html">[ HAUPTMENÜ ]</a>
     </div>
   </div>
