@@ -16,7 +16,7 @@
 
   <header class="sys-bar">
     <span class="sys-text">KAPITEL 02 // <span class="accent-system">WARTUNGSGARTEN</span></span>
-    <span class="sys-text" id="reactProgress">REAKTIVIERUNG: 8%</span>
+    <span class="sys-text" id="reactProgress">REAKTIVIERUNG: 12%</span>
   </header>
 
   <!-- TITLE CARD -->
@@ -78,13 +78,13 @@
   <!-- HINT BAR (3 chars: r3mi / vtgm / froschi) -->
   <div class="hint-bar hidden" id="hintBar">
     <span class="sys-text hint-label" id="hintCount">HINWEISE: 4 VERFÜGBAR</span>
-    <button class="ka-btn small" id="hintBtnR3MI" onclick="Chapter2.useHint('r3mi')">
+    <button class="ka-btn small hint-btn" id="hintBtnR3MI" onclick="Chapter2.useHint('r3mi')">
       <span class="accent-r3mi">[ R-3MI ]</span>
     </button>
-    <button class="ka-btn small" id="hintBtnVTGM" onclick="Chapter2.useHint('vtgm')">
+    <button class="ka-btn small hint-btn" id="hintBtnVTGM" onclick="Chapter2.useHint('vtgm')">
       <span class="accent-vtgm">[ V-TGM ]</span>
     </button>
-    <button class="ka-btn small" id="hintBtnFroschi" onclick="Chapter2.useHint('froschi')">
+    <button class="ka-btn small hint-btn" id="hintBtnFroschi" onclick="Chapter2.useHint('froschi')">
       <span class="accent-froschi">[ F-RØ5CHI ]</span>
     </button>
   </div>
@@ -183,9 +183,9 @@
     <div class="puzzle-card frost-card">
       <div class="puzzle-card-accent frost-accent"></div>
       <div class="puzzle-header">
-        <p class="puzzle-label sys-text">EIS-TAFEL // F-RØ5CHIs MANN</p>
+        <p class="puzzle-label sys-text">EIS-TAFEL // HANDGESCHNITZT</p>
         <h2 class="puzzle-title">FROSTMUSTER</h2>
-        <p class="puzzle-sub sys-text">SECHS 4ER-BEREICHE · BRUNNEN ALLEIN · PINKE KANÄLE = FEST · MAX 18</p>
+        <p class="puzzle-sub sys-text">SECHS 4ER-BEREICHE · BRUNNEN ALLEIN · PINKE KANÄLE = EINGESCHNITZT · MAX 18</p>
       </div>
 
       <!-- 5×5 ice board (cells + clickable channels) built by chapter2.js -->
@@ -208,7 +208,7 @@
       <div class="cc-title">SEKTOR 03 FREIGEGEBEN</div>
       <div class="cc-next">BEOBACHTUNGSSEKTOR</div>
       <div class="cc-progress sys-text" id="ccProgress"></div>
-      <a class="ka-btn primary" href="../chapter3/chapter3.html">[ EINTRETEN ]</a>
+      <a class="ka-btn primary" id="ccEnter" href="../chapter3/chapter3.html">[ EINTRETEN ]</a>
       <a class="ka-btn small"   href="../index.html">[ HAUPTMENÜ ]</a>
     </div>
   </div>
