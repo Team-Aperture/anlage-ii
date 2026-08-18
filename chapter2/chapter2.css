@@ -92,6 +92,32 @@
     linear-gradient(0deg, rgba(0,0,0,0.5) 0%, transparent 22%);
 }
 
+/* The middle rung of the chapter's progress bar: ice retreating, water
+   starting, green coming back — visibly between frozen and restored. */
+.scene-ph[data-scene="partial-wide"] {
+  background:
+    radial-gradient(ellipse at 50% 50%, #1a3a3c 0%, #08191c 70%),
+    linear-gradient(180deg, #0c2022 0%, #05110f 100%);
+}
+.scene-ph[data-scene="partial-wide"]::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    /* pavilion, a little clearer than before */
+    radial-gradient(ellipse 30% 40% at 50% 55%, rgba(24,54,52,0.4) 0%, transparent 60%),
+    radial-gradient(circle 19px at 50% 56%, rgba(232,74,140,0.55) 0%, transparent 100%),
+    /* meltwater running down the glass */
+    linear-gradient(180deg, rgba(214,242,255,0.10) 0%, transparent 26%, transparent 58%, rgba(127,184,212,0.14) 100%),
+    /* beds starting to green up */
+    radial-gradient(ellipse 9% 5% at 30% 74%, rgba(70,160,105,0.36) 0%, transparent 100%),
+    radial-gradient(ellipse 9% 5% at 50% 77%, rgba(80,175,110,0.36) 0%, transparent 100%),
+    radial-gradient(ellipse 9% 5% at 70% 74%, rgba(70,160,105,0.36) 0%, transparent 100%),
+    /* the first water back in the basin */
+    radial-gradient(ellipse 30% 5% at 50% 88%, rgba(127,184,212,0.14) 0%, transparent 100%),
+    linear-gradient(180deg, rgba(0,0,0,0.66) 0%, transparent 18%),
+    linear-gradient(0deg, rgba(0,0,0,0.55) 0%, transparent 18%);
+}
+
 .scene-ph[data-scene="thawed-wide"] {
   background:
     radial-gradient(ellipse at 50% 50%, #1c4030 0%, #0a1f16 70%),
@@ -526,10 +552,28 @@ button.ka-btn:disabled { opacity:.3; pointer-events:none; }
 .frost-ch {
   border: none; background: transparent; cursor: pointer; padding: 0;
   position: relative;
+  --ch-grab: 8px;
+  touch-action: manipulation;   /* no double-tap zoom delay on the board */
+}
+/* The channel READS as a thin line but must not be a thin tap target: the
+   gap track is only ~10px wide. This invisible pad grows the target across
+   the thin axis and pulls it in by the same amount along the long axis, so
+   the enlarged areas tile the board edge-to-edge without ever overlapping —
+   a tap near a corner still resolves to exactly one channel. */
+.frost-ch::before {
+  content: ''; position: absolute; z-index: 1;
+}
+.frost-ch-v::before {
+  top: var(--ch-grab); bottom: var(--ch-grab);
+  left: calc(-1 * var(--ch-grab)); right: calc(-1 * var(--ch-grab));
+}
+.frost-ch-h::before {
+  left: var(--ch-grab); right: var(--ch-grab);
+  top: calc(-1 * var(--ch-grab)); bottom: calc(-1 * var(--ch-grab));
 }
 .frost-ch::after {
   content: ''; position: absolute; border-radius: 2px;
-  background: transparent; transition: all var(--t-fast);
+  background: transparent; transition: all var(--t-fast); z-index: 2;
 }
 .frost-ch-v::after { left: 50%; top: 6%;  transform: translateX(-50%); width: 3px;  height: 88%; }
 .frost-ch-h::after { top: 50%; left: 6%;  transform: translateY(-50%); height: 3px; width: 88%; }
@@ -570,6 +614,8 @@ button.ka-btn:disabled { opacity:.3; pointer-events:none; }
   .plant-state { font-size: 24px; }
   .plant-name { font-size: 9px; }
   .frost-board { --fc-cell: 38px; --fc-gap: 10px; }
+  /* thinner gap tracks on a phone → grab a bit more around each channel */
+  .frost-ch { --ch-grab: 7px; }
   .frost-well::after { font-size: 18px; }
 
   .hint-bar {
