@@ -564,16 +564,29 @@ const Chapter3 = (() => {
   }
 
   const TASK_TEXT = {
-    1: 'In welcher Reihenfolge haben die Blenden reagiert?',
+    1: 'Das Array pulst im Gleichtakt — bis auf eine Ausnahme. Welche Blende ist wann ausgeschert?',
     2: 'Wie verhalten sich B, C und D zu A?',
-    3: 'Aus welchen Kanalanteilen besteht das Zielspektrum?',
+    3: 'Aus den Eichmessungen folgt eine Regel. Wende sie auf die neue Messung an.',
   };
 
   // ─── The observable event for each stage (generated per attempt) ───
   function buildEvent(stage) {
     if (stage === 1) {
-      // three shutters flare one after another, in a random order
-      return { order: shuffle([0, 1, 2]) };          // order[i] = shutter index flaring at beat i
+      // The whole array pulses in unison; exactly one blend drops out of step
+      // for exactly one beat. Nothing has to be memorised — it has to be SEEN.
+      // Rerolled until the rhythm actually reads as a rhythm, and never on the
+      // opening beat (the player is still settling into the recording).
+      const BEATS = 6;
+      let unison, tries = 0;
+      do {
+        unison = Array.from({ length: BEATS }, () => Math.random() < 0.5);
+        tries++;
+      } while (tries < 60 && transitions(unison) < 2);
+      return {
+        unison,
+        deviant: randInt(0, 3),          // which blend breaks ranks
+        deviantBeat: randInt(1, BEATS - 1),
+      };
     }
     if (stage === 2) {
       // A drives; the other three each take one role. The event is only
@@ -589,8 +602,37 @@ const Chapter3 = (() => {
       } while (tries < 60 && !readable(drive, noise, MIN_DIFF));
       return { drive, roles: shuffle(['follow', 'against', 'free']), noise };
     }
-    // stage 3 — a target colour, revealed one channel at a time
-    return { target: [randInt(1, 5), randInt(0, 5), randInt(0, 5)] };
+    // Stage 3 — the array answers a stimulus by RANK, not by position: one
+    // channel always takes the strongest of the three inputs, one the middle,
+    // one the weakest. Which channel takes which rank is what the calibration
+    // passes reveal. The player then applies that rule to a stimulus they have
+    // never seen a response for, so nothing can be copied.
+    const rank = shuffle([0, 1, 2]);      // rank[channel] → 0 strongest · 2 weakest
+    const examples = [distinctLevels(), distinctLevels()];
+    let target, tries = 0;
+    do { target = distinctLevels(); tries++; }
+    while (tries < 60 && examples.some(e => sameMultiset(e, target)));
+    return { rank, examples, target };
+  }
+
+  /** Three different levels, so "strongest / middle / weakest" is well defined. */
+  function distinctLevels() {
+    const pool = shuffle([0, 1, 2, 3, 4, 5]).slice(0, 3);
+    return shuffle(pool);
+  }
+  function sameMultiset(a, b) {
+    const s = x => x.slice().sort().join(',');
+    return s(a) === s(b);
+  }
+  /** Apply the array's rank rule to a stimulus. */
+  function rankResponse(levels, rank) {
+    const desc = levels.slice().sort((x, y) => y - x);   // strongest first
+    return rank.map(r => desc[r]);
+  }
+  function transitions(bits) {
+    let n = 0;
+    for (let i = 1; i < bits.length; i++) if (bits[i] !== bits[i-1]) n++;
+    return n;
   }
 
   /**
@@ -608,7 +650,7 @@ const Chapter3 = (() => {
   }
 
   function blankAnswer(stage) {
-    if (stage === 1) return [0, 0, 0];                 // 0 = not set, else 1..3
+    if (stage === 1) return { blend: null, beat: null };
     if (stage === 2) return [null, null, null];        // role per B, C, D
     return [0, 0, 0];                                  // RGB 0..5
   }
@@ -630,30 +672,36 @@ const Chapter3 = (() => {
     setBelStatus('AUFNAHME LÄUFT…', '');
     playSound('ch3_observe.mp3');
 
+    // Frames may hold longer than one beat — a calibration pass carries far
+    // more to read than a single pulse, and nothing here should reward haste.
     const beats = buildBeats(bel.stage, bel.event);
-    beats.forEach((frame, i) => later(() => {
-      renderScope(frame);
-      tone({ freq: 300 + i * 40, type:'sine', dur: 0.09, vol: 0.07 });
-    }, i * BEAT));
+    let at = 0;
+    beats.forEach((frame, i) => {
+      const start = at;
+      later(() => {
+        renderScope(frame);
+        tone({ freq: 300 + i * 40, type:'sine', dur: 0.09, vol: 0.07 });
+      }, start);
+      at += BEAT * (frame.hold || 1);
+    });
 
     later(() => {
       renderScope(null);                       // back to neutral
       bel.busy = false;
       setObserveLabel();
       setBelStatus('AUFNAHME BEENDET. STELL DAS ARRAY EIN.', '');
-    }, beats.length * BEAT + 260);
+    }, at + 260);
   }
 
   /** Turn an event into the frames the scope shows, one per beat. */
   function buildBeats(stage, ev) {
     if (stage === 1) {
-      // one shutter at a time, plus a blank beat between flares
-      const frames = [];
-      ev.order.forEach(idx => {
-        frames.push({ kind:'shutters', levels:[0,0,0].map((_, i) => i === idx ? 5 : 1), flare: idx });
-        frames.push({ kind:'shutters', levels:[1,1,1], flare: -1 });
-      });
-      return frames;
+      return ev.unison.map((on, beat) => ({
+        kind: 'pulse',
+        on: [0,1,2,3].map(b => (b === ev.deviant && beat === ev.deviantBeat) ? !on : on),
+        beat: beat + 1,
+        total: ev.unison.length,
+      }));
     }
     if (stage === 2) {
       return ev.drive.map((a, beat) => {
@@ -664,15 +712,17 @@ const Chapter3 = (() => {
         return { kind:'bars', levels: vals, beat: beat + 1, total: ev.drive.length };
       });
     }
-    // stage 3 — isolate each channel, then show the mixed target under a
-    // varying exposure so the eye alone can't be trusted
-    const t = ev.target;
-    return [
-      { kind:'channel', channel:0, level:t[0] },
-      { kind:'channel', channel:1, level:t[1] },
-      { kind:'channel', channel:2, level:t[2] },
-      { kind:'mix', rgb:t, exposure: 0.55 + Math.random() * 0.4 },
-    ];
+    // Stage 3 — the calibration passes. Each shows a stimulus and the response
+    // it produced. The stimulus the player must answer for is NOT in here; it
+    // sits in the answer panel, so this is a rule to learn, not a value to copy.
+    return ev.examples.map((levels, i) => ({
+      kind: 'calib',
+      idx: i + 1,
+      total: ev.examples.length,
+      levels,
+      out: rankResponse(levels, ev.rank),
+      hold: 3,                                  // a pass needs real reading time
+    }));
   }
 
   // ─── Scope rendering ────────────────────────────────────────────
@@ -685,11 +735,14 @@ const Chapter3 = (() => {
       return;
     }
 
-    if (frame.kind === 'shutters') {
-      scope.innerHTML = `<div class="bel-shutters">` + frame.levels.map((lv, i) =>
-        `<div class="bel-shutter ${i === frame.flare ? 'flare' : ''}">
-           <div class="bel-shutter-glow" style="opacity:${0.12 + lv * 0.17}"></div>
-           <span class="bel-shutter-name sys-text">${'ABC'[i]}</span>
+    if (frame.kind === 'pulse') {
+      scope.innerHTML =
+        `<div class="bel-beat sys-text">TAKT ${frame.beat} / ${frame.total}</div>` +
+        `<div class="bel-shutters">` + frame.on.map((on, i) =>
+        `<div class="bel-shutter ${on ? 'flare' : ''}">
+           <div class="bel-shutter-glow" style="opacity:${on ? 0.95 : 0.08}"></div>
+           <span class="bel-shutter-state sys-text">${on ? '●' : '○'}</span>
+           <span class="bel-shutter-name sys-text">${'ABCD'[i]}</span>
          </div>`).join('') + `</div>`;
       return;
     }
@@ -705,25 +758,43 @@ const Chapter3 = (() => {
       return;
     }
 
-    if (frame.kind === 'channel') {
-      const names = ['ROT', 'GRÜN', 'BLAU'];
-      const cols  = ['#e0483c', '#3ec27a', '#3a8fd4'];
-      scope.innerHTML =
-        `<div class="bel-beat sys-text">KANAL ISOLIERT</div>` +
-        `<div class="bel-chan" style="--chan:${cols[frame.channel]}">
-           <span class="bel-chan-name sys-text">${names[frame.channel]}</span>
-           <div class="bel-bar wide">${segs(frame.level, 5)}</div>
-           <span class="bel-chan-val sys-text">${frame.level} / 5</span>
-         </div>`;
-      return;
-    }
-
-    // mixed target, deliberately shown at an unreliable exposure
-    const e = frame.exposure;
-    const c = frame.rgb.map(v => Math.round(v * 51 * e));
+    // A calibration pass: a stimulus and the response it produced. Both sides
+    // are readable without colour (countable segments), because the whole
+    // point is to work out the relation between them.
     scope.innerHTML =
-      `<div class="bel-beat sys-text">MISCHBILD — BELICHTUNG ${Math.round(e * 100)}%</div>` +
-      `<div class="bel-mix" style="background:rgb(${c[0]},${c[1]},${c[2]})"></div>`;
+      `<div class="bel-beat sys-text">EICHMESSUNG ${frame.idx} / ${frame.total}</div>` +
+      `<div class="bel-calib">
+         <div class="bel-calib-side">
+           <span class="bel-calib-cap sys-text">REIZ</span>
+           ${stimulusHTML(frame.levels)}
+         </div>
+         <div class="bel-calib-arrow sys-text">&rarr;</div>
+         <div class="bel-calib-side">
+           <span class="bel-calib-cap sys-text">ANTWORT</span>
+           ${responseHTML(frame.out)}
+         </div>
+       </div>`;
+  }
+
+  const CH_NAMES = ['ROT', 'GRÜN', 'BLAU'];
+  const CH_COLS  = ['#e0483c', '#3ec27a', '#3a8fd4'];
+
+  function stimulusHTML(levels) {
+    return `<div class="bel-stim">` + levels.map((lv, i) =>
+      `<div class="bel-stim-item">
+         <span class="bel-stim-name sys-text">${['I','II','III'][i]}</span>
+         <div class="bel-bar">${segs(lv, 5)}</div>
+       </div>`).join('') + `</div>`;
+  }
+
+  function responseHTML(out) {
+    const c = out.map(v => v * 51);
+    return `<div class="bel-resp">` + out.map((lv, i) =>
+      `<div class="bel-resp-item" style="--chan:${CH_COLS[i]}">
+         <span class="bel-resp-name sys-text">${CH_NAMES[i]}</span>
+         <div class="bel-bar chan">${segs(lv, 5)}</div>
+       </div>`).join('') +
+      `<div class="bel-mix small" style="background:rgb(${c[0]},${c[1]},${c[2]})"></div></div>`;
   }
 
   function segs(n, total) {
@@ -738,18 +809,35 @@ const Chapter3 = (() => {
     if (!host || !bel) return;
 
     if (bel.stage === 1) {
-      host.innerHTML = `<div class="bel-dials">` + [0,1,2].map(i =>
-        `<div class="bel-dial">
-           <label class="sys-text">BLENDE ${'ABC'[i]}</label>
-           <div class="control-row">
-             <button class="control-btn" data-a="${i}" data-d="-1" aria-label="Blende ${'ABC'[i]} zurück">−</button>
-             <span class="bel-dial-val">${bel.answer[i] || '–'}</span>
-             <button class="control-btn" data-a="${i}" data-d="1" aria-label="Blende ${'ABC'[i]} vor">+</button>
+      const total = bel.event.unison.length;
+      const beats = Array.from({ length: total }, (_, i) => i + 1);
+      host.innerHTML =
+        `<div class="bel-roles">
+           <div class="bel-role-row">
+             <span class="bel-role-name sys-text">BLENDE</span>
+             <div class="bel-role-opts compact">` + [0,1,2,3].map(i =>
+               `<button class="bel-role-btn ${bel.answer.blend === i ? 'on' : ''}"
+                        data-pick="blend" data-v="${i}"
+                        aria-label="Blende ${'ABCD'[i]} ist ausgeschert"
+                        aria-pressed="${bel.answer.blend === i}">${'ABCD'[i]}</button>`).join('') +
+        `    </div>
            </div>
-           <span class="bel-dial-sub sys-text">Position</span>
-         </div>`).join('') + `</div>`;
-      host.querySelectorAll('.control-btn').forEach(b =>
-        b.addEventListener('click', () => nudge(+b.dataset.a, +b.dataset.d, 0, 3)));
+           <div class="bel-role-row">
+             <span class="bel-role-name sys-text">TAKT</span>
+             <div class="bel-role-opts compact">` + beats.map(n =>
+               `<button class="bel-role-btn ${bel.answer.beat === n ? 'on' : ''}"
+                        data-pick="beat" data-v="${n}"
+                        aria-label="Im Takt ${n}"
+                        aria-pressed="${bel.answer.beat === n}">${n}</button>`).join('') +
+        `    </div>
+           </div>
+         </div>`;
+      host.querySelectorAll('.bel-role-btn').forEach(b =>
+        b.addEventListener('click', () => {
+          if (!bel || bel.busy || S.solved) return;
+          bel.answer[b.dataset.pick] = +b.dataset.v;
+          renderAnswer();
+        }));
       return;
     }
 
@@ -774,20 +862,25 @@ const Chapter3 = (() => {
       return;
     }
 
-    const names = ['ROT', 'GRÜN', 'BLAU'];
+    // The stimulus to answer for stays on screen the whole time — the player
+    // is meant to transfer a rule, not to remember three numbers.
     const cur = `rgb(${bel.answer[0]*51},${bel.answer[1]*51},${bel.answer[2]*51})`;
     host.innerHTML =
-      `<div class="bel-swatches">
-         <div class="bel-swatch-wrap"><span class="sys-text">DEINE MISCHUNG</span>
+      `<div class="bel-newstim">
+         <span class="bel-calib-cap sys-text">NEUE MESSUNG — REIZ</span>
+         ${stimulusHTML(bel.event.target)}
+       </div>
+       <div class="bel-swatches">
+         <div class="bel-swatch-wrap"><span class="sys-text">DEINE ANTWORT</span>
            <div class="bel-sw" style="background:${cur}"></div></div>
        </div>
        <div class="bel-dials">` + [0,1,2].map(i =>
         `<div class="bel-dial">
-           <label class="sys-text">${names[i]}</label>
+           <label class="sys-text">${CH_NAMES[i]}</label>
            <div class="control-row">
-             <button class="control-btn" data-a="${i}" data-d="-1" aria-label="${names[i]} verringern">−</button>
+             <button class="control-btn" data-a="${i}" data-d="-1" aria-label="${CH_NAMES[i]} verringern">−</button>
              <span class="bel-dial-val">${bel.answer[i]}</span>
-             <button class="control-btn" data-a="${i}" data-d="1" aria-label="${names[i]} erhöhen">+</button>
+             <button class="control-btn" data-a="${i}" data-d="1" aria-label="${CH_NAMES[i]} erhöhen">+</button>
            </div>
            <div class="bel-bar mini">${segs(bel.answer[i], 5)}</div>
          </div>`).join('') + `</div>`;
@@ -826,11 +919,8 @@ const Chapter3 = (() => {
     const a = bel.answer, ev = bel.event;
 
     if (bel.stage === 1) {
-      if (a.some(v => !v)) return { ok:false, why:'ALLE DREI BLENDEN BRAUCHEN EINE POSITION.' };
-      if (new Set(a).size !== 3) return { ok:false, why:'JEDE POSITION NUR EINMAL.' };
-      // answer[i] is the position (1-based) the player assigns to shutter i
-      const ok = ev.order.every((shutterIdx, beat) => a[shutterIdx] === beat + 1);
-      return { ok };
+      if (a.blend == null || a.beat == null) return { ok:false, why:'BLENDE UND TAKT AUSWÄHLEN.' };
+      return { ok: a.blend === ev.deviant && a.beat === ev.deviantBeat + 1 };
     }
 
     if (bel.stage === 2) {
@@ -838,7 +928,8 @@ const Chapter3 = (() => {
       return { ok: ev.roles.every((role, i) => a[i] === role) };
     }
 
-    return { ok: ev.target.every((v, i) => a[i] === v) };
+    const want = rankResponse(ev.target, ev.rank);
+    return { ok: want.every((v, i) => a[i] === v) };
   }
 
   function stageSolved() {
@@ -1029,15 +1120,15 @@ const Chapter3 = (() => {
   // ═══════════════════════════════════════════════════════════════
   const HINTS = {
     stage1: [
-      { lux:  { t:'„Du beobachtest drei Blenden."' },
-        r3mi: { t:'„Drei Blenden, und sie machen nicht dasselbe. Das ist schon die halbe Antwort."' },
-        vtgm: { t:'"Only one shutter is bright at a time."', s:'Nur eine Blende ist gleichzeitig hell.' } },
-      { lux:  { t:'„Nicht wie hell. Wann."' },
-        r3mi: { t:'„Die Helligkeit ist dieselbe. Der Zeitpunkt nicht."' },
-        vtgm: { t:'"The information is the sequence, not the level."', s:'Die Information ist die Reihenfolge, nicht die Höhe.' } },
-      { lux:  { t:'„Erste, zweite, dritte. Mehr fragt das Array nicht."' },
-        r3mi: { t:'„Trag einfach ein, welche zuerst dran war, welche danach, welche zuletzt."' },
-        vtgm: { t:'"Assign 1 to the shutter that flared first, 2 to the next, 3 to the last."', s:'Gib der zuerst aufleuchtenden Blende die 1, der nächsten die 2, der letzten die 3.' } },
+      { lux:  { t:'„Sie machen alle dasselbe."' },
+        r3mi: { t:'„Vier Blenden, ein Takt. Ehrlich gesagt ganz hübsch anzuschauen."' },
+        vtgm: { t:'"The array pulses as one. That is the baseline."', s:'Das Array pulst als eines. Das ist die Grundlinie.' } },
+      { lux:  { t:'„Fast alle."' },
+        r3mi: { t:'„Einmal hat einer nicht mitgemacht. Nur einmal."' },
+        vtgm: { t:'"Exactly one blend is out of step, on exactly one beat."', s:'Genau eine Blende ist aus dem Takt, in genau einem Takt.' } },
+      { lux:  { t:'„Du musst dir nichts merken. Du musst nur den einen Moment erwischen, in dem die Reihe nicht mehr stimmt."' },
+        r3mi: { t:'„Nicht auf eine einzelne Blende starren. Auf die Reihe schauen — der Ausreißer springt raus."' },
+        vtgm: { t:'"Watch all four at once and wait for the row to break. Note which one broke it and when."', s:'Schau alle vier gleichzeitig an und warte, bis die Reihe bricht. Merk dir, welche sie gebrochen hat und wann.' } },
     ],
     stage2: [
       { lux:  { t:'„Du beobachtest vier Anzeigen."' },
@@ -1052,14 +1143,14 @@ const Chapter3 = (() => {
     ],
     stage3: [
       { lux:  { t:'„Farbe ist selten nur Farbe."' },
-        r3mi: { t:'„Das Mischbild sieht jedes Mal anders aus. Das kann nicht die Wahrheit sein."' },
-        vtgm: { t:'"The mixed image is shown at a changing exposure. It is not reliable."', s:'Das Mischbild wird mit wechselnder Belichtung gezeigt. Es ist nicht verlässlich.' } },
-      { lux:  { t:'„Die einzelnen Kanäle lügen nicht."' },
-        r3mi: { t:'„Drei Balken kamen einzeln. Die waren eindeutig."' },
-        vtgm: { t:'"Each channel is shown alone with its exact level. Use those, not the mix."', s:'Jeder Kanal wird einzeln mit seinem genauen Wert gezeigt. Nimm die, nicht die Mischung.' } },
-      { lux:  { t:'„Du musst nichts treffen. Du musst nur abschreiben, was da stand."' },
-        r3mi: { t:'„Drei Zahlen. Sie standen wörtlich daneben."' },
-        vtgm: { t:'"Set each channel to the value its isolated frame displayed."', s:'Stell jeden Kanal auf den Wert, den sein Einzelbild angezeigt hat.' } },
+        r3mi: { t:'„Die Zahlen im Reiz und die Zahlen in der Antwort sind dieselben. Nur woanders."' },
+        vtgm: { t:'"The response uses the same three values as the stimulus. Only the order differs."', s:'Die Antwort verwendet dieselben drei Werte wie der Reiz. Nur die Zuordnung ist anders.' } },
+      { lux:  { t:'„Nicht welcher Regler. Welcher Rang."' },
+        r3mi: { t:'„Es liegt nicht daran, welcher Balken es war — sondern ob er der größte, der mittlere oder der kleinste war."' },
+        vtgm: { t:'"Sort each stimulus by size. Each channel always answers to the same rank."', s:'Sortiere jeden Reiz nach Größe. Jeder Kanal antwortet immer auf denselben Rang.' } },
+      { lux:  { t:'„Wenn du weißt, welcher Kanal den größten Wert nimmt, kennst du auch die anderen beiden."' },
+        r3mi: { t:'„Zwei Eichmessungen reichen, um es sicher zu wissen. Dann dasselbe auf die neue Messung anwenden."' },
+        vtgm: { t:'"Determine which channel takes the strongest, middle and weakest input, then apply that to the new stimulus on screen."', s:'Bestimme, welcher Kanal den stärksten, mittleren und schwächsten Eingang nimmt, und wende das auf den neuen Reiz auf dem Schirm an.' } },
     ],
   };
 
