@@ -68,7 +68,7 @@ const Chapter7 = (() => {
       title: 'KA-II // Kapitel 7 — Vexiersektor',
       num: '07',
       sector: 'VEXIERSEKTOR',
-      reactPct: 64,
+      reactPct: 82,
       name: 'Vexiersektor',
       subline: '„Das Offensichtliche ist immer die Falle.“',
       emblemDeco: '<div class="ch7-grin"></div>',
@@ -427,7 +427,7 @@ const Chapter7 = (() => {
   function solveVex() {
     document.getElementById('vexModal').classList.add('hidden');
     CH.showHintBar(false);
-    CH.setProgress(76);
+    CH.setProgress(91);
     GameEngine.dialogue.load([
       { speaker:'SYSTEM', text:'VEXIERSCHLOSS ENTRIEGELT. VEXIERSEKTOR FREIGEGEBEN.' },
       { speaker:'FAX-N',  text:'„…du hast es geknackt. Mit LOGIK. Nicht mit Glück. Weißt du, wie selten das ist?"' },

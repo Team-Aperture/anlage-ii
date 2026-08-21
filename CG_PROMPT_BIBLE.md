@@ -603,50 +603,52 @@ Mood: energetic, warm, perpetual motion.
 ---
 
 # ═══════════════════════════════════════════════════════════════
-# KAPITEL 6 — DUNKELKAMMER (Gast: ASP-1024)
+# KAPITEL 6 — VERSUCHSKAMMER (Gast: ASP-1024)
 # ═══════════════════════════════════════════════════════════════
 
-## ch6_darkroom.png
-**Dateipfad:** `chapter6/cg/ch6_darkroom.png`
-**Zweck:** Foto-Dunkelkammer / Bildforensik-Labor
+## ch6_chamber.png
+**Dateipfad:** `chapter6/cg/ch6_chamber.png`
+**Zweck:** Versuchskammer / Blackbox-Labor
 
 ```
-[STYLE ANCHOR — near-black darkroom, faint grey]
+[STYLE ANCHOR — near-black lab, cold instrument grey]
 
-Scene: A photographic darkroom / image-forensics lab, almost completely
-dark. Rows of dead screens. Photo prints hang on lines from the ceiling,
-light-tight curtains everywhere. A faint cold GREY (#c7ccd6) safelight.
-It smells (visually) of chemistry and patience.
+Scene: A sealed test chamber, very dark — dark because every instrument
+emits exactly as much light as it takes to read it, not because anyone is
+developing photographs. In the centre, on a low plinth, a featureless matt
+black cube the size of a crate: no seams, no display, no handle, one small
+pale status ring on its front face. It is humming. Around it: instrument
+racks with rows of tiny indicator lights, a diagnostics terminal showing a
+dense table of short records, a workbench with test cables and three empty
+cups, a rack of numbered test cartridges, black glass panelling.
 
-Interactive objects:
-1. An EXPOSED PLATE under glass, center — a single grainy photographic
-   plate on a lit stand (target: ~50% from left, ~50% from top). THIS IS
-   THE PUZZLE OBJECT; faint grey glow.
-2. An IMAGE ARCHIVE shelf of prints, LEFT (target: ~14% from left, ~42% top)
-3. A small LOGBOOK on a stand, RIGHT (target: ~82% from left, ~58% from top)
+No photographs, no hanging prints, no chemistry, no darkroom equipment.
+Nothing in the room explains what the black cube does.
 
-Mood: hushed, secretive, monochrome. Everything hidden, nothing loud.
-The grey safelight is the only color.
+Mood: analytical, controlled, slightly eerie. Cold grey-white light
+(#c7ccd6) against near-black. Wide shot, cube dead centre.
 ```
 
 ---
 
 ## ch6_asp.png
 **Dateipfad:** `chapter6/cg/ch6_asp.png`
-**Zweck:** ASP-1024 erscheint — stiller grauer Maus-Roboter
+**Zweck:** ASP-1024 bei der Arbeit — grauer Maus-Roboter, mitten im Versuch
 
 ```
-[STYLE ANCHOR — darkroom, with character]
+[STYLE ANCHOR — test chamber, with character]
 
-Scene: The darkroom, with ASP-1024 present — a small, still, silent
-maintenance robot shaped like a MOUSE, light grey/white metallic body
-(#c7ccd6), big round ears, a tiny nose, whiskers, and two small round
-camera eyes glowing soft pale grey-white. About mouse/cat-sized. Sitting
-perfectly motionless before a black screen, having noticed you long ago.
+Scene: The test chamber, with ASP-1024 present — a small maintenance robot
+shaped like a MOUSE, light grey/white metallic body (#c7ccd6), big round
+ears, a tiny nose, whiskers, and two small round camera eyes glowing soft
+pale grey-white. About mouse/cat-sized. Standing at a lit console beside
+the sealed black cube, one paw mid-way through entering an input, head
+turned a little toward the viewer as if briefly looking up from work.
 
-Position ASP-1024 ~50% from left, ~54% from top. Minimal glow. Mood:
-profound stillness, quiet legend, the silence of someone who already
-knows everything.
+Position ASP-1024 ~50% from left, ~54% from top. Console glow on the face
+and forepaws. Mood: calm, methodical, unhurried, quietly friendly — someone
+who has run an absurd number of tests and is about to run one more. NOT
+mysterious, NOT motionless, NOT a silent oracle.
 ```
 
 ---
@@ -873,7 +875,7 @@ Variants to make later:
 - **Generation priority (most-seen first):**
   1. The **dim/establishing** scene of each chapter (ch1_hall_empty,
      ch2_garden_frozen, ch3_observation, ch4_vault, ch5_trail,
-     ch6_darkroom, ch7_vexier, ch8_archive, ch9_chamber, ch0_entrance)
+     ch6_chamber, ch7_vexier, ch8_archive, ch9_chamber, ch0_entrance)
   2. The **guest-present** scene of each chapter (ch3_lux, ch4_bradfish,
      ch5_tflon, ch6_asp, ch7_faxn, ch8_agn, ch2_pavilion)
   3. The **variant/transition** scenes (ch1_room/corridor/door_open,

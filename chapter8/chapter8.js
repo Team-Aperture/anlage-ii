@@ -39,7 +39,7 @@ const Chapter8 = (() => {
       title: 'KA-II // Kapitel 8 — Archivsektor',
       num: '08',
       sector: 'ARCHIVSEKTOR',
-      reactPct: 76,
+      reactPct: 91,
       name: 'Archivsektor',
       subline: '„Ich habe alles aufgeschrieben. Auch das, was sie vergessen wollten.“',
       emblemDeco: '<div class="ch-eye"></div>',

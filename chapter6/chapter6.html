@@ -3,68 +3,59 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>KA-II // Kapitel 6 — Dunkelkammer</title>
+  <title>KA-II // Kapitel 6 — Versuchskammer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Barlow:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/global.css?v=20260613">
   <link rel="stylesheet" href="../css/chapter.css?v=20260613">
-  <link rel="stylesheet" href="chapter6.css?v=20260613">
+  <link rel="stylesheet" href="chapter6.css?v=20260821">
 </head>
 <body class="chapter-page">
 
-  <!-- The shared chrome (sys-bar, title card, scene, choices, hint bar,
-       chapter-complete) is built by GameEngine.chapter.build() in chapter6.js.
-       Only the chapter's own puzzle modal lives here. -->
+  <!-- The shared chrome (sys-bar, title card, scene, robots, choices, hint bar,
+       completion card) is built by GameEngine.chapter.build() in chapter6.js.
+       Below: the Blackbox console and the Versuchsprotokoll. -->
 
   <!-- ════════════════════════════════════════════════════════════
-       BILDFORENSIK — steganography (canvas channels + threshold)
+       DIE BLACKBOX — input in, output out, nothing else
        ════════════════════════════════════════════════════════════ -->
-  <div class="puzzle-modal hidden" id="stegModal">
-    <div class="puzzle-card steg-card" id="stegCard">
+  <div class="puzzle-modal hidden" id="bbModal">
+    <div class="puzzle-card bb-card">
       <div class="puzzle-card-accent"></div>
       <div class="puzzle-header">
-        <p class="puzzle-label sys-text">BILDFORENSIK // ASP-1024</p>
-        <h2 class="puzzle-title">DAS VERSTECKTE BILD</h2>
-        <p class="puzzle-sub sys-text">VIER SPALTEN · KANAL · INVERT · FLIP · SCHWELLE</p>
+        <p class="puzzle-label sys-text">VERSUCHSREIHE 1024 // ASP-1024</p>
+        <h2 class="puzzle-title" id="bbTitle">DIE BLACKBOX</h2>
+        <p class="puzzle-sub sys-text" id="bbSub">EINGABE &rarr; AUSGABE</p>
       </div>
 
-      <div class="steg-canvas-wrap">
-        <canvas id="stegCanvas" width="280" height="110"></canvas>
+      <div class="bb-body" id="bbBody"></div>
+
+      <div class="puzzle-status sys-text" id="bbStatus"></div>
+      <div class="puzzle-actions" id="bbActions"></div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       VERSUCHSPROTOKOLL — a data table with a compare mode
+       ════════════════════════════════════════════════════════════ -->
+  <div class="puzzle-modal hidden" id="vpModal">
+    <div class="puzzle-card vp-card">
+      <div class="puzzle-card-accent"></div>
+      <div class="puzzle-header">
+        <p class="puzzle-label sys-text">SEKTOR 06 // ARCHIV</p>
+        <h2 class="puzzle-title">VERSUCHSPROTOKOLL</h2>
+        <p class="puzzle-sub sys-text">EINGABE &middot; AUSGABE &middot; STATUS</p>
       </div>
 
-      <div class="steg-controls">
-        <div class="steg-channels" id="stegChannels">
-          <button class="steg-ch active" data-ch="rgb" onclick="Chapter6.stegChannel('rgb')">RGB</button>
-          <button class="steg-ch" data-ch="r" onclick="Chapter6.stegChannel('r')">ROT</button>
-          <button class="steg-ch" data-ch="g" onclick="Chapter6.stegChannel('g')">GRÜN</button>
-          <button class="steg-ch" data-ch="b" onclick="Chapter6.stegChannel('b')">BLAU</button>
-          <button class="steg-toggle" id="stegInvertBtn" onclick="Chapter6.stegInvert()">INVERT</button>
-          <button class="steg-toggle" id="stegFlipBtn" onclick="Chapter6.stegFlip()">FLIP</button>
-        </div>
-        <div class="steg-thresh">
-          <span class="sys-text">SCHWELLE</span>
-          <input type="range" id="stegThreshold" min="0" max="255" value="0" step="1"
-                 oninput="Chapter6.stegThreshold(this.value)" aria-label="Schwelle">
-          <span class="sys-text" id="stegThreshLabel">AUS</span>
-        </div>
-      </div>
+      <div class="vp-body" id="vpBody"></div>
 
-      <div class="steg-answer">
-        <input type="text" id="stegInput" class="steg-input" maxlength="4" placeholder="CODE (4)"
-               autocomplete="off" aria-label="Code">
-        <button class="ka-btn primary" onclick="Chapter6.stegSubmit()">[ ENTSCHLÜSSELN ]</button>
-      </div>
-
-      <div class="puzzle-status sys-text" id="stegStatus"></div>
-      <div class="puzzle-actions">
-        <button class="ka-btn small" onclick="Chapter6.stegReset()">[ ANSICHT ZURÜCKSETZEN ]</button>
-      </div>
+      <div class="puzzle-actions" id="vpActions"></div>
     </div>
   </div>
 
   <script src="../js/engine.js?v=20260613"></script>
   <script src="../js/mobile-warning.js?v=20260613"></script>
-  <script src="chapter6.js?v=20260613"></script>
+  <script src="chapter6.js?v=20260821"></script>
 </body>
 </html>

@@ -156,14 +156,14 @@ never stops. Upbeat but industrial, not happy. Steady loopable texture, no fade 
 ```
 `EXCLUDE:` `vocals, guitar, orchestral, ballad`
 
-## `ch6_dunkelkammer.mp3` — Kapitel 6: Dunkelkammer
+## `ch6_versuchskammer.mp3` — Kapitel 6: Versuchskammer
 **Slot:** `ch6_ambient` · **Länge:** ~2:00 · **Instrumental: AN**
 ```
-Hushed darkroom ambient, 58 BPM, D minor. Extremely quiet, muffled low drone,
-faint chemical bubbling, soft analog tape hiss, rare distant single piano note
-with long decay. Secretive, patient, monochrome. The sound of holding your
-breath in the dark. Minimal, almost silent. No drums, steady loopable texture,
-no fade out.
+Hushed laboratory ambient, 58 BPM, D minor. Extremely quiet, muffled low drone,
+faint instrument hum, soft analog tape hiss, a slow irregular relay tick, rare
+distant single piano note with long decay. Patient, cerebral, monochrome, very
+slightly eerie. The sound of a sealed machine running while nobody speaks.
+Minimal, almost silent. No drums, steady loopable texture, no fade out.
 ```
 `EXCLUDE:` `drums, vocals, melody, bright, upbeat`
 
@@ -249,13 +249,13 @@ stops moving and refuses to let you stop either. Energetic and friendly.
 ```
 `EXCLUDE:` `vocals, sad, slow, ambient`
 
-## `theme_asp1024.mp3` — ASP-1024 (hellgrau, Maus, stumm)
+## `theme_asp1024.mp3` — ASP-1024 (hellgrau, Maus, Versuchseinheit)
 **Slot:** `theme_asp` · **Länge:** ~1:00 · **Instrumental: AN**
 ```
-Extremely minimal theme, 54 BPM, D minor. Four sparse piano notes with enormous
-space and reverb between them, faint sub drone, tape hiss. Almost nothing
-happens. Profound stillness, quiet legend, someone who says only what is
-necessary. Restrained, lonely, deeply calm.
+Minimal, methodical theme, 54 BPM, D minor. A short sparse piano figure that
+repeats with small deliberate variations, as if testing one change at a time;
+faint sub drone, tape hiss, a soft periodic tick underneath. Calm, dry, patient,
+quietly good-humoured. Unhurried rather than lonely. Restrained, deeply steady.
 ```
 `EXCLUDE:` `drums, vocals, melody development, busy, bright`
 
@@ -316,7 +316,7 @@ pressuring. Steady loopable texture, no fade out.
 ```
 `EXCLUDE:` `vocals, slow, ambient, ballad`
 
-## `puzzle_forensic.mp3` — BILDFORENSIK (Kap. 6)
+## `puzzle_forensic.mp3` — DIE BLACKBOX (Kap. 6)
 **Slot:** `puzzle_forensic` · **Länge:** ~2:00 · **Instrumental: AN**
 ```
 Analytical dark underscore, 64 BPM, D minor. Quiet granular texture, soft
