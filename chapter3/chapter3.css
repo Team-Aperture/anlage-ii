@@ -312,6 +312,30 @@ button.ka-btn:disabled { opacity:.3; pointer-events:none; }
 .bel-mix { width:110px; height:70px; border:1px solid var(--bdr-bright); border-radius:4px; }
 .bel-mix.small { width:30px; height:56px; align-self:flex-end; }
 
+/* stage 3 — the permanent EICHPROTOKOLL. Both passes stay readable while the
+   player works on the new stimulus; nothing here has to be memorised. */
+.bel-log { width:100%; display:flex; flex-direction:column; gap:6px; }
+.bel-log-h {
+  text-align:center; font-size:9px; letter-spacing:.2em; color:var(--accent-lux);
+  border-bottom:1px solid var(--bdr-dim); padding-bottom:4px;
+}
+.bel-log-rows { display:flex; flex-direction:column; gap:6px; overflow-x:auto; }
+.bel-log-row {
+  display:flex; flex-direction:column; align-items:center; gap:3px;
+  background:rgba(255,255,255,0.02); border:1px solid var(--bdr-dim); border-radius:3px;
+  padding:5px 6px; min-width:min-content;
+}
+.bel-log-idx { font-size:8px; letter-spacing:.18em; color:var(--text-secondary); }
+/* compact variant: the log carries two passes at once, so the bars shrink */
+.bel-calib.compact { gap:var(--sp-sm); }
+.bel-calib.compact .bel-seg { width:15px; height:7px; }
+.bel-calib.compact .bel-stim, .bel-calib.compact .bel-resp { gap:6px; }
+.bel-calib.compact .bel-mix.small { width:20px; height:36px; }
+.bel-calib.compact .bel-calib-cap { font-size:8px; letter-spacing:.14em; }
+.bel-calib.compact .bel-calib-arrow { font-size:14px; }
+.bel-calib.compact .bel-stim-name { font-size:8px; }
+.bel-calib.compact .bel-resp-name { font-size:8px; }
+
 /* the stimulus the player must answer for — stays put, nothing to memorise */
 .bel-newstim {
   display:flex; flex-direction:column; align-items:center; gap:6px;
@@ -386,6 +410,17 @@ button.ka-btn:disabled { opacity:.3; pointer-events:none; }
   .bel-seg { width:20px; height:9px; }
   .bel-bar.wide .bel-seg { width:22px; height:14px; }
   .bel-mix { width:92px; height:58px; }
+
+  /* the EICHPROTOKOLL must stay fully readable on a phone — it shrinks
+     rather than scrolling sideways, and never pushes the card wider */
+  .bel-log, .bel-log-rows, .bel-log-row { max-width:100%; }
+  .bel-log-row { padding:4px; }
+  .bel-calib.compact { gap:4px; }
+  .bel-calib.compact .bel-seg { width:12px; height:6px; }
+  .bel-calib.compact .bel-stim, .bel-calib.compact .bel-resp { gap:4px; }
+  .bel-calib.compact .bel-mix.small { width:16px; height:30px; }
+  .bel-calib.compact .bel-resp-name,
+  .bel-calib.compact .bel-stim-name { font-size:7px; letter-spacing:0; }
   .control-btn { width:40px; height:40px; }
   .bel-role-opts { gap:4px; }
   .bel-role-btn { min-width:0; font-size:9px; padding:6px 4px; }

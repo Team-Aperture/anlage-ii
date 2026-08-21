@@ -1212,7 +1212,7 @@ const Chapter4 = (() => {
 
     say([
       { speaker:'SYSTEM', text:'Die vier Ringe rasten nacheinander ein. Vier Klicks, gleichmäßig, fast leise.' },
-      { speaker:'SYSTEM', text:'ZENTRALVERSCHLUSS OFFEN. SEKTOR 05 — FÖRDERSEKTOR — FREIGEGEBEN.' },
+      { speaker:'SYSTEM', text:'ZENTRALVERSCHLUSS OFFEN. SEKTOR 05 — LANGSTRECKE — FREIGEGEBEN.' },
       { speaker:'R-3MI',  text:'„Das war’s?!"' },
       { speaker:'B-RADF1SH', text:'„Mhm."' },
       { speaker:'R-3MI',  text:'„Das Ding ist DREI METER HOCH!"' },
@@ -1249,7 +1249,7 @@ const Chapter4 = (() => {
 
   function backToWork() {
     say([
-      { speaker:'SYSTEM', text:'Hinter dem geöffneten Verschluss liegt der Durchgang zum Fördersektor.' },
+      { speaker:'SYSTEM', text:'Hinter dem geöffneten Verschluss liegt der Durchgang zur Langstrecke.' },
       { speaker:'R-3MI',  text:'„Kommst du nicht?"' },
       { speaker:'B-RADF1SH', text:'„Nein."' },
       { speaker:'SYSTEM', text:'*CLANK.*' },

@@ -98,7 +98,7 @@ const GameEngine = (() => {
       { id: 'ch2_complete',     icon: '❧', title: 'Wartungsgartenpflege', desc: 'Kapitel 2 abgeschlossen.' },
       { id: 'ch3_complete',     icon: '◎', title: 'Beobachtet',           desc: 'Kapitel 3 abgeschlossen.' },
       { id: 'ch4_complete',     icon: '⊞', title: 'Groß, nicht kompliziert', desc: 'Das Vierfach-Schloss geöffnet.' },
-      { id: 'ch5_complete',     icon: '▶', title: 'Beschleunigt',         desc: 'Den Förderlauf bestanden. Ohne stehenzubleiben.' },
+      { id: 'ch5_complete',     icon: '▶', title: 'Weitergegangen',        desc: 'Route 14 von 14-D bis 14-I. Eine Station nach der anderen.' },
       { id: 'ch6_complete',     icon: '◫', title: 'Im Bild verborgen',     desc: 'Den versteckten Code in der Dunkelkammer gefunden.' },
       { id: 'ch7_complete',     icon: '▣', title: 'Defragmentiert',       desc: 'Kapitel 7 abgeschlossen.' },
       { id: 'ch8_complete',     icon: '◍', title: 'Meta',                 desc: 'Kapitel 8 abgeschlossen.' },
@@ -318,7 +318,7 @@ const GameEngine = (() => {
       'L-UX':      { form: 'cat',      idle: 'face-jitter' }, // cat, hyper
       'J4W-A3':    { form: 'humanoid', idle: 'face-calm'   },
       'B-RADF1SH': { form: 'fish',     idle: 'face-calm'   }, // fish, confident
-      'T-FLON14':  { form: 'pan',      idle: 'face-zip'    }, // pan-bot, fast
+      'T-FLON14':  { form: 'pan',      idle: 'face-zip'    }, // pan-bot, steady
       'ASP-1024':  { form: 'mouse',    idle: 'face-calm'   }, // mouse, silent
       'AGN-H3R':   { form: 'skull',    idle: 'face-calm'   }, // skull
       'FAX-N':     { form: 'pumpkin',  idle: 'face-flicker'}, // jack-o'-lantern
@@ -1085,7 +1085,7 @@ const GameEngine = (() => {
       ch2_ambient:  'ch2_garten.mp3',
       ch3_ambient:  'ch3_beobachtung.mp3',
       ch4_ambient:  'ch4_werkstatt.mp3',
-      ch5_ambient:  'ch5_foerderlauf.mp3',
+      ch5_ambient:  'ch5_langstrecke.mp3',
       ch6_ambient:  'ch6_dunkelkammer.mp3',
       ch7_ambient:  'ch7_vexier.mp3',
       ch8_ambient:  'ch8_archiv.mp3',
@@ -1336,13 +1336,13 @@ const GameEngine = (() => {
     function addHotspot(cfg) {
       // A prop hotspot is a visible, code-drawn object you click directly.
       if (cfg.prop) {
-        const p = props.el(cfg.prop, { x:cfg.x, y:cfg.y, w:cfg.w, h:cfg.h, label:cfg.label, onClick:cfg.fn, cls:cfg.cls, anim:cfg.anim });
+        const p = props.el(cfg.prop, { x:cfg.x, y:cfg.y, w:cfg.w, h:cfg.h, label:cfg.label, aria:cfg.aria, onClick:cfg.fn, cls:cfg.cls, anim:cfg.anim });
         el('sceneHotspots').appendChild(p);
         return p;
       }
       const e = document.createElement('button');
       e.className = 'hotspot' + (cfg.cls ? ' ' + cfg.cls : '');
-      e.setAttribute('aria-label', cfg.label || 'Interagieren');
+      e.setAttribute('aria-label', cfg.aria || cfg.label || 'Interagieren');
       e.style.cssText = `left:${cfg.x}%;top:${cfg.y}%;width:${cfg.w || 7}%;height:${cfg.h || 7}%;`;
       if (cfg.label) {
         const l = document.createElement('span');

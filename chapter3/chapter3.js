@@ -545,6 +545,7 @@ const Chapter3 = (() => {
     bel.busy         = false;
     bel.observedOnce = false;
     bel.wrong        = 0;
+    bel.logReady     = false;     // stage 3's calibration log, once it has played
     bel.event        = buildEvent(stage);
     bel.answer       = blankAnswer(stage);
 
@@ -566,7 +567,7 @@ const Chapter3 = (() => {
   const TASK_TEXT = {
     1: 'Das Array pulst im Gleichtakt — bis auf eine Ausnahme. Welche Blende ist wann ausgeschert?',
     2: 'Wie verhalten sich B, C und D zu A?',
-    3: 'Aus den Eichmessungen folgt eine Regel. Wende sie auf die neue Messung an.',
+    3: 'Zwei Eichmessungen — keine reicht für sich allein. Wende die Regel auf die neue Messung an.',
   };
 
   // ─── The observable event for each stage (generated per attempt) ───
@@ -608,21 +609,61 @@ const Chapter3 = (() => {
     // passes reveal. The player then applies that rule to a stimulus they have
     // never seen a response for, so nothing can be copied.
     const rank = shuffle([0, 1, 2]);      // rank[channel] → 0 strongest · 2 weakest
-    const examples = [distinctLevels(), distinctLevels()];
-    let target, tries = 0;
-    do { target = distinctLevels(); tries++; }
-    while (tries < 60 && examples.some(e => sameMultiset(e, target)));
+    const { examples, target } = buildCalibration();
     return { rank, examples, target };
   }
 
-  /** Three different levels, so "strongest / middle / weakest" is well defined. */
-  function distinctLevels() {
-    const pool = shuffle([0, 1, 2, 3, 4, 5]).slice(0, 3);
-    return shuffle(pool);
+  /**
+   * The two calibration passes are built as deliberate complements, not as two
+   * independent samples. Each one is readable on its own but incomplete on its
+   * own, so both are needed and neither is redundant:
+   *
+   *   pass A — one clear peak over two EQUAL lower inputs. Because the lower
+   *            two are tied, the middle and weakest ranks answer with the same
+   *            number and cannot be told apart; only the channel holding the
+   *            strongest rank stands out.
+   *   pass B — two EQUAL higher inputs over one clear trough. The mirror case:
+   *            only the channel holding the weakest rank stands out.
+   *
+   * Strongest from A, weakest from B, and the channel left over is the middle.
+   * The tie inside each pass is the whole point — it is what keeps a single
+   * pass from giving the answer away.
+   */
+  const LVL_MIN = 1, LVL_MAX = 5;   // 0 would render as an unreadable empty bar
+  const TIE_LO_MAX = 3;             // leaves room for a clearly separated peak
+  const GAP_MIN = 2;                // peak/trough must be visibly, countably apart
+
+  function buildCalibration() {
+    let a = calibPair(), b = calibPair(), target = targetLevels();
+    for (let t = 0; t < 400 && !calibUsable(a, b, target); t++) {
+      a = calibPair(); b = calibPair(); target = targetLevels();
+    }
+    return {
+      // shape is guaranteed regardless of how the search above ended
+      examples: [shuffle([a.hi, a.lo, a.lo]), shuffle([b.hi, b.hi, b.lo])],
+      target,
+    };
   }
-  function sameMultiset(a, b) {
-    const s = x => x.slice().sort().join(',');
-    return s(a) === s(b);
+
+  function calibPair() {
+    const lo = randInt(LVL_MIN, TIE_LO_MAX);
+    return { hi: randInt(lo + GAP_MIN, LVL_MAX), lo };
+  }
+
+  /** Cosmetic guards: two passes that read as one, or a new stimulus that
+   *  shows nothing the passes did not already show, both feel like bugs. */
+  function calibUsable(a, b, target) {
+    if (a.hi === b.hi && a.lo === b.lo) return false;
+    const shown = new Set([a.hi, a.lo, b.hi, b.lo]);
+    return target.some(v => !shown.has(v));
+  }
+
+  /** Three different levels, so "strongest / middle / weakest" is well defined
+   *  and the response has three distinct values — one unambiguous answer. */
+  function targetLevels() {
+    const pool = [];
+    for (let v = LVL_MIN; v <= LVL_MAX; v++) pool.push(v);
+    return shuffle(shuffle(pool).slice(0, 3));
   }
   /** Apply the array's rank rule to a stimulus. */
   function rankResponse(levels, rank) {
@@ -686,10 +727,16 @@ const Chapter3 = (() => {
     });
 
     later(() => {
-      renderScope(null);                       // back to neutral
+      // Stage 3 keeps its calibration passes on screen from here on. Looking
+      // costs reserve; remembering must not — the log is the record so the
+      // player can reason about it for as long as they like.
+      if (bel.stage === 3) bel.logReady = true;
+      renderScope(null);
       bel.busy = false;
       setObserveLabel();
-      setBelStatus('AUFNAHME BEENDET. STELL DAS ARRAY EIN.', '');
+      setBelStatus(bel.stage === 3
+        ? 'EICHPROTOKOLL GESICHERT. STELL DAS ARRAY EIN.'
+        : 'AUFNAHME BEENDET. STELL DAS ARRAY EIN.', '');
     }, at + 260);
   }
 
@@ -731,6 +778,7 @@ const Chapter3 = (() => {
     if (!scope) return;
 
     if (!frame) {
+      if (bel && bel.stage === 3 && bel.logReady) { scope.innerHTML = calibLogHTML(); return; }
       scope.innerHTML = `<div class="bel-scope-idle sys-text">ARRAY NEUTRAL</div>`;
       return;
     }
@@ -774,6 +822,36 @@ const Chapter3 = (() => {
            ${responseHTML(frame.out)}
          </div>
        </div>`;
+  }
+
+  /**
+   * The permanent record of both calibration passes. It replaces "ARRAY
+   * NEUTRAL" for stage 3 once the recording has played all the way through,
+   * and stays until the stage is solved or regenerated. Reading it back costs
+   * nothing — only asking the array for a fresh look does.
+   */
+  function calibLogHTML() {
+    const ev = bel.event;
+    return `<div class="bel-log">
+        <div class="bel-log-h sys-text">EICHPROTOKOLL</div>
+        <div class="bel-log-rows">` +
+      ev.examples.map((levels, i) =>
+        `<div class="bel-log-row">
+           <span class="bel-log-idx sys-text">EICHMESSUNG ${i + 1}</span>
+           <div class="bel-calib compact">
+             <div class="bel-calib-side">
+               <span class="bel-calib-cap sys-text">REIZ</span>
+               ${stimulusHTML(levels)}
+             </div>
+             <div class="bel-calib-arrow sys-text">&rarr;</div>
+             <div class="bel-calib-side">
+               <span class="bel-calib-cap sys-text">ANTWORT</span>
+               ${responseHTML(rankResponse(levels, ev.rank))}
+             </div>
+           </div>
+         </div>`).join('') +
+      `</div>
+      </div>`;
   }
 
   const CH_NAMES = ['ROT', 'GRÜN', 'BLAU'];
@@ -1142,15 +1220,18 @@ const Chapter3 = (() => {
         vtgm: { t:'"Compare each bar to A on two different beats. Two beats are enough to tell all three apart."', s:'Vergleiche jeden Balken bei zwei verschiedenen Takten mit A. Zwei Takte reichen, um alle drei zu unterscheiden.' } },
     ],
     stage3: [
-      { lux:  { t:'„Farbe ist selten nur Farbe."' },
-        r3mi: { t:'„Die Zahlen im Reiz und die Zahlen in der Antwort sind dieselben. Nur woanders."' },
-        vtgm: { t:'"The response uses the same three values as the stimulus. Only the order differs."', s:'Die Antwort verwendet dieselben drei Werte wie der Reiz. Nur die Zuordnung ist anders.' } },
+      // OBSERVATION — what is actually on screen in each pass
+      { lux:  { t:'„In jeder Eichmessung antworten zwei Kanäle mit derselben Zahl. Das ist kein Fehler."' },
+        r3mi: { t:'„Bei beiden Messungen sind zwei Antworten gleich hoch und eine tanzt aus der Reihe. Bloß nicht dieselbe."' },
+        vtgm: { t:'"In each pass exactly one channel stands apart. The other two are tied."', s:'In jeder Eichmessung steht genau ein Kanal allein. Die anderen beiden sind gleichauf.' } },
+      // RELATIONSHIP — what the standout channel means
       { lux:  { t:'„Nicht welcher Regler. Welcher Rang."' },
-        r3mi: { t:'„Es liegt nicht daran, welcher Balken es war — sondern ob er der größte, der mittlere oder der kleinste war."' },
-        vtgm: { t:'"Sort each stimulus by size. Each channel always answers to the same rank."', s:'Sortiere jeden Reiz nach Größe. Jeder Kanal antwortet immer auf denselben Rang.' } },
-      { lux:  { t:'„Wenn du weißt, welcher Kanal den größten Wert nimmt, kennst du auch die anderen beiden."' },
-        r3mi: { t:'„Zwei Eichmessungen reichen, um es sicher zu wissen. Dann dasselbe auf die neue Messung anwenden."' },
-        vtgm: { t:'"Determine which channel takes the strongest, middle and weakest input, then apply that to the new stimulus on screen."', s:'Bestimme, welcher Kanal den stärksten, mittleren und schwächsten Eingang nimmt, und wende das auf den neuen Reiz auf dem Schirm an.' } },
+        r3mi: { t:'„Die eine Messung hat genau eine Spitze. Die andere genau einen Tiefpunkt. Das verrät nicht dasselbe."' },
+        vtgm: { t:'"One pass has a single peak, the other a single trough. Each names exactly one rank — and hides the other two behind the tie."', s:'Eine Messung hat genau eine Spitze, die andere genau einen Tiefpunkt. Jede benennt genau einen Rang — die anderen beiden versteckt der Gleichstand.' } },
+      // METHOD — how to combine them and carry it over
+      { lux:  { t:'„Zwei Ränge kannst du ablesen. Der dritte bleibt übrig."' },
+        r3mi: { t:'„Den Ausreißer nach oben aus der einen Messung, den Ausreißer nach unten aus der anderen. Wer übrig bleibt, ist die Mitte."' },
+        vtgm: { t:'"Take the standout channel from each pass to fix two ranks, give the leftover channel the remaining one, then sort the new stimulus and hand each channel its rank."', s:'Nimm aus jeder Eichmessung den herausstehenden Kanal, um zwei Ränge festzulegen, gib dem übrigen Kanal den letzten, sortiere dann den neuen Reiz und gib jedem Kanal seinen Rang.' } },
     ],
   };
 

@@ -245,7 +245,7 @@
     { id:'ch2', n:'02', name:'Garten',       href:'chapter2/chapter2.html' },
     { id:'ch3', n:'03', name:'Beobachtung',  href:'chapter3/chapter3.html' },
     { id:'ch4', n:'04', name:'Rätsel',       href:'chapter4/chapter4.html' },
-    { id:'ch5', n:'05', name:'Förderlauf',   href:'chapter5/chapter5.html' },
+    { id:'ch5', n:'05', name:'Langstrecke',  href:'chapter5/chapter5.html' },
     { id:'ch6', n:'06', name:'Dunkelkammer', href:'chapter6/chapter6.html' },
     { id:'ch7', n:'07', name:'Vexier',       href:'chapter7/chapter7.html' },
     { id:'ch8', n:'08', name:'Archiv',       href:'chapter8/chapter8.html' },
