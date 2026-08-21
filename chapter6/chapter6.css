@@ -1,91 +1,184 @@
 /* ═══════════════════════════════════════════════════════════════
-   KAPITEL 06 — DUNKELKAMMER  (guest: ASP-1024)
-   Shared chrome lives in css/chapter.css; this file themes the guest
-   accent, the scene backgrounds, and the BILDFORENSIK puzzle.
+   KAPITEL 06 — SEKTOR 06 // VERSUCHSKAMMER   (guest: ASP-1024)
+   Shared chrome lives in css/chapter.css. This file carries the guest
+   accent, the test-chamber scenes, the Blackbox console and the
+   Versuchsprotokoll table.
+
+   The room stays dark — but it is dark because instruments only emit as
+   much light as you need to read them, not because anyone is developing
+   photographs in here.
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
-  --accent-asp:      #c7ccd6;              /* ASP-1024 — forensics grey */
+  --accent-asp:      #c7ccd6;              /* ASP-1024 — instrument grey */
   --accent-asp-lo:   rgba(199,204,214,0.14);
-  --accent-guest:    var(--accent-asp);    /* themes the shared chrome */
+  --accent-guest:    var(--accent-asp);
   --accent-guest-lo: var(--accent-asp-lo);
 }
 
-/* room shell tint for this sector */
 .scene-room {
   --room-line: rgba(170,180,195,0.10);
-  --room-glow: rgba(199,204,214,0.07);
-  --room-strip: rgba(200,210,225,0.32);
+  --room-glow: rgba(199,204,214,0.06);
+  --room-strip: rgba(200,210,225,0.30);
 }
 
-
-/* ─── PLACEHOLDER SCENES ──────────────────────────────────────── */
-.scene-ph[data-scene="dark-dim"] {
+/* ─── SCENES ──────────────────────────────────────────────────── */
+/* running: sealed apparatus, live diagnostics, restless indicators */
+.scene-ph[data-scene="lab-dim"] {
   background:
-    radial-gradient(ellipse at 50% 50%, #160a1c 0%, #050308 80%),
-    linear-gradient(180deg, #0d0612 0%, #030205 100%);
+    radial-gradient(ellipse at 50% 50%, #0e1116 0%, #040507 80%),
+    linear-gradient(180deg, #090b0f 0%, #020304 100%);
 }
-.scene-ph[data-scene="dark-dim"]::before {
+.scene-ph[data-scene="lab-dim"]::before {
   content:''; position:absolute; inset:0;
   background:
-    /* hanging prints */
-    repeating-linear-gradient(0deg, transparent 0 40px, rgba(199,204,214,0.04) 40px 41px),
-    radial-gradient(circle 3px at 22% 30%, rgba(199,204,214,0.35) 0%, transparent 100%),
-    radial-gradient(circle 3px at 76% 26%, rgba(199,204,214,0.25) 0%, transparent 100%),
-    linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 24%),
-    linear-gradient(0deg, rgba(0,0,0,0.7) 0%, transparent 24%);
+    /* instrument racks left and right */
+    repeating-linear-gradient(0deg, transparent 0 22px, rgba(199,204,214,0.045) 22px 23px),
+    /* the sealed box in the middle, lit only by its own status ring */
+    radial-gradient(ellipse 16% 20% at 50% 46%, rgba(199,204,214,0.16) 0%, transparent 72%),
+    radial-gradient(circle 3px at 30% 34%, rgba(214,224,235,0.55) 0%, transparent 100%),
+    radial-gradient(circle 3px at 71% 31%, rgba(214,224,235,0.40) 0%, transparent 100%),
+    radial-gradient(circle 3px at 78% 57%, rgba(214,224,235,0.35) 0%, transparent 100%),
+    linear-gradient(180deg, rgba(0,0,0,0.82) 0%, transparent 26%),
+    linear-gradient(0deg, rgba(0,0,0,0.74) 0%, transparent 26%);
 }
-.scene-ph[data-scene="dark-lit"] {
-  background: radial-gradient(ellipse at 50% 48%, #2a1336 0%, #070310 80%);
+/* confirmed: the same room, simply no longer twitching */
+.scene-ph[data-scene="lab-stable"] {
+  background: radial-gradient(ellipse at 50% 48%, #131820 0%, #05070a 78%);
 }
-.scene-ph[data-scene="dark-lit"]::before {
+.scene-ph[data-scene="lab-stable"]::before {
   content:''; position:absolute; inset:0;
   background:
-    radial-gradient(ellipse 22% 30% at 50% 50%, rgba(199,204,214,0.32) 0%, transparent 70%),
-    radial-gradient(circle 4px at 50% 50%, rgba(230,160,255,0.85) 0%, transparent 100%),
+    repeating-linear-gradient(0deg, transparent 0 22px, rgba(199,204,214,0.055) 22px 23px),
+    radial-gradient(ellipse 20% 24% at 50% 46%, rgba(199,204,214,0.30) 0%, transparent 72%),
+    radial-gradient(circle 4px at 30% 34%, rgba(224,234,245,0.8) 0%, transparent 100%),
+    radial-gradient(circle 4px at 71% 31%, rgba(224,234,245,0.75) 0%, transparent 100%),
+    radial-gradient(circle 4px at 78% 57%, rgba(224,234,245,0.7) 0%, transparent 100%),
     linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 22%),
-    linear-gradient(0deg, rgba(0,0,0,0.6) 0%, transparent 22%);
+    linear-gradient(0deg, rgba(0,0,0,0.62) 0%, transparent 22%);
 }
+
+/* ─── EMBLEM — a sealed box with one indicator ────────────────── */
+.ch6-box {
+  position:absolute; width:44px; height:44px;
+  border:2px solid rgba(199,204,214,0.6); border-radius:3px;
+  background:rgba(199,204,214,0.05);
+}
+.ch6-box i {
+  position:absolute; top:6px; right:6px; width:7px; height:7px; border-radius:50%;
+  background:var(--accent-asp); box-shadow:0 0 9px var(--accent-asp);
+  animation: aspBlink 2.6s ease-in-out infinite;
+}
+@keyframes aspBlink { 0%,100%{opacity:.35} 50%{opacity:1} }
+
+/* the Blackbox in the room reads as sealed; solved, it simply steadies */
+.scene-prop.hs-bb svg { filter:drop-shadow(0 6px 14px rgba(0,0,0,0.7)) drop-shadow(0 0 9px rgba(199,204,214,0.28)); }
+.scene-prop.hs-bb.hs-stable svg { filter:drop-shadow(0 6px 14px rgba(0,0,0,0.6)) drop-shadow(0 0 14px rgba(199,204,214,0.6)); }
 
 /* ═══════════════════════════════════════════════════════════════
-   BILDFORENSIK
+   BLACKBOX CONSOLE
    ═══════════════════════════════════════════════════════════════ */
-.steg-canvas-wrap { display:flex; justify-content:center; margin-bottom:var(--sp-md); }
-#stegCanvas {
-  width:100%; max-width:320px; height:auto; aspect-ratio: 280 / 110;
-  image-rendering: pixelated; border:1px solid var(--accent-asp);
-  background:#000; box-shadow:0 0 18px rgba(199,204,214,0.25);
-}
+.bb-card { max-width:600px; }
+.bb-body { max-height:56vh; overflow-y:auto; padding-right:2px; }
+.bb-task { text-align:center; font-size:10px; letter-spacing:.18em; color:var(--accent-asp); margin-bottom:var(--sp-xs); }
+.bb-note { text-align:center; font-size:11px; color:var(--text-secondary); margin:0 0 var(--sp-sm); line-height:1.5; }
+.bb-cap  { text-align:center; font-size:9px; letter-spacing:.16em; color:var(--text-dim); margin:var(--sp-sm) 0 4px; }
+.bb-arrow { text-align:center; font-size:14px; color:var(--accent-asp); opacity:.6; margin:2px 0; }
 
-.steg-controls { display:flex; flex-direction:column; gap:var(--sp-sm); margin-bottom:var(--sp-md); }
-.steg-channels { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; }
-.steg-ch, .steg-toggle {
+.bb-row { display:flex; justify-content:center; gap:var(--sp-sm); flex-wrap:wrap; }
+.bb-slot {
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  width:84px; min-height:78px; padding:8px 4px;
+  background:var(--bg-surface); border:1px solid var(--bdr-mid); color:var(--text-primary);
+  cursor:pointer; transition:all var(--t-fast);
+}
+.bb-slot:hover { border-color:var(--accent-asp); }
+.bb-slot:active { transform:translateY(1px); }
+.bb-slot.fixed { cursor:default; }
+.bb-row.in  .bb-slot { border-left:3px solid rgba(199,204,214,0.5); }
+.bb-row.out .bb-slot { border-left:3px solid rgba(199,204,214,0.22); background:var(--bg-panel); }
+.bb-pos   { font-size:8px; letter-spacing:.1em; color:var(--text-dim); }
+.bb-glyph { font-size:28px; line-height:1.1; color:var(--text-primary); }
+.bb-name  { font-size:8px; letter-spacing:.06em; color:var(--text-dim); }
+.bb-empty { padding:var(--sp-md); }
+.bb-empty .sys-text { font-size:10px; letter-spacing:.14em; color:var(--text-dim); }
+.bb-inline { display:flex; justify-content:center; margin-top:var(--sp-xs); }
+.bb-final-block { border-top:1px solid var(--bdr-dim); padding-top:var(--sp-sm); margin-top:var(--sp-sm); }
+.bb-final-block:first-of-type { border-top:none; margin-top:0; }
+
+.bb-hypo { margin-top:var(--sp-md); padding-top:var(--sp-sm); border-top:1px solid var(--bdr-dim); }
+.bb-hypo-row { display:flex; justify-content:center; gap:6px; flex-wrap:wrap; }
+.bb-hbtn {
   background:var(--bg-surface); border:1px solid var(--bdr-mid); color:var(--text-secondary);
-  font-family:var(--font-mono); font-size:11px; letter-spacing:.08em;
-  padding:6px 12px; cursor:pointer; transition:all var(--t-fast);
+  font-family:var(--font-mono); font-size:10px; letter-spacing:.06em;
+  padding:9px 11px; min-height:36px; cursor:pointer; transition:all var(--t-fast);
 }
-.steg-ch:hover, .steg-toggle:hover { border-color:var(--accent-asp); color:var(--text-primary); }
-.steg-ch.active, .steg-toggle.active {
-  border-color:var(--accent-asp); color:var(--text-primary);
-  background:var(--accent-asp-lo); box-shadow:0 0 8px rgba(199,204,214,0.35);
-}
+.bb-hbtn:hover { border-color:var(--accent-asp); color:var(--accent-asp); }
+.bb-hypo-note { text-align:center; font-size:9px; color:var(--text-dim); margin:var(--sp-xs) 0 0; }
 
-.steg-thresh { display:flex; align-items:center; gap:var(--sp-sm); }
-.steg-thresh .sys-text { font-size:10px; }
-.steg-thresh #stegThreshLabel { min-width:32px; text-align:right; color:var(--accent-asp); }
-#stegThreshold { flex:1; accent-color: var(--accent-asp); height:4px; }
-
-.steg-answer { display:flex; gap:var(--sp-sm); align-items:stretch; }
-.steg-input {
-  flex:1; background:var(--bg-surface); border:1px solid var(--bdr-mid);
-  color:var(--text-primary); font-family:var(--font-display); font-size:20px;
-  font-weight:700; letter-spacing:.3em; text-align:center; text-transform:uppercase;
-  padding:var(--sp-sm); min-width:0;
+/* ═══════════════════════════════════════════════════════════════
+   VERSUCHSPROTOKOLL — a table, not a journal
+   ═══════════════════════════════════════════════════════════════ */
+.vp-card { max-width:640px; }
+.vp-body { max-height:58vh; overflow-y:auto; padding-right:2px; }
+.vp-hint { text-align:center; font-size:9px; letter-spacing:.12em; color:var(--text-dim); margin-bottom:var(--sp-sm); }
+.vp-list { display:flex; flex-direction:column; gap:4px; }
+.vp-row {
+  display:flex; align-items:center; gap:var(--sp-sm); flex-wrap:wrap;
+  background:var(--bg-surface); border:1px solid var(--bdr-dim); color:var(--text-primary);
+  padding:9px var(--sp-sm); min-height:44px; cursor:pointer; text-align:left;
+  transition:all var(--t-fast);
 }
-.steg-input:focus { outline:none; border-color:var(--accent-asp); }
+.vp-row:hover { border-color:var(--accent-asp); }
+.vp-row.sel { border-color:var(--accent-asp); background:var(--accent-asp-lo); }
+/* status is always spelled out in words as well as marked */
+.vp-row.odd     { border-left:3px solid var(--accent-warn); }
+.vp-row.foreign { border-left:3px solid var(--accent-vtgm); border-style:dashed; }
+.vp-n  { font-size:9px; letter-spacing:.08em; color:var(--accent-asp); min-width:64px; }
+.vp-io { display:flex; align-items:center; gap:5px; }
+.vp-sym { font-size:19px; line-height:1; color:var(--text-primary); }
+.vp-sym.diff { color:var(--accent-warn); text-shadow:0 0 8px rgba(200,138,40,0.5); }
+.vp-to { font-size:11px; color:var(--text-dim); margin:0 3px; }
+.vp-flag { font-size:8px; letter-spacing:.1em; color:var(--text-dim); margin-left:auto; }
+.vp-flag.warn { color:var(--accent-warn); }
+.vp-flag.bad  { color:var(--accent-vtgm); }
+
+.vp-inspect {
+  background:var(--bg-panel); border:1px solid var(--accent-vtgm); color:var(--accent-vtgm);
+  font-family:var(--font-mono); font-size:9px; letter-spacing:.08em;
+  padding:7px 10px; min-height:34px; cursor:pointer; transition:all var(--t-fast);
+}
+.vp-inspect:hover { background:rgba(192,50,44,0.12); }
+
+.vp-compare { background:var(--bg-surface); border:1px solid var(--bdr-mid); padding:var(--sp-sm) var(--sp-md); margin-bottom:var(--sp-sm); }
+.vp-cmp-h { text-align:center; font-size:9px; letter-spacing:.16em; color:var(--accent-asp); margin-bottom:var(--sp-xs); }
+.vp-cmp-grid { display:flex; gap:var(--sp-md); justify-content:center; flex-wrap:wrap; }
+.vp-cmp-line { display:flex; align-items:center; gap:var(--sp-xs); padding:2px 0; }
+.vp-cmp-line .sys-text { font-size:8px; letter-spacing:.08em; color:var(--text-dim); min-width:78px; }
+.vp-cmp-sum { text-align:center; font-size:9px; letter-spacing:.06em; color:var(--text-secondary); margin:var(--sp-xs) 0 0; }
 
 /* ─── RESPONSIVE ──────────────────────────────────────────────── */
 @media (max-width: 600px) {
-  .steg-input { font-size:18px; letter-spacing:.2em; }
-  .steg-answer { flex-direction:column; }
+  .bb-card, .vp-card { padding:var(--sp-md); }
+  .bb-body { max-height:60vh; }
+  .vp-body { max-height:62vh; }
+
+  .bb-row { gap:6px; }
+  .bb-slot { width:88px; min-height:80px; }
+  .bb-glyph { font-size:26px; }
+
+  .bb-hbtn { flex:1 1 44%; min-height:42px; }
+
+  .vp-row { gap:6px; padding:8px 7px; }
+  .vp-n { min-width:56px; font-size:8px; }
+  .vp-sym { font-size:17px; }
+  .vp-flag { margin-left:0; width:100%; }
+  .vp-inspect { width:100%; min-height:40px; }
+  .vp-cmp-grid { flex-direction:column; gap:var(--sp-xs); }
+  .vp-cmp-line .sys-text { min-width:70px; }
+}
+
+/* ─── REDUCED MOTION ──────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .ch6-box i { animation:none; opacity:.85; }
 }

@@ -99,7 +99,7 @@ const GameEngine = (() => {
       { id: 'ch3_complete',     icon: '◎', title: 'Beobachtet',           desc: 'Kapitel 3 abgeschlossen.' },
       { id: 'ch4_complete',     icon: '⊞', title: 'Groß, nicht kompliziert', desc: 'Das Vierfach-Schloss geöffnet.' },
       { id: 'ch5_complete',     icon: '▶', title: 'Weitergegangen',        desc: 'Route 14 von 14-D bis 14-I. Eine Station nach der anderen.' },
-      { id: 'ch6_complete',     icon: '◫', title: 'Im Bild verborgen',     desc: 'Den versteckten Code in der Dunkelkammer gefunden.' },
+      { id: 'ch6_complete',     icon: '◫', title: 'Modell bestätigt',      desc: 'Die Blackbox verstanden, ohne sie zu öffnen.' },
       { id: 'ch7_complete',     icon: '▣', title: 'Defragmentiert',       desc: 'Kapitel 7 abgeschlossen.' },
       { id: 'ch8_complete',     icon: '◍', title: 'Meta',                 desc: 'Kapitel 8 abgeschlossen.' },
       { id: 'ch9_complete',     icon: '✦', title: 'Reaktivierung',        desc: 'Alle Sektoren, alle Frequenzen, die ganze Wahrheit. 100%.' },
@@ -319,7 +319,7 @@ const GameEngine = (() => {
       'J4W-A3':    { form: 'humanoid', idle: 'face-calm'   },
       'B-RADF1SH': { form: 'fish',     idle: 'face-calm'   }, // fish, confident
       'T-FLON14':  { form: 'pan',      idle: 'face-zip'    }, // pan-bot, steady
-      'ASP-1024':  { form: 'mouse',    idle: 'face-calm'   }, // mouse, silent
+      'ASP-1024':  { form: 'mouse',    idle: 'face-calm'   }, // mouse, methodical
       'AGN-H3R':   { form: 'skull',    idle: 'face-calm'   }, // skull
       'FAX-N':     { form: 'pumpkin',  idle: 'face-flicker'}, // jack-o'-lantern
     };
@@ -1086,7 +1086,7 @@ const GameEngine = (() => {
       ch3_ambient:  'ch3_beobachtung.mp3',
       ch4_ambient:  'ch4_werkstatt.mp3',
       ch5_ambient:  'ch5_langstrecke.mp3',
-      ch6_ambient:  'ch6_dunkelkammer.mp3',
+      ch6_ambient:  'ch6_versuchskammer.mp3',
       ch7_ambient:  'ch7_vexier.mp3',
       ch8_ambient:  'ch8_archiv.mp3',
       ch9_ambient:  'ch9_bonus.mp3',

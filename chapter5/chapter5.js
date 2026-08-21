@@ -1626,7 +1626,7 @@ const Chapter5 = (() => {
       modals: ['stModal'],
       completeId: CHAPTER_ID,
       completeAch: 'ch5_complete',
-      next: { title: 'SEKTOR 06 FREIGEGEBEN', label: 'DUNKELKAMMER',
+      next: { title: 'SEKTOR 06 FREIGEGEBEN', label: 'VERSUCHSKAMMER',
               href: '../chapter6/chapter6.html', enter: 'EINTRETEN' },
       onStart: beginOrResume,
       onRobot: clickRobot,
