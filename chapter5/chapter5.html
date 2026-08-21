@@ -3,50 +3,78 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>KA-II // Kapitel 5 — Fördersektor</title>
+  <title>KA-II // Kapitel 5 — Langstrecke</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Barlow:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/global.css?v=20260613">
   <link rel="stylesheet" href="../css/chapter.css?v=20260613">
-  <link rel="stylesheet" href="chapter5.css?v=20260613">
+  <link rel="stylesheet" href="chapter5.css?v=20260821">
 </head>
 <body class="chapter-page">
 
-  <!-- The shared chrome is built by GameEngine.chapter.build() in chapter5.js.
-       Only the FÖRDERLAUF puzzle modal lives here. -->
+  <!-- The shared chrome (sys-bar, title card, scene, robots, choices, hint bar,
+       completion card) is built by GameEngine.chapter.build() in chapter5.js.
+       Everything below is Chapter 5's own route furniture. -->
+
+  <!-- ROUTE TAG + STRECKENPROTOKOLL TOGGLE (bottom-left, clear of the
+       hint bar top-right and the robot icons bottom-right) -->
+  <div class="route-bar">
+    <span class="route-tag sys-text" id="routeTag">ROUTE 14</span>
+    <button class="route-log-btn sys-text" id="logToggle" aria-expanded="false" aria-controls="logPanel">[ PROTOKOLL ]</button>
+  </div>
+
+  <!-- STRECKENPROTOKOLL -->
+  <aside class="log-panel" id="logPanel" aria-label="Streckenprotokoll">
+    <div class="log-head">
+      <span class="sys-text">STRECKENPROTOKOLL</span>
+      <button class="log-close" id="logClose" aria-label="Protokoll schließen">✕</button>
+    </div>
+    <ul class="log-body" id="logBody"></ul>
+    <p class="log-foot sys-text">WARTUNGSROUTE 14 · LAUFENDE AUFNAHME</p>
+  </aside>
+
+  <!-- TRAVEL TRANSITION -->
+  <div class="travel-overlay hidden" id="travelOverlay" role="status" aria-live="polite">
+    <div class="tv-inner">
+      <div class="tv-line" aria-hidden="true"><i></i><i></i><i></i></div>
+      <p class="tv-route sys-text" id="tvRoute"></p>
+      <p class="tv-dist sys-text" id="tvDist"></p>
+      <p class="tv-note" id="tvNote"></p>
+      <p class="tv-skip sys-text">[ ANTIPPEN ÜBERSPRINGT ]</p>
+    </div>
+  </div>
+
+  <!-- ROUTE POWER-UP (finale) -->
+  <div class="routeup hidden" id="routeUp" role="status" aria-live="polite">
+    <div class="ru-inner">
+      <p class="ru-h sys-text">ROUTE 14 // SYNCHRONISATION</p>
+      <ul class="ru-list" id="ruList"></ul>
+    </div>
+  </div>
 
   <!-- ════════════════════════════════════════════════════════════
-       FÖRDERLAUF — 20 rapid mixed micro-tasks under one clock
+       STATION PANEL — one shell, four faces (14-E / 14-G / 14-H / 14-I).
+       Contents are rendered by chapter5.js.
        ════════════════════════════════════════════════════════════ -->
-  <div class="puzzle-modal hidden" id="flModal">
-    <div class="puzzle-card fl-card" id="flCard">
+  <div class="puzzle-modal hidden" id="stModal">
+    <div class="puzzle-card st-card">
       <div class="puzzle-card-accent"></div>
       <div class="puzzle-header">
-        <p class="puzzle-label sys-text">FÖRDERLAUF // T-FLON14</p>
-        <h2 class="puzzle-title">DIE STRECKE</h2>
-        <p class="puzzle-sub sys-text">20 PRÜFUNGEN · EINE UHR · NICHT STEHENBLEIBEN</p>
+        <p class="puzzle-label sys-text" id="stLabel">STATION</p>
+        <h2 class="puzzle-title" id="stTitle">&mdash;</h2>
+        <p class="puzzle-sub sys-text" id="stSub"></p>
       </div>
 
-      <div class="fl-bar">
-        <div class="fl-timer-track"><div class="fl-timer-fill" id="flTimer"></div></div>
-        <span class="sys-text" id="flTimeLabel">60s</span>
-      </div>
-      <div class="fl-progress sys-text" id="flProgress">RUNDE 1 / 20</div>
+      <div class="st-body" id="stBody"></div>
 
-      <div class="fl-prompt" id="flPrompt"></div>
-      <div class="fl-grid" id="flGrid"></div>
-      <div class="fl-answers hidden" id="flAnswers"></div>
-
-      <div class="puzzle-status sys-text" id="flStatus"></div>
-      <div class="puzzle-actions">
-        <button class="ka-btn primary hidden" id="flRestart" onclick="Chapter5.flRestart()">[ NEU STARTEN ]</button>
-      </div>
+      <div class="puzzle-status sys-text" id="stStatus"></div>
+      <div class="puzzle-actions" id="stActions"></div>
     </div>
   </div>
 
   <script src="../js/engine.js?v=20260613"></script>
   <script src="../js/mobile-warning.js?v=20260613"></script>
-  <script src="chapter5.js?v=20260613"></script>
+  <script src="chapter5.js?v=20260821"></script>
 </body>
 </html>

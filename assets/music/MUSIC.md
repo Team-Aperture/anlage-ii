@@ -28,7 +28,7 @@ ones the engine already references (id → filename); add or rename in the
 | `ch2_ambient` | `ch2_garten.mp3` | Kapitel 2 | overgrown garden calm |
 | `ch3_ambient` | `ch3_beobachtung.mp3` | Kapitel 3 | watched, clinical |
 | `ch4_ambient` | `ch4_wuerfel.mp3` | Kapitel 4 | spatial, puzzle-box |
-| `ch5_ambient` | `ch5_foerderlauf.mp3` | Kapitel 5 | upbeat, relentless motion |
+| `ch5_ambient` | `ch5_langstrecke.mp3` | Kapitel 5 | slow, spacious, damp catacomb reverb |
 | `ch6_ambient` | `ch6_dunkelkammer.mp3` | Kapitel 6 | hushed, chemical, tense |
 | `ch7_ambient` | `ch7_vexier.mp3` | Kapitel 7 | playful-creepy carnival |
 | `ch8_ambient` | `ch8_archiv.mp3` | Kapitel 8 | vast, ominous, knowing |
@@ -49,7 +49,7 @@ puzzle opens, when a Signalnische is found). Suggested moments in brackets.
 | `theme_agn` | `theme_agnher.mp3` | AGN‑H3R appears |
 | `puzzle_calm` | `puzzle_calm.mp3` | gentle puzzle underscore |
 | `puzzle_tense` | `puzzle_tense.mp3` | hard puzzle underscore |
-| `puzzle_timed` | `puzzle_timed.mp3` | FÖRDERLAUF (Ch5) |
+| `puzzle_timed` | `puzzle_timed.mp3` | (frei — kein Kapitel nutzt aktuell eine Uhr) |
 | `puzzle_forensic` | `puzzle_forensic.mp3` | BILDFORENSIK (Ch6) |
 | `puzzle_deduce` | `puzzle_deduction.mp3` | VEXIERSCHLOSS (Ch7) |
 | `puzzle_finale` | `puzzle_finale.mp3` | the jigsaw (Ch8) |
