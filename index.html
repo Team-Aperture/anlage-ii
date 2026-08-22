@@ -154,45 +154,9 @@
     </div>
   </div>
 
-  <div class="overlay-panel hidden" id="creditsOverlay" role="dialog" aria-label="Credits">
-    <div class="overlay-card">
-      <h2 class="overlay-title">CREDITS</h2>
-      <div class="overlay-content credits-content">
-        <div class="credits-roll">
-
-          <p>
-            <span class="accent-r3mi">R-3MI</span><br>
-            <span class="sys-text">Musik · Code</span>
-          </p>
-
-          <p class="credits-divider">──────────────────────────</p>
-
-          <p>
-            <span class="accent-vtgm">V-TGM</span><br>
-            <span class="sys-text">Playtesting · Story</span>
-          </p>
-
-          <p class="credits-divider">──────────────────────────</p>
-
-          <p class="sys-text">Code-Unterstützung</p>
-          <p style="font-size:13px; color:var(--text-secondary); margin-top:4px;">
-            Claude AI — entwickelt von Anthropic<br>
-            prüft, ob der Code funktioniert
-          </p>
-
-          <p class="credits-divider">──────────────────────────</p>
-
-          <p class="sys-text">Ein Team_Aperture Geocaching-Projekt.</p>
-          <p class="sys-text" style="margin-top:8px;">
-            Dieses Spiel speichert keine personenbezogenen Daten.<br>
-            Spielfortschritt wird lokal gespeichert.
-          </p>
-
-        </div>
-      </div>
-      <button class="ka-btn" onclick="GameEngine.closeOverlay()">[ SCHLIESSEN ]</button>
-    </div>
-  </div>
+  <!-- The credits panel is built by GameEngine.showCredits() so there is
+       only one copy of it, and so the guest thanks can stay hidden until the
+       game is finished. -->
 
   <!-- ── SCRIPTS ─────────────────────────────────────────────── -->
   <script src="js/engine.js?v=20260822"></script>
