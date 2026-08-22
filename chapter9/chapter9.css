@@ -174,7 +174,10 @@ body.diag-blip .scene-wrapper { animation: diagBlip .9s steps(3) 1; }
 /* ═══════════════════════════════════════════════════════════════
    PROTOKOLL
    ═══════════════════════════════════════════════════════════════ */
+/* There is nothing to read back while a card is open, and on a phone the
+   card starts at the top of the screen — exactly where this button sits. */
 .log-btn { position: fixed; top: 44px; left: var(--sp-md); z-index: 250; }
+body.card-open .log-btn { display: none; }
 .log-sheet { position: fixed; inset: 0; z-index: 260; display: flex; align-items: flex-end; justify-content: center; }
 .log-scrim { position: absolute; inset: 0; background: rgba(0,0,0,0.75); }
 .log-card {
@@ -273,6 +276,8 @@ body.diag-blip .scene-wrapper { animation: diagBlip .9s steps(3) 1; }
 
 @media (max-width: 640px) {
   .log-btn { top: 40px; left: var(--sp-sm); padding: 5px 8px; font-size: 10px; }
+  .ev-card .puzzle-title, .sg-card .puzzle-title { font-size: 17px; letter-spacing: .14em; }
+  .ev-card .puzzle-sub, .sg-card .puzzle-sub { font-size: 9px; }
   .face-bar { bottom: 22%; }
   .sg-text { font-size: 10px; }
   .rec-rows dd { font-size: 10px; }

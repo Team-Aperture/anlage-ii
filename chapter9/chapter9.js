@@ -124,6 +124,15 @@ const Chapter9 = (() => {
     return d;
   }
 
+  function openCard(id) {
+    el(id)?.classList.remove('hidden');
+    document.body.classList.add('card-open');
+  }
+  function closeCard(id) {
+    el(id)?.classList.add('hidden');
+    if (!document.querySelector('.puzzle-modal:not(.hidden)')) document.body.classList.remove('card-open');
+  }
+
   // ═══════════════════════════════════════════════════════════════
   // PROTOKOLL — everything said in this room can be read back
   // ═══════════════════════════════════════════════════════════════
@@ -341,11 +350,11 @@ const Chapter9 = (() => {
     el('evTitle').textContent = r.title;
     el('evSub').textContent   = r.sub;
     el('evBody').innerHTML    = r.body();
-    el('evModal').classList.remove('hidden');
+    openCard('evModal');
     tone({ f: 200, t: 0.07, type: 'sine', g: 0.05 });
     if (first) say(r.lines, () => { if (recordsDone() === 3 && !S.signalDone) nudgeSignal(); });
   }
-  function closeRecord() { el('evModal')?.classList.add('hidden'); }
+  function closeRecord() { closeCard('evModal'); }
 
   function nudgeSignal() {
     if (bump('nudge') > 1) return;
@@ -399,7 +408,7 @@ const Chapter9 = (() => {
 
   function openSignal() {
     if (S.signalDone) { replayWarning(); return; }
-    el('sgModal').classList.remove('hidden');
+    openCard('sgModal');
     renderSignal(false);
     if (bump('sig') === 1) {
       say([
@@ -408,7 +417,7 @@ const Chapter9 = (() => {
       ]);
     }
   }
-  function closeSignal() { el('sgModal')?.classList.add('hidden'); }
+  function closeSignal() { closeCard('sgModal'); }
 
   function renderSignal(synced) {
     const defs = signalDefs();
@@ -690,7 +699,7 @@ const Chapter9 = (() => {
         `<dl class="rec-rows">${rowsHtml.map(([k, v, c]) => `<dt>${k}</dt><dd class="${c}">${v}</dd>`).join('')}</dl>`
       + `<p class="rec-sep sys-text">ADMINISTRATIVE EINHEITEN ERKANNT</p>`
       + `<ul class="rec-admins"><li class="accent-r3mi">R-3MI</li><li class="accent-vtgm">V-TGM</li></ul>`;
-    el('evModal').classList.remove('hidden');
+    openCard('evModal');
     if (!auto) return;
     later(() => { adminReveal(); }, reduceMotion() ? 600 : 2200);
   }
@@ -967,7 +976,7 @@ const Chapter9 = (() => {
     el('evBody').innerHTML =
         `<div class="rec-coords"><div class="rec-coords-value">${esc(S.bonus)}</div>`
       + `<button class="ka-btn small" data-act="copy-bonus">[ KOPIEREN ]</button></div>`;
-    el('evModal').classList.remove('hidden');
+    openCard('evModal');
     revisitMenu();
   }
 
