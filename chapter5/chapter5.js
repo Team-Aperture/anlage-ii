@@ -569,7 +569,6 @@ const Chapter5 = (() => {
     save();
     CH.showGuest(true);
     playSound('ch5_tflon.mp3');
-    try { GameEngine.music.play('theme_tflon'); } catch (_) {}
 
     const webCallback = S.branch === 'alt'
       ? [{ speaker:'V-TGM', text:'"Both."', subtitle:'Beides.' }]

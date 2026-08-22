@@ -916,7 +916,24 @@ const GameEngine = (() => {
       return e;
     }
 
-    return { svg, el, types: () => Object.keys(SVG) };
+    /**
+     * Register chapter-local artwork. The shared set above is deliberately
+     * generic — a crate is a crate in every sector. Anything a chapter wants
+     * the player to actually LOOK at gets drawn for that chapter and
+     * registered here, so no two sectors furnish themselves alike.
+     *
+     * Pass raw inner SVG markup plus its viewBox; the wrapper, sizing and
+     * material classes are applied for you, so chapter art inherits the same
+     * lighting language as the shared props.
+     */
+    function register(defs) {
+      Object.entries(defs || {}).forEach(([name, d]) => {
+        if (!name || !d) return;
+        SVG[name] = typeof d === 'string' ? d : wrap(d.vb || '0 0 100 100', d.art || '');
+      });
+    }
+
+    return { svg, el, register, types: () => Object.keys(SVG) };
   })();
 
 
@@ -1067,19 +1084,16 @@ const GameEngine = (() => {
   // Crossfades looping tracks from assets/music/. The files are
   // placeholders for now; a missing or autoplay-blocked track fails
   // silently and retries on the next user gesture. Respects the mute
-  // toggle. Track slots + trigger moments are documented in
-  // assets/music/MUSIC.md — drop real .mp3s in to bring it to life.
+  // toggle. One track per chapter, plus the main menu and the credits —
+  // nothing else. Slots are documented in assets/music/MUSIC.md; drop real
+  // .mp3s in to bring it to life.
   // ═══════════════════════════════════════════════════════════════
   const music = (() => {
     const BASE = (/\/chapter\d/.test(location.pathname) ? '../' : '') + 'assets/music/';
 
     // id → filename. Up to ~60 slots; compose freely. (See MUSIC.md.)
     const TRACKS = {
-      // — UI / frame —
-      title:        'title_theme.mp3',
-      boot:         'boot_drone.mp3',
-      credits:      'credits_theme.mp3',
-      // — chapter ambiences —
+      title:        'title_theme.mp3',      // main menu
       ch0_ambient:  'ch0_rueckkehr.mp3',
       ch1_ambient:  'ch1_wartung.mp3',
       ch2_ambient:  'ch2_garten.mp3',
@@ -1090,31 +1104,7 @@ const GameEngine = (() => {
       ch7_ambient:  'ch7_vexier.mp3',
       ch8_ambient:  'ch8_archiv.mp3',
       ch9_ambient:  'ch9_bonus.mp3',
-      // — character themes (on first appearance) —
-      theme_froschi:  'theme_froschi.mp3',
-      theme_lux:      'theme_lux.mp3',
-      theme_bradf1sh: 'theme_bradfisch.mp3',
-      theme_tflon:    'theme_tflon14.mp3',
-      theme_asp:      'theme_asp1024.mp3',
-      theme_faxn:     'theme_faxn.mp3',
-      theme_agn:      'theme_agnher.mp3',
-      // — puzzle underscores —
-      puzzle_calm:    'puzzle_calm.mp3',
-      puzzle_tense:   'puzzle_tense.mp3',
-      puzzle_timed:   'puzzle_timed.mp3',
-      puzzle_forensic:'puzzle_forensic.mp3',
-      puzzle_deduce:  'puzzle_deduction.mp3',
-      puzzle_finale:  'puzzle_finale.mp3',
-      countdown:      'countdown_panic.mp3',
-      // — story beats —
-      transmission:   'the_transmission.mp3',
-      signal_found:   'signal_discovery.mp3',
-      coordinates:    'coordinates_reveal.mp3',
-      reactivation:   'reactivation_100.mp3',
-      // — the bonus / dark turn —
-      bonus_intro:    'bonus_intro.mp3',
-      bonus_truth:    'bonus_truth.mp3',
-      bonus_finale:   'bonus_finale.mp3',
+      credits:      'credits_theme.mp3',
     };
 
     let cur = null, curId = null, pending = null;
@@ -1239,7 +1229,6 @@ const GameEngine = (() => {
       const guestNm  = g.name || 'GAST';
       const reactPct = c.reactPct != null ? c.reactPct : 0;
       const deco     = c.emblemDeco || '';
-      const sImg     = (c.scene && c.scene.img) || '';
       const sPh      = (c.scene && c.scene.ph)  || '';
       const next     = c.next || null;
 
@@ -1268,7 +1257,7 @@ const GameEngine = (() => {
 
         <div class="scene-wrapper" id="sceneWrapper">
           <div class="scene-bg-layer" id="sceneBgLayer">
-            <!-- Rooms are code-drawn: scene-ph lighting + a perspective floor + props -->
+            <!-- Rooms are drawn in code: scene-ph lighting + perspective floor + props -->
             <div class="scene-ph" id="scenePh" data-scene="${sPh}"></div>
             <div class="scene-room" aria-hidden="true"><div class="room-ceil"></div><div class="room-wall room-wall-l"></div><div class="room-wall room-wall-r"></div><div class="room-back"></div></div>
             <div class="scene-floor" aria-hidden="true"></div>
@@ -1327,8 +1316,7 @@ const GameEngine = (() => {
 
     // ---- SCENE ------------------------------------------------------
     function setScene(key) {
-      // Rooms are code-drawn — switch the lighting/atmosphere key (the second
-      // arg some chapters still pass is ignored).
+      // Rooms are drawn entirely in code — this switches the lighting key.
       const ph = el('scenePh');
       if (ph) ph.dataset.scene = key;
     }

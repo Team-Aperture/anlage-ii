@@ -1,114 +1,323 @@
 /* ═══════════════════════════════════════════════════════════════
-   KAPITEL 07 — VEXIERSEKTOR  (guest: FAX-N)
-   Shared chrome lives in css/chapter.css; this file themes the guest
-   accent, the scene backgrounds, the emblem, and the VEXIERSCHLOSS.
+   KAPITEL 07 — SEKTOR 07 // VEXIERSEKTOR   (guest: FAX-N)
+   Shared chrome lives in css/chapter.css. This file carries the guest
+   accent, the sector's four moods (it visibly calms down as reference
+   anchors come back), the fake completion screen, the in-universe fault
+   screen, the integrity report and the ECHTHEITSPRÜFUNG panels.
+
+   Nothing here flashes rapidly, and every motion is dropped under
+   prefers-reduced-motion at the bottom of the file.
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
-  --accent-guest:    #ff4733;              /* FAX-N — pumpkin red */
-  --accent-guest-lo: rgba(255,71,51,0.14);
+  --accent-faxn:    #d68a2a;               /* FAX-N — jack-o'-lantern amber */
+  --accent-faxn-lo: rgba(214,138,42,0.15);
+  --accent-guest:    var(--accent-faxn);
+  --accent-guest-lo: var(--accent-faxn-lo);
 }
 
-/* room shell tint for this sector */
 .scene-room {
-  --room-line: rgba(215,120,95,0.12);
-  --room-glow: rgba(255,71,51,0.09);
-  --room-strip: rgba(255,140,110,0.42);
+  --room-line: rgba(214,160,90,0.11);
+  --room-glow: rgba(214,138,42,0.08);
+  --room-strip: rgba(255,196,110,0.36);
 }
 
-
-/* ─── PLACEHOLDER SCENES ──────────────────────────────────────── */
-.scene-ph[data-scene="vexier-dim"] {
+/* ─── SCENES — the room reads calmer with every anchor restored ──── */
+/* everything lying at once */
+.scene-ph[data-scene="vex-loud"] {
   background:
-    radial-gradient(ellipse at 50% 60%, #1d0a06 0%, #060302 80%),
-    linear-gradient(180deg, #120705 0%, #030101 100%);
+    radial-gradient(ellipse at 50% 50%, #21150a 0%, #080502 78%),
+    linear-gradient(180deg, #150d05 0%, #050301 100%);
 }
-.scene-ph[data-scene="vexier-dim"]::before {
+.scene-ph[data-scene="vex-loud"]::before {
   content:''; position:absolute; inset:0;
   background:
-    /* false doors painted on the walls */
-    repeating-linear-gradient(90deg, transparent 0 120px, rgba(255,71,51,0.05) 120px 122px),
-    radial-gradient(circle 3px at 30% 38%, rgba(255,120,90,0.4) 0%, transparent 100%),
-    radial-gradient(circle 2px at 70% 30%, rgba(255,120,90,0.3) 0%, transparent 100%),
-    linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 26%),
-    linear-gradient(0deg, rgba(0,0,0,0.7) 0%, transparent 26%);
+    /* a wall of signage, none of it agreeing with anything */
+    repeating-linear-gradient(90deg, transparent 0 46px, rgba(214,138,42,0.08) 46px 48px),
+    repeating-linear-gradient(0deg, transparent 0 58px, rgba(214,138,42,0.05) 58px 59px),
+    radial-gradient(ellipse 24% 26% at 50% 46%, rgba(214,138,42,0.24) 0%, transparent 72%),
+    radial-gradient(circle 4px at 20% 34%, rgba(255,206,120,0.7) 0%, transparent 100%),
+    radial-gradient(circle 4px at 79% 31%, rgba(255,206,120,0.6) 0%, transparent 100%),
+    radial-gradient(circle 3px at 64% 62%, rgba(255,206,120,0.5) 0%, transparent 100%),
+    linear-gradient(180deg, rgba(0,0,0,0.76) 0%, transparent 24%),
+    linear-gradient(0deg, rgba(0,0,0,0.7) 0%, transparent 24%);
 }
-.scene-ph[data-scene="vexier-lit"] {
-  background: radial-gradient(ellipse at 50% 46%, #3a1108 0%, #0a0302 82%);
+/* one or two anchors back */
+.scene-ph[data-scene="vex-dim"] {
+  background: radial-gradient(ellipse at 50% 48%, #241a0d 0%, #090603 78%);
 }
-.scene-ph[data-scene="vexier-lit"]::before {
+.scene-ph[data-scene="vex-dim"]::before {
   content:''; position:absolute; inset:0;
   background:
-    radial-gradient(ellipse 24% 30% at 50% 48%, rgba(255,71,51,0.4) 0%, transparent 70%),
-    radial-gradient(circle 5px at 50% 48%, rgba(255,180,60,0.9) 0%, transparent 100%),
-    linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 22%),
-    linear-gradient(0deg, rgba(0,0,0,0.6) 0%, transparent 22%);
+    repeating-linear-gradient(90deg, transparent 0 60px, rgba(214,138,42,0.06) 60px 61px),
+    radial-gradient(ellipse 24% 26% at 50% 46%, rgba(214,138,42,0.28) 0%, transparent 72%),
+    radial-gradient(circle 4px at 20% 34%, rgba(255,206,120,0.75) 0%, transparent 100%),
+    radial-gradient(circle 4px at 79% 31%, rgba(255,206,120,0.65) 0%, transparent 100%),
+    linear-gradient(180deg, rgba(0,0,0,0.72) 0%, transparent 22%),
+    linear-gradient(0deg, rgba(0,0,0,0.66) 0%, transparent 22%);
+}
+/* all three anchors, last check pending */
+.scene-ph[data-scene="vex-calm"] {
+  background: radial-gradient(ellipse at 50% 46%, #2c2110 0%, #0b0704 76%);
+}
+.scene-ph[data-scene="vex-calm"]::before {
+  content:''; position:absolute; inset:0;
+  background:
+    radial-gradient(ellipse 26% 28% at 50% 46%, rgba(214,138,42,0.32) 0%, transparent 72%),
+    radial-gradient(circle 5px at 20% 34%, rgba(255,214,140,0.85) 0%, transparent 100%),
+    radial-gradient(circle 5px at 79% 31%, rgba(255,214,140,0.8) 0%, transparent 100%),
+    linear-gradient(180deg, rgba(0,0,0,0.66) 0%, transparent 20%),
+    linear-gradient(0deg, rgba(0,0,0,0.6) 0%, transparent 20%);
+}
+/* the sector finally agrees with itself */
+.scene-ph[data-scene="vex-stable"] {
+  background: radial-gradient(ellipse at 50% 46%, #3a2c15 0%, #0d0905 76%);
+}
+.scene-ph[data-scene="vex-stable"]::before {
+  content:''; position:absolute; inset:0;
+  background:
+    radial-gradient(ellipse 30% 30% at 50% 46%, rgba(214,138,42,0.42) 0%, transparent 74%),
+    radial-gradient(circle 5px at 20% 34%, rgba(255,224,160,0.95) 0%, transparent 100%),
+    radial-gradient(circle 5px at 50% 30%, rgba(255,224,160,0.9) 0%, transparent 100%),
+    radial-gradient(circle 5px at 79% 34%, rgba(255,224,160,0.9) 0%, transparent 100%),
+    linear-gradient(180deg, rgba(0,0,0,0.58) 0%, transparent 18%),
+    linear-gradient(0deg, rgba(0,0,0,0.52) 0%, transparent 18%);
 }
 
-/* ─── EMBLEM GRIN ─────────────────────────────────────────────── */
-.ch7-grin {
-  position:absolute; inset:32% 30% auto 30%; height:30%;
-  border:0 solid var(--accent-guest); border-bottom-width:3px;
-  border-radius:0 0 60% 60% / 0 0 100% 100%;
-  box-shadow: 0 0 12px var(--accent-guest);
-  animation: grinFlicker 3.2s ease-in-out infinite;
+/* While the sector still lies, its signage drifts — slowly, never
+   flashing, and only on decorative labels. */
+.scene-wrapper[data-lies="3"] .prop-label { animation: vexDrift 7s ease-in-out infinite; }
+.scene-wrapper[data-lies="2"] .prop-label { animation: vexDrift 11s ease-in-out infinite; }
+@keyframes vexDrift { 0%,88%,100%{opacity:0} 90%,96%{opacity:.55} }
+
+/* ─── EMBLEM — a grin that is mostly friendly ──────────────────── */
+.ch7-grin { position:absolute; width:56px; height:44px; }
+.ch7-grin i {
+  position:absolute; top:2px; width:0; height:0;
+  border-left:7px solid transparent; border-right:7px solid transparent;
+  border-bottom:11px solid var(--accent-faxn);
+  filter:drop-shadow(0 0 6px var(--accent-faxn));
 }
-@keyframes grinFlicker { 0%,88%,100%{opacity:.95} 90%{opacity:.35} 93%{opacity:.9} }
+.ch7-grin i:nth-child(1) { left:4px; }
+.ch7-grin i:nth-child(2) { left:38px; }
+.ch7-grin i:nth-child(3) { left:21px; top:12px; border-bottom-width:8px; opacity:.75; }
+.ch7-grin::after {
+  content:''; position:absolute; left:6px; right:6px; bottom:6px; height:12px;
+  border-bottom:3px solid var(--accent-faxn); border-radius:0 0 24px 24px;
+  box-shadow:0 3px 8px var(--accent-faxn-lo);
+  animation: grinFlicker 5.5s ease-in-out infinite;
+}
+@keyframes grinFlicker { 0%,100%{opacity:.55} 45%{opacity:1} 47%{opacity:.7} 49%{opacity:1} }
 
 /* ═══════════════════════════════════════════════════════════════
-   VEXIERSCHLOSS
+   THE FAKE COMPLETION SCREEN
+   Deliberately identical in weight to the real one — that is the joke.
    ═══════════════════════════════════════════════════════════════ */
-.vex-card { max-width: 440px; }
-
-/* the six lock symbols, each a distinct hue + glyph (colour-blind safe) */
-.vex-0 { color:#ff5d5d; }   /* ● */
-.vex-1 { color:#ffd23f; }   /* ▲ */
-.vex-2 { color:#3fc8ff; }   /* ■ */
-.vex-3 { color:#ff6fe0; }   /* ◆ */
-.vex-4 { color:#5dff9b; }   /* ★ */
-.vex-5 { color:#b48cff; }   /* ✚ */
-
-.vex-sym { font-size:18px; line-height:1; margin:0 2px; text-shadow:0 0 6px currentColor; }
-
-.vex-legend {
-  display:flex; align-items:center; justify-content:center; gap:4px;
-  flex-wrap:wrap; margin-bottom:var(--sp-sm);
-  padding-bottom:var(--sp-sm); border-bottom:1px solid var(--bdr-dim);
+.fake-complete {
+  position:fixed; inset:0; z-index:420; background:var(--bg-deep);
+  display:flex; align-items:center; justify-content:center; padding:var(--sp-lg);
+  opacity:0; transition:opacity .5s ease;
 }
-.vex-legend-label { font-size:10px; margin-right:6px; }
-
-/* feedback pips */
-.vex-pip { display:inline-block; width:9px; height:9px; border-radius:50%; margin:0 1px; vertical-align:middle; }
-.vex-pip.exact { background:var(--accent-r3mi); box-shadow:0 0 6px var(--accent-r3mi); }
-.vex-pip.misp  { background:transparent; border:1.5px solid var(--text-secondary); }
-.vex-pip.blank { background:var(--bdr-dim); opacity:.35; }
-
-/* history of past guesses */
-.vex-history {
-  max-height:168px; overflow-y:auto; margin-bottom:var(--sp-sm);
-  background:var(--bg-surface); border:1px solid var(--bdr-dim); padding:var(--sp-xs);
+.fake-complete.visible { opacity:1; }
+.fake-complete.breaking { animation: fcBreak .9s ease forwards; }
+@keyframes fcBreak {
+  0%   { opacity:1; transform:none; filter:none; }
+  35%  { transform:translateX(-4px) skewX(1.2deg); filter:hue-rotate(-25deg); }
+  55%  { transform:translateX(5px) skewX(-1.6deg); }
+  75%  { opacity:.7; transform:translateY(9px) skewY(1.4deg); }
+  100% { opacity:0; transform:translateY(46px) skewY(3deg); }
 }
-.vex-empty { text-align:center; font-size:11px; color:var(--text-dim); padding:var(--sp-sm); }
-.vex-row { display:flex; align-items:center; gap:var(--sp-sm); padding:3px 6px; }
-.vex-row + .vex-row { border-top:1px solid rgba(255,255,255,0.04); }
-.vex-row-n    { font-size:10px; color:var(--text-dim); min-width:14px; }
-.vex-row-syms { flex:1; letter-spacing:2px; }
-.vex-row-pips { min-width:48px; text-align:right; white-space:nowrap; }
+.fc-card { text-align:center; display:flex; flex-direction:column; align-items:center; gap:var(--sp-md); max-width:480px; }
+.fc-header { letter-spacing:.2em; }
+.fc-title  { font-family:var(--font-display); font-size:clamp(26px,4vw,44px); font-weight:700; letter-spacing:.2em;
+             color:var(--accent-faxn); text-shadow:0 0 16px var(--accent-faxn); }
+.fc-next   { font-family:var(--font-display); font-size:20px; letter-spacing:.15em; color:var(--text-primary); }
+.fc-progress { margin-bottom:var(--sp-md); }
+.fc-card .ka-btn { min-width:200px; }
 
-/* the current editable row */
-.vex-current { display:flex; flex-direction:column; align-items:center; gap:var(--sp-sm); margin-bottom:var(--sp-sm); }
-.vex-slots { display:flex; gap:var(--sp-sm); justify-content:center; }
-.vex-slot {
-  width:52px; height:52px; font-size:26px; line-height:1;
-  background:var(--bg-raised); border:2px solid var(--bdr-mid);
-  cursor:pointer; transition:all var(--t-fast);
-  text-shadow:0 0 8px currentColor;
+/* ═══════════════════════════════════════════════════════════════
+   IN-UNIVERSE FAULT SCREEN
+   ═══════════════════════════════════════════════════════════════ */
+.bsod {
+  position:fixed; inset:0; z-index:440; background:#123a8c;
+  display:flex; align-items:center; justify-content:center; padding:var(--sp-lg);
+  opacity:0; transition:opacity .45s ease; overflow-y:auto;
 }
-.vex-slot:hover { border-color:var(--accent-guest); transform:translateY(-2px); }
-.vex-slot:active { transform:translateY(0); }
-.vex-attempts { font-size:11px; letter-spacing:.12em; color:var(--accent-guest); }
+.bsod.visible { opacity:1; }
+.bsod-inner { max-width:560px; color:#eaf1ff; font-family:var(--font-body); }
+.bsod-face { font-size:clamp(48px,9vw,76px); margin:0 0 var(--sp-md); line-height:1; }
+.bsod-lead { font-size:clamp(17px,2.6vw,22px); margin:0 0 var(--sp-md); line-height:1.4; }
+.bsod-body { font-size:14px; line-height:1.65; margin:0 0 var(--sp-lg); opacity:.92; }
+.bsod-code { font-size:11px; letter-spacing:.12em; opacity:.75; margin:0 0 var(--sp-md); }
+.bsod-pct  { font-size:15px; letter-spacing:.16em; }
 
+.joking {
+  position:fixed; inset:0; z-index:440; background:#000;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:var(--sp-lg);
+  opacity:0; transition:opacity .5s ease;
+}
+.joking.visible { opacity:1; }
+.joking-text { color:#5c5c5c; font-size:13px; letter-spacing:.1em; margin:0; }
+.joking-face { position:relative; width:78px; height:62px; }
+.joking-face i {
+  position:absolute; top:6px; width:0; height:0;
+  border-left:9px solid transparent; border-right:9px solid transparent;
+  border-bottom:14px solid var(--accent-faxn); filter:drop-shadow(0 0 10px var(--accent-faxn));
+}
+.joking-face i:nth-child(1) { left:8px; }
+.joking-face i:nth-child(2) { right:8px; }
+.joking-face span {
+  position:absolute; left:10px; right:10px; bottom:8px; height:16px;
+  border-bottom:4px solid var(--accent-faxn); border-radius:0 0 30px 30px;
+  box-shadow:0 4px 14px var(--accent-faxn-lo);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INTEGRITY REPORT
+   ═══════════════════════════════════════════════════════════════ */
+.integrity {
+  position:fixed; inset:0; z-index:430; background:rgba(3,4,8,0.95);
+  display:flex; align-items:center; justify-content:center; padding:var(--sp-md);
+  opacity:0; transition:opacity .4s ease; overflow-y:auto;
+}
+.integrity.visible { opacity:1; }
+.int-card {
+  background:var(--bg-panel); border:1px solid var(--bdr-mid); padding:var(--sp-lg);
+  max-width:600px; width:100%; margin:auto;
+}
+.int-boot { font-size:10px; letter-spacing:.18em; color:var(--text-dim); line-height:1.9; margin:0 0 var(--sp-md); }
+.int-h { font-size:11px; letter-spacing:.18em; color:var(--accent-faxn); margin:0 0 var(--sp-sm);
+         border-bottom:1px solid var(--bdr-dim); padding-bottom:var(--sp-xs); }
+.int-rows { list-style:none; margin:0 0 var(--sp-sm); padding:0; }
+.int-rows li {
+  display:flex; justify-content:space-between; align-items:baseline; gap:var(--sp-md);
+  padding:8px 0; border-bottom:1px solid var(--bdr-dim); flex-wrap:wrap;
+}
+.int-rows li:last-child { border-bottom:none; }
+.int-k { font-size:9px; letter-spacing:.1em; color:var(--text-dim); }
+.int-v { font-size:12px; color:var(--text-secondary); text-align:right; }
+.int-foot { font-size:10px; letter-spacing:.14em; color:var(--text-dim); margin:0 0 var(--sp-md); }
+.int-card .ka-btn { display:block; margin:0 auto; }
+
+/* ═══════════════════════════════════════════════════════════════
+   ECHTHEITSPRÜFUNG PANELS
+   ═══════════════════════════════════════════════════════════════ */
+.vx-card { max-width:640px; }
+.vx-body { max-height:56vh; overflow-y:auto; padding-right:2px; }
+.vx-rule { text-align:center; font-size:10px; letter-spacing:.14em; color:var(--accent-faxn); margin:0 0 var(--sp-xs); }
+.vx-rulelist { margin:0 auto var(--sp-sm); padding-left:1.2em; max-width:420px; font-size:12px; color:var(--text-secondary); line-height:1.6; }
+.vx-rulelist b { color:var(--text-primary); }
+.vx-note { text-align:center; font-size:9px; letter-spacing:.1em; color:var(--text-dim); margin:var(--sp-xs) 0 var(--sp-sm); }
+.vx-cap  { text-align:center; font-size:9px; letter-spacing:.16em; color:var(--text-dim); margin:var(--sp-sm) 0 4px; }
+
+/* doors + exits share a card layout */
+.vx-doors { display:flex; justify-content:center; gap:var(--sp-sm); flex-wrap:wrap; }
+.vx-door {
+  flex:1 1 170px; max-width:200px; text-align:left;
+  background:var(--bg-surface); border:1px solid var(--bdr-mid); color:var(--text-primary);
+  padding:var(--sp-sm); cursor:pointer; transition:all var(--t-fast);
+}
+.vx-door:hover { border-color:var(--accent-faxn); background:var(--bg-raised); }
+.vx-door-id { display:block; font-size:9px; letter-spacing:.14em; color:var(--accent-faxn); margin-bottom:2px; }
+.vx-door-label { display:block; font-family:var(--font-display); font-size:15px; letter-spacing:.08em; margin-bottom:6px; }
+.vx-ev { list-style:none; margin:0; padding:0; }
+.vx-ev li { display:flex; justify-content:space-between; gap:6px; padding:3px 0; border-bottom:1px solid var(--bdr-dim); }
+.vx-ev li:last-child { border-bottom:none; }
+.vx-ev .sys-text { font-size:8px; letter-spacing:.08em; color:var(--text-dim); }
+.vx-ev b { font-size:10px; font-weight:600; color:var(--text-secondary); text-align:right; }
+/* the light line is real, readable, and deliberately not part of the rule */
+.vx-ev-dim { opacity:.55; }
+
+/* the two competing claims at the finale */
+.vx-claims { display:flex; flex-direction:column; gap:6px; margin-bottom:var(--sp-sm); }
+.vx-claim { background:var(--bg-surface); border:1px solid var(--bdr-dim); padding:var(--sp-sm); }
+.vx-claim .sys-text { display:block; font-size:8px; letter-spacing:.14em; color:var(--text-dim); margin-bottom:3px; }
+.vx-claim b { font-size:12px; color:var(--text-secondary); }
+.vx-claim.sys { border-left:3px solid var(--accent-system); }
+.vx-claim.fax { border-left:3px solid var(--accent-faxn); }
+
+/* wiring anchor */
+.vx-schema { display:flex; justify-content:center; gap:var(--sp-sm); flex-wrap:wrap; margin-bottom:var(--sp-xs); }
+.vx-schema.real .vx-map { border-style:solid; border-color:var(--accent-faxn); }
+.vx-map {
+  display:flex; align-items:center; gap:5px; padding:6px 9px;
+  background:var(--bg-surface); border:1px dashed var(--bdr-mid);
+  font-family:var(--font-mono); font-size:11px; color:var(--text-secondary);
+}
+.vx-map i { font-style:normal; color:var(--text-dim); }
+.vx-map.hidden-route { opacity:.5; }
+.vx-map.hidden-route span:last-child { color:var(--accent-warn); }
+.vx-target { text-align:center; font-size:11px; color:var(--text-secondary); margin:var(--sp-sm) 0; }
+.vx-target b { color:var(--accent-faxn); }
+
+.vx-switches { display:flex; justify-content:center; gap:var(--sp-sm); flex-wrap:wrap; margin-bottom:var(--sp-sm); }
+.vx-sw {
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+  min-width:62px; min-height:52px; padding:8px 6px;
+  background:var(--bg-surface); border:1px solid var(--bdr-mid); color:var(--text-primary);
+  font-family:var(--font-mono); cursor:pointer; transition:all var(--t-fast);
+}
+.vx-sw:hover { border-color:var(--accent-faxn); }
+.vx-sw.on { border-color:var(--accent-faxn); background:var(--accent-faxn-lo); }
+.vx-sw:active { transform:translateY(1px); }
+.vx-sw-id { font-size:13px; letter-spacing:.06em; }
+.vx-sw-state { font-size:8px; letter-spacing:.1em; color:var(--text-dim); }
+.vx-sw.on .vx-sw-state { color:var(--accent-faxn); }
+
+.vx-terms { display:flex; justify-content:center; gap:var(--sp-sm); flex-wrap:wrap; }
+.vx-term {
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  min-width:62px; padding:8px 6px; background:var(--bg-panel); border:1px solid var(--bdr-dim);
+}
+.vx-term-id { font-size:10px; letter-spacing:.08em; color:var(--text-secondary); }
+.vx-lamp { width:11px; height:11px; border-radius:50%; background:#1a1a14; border:1px solid var(--bdr-mid); }
+/* the lamp is backed by the word next to it — never colour alone */
+.vx-term.live .vx-lamp { background:var(--accent-faxn); box-shadow:0 0 10px var(--accent-faxn); }
+.vx-term-state { font-size:8px; letter-spacing:.1em; color:var(--text-dim); }
+.vx-term.live .vx-term-state { color:var(--accent-faxn); }
+
+/* latch anchor */
+.vx-latchrow { display:flex; justify-content:center; gap:var(--sp-sm); flex-wrap:wrap; margin-bottom:var(--sp-sm); }
+.vx-latch {
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  min-width:74px; padding:8px 6px; background:var(--bg-surface); border:1px solid var(--bdr-dim);
+}
+.vx-latch.target { background:var(--bg-panel); border-style:dashed; }
+.vx-latch-id { font-size:8px; letter-spacing:.08em; color:var(--text-dim); }
+.vx-latch-state { font-size:9px; letter-spacing:.08em; color:var(--text-secondary); }
+.vx-bolt {
+  display:block; width:44px; height:12px; border:1px solid var(--bdr-mid); background:var(--bg-panel);
+  position:relative; overflow:hidden;
+}
+.vx-bolt::after {
+  content:''; position:absolute; top:2px; height:6px; width:22px;
+  background:var(--text-dim); transition:left .22s ease;
+}
+.vx-latch.shut .vx-bolt::after { left:20px; }
+.vx-latch.open .vx-bolt::after { left:1px; }
+.vx-latch.open .vx-bolt::after { background:var(--accent-faxn); }
+.vx-latch.moved { border-color:var(--accent-faxn); box-shadow:0 0 10px var(--accent-faxn-lo); }
+
+/* ─── RESPONSIVE ──────────────────────────────────────────────── */
 @media (max-width: 600px) {
-  .vex-slot { width:46px; height:46px; font-size:22px; }
-  .vex-history { max-height:132px; }
+  .vx-card, .int-card { padding:var(--sp-md); }
+  .vx-body { max-height:60vh; }
+  .vx-door { flex:1 1 100%; max-width:none; }
+  .vx-sw { min-width:66px; min-height:56px; }
+  .vx-term { min-width:66px; }
+  .vx-latch { min-width:68px; }
+  .vx-bolt { width:40px; }
+  .vx-map { font-size:10px; padding:6px 7px; }
+  .int-rows li { flex-direction:column; gap:2px; }
+  .int-v { text-align:left; }
+  .bsod { align-items:flex-start; padding-top:12vh; }
+}
+
+/* ─── REDUCED MOTION ──────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .ch7-grin::after, .scene-wrapper .prop-label { animation:none; }
+  .scene-wrapper[data-lies] .prop-label { opacity:1; }
+  .fake-complete, .bsod, .joking, .integrity { transition:none; }
+  .fake-complete.breaking { animation-duration:.25s; }
+  .vx-bolt::after { transition:none; }
 }

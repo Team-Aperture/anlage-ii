@@ -383,7 +383,6 @@ const Chapter6 = (() => {
     save();
     CH.showGuest(true);
     playSound('ch6_asp.mp3');
-    try { GameEngine.music.play('theme_asp'); } catch (_) {}
     say([
       { speaker:'SYSTEM', text:'Die Einheit sieht kurz herüber.' },
       { speaker:'ASP-1024', text:'„Moin."' },

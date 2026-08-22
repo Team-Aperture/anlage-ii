@@ -43,7 +43,7 @@ const Chapter8 = (() => {
       name: 'Archivsektor',
       subline: '„Ich habe alles aufgeschrieben. Auch das, was sie vergessen wollten.“',
       emblemDeco: '<div class="ch-eye"></div>',
-      scene: { img: 'cg/ch8_archive.png', ph: 'archive-dim' },
+      scene: { ph: 'archive-dim' },
       guest: { key: 'agn', name: 'AGN-H3R' },
       modals: ['jigModal'],
       completeId: 'ch8',
@@ -57,7 +57,7 @@ const Chapter8 = (() => {
 
   // ─── 8.1 ARRIVAL ──────────────────────────────────────────────
   function scene_8_1_arrival() {
-    CH.setScene('archive-dim', 'cg/ch8_archive.png');
+    CH.setScene('archive-dim');
     CH.clearHotspots();
     CH.showRobots(true);
     CH.showGuest(false);
@@ -71,7 +71,7 @@ const Chapter8 = (() => {
 
   // ─── 8.2 AGN-H3R APPEARS ──────────────────────────────────────
   function scene_8_2_agn() {
-    CH.setScene('archive-lit', 'cg/ch8_agn.png');
+    CH.setScene('archive-lit');
     CH.showGuest(true);
     try { GameEngine.achievements.unlock('all_guests'); } catch(_) {}
     GameEngine.dialogue.load([
