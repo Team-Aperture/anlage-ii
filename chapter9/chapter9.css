@@ -102,7 +102,7 @@ body.diag-blip .scene-wrapper { animation: diagBlip .9s steps(3) 1; }
    RECORDS
    ═══════════════════════════════════════════════════════════════ */
 .ev-card { max-width: 500px; }
-.ev-body { margin-bottom: var(--sp-sm); }
+.ev-body { margin-bottom: var(--sp-md); }
 
 .rec-rows { display: grid; grid-template-columns: 1fr auto; gap: 4px 14px; margin: 0; text-align: left; }
 .rec-rows dt { font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em; color: var(--text-dim); }
@@ -122,13 +122,13 @@ body.diag-blip .scene-wrapper { animation: diagBlip .9s steps(3) 1; }
 .rec-tree li .odd { color: var(--accent-vault); text-shadow: 0 0 8px var(--accent-vault-lo); }
 .rec-tree-last { margin-top: 6px; padding-top: 6px !important; border-top: 1px solid var(--bdr-dim); }
 
-.rec-chain { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-top: 6px; }
+.rec-chain { display: flex; flex-direction: column; align-items: center; gap: 2px; margin: 6px 0 var(--sp-md); }
 .rec-step {
   font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em;
   color: var(--text-secondary); border: 1px solid var(--bdr-dim); padding: 4px 10px; text-align: center;
 }
 .rec-step.end { border-color: var(--accent-vault); color: var(--accent-vault); }
-.rec-arrow { color: var(--text-dim); font-size: 11px; font-style: normal; }
+.rec-arrow { color: var(--accent-vault); font-size: 13px; font-style: normal; opacity: .7; line-height: 1; }
 
 .rec-admins { list-style: none; margin: 0; padding: 0; display: flex; gap: var(--sp-md); justify-content: center; }
 .rec-admins li { font-family: var(--font-mono); font-size: 15px; letter-spacing: .18em; }

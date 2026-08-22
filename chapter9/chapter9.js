@@ -188,16 +188,21 @@ const Chapter9 = (() => {
   // ═══════════════════════════════════════════════════════════════
   // THE ROOM
   // ═══════════════════════════════════════════════════════════════
-  function loadRoom() {
+  // the room itself, with nothing to click — used again once the evidence
+  // stops mattering and only the two of them do
+  function dressRoom() {
     CH.clearHotspots();
-    CH.showRobots(true);
-    CH.showGuest(false);
-    CH.setScene(S.act >= 5 ? 'vault-live' : 'vault-dim');
-
     CH.addProp({ prop:'c9_stack',  x:0,  y:10, w:9,  h:62 });
     CH.addProp({ prop:'c9_stack',  x:91, y:10, w:9,  h:62 });
     CH.addProp({ prop:'c9_duct',   x:20, y:0,  w:60, h:7  });
     CH.addProp({ prop:'debris',    x:30, y:86, w:13, h:7  });
+  }
+
+  function loadRoom() {
+    dressRoom();
+    CH.showRobots(true);
+    CH.showGuest(false);
+    CH.setScene(S.act >= 5 ? 'vault-live' : 'vault-dim');
 
     addHotspot({ prop:'c9_reader', x:11, y:44, w:16, h:22, label:'AUTORISIERUNGSAKTE',
                  aria:'Autorisierungsakte', fn:() => openRecord('auth') });
@@ -470,7 +475,7 @@ const Chapter9 = (() => {
   function afterWarning() {
     S.act = 4;
     save();
-    CH.clearHotspots();
+    dressRoom();
     CH.showRobots(true);
     say([
       { speaker:'SYSTEM', text:'Keiner der beiden sagt etwas. R-3MI sieht auf den Boden. V-TGM sieht dich an.' },
