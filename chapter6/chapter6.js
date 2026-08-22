@@ -1295,6 +1295,13 @@ const Chapter6 = (() => {
 
   function init() {
     try { GameEngine.props.register(CH6_ART); } catch (_) {}
+    // the same entry gate every other chapter has: no skipping ahead,
+    // but a finished chapter can always be replayed
+    if (!GameEngine.state.isChapterComplete('ch5')
+        && !GameEngine.state.isChapterComplete('ch6')) {
+      location.replace('../chapter5/chapter5.html');
+      return;
+    }
     buildChapter();
     rebindHints();
     CH.showHintBar(false);
