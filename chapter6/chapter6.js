@@ -314,21 +314,21 @@ const Chapter6 = (() => {
     CH.addProp({ prop:'crate',    x:86, y:70, w:12, h:14 });
     CH.addProp({ prop:'barrel',   x:4,  y:68, w:8,  h:14 });
 
-    addHotspot({ prop:'reactor', cls:'prop-guest hs-bb' + (S.solved ? ' hs-stable' : ''),
+    addHotspot({ prop:'c6_blackbox', cls:'prop-guest hs-bb' + (S.solved ? ' hs-stable' : ''),
       x:41, y:32, w:19, h:25,
       label: S.solved ? 'BLACKBOX · MODELL BESTÄTIGT' : 'BLACKBOX',
       aria:'Blackbox bedienen', fn:() => openBlackbox() });
-    addHotspot({ prop:'monitors', x:66, y:28, w:18, h:16,
+    addHotspot({ prop:'c6_archive', x:66, y:28, w:18, h:16,
       label:'VERSUCHSARCHIV', aria:'Versuchsprotokoll öffnen', fn:() => openProtocol() });
-    addHotspot({ prop:'console', x:10, y:36, w:18, h:18,
+    addHotspot({ prop:'c6_bench', x:10, y:36, w:18, h:18,
       label:'WERKBANK', aria:'ASPs Werkbank ansehen', fn:() => examine('bench') });
-    addHotspot({ prop:'shelf', x:30, y:58, w:11, h:26,
+    addHotspot({ prop:'c6_cartridges', x:30, y:58, w:11, h:26,
       label:'KARTUSCHENFACH', aria:'Testkartuschen ansehen', fn:() => examine('cart') });
-    addHotspot({ prop:'panel', x:74, y:52, w:14, h:14,
+    addHotspot({ prop:'c6_rack', x:74, y:52, w:14, h:14,
       label:'DIAGNOSERACK', aria:'Diagnoserack ansehen', fn:() => examine('rack') });
 
     if (S.solved) {
-      addHotspot({ prop:'door', x:44, y:60, w:13, h:34,
+      addHotspot({ prop:'c6_labdoor', x:44, y:60, w:13, h:34,
         label:'SEKTOR 07', aria:'Sektor 07 betreten', fn:() => finishChapter() });
     }
   }
@@ -1212,7 +1212,89 @@ const Chapter6 = (() => {
     });
   }
 
+
+  // ─── CHAPTER ART ──────────────────────────────────────────────
+  // A sealed test chamber. Instruments give off exactly as much light as
+  // it takes to read them, and the thing in the middle gives off none.
+  const CH6_ART = {
+    // the Blackbox: a featureless cube with one status ring
+    c6_blackbox: { vb:'0 0 110 110', art:
+      '<ellipse class="prop-inset" cx="55" cy="103" rx="42" ry="5" opacity=".6"/>'
+    + '<rect class="prop-base" x="14" y="22" width="82" height="78" rx="2"/>'
+    + '<rect class="prop-inset" x="18" y="26" width="74" height="70" rx="1"/>'
+    + '<rect class="prop-lite" x="18" y="26" width="74" height="2" opacity=".45"/>'
+    + '<circle class="prop-edge" cx="55" cy="58" r="15" opacity=".75"/>'
+    + '<circle class="prop-glow" cx="55" cy="58" r="11"/>'
+    + '<circle class="prop-core" cx="55" cy="58" r="4"/>'
+    + '<rect class="prop-metal" x="30" y="14" width="50" height="9" rx="2"/>'
+    + '<rect class="prop-base" x="22" y="100" width="66" height="6" rx="2"/>'
+    + '<line class="prop-thin" x1="26" y1="90" x2="84" y2="90" opacity=".35"/>' },
+
+    // the diagnostics archive — dense rows of very short records
+    c6_archive: { vb:'0 0 130 90', art:
+      '<rect class="prop-base" x="4" y="4" width="60" height="40" rx="3"/>'
+    + '<rect class="prop-screen" x="9" y="9" width="50" height="30"/>'
+    + [0,1,2].map(i => `<line class="prop-scan" x1="14" y1="${16 + i*8}" x2="${52 - i*7}" y2="${16 + i*8}"/>`).join('')
+    + '<rect class="prop-base" x="68" y="4" width="58" height="40" rx="3"/>'
+    + '<rect class="prop-screen" x="73" y="9" width="48" height="30"/>'
+    + [0,1,2].map(i => `<line class="prop-scan" x1="78" y1="${16 + i*8}" x2="${114 - i*5}" y2="${16 + i*8}"/>`).join('')
+    + '<rect class="prop-cursor" x="78" y="32" width="7" height="5"/>'
+    + '<rect class="prop-base" x="4" y="50" width="58" height="36" rx="3"/>'
+    + '<rect class="prop-inset" x="9" y="55" width="48" height="26"/>'
+    + '<rect class="prop-base" x="68" y="50" width="58" height="36" rx="3"/>'
+    + '<rect class="prop-screen" x="73" y="55" width="48" height="26"/>'
+    + '<line class="prop-scan" x1="78" y1="64" x2="110" y2="64"/>'
+    + '<circle class="prop-led" cx="120" cy="47" r="2.4"/>' },
+
+    // his bench: cables, a blank pad, three cups
+    c6_bench: { vb:'0 0 130 86', art:
+      '<ellipse class="prop-inset" cx="65" cy="80" rx="52" ry="5" opacity=".6"/>'
+    + '<path class="prop-base" d="M12 78 L24 32 h84 l12 46 Z"/>'
+    + '<path class="prop-metal" d="M24 32 h84 l5 12 H19 Z"/>'
+    + '<rect class="prop-lite" x="24" y="32" width="84" height="2.4"/>'
+    + '<path class="prop-thin" d="M32 30 q10 -12 22 -4 q10 7 20 -2" stroke-width="2"/>'
+    + '<rect class="prop-inset" x="60" y="18" width="22" height="13" rx="1"/>'
+    + '<circle class="prop-metal" cx="94" cy="24" r="6"/><path class="prop-thin" d="M100 22 q5 2 0 5"/>'
+    + '<circle class="prop-metal" cx="106" cy="26" r="5"/><path class="prop-thin" d="M111 24 q4 2 0 4"/>'
+    + '<circle class="prop-inset" cx="116" cy="24" r="5"/>'
+    + '<line class="prop-thin" x1="26" y1="62" x2="106" y2="62" opacity=".5"/>' },
+
+    // numbered test cartridges, all but one ticked off
+    c6_cartridges: { vb:'0 0 80 120', art:
+      '<rect class="prop-base" x="5" y="4" width="70" height="112" rx="3"/>'
+    + [0,1,2,3].map(r => [0,1].map(c => `<rect class="prop-metal" x="${11 + c*31}" y="${11 + r*27}" width="26" height="21" rx="2"/>`
+                          + `<rect class="prop-lite" x="${11 + c*31}" y="${11 + r*27}" width="26" height="2.2"/>`
+                          + `<rect class="prop-inset" x="${15 + c*31}" y="${17 + r*27}" width="14" height="4"/>`
+                          + ((r===1&&c===1) ? `<circle class="prop-acc" cx="${33 + c*31}" cy="${28 + r*27}" r="2.6"/>`
+                                            : `<path class="prop-thin" d="M${16 + c*31} ${27 + r*27} l3 3 l6 -7" stroke-width="1.6" opacity=".6"/>`)).join('')).join('') },
+
+    // an instrument rack whose counter overflowed a long time ago
+    c6_rack: { vb:'0 0 100 90', art:
+      '<rect class="prop-base" x="5" y="5" width="90" height="80" rx="4"/>'
+    + '<rect class="prop-lite" x="10" y="9" width="80" height="3" rx="1.5"/>'
+    + '<rect class="prop-screen" x="12" y="17" width="76" height="20"/>'
+    + [0,1,2,3,4,5,6,7,8,9,10,11].map(i => `<rect class="prop-acc" x="${16 + i*6}" y="22" width="4" height="10" opacity=".85"/>`).join('')
+    + '<line class="prop-scan" x1="16" y1="34" x2="84" y2="34"/>'
+    + [0,1,2].map(r => [0,1,2,3,4,5].map(c => `<circle class="prop-led${(r+c)%3 ? '-'+(((r+c)%3)+1) : ''}" cx="${17 + c*13}" cy="${48 + r*13}" r="2.6"/>`).join('')).join('')
+    + '<rect class="prop-inset" x="12" y="78" width="76" height="3"/>' },
+
+    // the way on
+    c6_labdoor: { vb:'0 0 80 120', art:
+      '<ellipse class="prop-inset" cx="40" cy="115" rx="34" ry="4" opacity=".6"/>'
+    + '<rect class="prop-base" x="5" y="2" width="70" height="112" rx="4"/>'
+    + '<rect class="prop-inset" x="12" y="9" width="56" height="98"/>'
+    + '<rect class="prop-metal" x="13" y="10" width="26" height="96"/>'
+    + '<rect class="prop-metal" x="41" y="10" width="26" height="96"/>'
+    + '<rect class="prop-lite" x="13" y="10" width="3.4" height="96"/>'
+    + '<rect class="prop-lite" x="41" y="10" width="3.4" height="96"/>'
+    + '<rect class="prop-screen" x="28" y="44" width="9" height="14" rx="1"/>'
+    + '<rect class="prop-screen" x="44" y="44" width="9" height="14" rx="1"/>'
+    + '<line class="prop-edge" x1="40" y1="10" x2="40" y2="106" opacity=".85"/>'
+    + '<circle class="prop-led" cx="40" cy="6" r="2.8"/>' },
+  };
+
   function init() {
+    try { GameEngine.props.register(CH6_ART); } catch (_) {}
     buildChapter();
     rebindHints();
     CH.showHintBar(false);

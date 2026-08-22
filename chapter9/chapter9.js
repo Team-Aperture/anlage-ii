@@ -87,9 +87,9 @@ const Chapter9 = (() => {
     CH.addProp({ prop:'shelf',  x:9,  y:14, w:9,  h:30 });
     CH.addProp({ prop:'shelf',  x:82, y:14, w:9,  h:30 });
     CH.addProp({ prop:'debris', x:36, y:84, w:15, h:8  });
-    CH.addHotspot({ prop:'crate', x:17, y:48, w:15, h:18, label:'EXPONAT: FRIGO', fn:() => clickExhibit('brainrot') });
-    CH.addHotspot({ prop:'panel', anim:'prop-flicker', x:44, y:42, w:15, h:16, label:'EXPONAT: FARBEN', fn:() => clickExhibit('crypto') });
-    CH.addHotspot({ prop:'crate', cls:'prop-brown', x:70, y:48, w:15, h:18, label:'EXPONAT: DIE ÜBERTRAGUNG', fn:() => clickExhibit('transmission') });
+    CH.addHotspot({ prop:'c9_case_a', x:17, y:48, w:15, h:18, label:'EXPONAT: FRIGO', fn:() => clickExhibit('brainrot') });
+    CH.addHotspot({ prop:'c9_case_b', anim:'prop-flicker', x:44, y:42, w:15, h:16, label:'EXPONAT: FARBEN', fn:() => clickExhibit('crypto') });
+    CH.addHotspot({ prop:'c9_case_c', cls:'prop-brown', x:70, y:48, w:15, h:18, label:'EXPONAT: DIE ÜBERTRAGUNG', fn:() => clickExhibit('transmission') });
   }
 
   // ─── 9.2 EXHIBITS ─────────────────────────────────────────────
@@ -197,7 +197,49 @@ const Chapter9 = (() => {
   }
 
   // ─── INIT ─────────────────────────────────────────────────────
+
+  // ─── CHAPTER ART ──────────────────────────────────────────────
+  // A room that officially does not exist, arranged like a museum by
+  // someone who thought the exhibits were funny.
+  const CH9_ART = {
+    // exhibit one, in a vitrine
+    c9_case_a: { vb:'0 0 100 120', art:
+      '<ellipse class="prop-inset" cx="50" cy="114" rx="36" ry="5" opacity=".6"/>'
+    + '<rect class="prop-base" x="18" y="86" width="64" height="26" rx="2"/>'
+    + '<rect class="prop-lite" x="18" y="86" width="64" height="2.4"/>'
+    + '<rect class="prop-inset" x="14" y="8" width="72" height="78" rx="2"/>'
+    + '<rect class="prop-edge" x="14" y="8" width="72" height="78" rx="2" opacity=".55"/>'
+    + '<path class="prop-metal" d="M38 74 q-4 -22 12 -30 q16 8 12 30 Z"/>'
+    + '<circle class="prop-acc" cx="50" cy="40" r="7" opacity=".8"/>'
+    + '<rect class="prop-acc-dim" x="30" y="94" width="40" height="4"/>'
+    + '<line class="prop-thin" x1="34" y1="102" x2="66" y2="102" opacity=".5"/>' },
+
+    // exhibit two, a wall of swatches
+    c9_case_b: { vb:'0 0 100 100', art:
+      '<rect class="prop-base" x="6" y="6" width="88" height="88" rx="3"/>'
+    + '<rect class="prop-inset" x="12" y="12" width="76" height="60"/>'
+    + [0,1,2].map(r => [0,1,2,3].map(c =>
+        `<rect class="prop-${['acc','lite','acc-dim','metal'][(r*4+c)%4]}" x="${17 + c*18}" y="${17 + r*18}" width="14" height="14" rx="1" opacity="${0.5 + ((r+c)%3)*0.2}"/>`).join('')).join('')
+    + '<rect class="prop-acc-dim" x="16" y="78" width="44" height="4"/>'
+    + '<line class="prop-thin" x1="16" y1="86" x2="72" y2="86" opacity=".5"/>'
+    + '<circle class="prop-led" cx="86" cy="88" r="2.4"/>' },
+
+    // exhibit three: a brown box in a display case
+    c9_case_c: { vb:'0 0 100 120', art:
+      '<ellipse class="prop-inset" cx="50" cy="114" rx="36" ry="5" opacity=".6"/>'
+    + '<rect class="prop-base" x="18" y="86" width="64" height="26" rx="2"/>'
+    + '<rect class="prop-inset" x="14" y="8" width="72" height="78" rx="2"/>'
+    + '<rect class="prop-edge" x="14" y="8" width="72" height="78" rx="2" opacity=".55"/>'
+    + '<rect class="prop-metal" x="30" y="40" width="40" height="30" rx="2"/>'
+    + '<rect class="prop-lite" x="30" y="40" width="40" height="2.2"/>'
+    + '<circle class="prop-led" cx="62" cy="63" r="2.6"/>'
+    + '<path class="prop-thin" d="M50 40 v-12" opacity=".6"/>'
+    + '<path class="prop-thin" d="M44 26 q6 -6 12 0" opacity=".5"/>'
+    + '<rect class="prop-acc-dim" x="28" y="94" width="44" height="4"/>' },
+  };
+
   function init() {
+    try { GameEngine.props.register(CH9_ART); } catch (_) {}
     if (!allSignals()) { showLocked(); return; }
     buildChapter();
     CH.start();

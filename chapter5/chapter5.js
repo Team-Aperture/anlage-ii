@@ -323,9 +323,9 @@ const Chapter5 = (() => {
     CH.addProp({ prop:'light',  x:45, y:2,  w:10, h:7 });
     CH.addProp({ prop:'debris', x:60, y:84, w:16, h:8 });
 
-    addHotspot({ prop:'sign', x:44, y:40, w:13, h:14,
+    addHotspot({ prop:'c5_routeboard', x:44, y:40, w:13, h:14,
       label:'ROUTENTAFEL', aria:'Routentafel lesen', fn:() => examine('tafel') });
-    addHotspot({ prop:'opening', x:42, y:56, w:16, h:34,
+    addHotspot({ prop:'c5_passage', x:42, y:56, w:16, h:34,
       label:'WEITER · 14-D', aria:'Der Route folgen', fn:() => travelTo('14-D') });
 
     say([
@@ -355,11 +355,11 @@ const Chapter5 = (() => {
     CH.addProp({ prop:'barrel',  x:36, y:74, w:8,  h:14 });
     CH.addProp({ prop:'debris',  x:12, y:86, w:14, h:7 });
 
-    addHotspot({ prop:'opening', cls:'rt-main', x:10, y:34, w:19, h:44,
+    addHotspot({ prop:'c5_passage', cls:'rt-main', x:10, y:34, w:19, h:44,
       label:'LINKS · GEPFLEGT', aria:'Linken Gang nehmen', fn:() => chooseBranch('haupt') });
-    addHotspot({ prop:'opening', cls:'rt-old', x:70, y:34, w:19, h:44,
+    addHotspot({ prop:'c5_passage', cls:'rt-old', x:70, y:34, w:19, h:44,
       label:'RECHTS · STAUBIG', aria:'Rechten Gang nehmen', fn:() => chooseBranch('alt') });
-    addHotspot({ prop:'sign', x:46, y:40, w:12, h:13,
+    addHotspot({ prop:'c5_marker', x:46, y:40, w:12, h:13,
       label:'MARKIERUNG 14-D', aria:'Markierung 14-D ansehen', fn:() => examine('markD') });
 
     if (S.branch) {                        // returning after the detour
@@ -419,9 +419,9 @@ const Chapter5 = (() => {
       label:'SPINNENNETZ', aria:'Spinnennetz', fn:() => webGag() });
     addHotspot({ cls:'hs-web web-b', x:56, y:38, w:16, h:22,
       label:'NOCH EIN NETZ', aria:'Noch ein Spinnennetz', fn:() => webGag() });
-    addHotspot({ prop:'sign', x:10, y:44, w:12, h:13,
+    addHotspot({ prop:'c5_marker', x:10, y:44, w:12, h:13,
       label:'ALTE ROUTENPLATTE', aria:'Alte Routenplatte ansehen', fn:() => examine('oldplate') });
-    addHotspot({ prop:'ladder', x:78, y:30, w:8,  h:48,
+    addHotspot({ prop:'c5_hatch', x:78, y:30, w:8,  h:48,
       label:'WARTUNGSLUKE', aria:'Durch die Wartungsluke zurück auf die Trasse', fn:() => rejoin() });
 
     say([
@@ -549,12 +549,12 @@ const Chapter5 = (() => {
     CH.addProp({ prop:'crate',    x:84, y:70, w:12, h:14 });
     CH.addProp({ prop:'monitors', x:8,  y:26, w:14, h:14, cls:'prop-far' });
 
-    addHotspot({ prop:'panel', cls:'prop-guest', x:36, y:32, w:24, h:24,
+    addHotspot({ prop:'c5_gallery', cls:'prop-guest', x:36, y:32, w:24, h:24,
       label:'SCHALTWAND', aria:'Schaltwand bedienen', fn:() => openStation('gallery') });
-    addHotspot({ prop:'sign', x:66, y:44, w:12, h:13,
+    addHotspot({ prop:'c5_marker', x:66, y:44, w:12, h:13,
       label:'MARKIERUNG 14-E', aria:'Markierung 14-E ansehen', fn:() => examine('markE') });
     if (S.relay) {
-      addHotspot({ prop:'opening', x:44, y:62, w:15, h:32,
+      addHotspot({ prop:'c5_passage', x:44, y:62, w:15, h:32,
         label:'WEITER · 14-F', aria:'Weiter nach 14-F', fn:() => travelTo('14-F') });
     }
 
@@ -641,15 +641,15 @@ const Chapter5 = (() => {
     CH.addProp({ prop:'cables',  x:24, y:0,  w:9,  h:30, cls:'prop-far' });
     CH.addProp({ prop:'railing', x:30, y:66, w:40, h:12 });
 
-    addHotspot({ prop:'console', cls:'prop-guest', x:42, y:36, w:18, h:20,
+    addHotspot({ prop:'c5_lift', cls:'prop-guest', x:42, y:36, w:18, h:20,
       label:'WARTUNGSLIFT', aria:'Wartungslift bedienen', fn:() => descend() });
-    addHotspot({ prop:'vent', x:74, y:36, w:13, h:14,
+    addHotspot({ prop:'c5_niche', x:74, y:36, w:13, h:14,
       label:'SEITENNISCHE', aria:'Seitennische untersuchen', fn:() => examine('alcove') });
-    addHotspot({ prop:'sign', x:18, y:44, w:12, h:13,
+    addHotspot({ prop:'c5_marker', x:18, y:44, w:12, h:13,
       label:'MARKIERUNG 14-F', aria:'Markierung 14-F ansehen', fn:() => examine('markF') });
 
     if (S.restSeen) {
-      addHotspot({ prop:'opening', x:44, y:66, w:15, h:30,
+      addHotspot({ prop:'c5_passage', x:44, y:66, w:15, h:30,
         label:'WEITER · 14-G', aria:'Weiter nach 14-G', fn:() => travelTo('14-G') });
       say([{ speaker:'SYSTEM', text:'Die Sohle des Tiefschachts. Über euch verliert sich der Schacht in Dunkelheit und ein paar sehr weit entfernten Lichtern.' }]);
       return;
@@ -797,13 +797,13 @@ const Chapter5 = (() => {
     CH.addProp({ prop:'barrel',  x:80, y:66, w:8,  h:15 });
     CH.addProp({ prop:'reactor', x:12, y:28, w:13, h:16, cls:'prop-far' });
 
-    addHotspot({ prop:'console', cls:'prop-guest', x:36, y:34, w:22, h:22,
+    addHotspot({ prop:'c5_supply', cls:'prop-guest', x:36, y:34, w:22, h:22,
       label:'VERSORGUNGSPULT', aria:'Versorgungspult bedienen', fn:() => openStation('supply') });
-    addHotspot({ prop:'sign', x:68, y:44, w:12, h:13,
+    addHotspot({ prop:'c5_marker', x:68, y:44, w:12, h:13,
       label:'MARKIERUNG 14-G', aria:'Markierung 14-G ansehen', fn:() => examine('markG') });
 
     if (S.crossing) {
-      addHotspot({ prop:'railing', cls:'rt-bridge', x:30, y:62, w:40, h:16,
+      addHotspot({ prop:'c5_bridge', cls:'rt-bridge', x:30, y:62, w:40, h:16,
         label:'WARTUNGSSTEG · 14-H', aria:'Über den Wartungssteg nach 14-H', fn:() => crossOver() });
       say([{ speaker:'SYSTEM', text:'Der Wartungssteg steht ausgefahren und verriegelt über dem Spalt.' }]);
       return;
@@ -870,14 +870,14 @@ const Chapter5 = (() => {
     CH.addProp({ prop:'debris',  x:66, y:84, w:15, h:8 });
     CH.addProp({ prop:'ivy',     x:86, y:22, w:10, h:26, cls:'prop-far' });
 
-    addHotspot({ prop:'panel', cls:'prop-guest', x:34, y:32, w:26, h:22,
+    addHotspot({ prop:'c5_markerwall', cls:'prop-guest', x:34, y:32, w:26, h:22,
       label:'MARKIERUNGSWAND', aria:'Markierungen vergleichen', fn:() => openStation('marker') });
 
     if (S.marker) {
-      addHotspot({ prop:'crate', cls:'prop-brown', x:66, y:60, w:13, h:16,
+      addHotspot({ prop:'c5_foreign', cls:'prop-brown', x:66, y:60, w:13, h:16,
         label: S.sigFound ? 'FREMDES BAUTEIL' : 'HINTER DER PLATTE',
         aria:'Hinter der falschen Platte nachsehen', fn:() => inspectSig() });
-      addHotspot({ prop:'opening', x:44, y:64, w:15, h:30,
+      addHotspot({ prop:'c5_passage', x:44, y:64, w:15, h:30,
         label:'WEITER · 14-I', aria:'Weiter nach 14-I', fn:() => travelTo('14-I') });
       say([{ speaker:'SYSTEM', text:'Die falsche Platte hängt schief in der Halterung, seit ihr sie gelöst habt.' }]);
       return;
@@ -971,9 +971,9 @@ const Chapter5 = (() => {
     CH.addProp({ prop:'cables',   x:8,  y:6,  w:8,  h:22, cls:'prop-far' });
     CH.addProp({ prop:'crate',    x:84, y:70, w:12, h:14 });
 
-    addHotspot({ prop:'terminal', cls:'prop-guest', x:40, y:30, w:20, h:26,
+    addHotspot({ prop:'c5_terminal', cls:'prop-guest', x:40, y:30, w:20, h:26,
       label:'STRECKENTERMINAL', aria:'Streckenterminal bedienen', fn:() => openStation('terminal') });
-    addHotspot({ prop:'sign', x:70, y:48, w:12, h:13,
+    addHotspot({ prop:'c5_marker', x:70, y:48, w:12, h:13,
       label:'MARKIERUNG 14-I', aria:'Markierung 14-I ansehen', fn:() => examine('markI') });
 
     say([
@@ -1632,7 +1632,139 @@ const Chapter5 = (() => {
     });
   }
 
+
+  // ─── CHAPTER ART ──────────────────────────────────────────────
+  // Old maintenance catacombs. Damp stone, tired metal, and route
+  // plates that have outlived everyone who read them.
+  const CH5_ART = {
+    // an enamelled route board at the mouth of the line
+    c5_routeboard: { vb:'0 0 110 84', art:
+      '<rect class="prop-base" x="5" y="6" width="100" height="70" rx="3"/>'
+    + '<rect class="prop-metal" x="11" y="12" width="88" height="58"/>'
+    + '<rect class="prop-lite" x="11" y="12" width="88" height="2.4"/>'
+    + '<rect class="prop-acc-dim" x="19" y="20" width="60" height="6"/>'
+    + [0,1,2,3,4].map(i => `<rect class="prop-acc-dim" x="19" y="${34 + i*7}" width="${34 - i*3}" height="3" opacity="${i<3?0.3:0.55}"/>`
+                          + (i<3 ? `<line class="prop-acc" x1="17" y1="${35.5 + i*7}" x2="${55 - i*3}" y2="${35.5 + i*7}" stroke-width="1.4" opacity=".8"/>` : '')).join('')
+    + '<circle class="prop-inset" cx="9" cy="10" r="2"/><circle class="prop-inset" cx="101" cy="10" r="2"/>'
+    + '<circle class="prop-inset" cx="9" cy="72" r="2"/><circle class="prop-inset" cx="101" cy="72" r="2"/>'
+    + '<path class="prop-thin" d="M84 60 l6 6 l-6 6" opacity=".5"/>' },
+
+    // a corridor mouth receding into the dark
+    c5_passage: { vb:'0 0 100 120', art:
+      '<path class="prop-base" d="M8 118 V34 q42 -30 84 0 v84 Z"/>'
+    + '<path class="prop-inset" d="M18 118 V40 q32 -22 64 0 v78 Z"/>'
+    + '<path class="prop-thin" d="M30 118 V50 q20 -13 40 0 v68 Z" opacity=".45"/>'
+    + '<path class="prop-thin" d="M42 118 V62 q8 -6 16 0 v56 Z" opacity=".28"/>'
+    + '<rect class="prop-metal" x="6" y="30" width="88" height="6" rx="2"/>'
+    + '<circle class="prop-led" cx="14" cy="46" r="2.2"/>'
+    + '<circle class="prop-led-3" cx="86" cy="46" r="2.2"/>'
+    + '<path class="prop-glow" d="M40 118 q10 -26 20 0 Z" opacity=".35"/>' },
+
+    // a ROUTE 14 marker plate — double border, four bolts, a notch
+    c5_marker: { vb:'0 0 90 68', art:
+      '<rect class="prop-base" x="4" y="4" width="82" height="60" rx="2"/>'
+    + '<rect class="prop-metal" x="9" y="9" width="72" height="50"/>'
+    + '<rect class="prop-inset" x="13" y="13" width="64" height="42"/>'
+    + '<rect class="prop-acc-dim" x="22" y="24" width="34" height="8"/>'
+    + '<path class="prop-acc" d="M62 28 l8 6 l-8 6 Z" opacity=".85"/>'
+    + '<circle class="prop-lite" cx="13" cy="13" r="2.6"/><circle class="prop-lite" cx="77" cy="13" r="2.6"/>'
+    + '<circle class="prop-lite" cx="13" cy="55" r="2.6"/><circle class="prop-lite" cx="77" cy="55" r="2.6"/>'
+    + '<path class="prop-inset" d="M86 64 l-8 0 l8 -8 Z"/>' },
+
+    // the maintenance hatch back onto the live line
+    c5_hatch: { vb:'0 0 60 140', art:
+      '<rect class="prop-metal" x="8" y="0" width="7" height="140" rx="2"/>'
+    + '<rect class="prop-metal" x="45" y="0" width="7" height="140" rx="2"/>'
+    + '<rect class="prop-lite" x="8" y="0" width="2.4" height="140"/>'
+    + [0,1,2,3,4].map(i => `<rect class="prop-metal" x="8" y="${16 + i*28}" width="44" height="5" rx="2"/>`).join('')
+    + '<circle class="prop-base" cx="30" cy="72" r="10"/>'
+    + '<circle class="prop-edge" cx="30" cy="72" r="6"/>'
+    + '<line class="prop-edge" x1="30" y1="66" x2="30" y2="78"/>' },
+
+    // the switch gallery wall
+    c5_gallery: { vb:'0 0 110 90', art:
+      '<rect class="prop-base" x="4" y="4" width="102" height="82" rx="4"/>'
+    + '<rect class="prop-lite" x="9" y="8" width="92" height="3" rx="1.5"/>'
+    + [0,1,2].map(r => [0,1,2,3].map(c => `<rect class="prop-metal" x="${13 + c*23}" y="${18 + r*22}" width="17" height="16" rx="2"/>`
+                          + `<circle class="prop-led${(r+c)%3 ? '-'+(((r+c)%3)+1) : ''}" cx="${21.5 + c*23}" cy="${26 + r*22}" r="2.6"/>`).join('')).join('')
+    + '<rect class="prop-acc-dim" x="9" y="82" width="92" height="2"/>' },
+
+    // the descent lift
+    c5_lift: { vb:'0 0 100 100', art:
+      '<rect class="prop-base" x="6" y="6" width="88" height="88" rx="4"/>'
+    + '<rect class="prop-inset" x="14" y="14" width="72" height="60"/>'
+    + '<rect class="prop-metal" x="18" y="18" width="64" height="8" rx="2"/>'
+    + '<path class="prop-thin" d="M30 34 v30 M50 34 v30 M70 34 v30" opacity=".5"/>'
+    + '<path class="prop-acc" d="M50 40 l-9 12 h18 Z" opacity=".8"/>'
+    + '<path class="prop-acc-dim" d="M50 66 l-9 -12 h18 Z" opacity=".5"/>'
+    + '<rect class="prop-base" x="18" y="80" width="64" height="8" rx="2"/>'
+    + '<circle class="prop-led" cx="88" cy="12" r="2.4"/>' },
+
+    // a wall niche someone used to sit in
+    c5_niche: { vb:'0 0 90 80', art:
+      '<rect class="prop-base" x="4" y="4" width="82" height="72" rx="3"/>'
+    + '<path class="prop-inset" d="M12 72 V26 q33 -14 66 0 v46 Z"/>'
+    + '<rect class="prop-metal" x="26" y="50" width="34" height="5" rx="2"/>'
+    + '<rect class="prop-metal" x="29" y="55" width="4" height="16"/>'
+    + '<rect class="prop-metal" x="53" y="55" width="4" height="16"/>'
+    + '<circle class="prop-inset" cx="68" cy="36" r="4"/>'
+    + [0,1,2,3].map(i => `<line class="prop-thin" x1="${20 + i*3}" y1="42" x2="${20 + i*3}" y2="52" opacity=".55"/>`).join('') },
+
+    // the supply desk at the crossing
+    c5_supply: { vb:'0 0 130 90', art:
+      '<ellipse class="prop-inset" cx="65" cy="84" rx="52" ry="5" opacity=".6"/>'
+    + '<path class="prop-base" d="M14 82 L28 26 h74 l14 56 Z"/>'
+    + '<path class="prop-metal" d="M28 26 h74 l6 18 H22 Z"/>'
+    + '<rect class="prop-lite" x="28" y="26" width="74" height="2.6"/>'
+    + [0,1,2].map(i => `<circle class="prop-led${i?'-'+(i+1):''}" cx="${40 + i*22}" cy="58" r="3.4"/>`).join('')
+    + '<rect class="prop-acc-dim" x="76" y="54" width="30" height="8" rx="3"/>'
+    + '<rect class="prop-acc" x="88" y="51" width="6" height="14" rx="2"/>'
+    + '<line class="prop-thin" x1="26" y1="70" x2="110" y2="70"/>' },
+
+    // the maintenance bridge, once it exists
+    c5_bridge: { vb:'0 0 160 70', art:
+      '<rect class="prop-metal" x="4" y="26" width="152" height="7" rx="2"/>'
+    + '<rect class="prop-lite" x="4" y="26" width="152" height="2.4" rx="1"/>'
+    + '<rect class="prop-metal" x="4" y="46" width="152" height="5" rx="2"/>'
+    + [0,1,2,3].map(i => `<rect class="prop-base" x="${12 + i*45}" y="28" width="6" height="34" rx="2"/>`).join('')
+    + [0,1,2,3,4,5,6].map(i => `<line class="prop-thin" x1="${14 + i*21}" y1="33" x2="${14 + i*21}" y2="46" opacity=".5"/>`).join('')
+    + '<circle class="prop-led" cx="8" cy="22" r="2.4"/>'
+    + '<circle class="prop-led-3" cx="152" cy="22" r="2.4"/>' },
+
+    // the marker wall at 14-H
+    c5_markerwall: { vb:'0 0 130 80', art:
+      '<rect class="prop-inset" x="0" y="0" width="130" height="80"/>'
+    + [0,1,2,3,4].map(i => `<rect class="prop-base" x="${6 + i*25}" y="20" width="20" height="30" rx="2"/>`
+                          + `<rect class="prop-metal" x="${9 + i*25}" y="23" width="14" height="24"/>`
+                          + `<rect class="prop-acc-dim" x="${11 + i*25}" y="30" width="10" height="4"/>`
+                          + `<circle class="prop-lite" cx="${10 + i*25}" cy="24" r="1.4"/>`
+                          + `<circle class="prop-lite" cx="${22 + i*25}" cy="24" r="1.4"/>`).join('')
+    + '<line class="prop-thin" x1="0" y1="58" x2="130" y2="58" opacity=".4"/>' },
+
+    // a foreign housing behind a plate
+    c5_foreign: { vb:'0 0 100 80', art:
+      '<ellipse class="prop-inset" cx="50" cy="74" rx="38" ry="5" opacity=".6"/>'
+    + '<rect class="prop-metal" x="14" y="20" width="72" height="50" rx="3"/>'
+    + '<rect class="prop-lite" x="14" y="20" width="72" height="3" rx="1.5"/>'
+    + '<rect class="prop-inset" x="22" y="30" width="56" height="4" opacity=".5"/>'
+    + '<circle class="prop-led" cx="74" cy="60" r="3"/>'
+    + '<path class="prop-thin" d="M26 44 q10 -5 18 3" opacity=".5"/>' },
+
+    // the route terminal at the end of the line
+    c5_terminal: { vb:'0 0 100 120', art:
+      '<ellipse class="prop-inset" cx="50" cy="112" rx="32" ry="5" opacity=".6"/>'
+    + '<path class="prop-metal" d="M36 108 L40 84 h20 l4 24 Z"/>'
+    + '<rect class="prop-base" x="28" y="106" width="44" height="8" rx="2"/>'
+    + '<rect class="prop-base" x="6" y="6" width="88" height="74" rx="5"/>'
+    + '<rect class="prop-screen" x="13" y="14" width="74" height="58"/>'
+    + [0,1,2,3,4,5].map(i => `<circle class="prop-acc" cx="${20 + i*11}" cy="${30 + (i%2)*16}" r="3.2" opacity=".85"/>`
+                            + (i<5 ? `<line class="prop-acc-dim" x1="${23 + i*11}" y1="${30 + (i%2)*16}" x2="${28 + i*11}" y2="${30 + ((i+1)%2)*16}" stroke-width="1.6"/>` : '')).join('')
+    + '<line class="prop-scan" x1="19" y1="62" x2="66" y2="62"/>'
+    + '<circle class="prop-led" cx="88" cy="76" r="2.6"/>' },
+  };
+
   function init() {
+    try { GameEngine.props.register(CH5_ART); } catch (_) {}
     buildChapter();
     rebindHints();
     CH.showHintBar(false);

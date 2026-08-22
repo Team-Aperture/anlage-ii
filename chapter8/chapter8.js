@@ -144,9 +144,9 @@ const Chapter8 = (() => {
     CH.addProp({ prop:'ladder', x:22, y:22, w:6,  h:48 });
     CH.addProp({ prop:'crate',  x:74, y:70, w:12, h:13 });
     CH.addProp({ prop:'debris', x:14, y:82, w:14, h:8  });
-    CH.addHotspot({ prop:'panel', cls:'prop-guest', anim:'prop-flicker', x:43, y:44, w:16, h:20, label:'DAS ZEHNTE PUZZLE', fn:() => clickExplore('record') });
-    CH.addHotspot({ prop:'shelf', x:16, y:36, w:12, h:34, label:'AKTENREGAL',  fn:() => clickExplore('shelf') });
-    CH.addHotspot({ prop:'sign', x:80, y:52, w:14, h:12, label:'AGN-H3RS HAUPTBUCH', fn:() => clickExplore('ledger') });
+    CH.addHotspot({ prop:'c8_record', cls:'prop-guest', anim:'prop-flicker', x:43, y:44, w:16, h:20, label:'DAS ZEHNTE PUZZLE', fn:() => clickExplore('record') });
+    CH.addHotspot({ prop:'c8_shelf', x:16, y:36, w:12, h:34, label:'AKTENREGAL',  fn:() => clickExplore('shelf') });
+    CH.addHotspot({ prop:'c8_ledger', x:80, y:52, w:14, h:12, label:'AGN-H3RS HAUPTBUCH', fn:() => clickExplore('ledger') });
   }
 
   function clickExplore(key) {
@@ -430,7 +430,46 @@ const Chapter8 = (() => {
   }
 
   // ─── PUBLIC API ───────────────────────────────────────────────
+
+  // ─── CHAPTER ART ──────────────────────────────────────────────
+  // The archive. Shelving that goes past where the light reaches, and a
+  // ledger somebody has been keeping for a very long time.
+  const CH8_ART = {
+    // the record the tenth puzzle lives on
+    c8_record: { vb:'0 0 110 90', art:
+      '<rect class="prop-base" x="5" y="5" width="100" height="80" rx="4"/>'
+    + '<rect class="prop-lite" x="10" y="9" width="90" height="3" rx="1.5"/>'
+    + '<rect class="prop-screen" x="14" y="17" width="82" height="56"/>'
+    + [0,1,2,3].map(r => [0,1,2,3].map(c =>
+        `<rect class="prop-metal" x="${18 + c*20}" y="${21 + r*13}" width="17" height="11" rx="1" opacity="${0.45 + ((r+c)%3)*0.18}"/>`).join('')).join('')
+    + '<line class="prop-edge" x1="14" y1="17" x2="96" y2="17" opacity=".5"/>'
+    + '<circle class="prop-led" cx="99" cy="79" r="2.6"/>' },
+
+    // shelving, crowded, receding
+    c8_shelf: { vb:'0 0 90 130', art:
+      '<rect class="prop-base" x="5" y="3" width="80" height="124"/>'
+    + [0,1,2,3].map(r => `<rect class="prop-metal" x="5" y="${28 + r*28}" width="80" height="4"/>`).join('')
+    + [0,1,2,3].map(r => [0,1,2,3,4].map(c => {
+        const h = 12 + ((r * 5 + c) % 4) * 4;
+        const cls = ['acc-dim', 'lite', 'inset'][(r + c) % 3];
+        const w = 8 + ((c + r) % 2) * 3;
+        return `<rect class="prop-${cls}" x="${10 + c * 15}" y="${28 + r * 28 - h}" width="${w}" height="${h}"/>`;
+      }).join('')).join('')
+    + '<rect class="prop-inset" x="5" y="120" width="80" height="7"/>' },
+
+    // the ledger
+    c8_ledger: { vb:'0 0 110 80', art:
+      '<rect class="prop-base" x="6" y="8" width="98" height="64" rx="3"/>'
+    + '<rect class="prop-metal" x="12" y="14" width="86" height="52"/>'
+    + '<line class="prop-edge" x1="55" y1="14" x2="55" y2="66" opacity=".7"/>'
+    + [0,1,2,3,4].map(i => `<line class="prop-thin" x1="18" y1="${22 + i*9}" x2="${50 - (i%2)*7}" y2="${22 + i*9}" opacity=".55"/>`
+                          + `<line class="prop-thin" x1="60" y1="${22 + i*9}" x2="${92 - (i%3)*6}" y2="${22 + i*9}" opacity=".45"/>`).join('')
+    + '<rect class="prop-acc-dim" x="18" y="16" width="26" height="3"/>'
+    + '<circle class="prop-inset" cx="55" cy="11" r="2.4"/>' },
+  };
+
   function init() {
+    try { GameEngine.props.register(CH8_ART); } catch (_) {}
     buildChapter();
     CH.start();
   }
