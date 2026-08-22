@@ -85,7 +85,9 @@
 .rk-coh-value.spur     { color: var(--accent-agn); text-shadow: 0 0 10px var(--accent-agn-lo); }
 .rk-coh-note { flex: 1 1 100%; text-align: center; font-size: 11px; color: var(--text-dim); line-height: 1.4; }
 
-.rk-stage { position: relative; margin: 0 auto var(--sp-sm); width: fit-content; }
+/* the banner lives in the reserved strip below the board, so the finished
+   mosaic — the whole point of the chapter — is never covered up */
+.rk-stage { position: relative; margin: 0 auto var(--sp-sm); width: fit-content; padding-bottom: 34px; }
 
 .rk-board {
   display: grid;
@@ -155,12 +157,12 @@
 #rkModal.done .rk-tile { outline-color: rgba(232,179,74,0.30); }
 #rkModal.done .rk-tag  { opacity: .45; }
 .rk-banner {
-  position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%) scale(0.92);
-  padding: 8px 16px; background: rgba(3,5,9,0.92); border: 1px solid var(--trace);
+  position: absolute; left: 50%; bottom: 0; transform: translateX(-50%) scale(0.92);
+  padding: 6px 14px; background: rgba(3,5,9,0.92); border: 1px solid var(--trace);
   color: var(--trace); font-size: 12px; letter-spacing: .2em; white-space: nowrap;
   opacity: 0; pointer-events: none; transition: opacity .5s ease, transform .5s ease;
 }
-.rk-banner.visible { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+.rk-banner.visible { opacity: 1; transform: translateX(-50%) scale(1); }
 
 .rk-actions { flex-wrap: wrap; justify-content: center; }
 
@@ -222,7 +224,7 @@
 .cc-coords-state { font-size: 10px; letter-spacing: .2em; color: var(--accent-r3mi); margin-bottom: 6px; }
 
 .cc-check {
-  margin: var(--sp-md) auto 0; max-width: 340px; padding-top: var(--sp-sm);
+  margin: 0 auto; max-width: 340px; padding-top: var(--sp-sm);
   border-top: 1px solid var(--bdr-dim);
   opacity: 0; transform: translateY(8px);
   transition: opacity 1s ease, transform 1s ease;
@@ -250,10 +252,37 @@
 .cc-unknown.visible { opacity: 1; }
 .cc-unknown:hover { background: rgba(214,218,226,0.10); box-shadow: 0 0 18px var(--accent-agn-lo); }
 
-@media (max-width: 600px) {
-  .rk-board { width: min(88vw, 300px); }
+@media (max-width: 640px) {
+  /* The table is the tallest card in the game, so on a phone it starts at the
+     top of the screen — right where the fixed hint bar lives. Compact the bar
+     and give the card room to clear it. */
+  .hint-bar {
+    top: 40px; left: var(--sp-sm); right: var(--sp-sm);
+    justify-content: center; gap: 5px; padding: 5px 7px;
+  }
+  .hint-bar .hint-label { flex: 1 1 100%; text-align: center; font-size: 9px; }
+  .hint-bar .ka-btn.small { padding: 5px 8px; font-size: 10px; }
+  /* no bottom padding, so the sticky action row can sit flush against the
+     screen edge instead of leaving a strip of board showing beneath it */
+  #rkModal { padding-top: 108px; padding-bottom: 0; }
+
+  .rk-card { padding: var(--sp-md); }
+  .rk-card .puzzle-label { display: none; }          /* the title says it already */
+  .rk-card .puzzle-header { margin-bottom: var(--sp-xs); }
+  .rk-card .puzzle-title { font-size: 17px; letter-spacing: .14em; }
+  .rk-card .puzzle-sub { font-size: 9px; }
+  .rk-coh { padding: 4px 8px; }
+  .rk-board { width: min(86vw, 292px); }
+
+  /* [ DREHEN ] is used on nearly every move — it must never be below the fold */
+  .rk-actions {
+    position: sticky; bottom: 0; z-index: 3; margin: 0 calc(-1 * var(--sp-md));
+    padding: 8px var(--sp-md) 12px; background: var(--bg-panel);
+    box-shadow: 0 -10px 14px -8px rgba(0,0,0,0.95);
+  }
   .rk-tag { font-size: 8px; }
   .rk-coh-value { font-size: 12px; }
+  .rk-coh-note { font-size: 10px; }
   .rk-detail-art { width: 92px; height: 92px; margin: 0 auto; }
   .rk-notes li { font-size: 11px; }
 }

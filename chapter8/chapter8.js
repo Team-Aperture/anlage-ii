@@ -1016,7 +1016,10 @@ const Chapter8 = (() => {
     CH.complete();                       // sets ch8_complete before anything else
     const card = document.querySelector('#chapterComplete .cc-card');
     if (!card) return;
-    const anchor = card.querySelector('.cc-progress');
+
+    // the scaffold's own second link goes to the terminal as well
+    card.querySelector(':scope > a.ka-btn.small')?.remove();
+    const terminal = card.querySelector(':scope > a.ka-btn.primary');
 
     const coords = document.createElement('div');
     coords.className = 'cc-coords';
@@ -1025,7 +1028,7 @@ const Chapter8 = (() => {
       + `<div class="cc-coords-value" id="ccCoords">${esc(S.ziel)}</div>`
       + '<div class="cc-coords-state sys-text">STATUS: BESTÄTIGT</div>'
       + '<button class="ka-btn small" id="ccCopy">[ KOORDINATEN KOPIEREN ]</button>';
-    card.insertBefore(coords, anchor);
+    card.insertBefore(coords, card.querySelector('.cc-progress'));
     el('ccCopy')?.addEventListener('click', copyCoords);
 
     const credits = document.createElement('button');
@@ -1034,7 +1037,7 @@ const Chapter8 = (() => {
     credits.addEventListener('click', () => GameEngine.showCredits());
     card.appendChild(credits);
 
-    later(() => archiveCheck(card), reduceMotion() ? 600 : 2600);
+    later(() => archiveCheck(card, terminal), reduceMotion() ? 600 : 2600);
   }
 
   function copyCoords() {
@@ -1057,7 +1060,7 @@ const Chapter8 = (() => {
   }
 
   // ─── the archive checks one more thing ────────────────────────
-  function archiveCheck(card) {
+  function archiveCheck(card, before) {
     const have = signalCount(), total = signalTotal();
     const complete = have >= total;
     const box = document.createElement('div');
@@ -1082,7 +1085,9 @@ const Chapter8 = (() => {
             + 'R-3MI: „Dann gibt’s ihn nicht."<br>AGN-H3R: „Das habe ich nicht gesagt."</p>'
           : '<p class="cc-check-say">AGN-H3R: „Da fehlen Fragmente."<br>R-3MI: „Von was?"<br>'
             + 'AGN-H3R: „Wenn ich das wüsste, wären sie keine Fragmente."</p>');
-    card.appendChild(box);
+    // the report belongs with the readout, above the buttons; anything the
+    // report offers appears underneath them
+    if (before) card.insertBefore(box, before); else card.appendChild(box);
     requestAnimationFrame(() => box.classList.add('visible'));
     try { GameEngine.audio.tone({ f: 180, t: 0.09, type: 'sine', g: 0.05 }); } catch (_) {}
 
