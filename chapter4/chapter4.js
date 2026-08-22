@@ -285,28 +285,28 @@ const Chapter4 = (() => {
     addProp({ prop:'debris',  x:52, y:86, w:15, h:8 });
 
     // ── the machine
-    addHotspot({ prop:'reactor', cls:'prop-guest hs-lock' + (S.finalSolved ? ' hs-open' : ''),
+    addHotspot({ prop:'c4_lock', cls:'prop-guest hs-lock' + (S.finalSolved ? ' hs-open' : ''),
       x:41, y:31, w:19, h:27,
       label: lockLabel(), aria:'Zentralverschluss untersuchen', fn:() => clickLock() });
 
     // ── the four subsystems, all present from the start
-    addHotspot({ prop:'panel',    cls:modCls('pattern'), x:7,  y:30, w:15, h:14,
+    addHotspot({ prop:'c4_muster',   cls:modCls('pattern'), x:7,  y:30, w:15, h:14,
       label: modLabel('pattern'), aria:'Markierstrecke untersuchen', fn:() => openModule('pattern') });
-    addHotspot({ prop:'railing',  cls:modCls('weight'),  x:4,  y:57, w:22, h:14,
+    addHotspot({ prop:'c4_waage',    cls:modCls('weight'),  x:4,  y:57, w:22, h:14,
       label: modLabel('weight'),  aria:'Prüfwaage untersuchen',      fn:() => openModule('weight') });
-    addHotspot({ prop:'monitors', cls:modCls('timing'),  x:73, y:27, w:18, h:15,
+    addHotspot({ prop:'c4_takt',     cls:modCls('timing'),  x:73, y:27, w:18, h:15,
       label: modLabel('timing'),  aria:'Kolbensteuerung untersuchen',fn:() => openModule('timing') });
-    addHotspot({ prop:'vent',     cls:modCls('orient'),  x:74, y:52, w:15, h:15,
+    addHotspot({ prop:'c4_getriebe', cls:modCls('orient'),  x:74, y:52, w:15, h:15,
       label: modLabel('orient'),  aria:'Getriebezug untersuchen',    fn:() => openModule('orient') });
 
     // ── things to look at while you think
-    addHotspot({ prop:'console', x:30, y:62, w:17, h:14,
+    addHotspot({ prop:'c4_bench', x:30, y:62, w:17, h:14,
       label:'WERKBANK', aria:'Werkbank untersuchen', fn:() => examine('bank') });
-    addHotspot({ prop:'poster',  x:34, y:9,  w:10, h:15,
+    addHotspot({ prop:'c4_risse',  x:34, y:9,  w:10, h:15,
       label:'RISSZEICHNUNGEN', aria:'Risszeichnungen ansehen', fn:() => examine('plan') });
-    addHotspot({ prop:'pipe',    x:62, y:52, w:7,  h:24,
+    addHotspot({ prop:'c4_hebel',  x:62, y:52, w:7,  h:24,
       label:'HEBEL', aria:'Unbeschrifteten Hebel untersuchen', fn:() => examine('hebel') });
-    addHotspot({ prop:'crate',   cls:'prop-brown', x:13, y:76, w:13, h:15,
+    addHotspot({ prop:'c4_box',   cls:'prop-brown', x:13, y:76, w:13, h:15,
       label:'BRAUNER KASTEN', aria:'Braunen Kasten untersuchen', fn:() => examine('kasten') });
 
     // Once the lock is open the way on is an object in the room, so the
@@ -1550,7 +1550,129 @@ const Chapter4 = (() => {
   // ═══════════════════════════════════════════════════════════════
   // INIT
   // ═══════════════════════════════════════════════════════════════
+
+  // ─── CHAPTER ART ──────────────────────────────────────────────
+  // A repair workshop. Heavy, well-used, and organised by someone who
+  // intends to come back to every single thing on that bench.
+  const CH4_ART = {
+    // DAS VIERFACH-SCHLOSS: four concentric rings and a lot of linkage
+    c4_lock: { vb:'0 0 110 110', art:
+      '<ellipse class="prop-inset" cx="55" cy="104" rx="42" ry="5" opacity=".6"/>'
+    + '<circle class="prop-base" cx="55" cy="52" r="48"/>'
+    + '<circle class="prop-metal" cx="55" cy="52" r="40"/>'
+    + '<circle class="prop-inset" cx="55" cy="52" r="33"/>'
+    + '<circle class="prop-metal" cx="55" cy="52" r="26"/>'
+    + '<circle class="prop-inset" cx="55" cy="52" r="19"/>'
+    + '<circle class="prop-edge" cx="55" cy="52" r="44" stroke-dasharray="9 6"/>'
+    + '<circle class="prop-edge" cx="55" cy="52" r="30" stroke-dasharray="6 5" opacity=".6"/>'
+    + [0,1,2,3].map(i => {
+        const a = i * Math.PI / 2 - Math.PI / 2;
+        return `<rect class="prop-metal" x="${55 + 43*Math.cos(a) - 5}" y="${52 + 43*Math.sin(a) - 5}" width="10" height="10" rx="2"/>`
+             + `<circle class="prop-acc" cx="${55 + 43*Math.cos(a)}" cy="${52 + 43*Math.sin(a)}" r="3" opacity=".85"/>`;
+      }).join('')
+    + '<circle class="prop-core" cx="55" cy="52" r="9"/>'
+    + '<circle class="prop-glow" cx="55" cy="52" r="15"/>' },
+
+    // the marking strip — a row of stamped test plates
+    c4_muster: { vb:'0 0 120 70', art:
+      '<rect class="prop-base" x="4" y="10" width="112" height="50" rx="3"/>'
+    + '<rect class="prop-lite" x="8" y="13" width="104" height="2.6" rx="1"/>'
+    + [0,1,2,3,4,5].map(i => `<rect class="prop-metal" x="${11 + i*17}" y="22" width="13" height="28" rx="1"/>`
+                            + `<rect class="prop-inset" x="${13 + i*17}" y="26" width="9" height="9"/>`).join('')
+    + '<rect class="prop-acc-dim" x="11" y="54" width="98" height="3"/>'
+    + '<circle class="prop-led" cx="110" cy="17" r="2.2"/>' },
+
+    // the test balance
+    c4_waage: { vb:'0 0 160 70', art:
+      '<rect class="prop-base" x="74" y="20" width="10" height="44" rx="2"/>'
+    + '<rect class="prop-base" x="58" y="60" width="42" height="7" rx="3"/>'
+    + '<rect class="prop-metal" x="12" y="22" width="134" height="5" rx="2"/>'
+    + '<rect class="prop-lite" x="12" y="22" width="134" height="2" rx="1"/>'
+    + '<path class="prop-metal" d="M22 27 v9 M136 27 v9"/>'
+    + '<path class="prop-base" d="M8 36 h28 l-5 14 h-18 Z"/>'
+    + '<path class="prop-base" d="M122 36 h28 l-5 14 h-18 Z"/>'
+    + '<circle class="prop-acc" cx="79" cy="20" r="4"/>'
+    + '<circle class="prop-edge" cx="79" cy="20" r="7" opacity=".6"/>' },
+
+    // the piston control — four rods in a cadence
+    c4_takt: { vb:'0 0 130 90', art:
+      '<rect class="prop-base" x="4" y="6" width="122" height="76" rx="4"/>'
+    + '<rect class="prop-inset" x="10" y="12" width="110" height="42"/>'
+    + [0,1,2,3].map(i => `<rect class="prop-metal" x="${18 + i*26}" y="${16 + (i%2)*7}" width="12" height="${34 - (i%2)*7}" rx="2"/>`
+                        + `<rect class="prop-lite" x="${18 + i*26}" y="${16 + (i%2)*7}" width="3" height="${34 - (i%2)*7}"/>`).join('')
+    + '<rect class="prop-acc-dim" x="12" y="60" width="106" height="7" rx="2"/>'
+    + [0,1,2,3].map(i => `<circle class="prop-led${i?('-'+((i%3)+1)):''}" cx="${24 + i*26}" cy="73" r="3"/>`).join('') },
+
+    // the gear train housing
+    c4_getriebe: { vb:'0 0 90 90', art:
+      '<rect class="prop-base" x="5" y="5" width="80" height="80" rx="4"/>'
+    + '<rect class="prop-inset" x="12" y="12" width="66" height="66"/>'
+    + '<circle class="prop-metal" cx="34" cy="36" r="15"/>'
+    + '<circle class="prop-inset" cx="34" cy="36" r="6"/>'
+    + '<circle class="prop-metal" cx="60" cy="56" r="11"/>'
+    + '<circle class="prop-inset" cx="60" cy="56" r="4"/>'
+    + [0,1,2,3,4,5,6,7].map(i => { const a=i*Math.PI/4;
+        return `<rect class="prop-metal" x="${34 + 15*Math.cos(a) - 2.5}" y="${36 + 15*Math.sin(a) - 2.5}" width="5" height="5"/>`; }).join('')
+    + [0,1,2,3,4,5].map(i => { const a=i*Math.PI/3;
+        return `<rect class="prop-metal" x="${60 + 11*Math.cos(a) - 2}" y="${56 + 11*Math.sin(a) - 2}" width="4" height="4"/>`; }).join('')
+    + '<circle class="prop-led" cx="76" cy="18" r="2.4"/>' },
+
+    // his bench: tools laid out in the order he will need them
+    c4_bench: { vb:'0 0 140 86', art:
+      '<ellipse class="prop-inset" cx="70" cy="80" rx="56" ry="5" opacity=".6"/>'
+    + '<path class="prop-base" d="M12 78 L24 30 h92 l12 48 Z"/>'
+    + '<path class="prop-metal" d="M24 30 h92 l5 12 H19 Z"/>'
+    + '<rect class="prop-lite" x="24" y="30" width="92" height="2.6"/>'
+    + '<rect class="prop-metal" x="34" y="20" width="30" height="4" rx="2"/>'
+    + '<rect class="prop-metal" x="70" y="16" width="6" height="12" rx="2"/>'
+    + '<path class="prop-thin" d="M84 26 q7 -8 14 -2" stroke-width="2"/>'
+    + '<circle class="prop-inset" cx="106" cy="24" r="5"/>'
+    + '<circle class="prop-inset" cx="118" cy="24" r="4"/>'
+    + '<rect class="prop-acc-dim" x="30" y="52" width="80" height="4"/>'
+    + '<line class="prop-thin" x1="26" y1="64" x2="114" y2="64"/>' },
+
+    // pinned drawings, corrected over and over
+    c4_risse: { vb:'0 0 90 110', art:
+      '<path class="prop-metal" d="M8 6 H82 V96 L64 104 H8 Z"/>'
+    + '<path class="prop-inset" d="M82 96 L64 104 V92 Z"/>'
+    + '<circle class="prop-acc" cx="45" cy="10" r="3"/>'
+    + '<rect class="prop-acc-dim" x="18" y="20" width="52" height="5"/>'
+    + '<circle class="prop-thin" cx="34" cy="46" r="13"/>'
+    + '<circle class="prop-thin" cx="34" cy="46" r="7" opacity=".6"/>'
+    + '<line class="prop-thin" x1="52" y1="38" x2="72" y2="38"/>'
+    + '<line class="prop-thin" x1="52" y1="46" x2="68" y2="46"/>'
+    + '<line class="prop-thin" x1="52" y1="54" x2="72" y2="54"/>'
+    + '<path class="prop-acc-dim" d="M16 68 h56 v3 h-56 Z" opacity=".5"/>'
+    + '<path class="prop-acc" d="M20 76 L62 84" stroke-width="2" opacity=".7"/>'
+    + '<path class="prop-acc" d="M62 76 L20 84" stroke-width="2" opacity=".7"/>' },
+
+    // an unlabelled lever, freshly oiled, connected to who knows what
+    c4_hebel: { vb:'0 0 60 120', art:
+      '<rect class="prop-base" x="18" y="60" width="24" height="52" rx="3"/>'
+    + '<rect class="prop-metal" x="22" y="64" width="16" height="44" rx="2"/>'
+    + '<g transform="rotate(-18 30 60)">'
+    + '  <rect class="prop-metal" x="26" y="12" width="8" height="50" rx="4"/>'
+    + '  <rect class="prop-lite" x="26" y="12" width="2.4" height="50"/>'
+    + '  <circle class="prop-acc" cx="30" cy="12" r="8"/>'
+    + '  <circle class="prop-edge" cx="30" cy="12" r="11" opacity=".55"/>'
+    + '</g>'
+    + '<circle class="prop-inset" cx="30" cy="60" r="6"/>'
+    + '<rect class="prop-inset" x="20" y="100" width="20" height="4"/>' },
+
+    // a brown box that does not belong in a workshop
+    c4_box: { vb:'0 0 100 80', art:
+      '<ellipse class="prop-inset" cx="50" cy="74" rx="40" ry="5" opacity=".6"/>'
+    + '<rect class="prop-metal" x="12" y="18" width="76" height="52" rx="3"/>'
+    + '<rect class="prop-lite" x="12" y="18" width="76" height="3" rx="1.5"/>'
+    + '<rect class="prop-inset" x="20" y="28" width="60" height="4" opacity=".5"/>'
+    + '<rect class="prop-inset" x="20" y="60" width="60" height="4" opacity=".4"/>'
+    + '<rect class="prop-base" x="40" y="14" width="20" height="8" rx="2"/>'
+    + '<circle class="prop-led" cx="76" cy="62" r="2.6"/>'
+    + '<path class="prop-thin" d="M24 40 q10 -4 18 2" opacity=".5"/>' },
+  };
+
   function init() {
+    try { GameEngine.props.register(CH4_ART); } catch (_) {}
     if (!GameEngine.state.isChapterComplete('ch3')) {
       location.replace('../chapter3/chapter3.html');
       return;

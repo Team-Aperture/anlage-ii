@@ -320,25 +320,25 @@ const Chapter2 = (() => {
     addProp({ prop:'debris', x:60, y:84, w:15, h:8  });
 
     // ── interactive
-    addHotspot({ prop:'crate',     x:40, y:64, w:16, h:18,
+    addHotspot({ prop:'c2_planter', x:40, y:64, w:16, h:18,
       label:'PFLANZBECKEN', aria:'Pflanzbecken untersuchen', fn:() => examine('plants') });
-    addHotspot({ prop:'pipe',      x:5,  y:46, w:8,  h:40,
+    addHotspot({ prop:'c2_organ',   x:5,  y:46, w:8,  h:40,
       label:'WASSERORGEL', aria:'Wasserorgel bedienen', fn:() => examine('orgel') });
-    addHotspot({ prop:'panel',     x:85, y:52, w:11, h:12, anim:'prop-flicker',
+    addHotspot({ prop:'c2_plaque',  x:85, y:52, w:11, h:12, anim:'prop-flicker',
       label:'WARTUNGSPLAKETTE', aria:'Wartungsplakette lesen', fn:() => examine('plaque') });
-    addHotspot({ prop:'sign', cls:'prop-guest', x:14, y:52, w:14, h:12,
+    addHotspot({ prop:'c2_icedsign', cls:'prop-guest', x:14, y:52, w:14, h:12,
       label:'EISVERPACKTE TAFEL', aria:'Eisverpackte Tafel untersuchen', fn:() => examine('tafel') });
-    addHotspot({ prop:'sculpture', x:74, y:40, w:12, h:30,
+    addHotspot({ prop:'c2_icesculpt', x:74, y:40, w:12, h:30,
       label:'EIS-SKULPTUR', aria:'Eis-Skulptur untersuchen', fn:() => examine('ice') });
-    addHotspot({ prop:'fountain',  x:60, y:70, w:11, h:14,
+    addHotspot({ prop:'c2_fountain', x:60, y:70, w:11, h:14,
       label:'EISBRUNNEN', aria:'Eisbrunnen untersuchen', fn:() => examine('brunnen') });
-    addHotspot({ prop:'vent',      x:84, y:72, w:12, h:12,
+    addHotspot({ prop:'c2_shaft',    x:84, y:72, w:12, h:12,
       label:'WARTUNGSSCHACHT', aria:'Wartungsschacht untersuchen', fn:() => examine('vent') });
 
     // Once the garden is whole, the way on is a real object in the room.
     // This also guarantees the chapter can always be finished from here.
     if (S.p2Solved) {
-      addHotspot({ prop:'door', x:44, y:22, w:13, h:34,
+      addHotspot({ prop:'c2_gardendoor', x:44, y:22, w:13, h:34,
         label:'SEKTOR 03', aria:'Sektor 03 betreten', fn:finishChapter });
     }
   }
@@ -1241,7 +1241,119 @@ const Chapter2 = (() => {
   // ═══════════════════════════════════════════════════════════════
   // INIT
   // ═══════════════════════════════════════════════════════════════
+
+  // ─── CHAPTER ART ──────────────────────────────────────────────
+  // A frozen garden. Everything in here is either growing, or was, or
+  // is encased in ice waiting to find out.
+  const CH2_ART = {
+    // a planter bed under frost — soil, dormant shoots, a rime crust
+    c2_planter: { vb:'0 0 110 96', art:
+      '<ellipse class="prop-inset" cx="55" cy="90" rx="46" ry="5" opacity=".6"/>'
+    + '<path class="prop-base" d="M10 86 L16 40 h78 l6 46 Z"/>'
+    + '<rect class="prop-metal" x="12" y="36" width="86" height="8" rx="2"/>'
+    + '<rect class="prop-lite" x="12" y="36" width="86" height="2.5" rx="1"/>'
+    + '<path class="prop-inset" d="M20 44 h70 l-4 34 H24 Z"/>'
+    + '<path class="prop-vine" d="M40 76 q-3 -14 2 -22" stroke-width="2"/>'
+    + '<path class="prop-vine" d="M58 78 q4 -16 -1 -24" stroke-width="2"/>'
+    + '<path class="prop-vine" d="M72 76 q2 -11 -3 -18" stroke-width="1.6"/>'
+    + '<ellipse class="prop-leaf" cx="42" cy="52" rx="6" ry="3.4" transform="rotate(-22 42 52)"/>'
+    + '<ellipse class="prop-leaf" cx="57" cy="50" rx="6" ry="3.4" transform="rotate(18 57 50)"/>'
+    + '<path class="prop-lite" d="M20 46 q18 6 34 0 q16 -6 36 2 v4 H20 Z" opacity=".45"/>'
+    + '<circle class="prop-led" cx="94" cy="82" r="2.6"/>' },
+
+    // the water organ: a rank of pipes, valves and one frozen outlet
+    c2_organ: { vb:'0 0 72 130', art:
+      '<ellipse class="prop-inset" cx="36" cy="124" rx="26" ry="4" opacity=".6"/>'
+    + '<rect class="prop-metal" x="12" y="6" width="9" height="112" rx="3"/>'
+    + '<rect class="prop-metal" x="27" y="14" width="9" height="104" rx="3"/>'
+    + '<rect class="prop-metal" x="42" y="2" width="9" height="116" rx="3"/>'
+    + '<rect class="prop-lite" x="12" y="6" width="2.6" height="112"/>'
+    + '<rect class="prop-lite" x="27" y="14" width="2.6" height="104"/>'
+    + '<rect class="prop-lite" x="42" y="2" width="2.6" height="116"/>'
+    + '<rect class="prop-base" x="6" y="60" width="54" height="9" rx="3"/>'
+    + '<circle class="prop-base" cx="55" cy="42" r="11"/>'
+    + '<circle class="prop-edge" cx="55" cy="42" r="7"/>'
+    + '<line class="prop-edge" x1="55" y1="35" x2="55" y2="49"/>'
+    + '<line class="prop-edge" x1="48" y1="42" x2="62" y2="42"/>'
+    + '<path class="prop-glow" d="M14 118 h5 l3 8 h-11 Z"/>'
+    + '<circle class="prop-led-2" cx="9" cy="66" r="2.4"/>' },
+
+    // the maintenance plaque, iced over at one corner
+    c2_plaque: { vb:'0 0 100 80', art:
+      '<rect class="prop-base" x="6" y="8" width="88" height="62" rx="3"/>'
+    + '<rect class="prop-metal" x="11" y="13" width="78" height="52"/>'
+    + '<rect class="prop-lite" x="11" y="13" width="78" height="2.4"/>'
+    + '<rect class="prop-acc-dim" x="19" y="22" width="46" height="6"/>'
+    + '<rect class="prop-acc-dim" x="19" y="34" width="58" height="4" opacity=".55"/>'
+    + '<rect class="prop-acc-dim" x="19" y="43" width="38" height="4" opacity=".45"/>'
+    + '<circle class="prop-inset" cx="14" cy="16" r="2"/><circle class="prop-inset" cx="86" cy="16" r="2"/>'
+    + '<circle class="prop-inset" cx="14" cy="62" r="2"/><circle class="prop-inset" cx="86" cy="62" r="2"/>'
+    + '<path class="prop-lite" d="M62 13 l27 0 l0 26 z" opacity=".38"/>'
+    + '<circle class="prop-led" cx="83" cy="58" r="2.6"/>' },
+
+    // a notice board sealed under a slab of ice
+    c2_icedsign: { vb:'0 0 100 80', art:
+      '<rect class="prop-base" x="8" y="10" width="84" height="56" rx="2"/>'
+    + '<rect class="prop-inset" x="13" y="15" width="74" height="46"/>'
+    + '<rect class="prop-acc-dim" x="22" y="24" width="42" height="5" opacity=".4"/>'
+    + '<rect class="prop-acc-dim" x="22" y="34" width="52" height="4" opacity=".3"/>'
+    + '<path class="prop-lite" d="M10 12 L44 8 L52 66 L14 68 Z" opacity=".33"/>'
+    + '<path class="prop-lite" d="M50 9 L82 12 L78 66 L54 66 Z" opacity=".22"/>'
+    + '<path class="prop-edge" d="M44 8 L52 66" opacity=".5"/>'
+    + '<path class="prop-edge" d="M13 15 h74 v46 h-74 Z" opacity=".35"/>' },
+
+    // an ice sculpture nobody has explained yet
+    c2_icesculpt: { vb:'0 0 90 130', art:
+      '<ellipse class="prop-inset" cx="45" cy="124" rx="30" ry="5" opacity=".6"/>'
+    + '<path class="prop-base" d="M24 122 h42 l-6 -13 h-30 Z"/>'
+    + '<path class="prop-lite" d="M45 8 L66 54 L58 109 H32 L24 54 Z" opacity=".5"/>'
+    + '<path class="prop-edge" d="M45 8 L66 54 L58 109 H32 L24 54 Z" opacity=".85"/>'
+    + '<path class="prop-edge" d="M45 8 V109 M24 54 H66" opacity=".38"/>'
+    + '<path class="prop-glow" d="M45 22 L58 56 L53 98 H38 L32 56 Z"/>'
+    + '<path class="prop-lite" d="M45 8 L52 30 L45 44 L38 30 Z" opacity=".7"/>' },
+
+    // the frozen fountain, basin rimmed with rime
+    c2_fountain: { vb:'0 0 120 92', art:
+      '<ellipse class="prop-inset" cx="60" cy="82" rx="48" ry="8" opacity=".6"/>'
+    + '<path class="prop-base" d="M14 62 q46 16 92 0 l-6 16 q-40 12 -80 0 Z"/>'
+    + '<ellipse class="prop-metal" cx="60" cy="62" rx="46" ry="11"/>'
+    + '<ellipse class="prop-lite" cx="60" cy="61" rx="38" ry="8" opacity=".55"/>'
+    + '<rect class="prop-base" x="52" y="24" width="16" height="36" rx="3"/>'
+    + '<ellipse class="prop-lite" cx="60" cy="24" rx="14" ry="4"/>'
+    + '<path class="prop-lite" d="M60 26 q-9 12 -6 24 M60 26 q9 12 6 24" stroke-width="2" opacity=".6"/>'
+    + '<path class="prop-edge" d="M22 60 q38 12 76 0" opacity=".45"/>' },
+
+    // the service shaft the garden drains into
+    c2_shaft: { vb:'0 0 90 80', art:
+      '<rect class="prop-base" x="6" y="6" width="78" height="68" rx="3"/>'
+    + '<rect class="prop-inset" x="13" y="13" width="64" height="54"/>'
+    + '<rect class="prop-metal" x="15" y="18" width="60" height="5"/>'
+    + '<rect class="prop-metal" x="15" y="29" width="60" height="5"/>'
+    + '<rect class="prop-metal" x="15" y="40" width="60" height="5"/>'
+    + '<rect class="prop-metal" x="15" y="51" width="60" height="5"/>'
+    + '<path class="prop-vine" d="M20 67 q6 -14 -1 -24" stroke-width="1.6"/>'
+    + '<ellipse class="prop-leaf" cx="18" cy="47" rx="5" ry="2.8" transform="rotate(-30 18 47)"/>'
+    + '<circle class="prop-lite" cx="11" cy="11" r="2"/><circle class="prop-lite" cx="79" cy="11" r="2"/>'
+    + '<circle class="prop-lite" cx="11" cy="69" r="2"/><circle class="prop-lite" cx="79" cy="69" r="2"/>' },
+
+    // the door out, with a growth of ivy that refuses to be tidy
+    c2_gardendoor: { vb:'0 0 80 120', art:
+      '<ellipse class="prop-inset" cx="40" cy="115" rx="34" ry="4" opacity=".6"/>'
+    + '<rect class="prop-base" x="5" y="2" width="70" height="112" rx="4"/>'
+    + '<rect class="prop-inset" x="12" y="9" width="56" height="98"/>'
+    + '<rect class="prop-metal" x="13" y="10" width="26" height="96"/>'
+    + '<rect class="prop-metal" x="41" y="10" width="26" height="96"/>'
+    + '<rect class="prop-lite" x="13" y="10" width="3.4" height="96"/>'
+    + '<rect class="prop-lite" x="41" y="10" width="3.4" height="96"/>'
+    + '<line class="prop-edge" x1="40" y1="10" x2="40" y2="106" opacity=".8"/>'
+    + '<path class="prop-vine" d="M6 106 q10 -30 2 -56" stroke-width="2.4"/>'
+    + '<ellipse class="prop-leaf" cx="11" cy="72" rx="7" ry="3.8" transform="rotate(-24 11 72)"/>'
+    + '<ellipse class="prop-leaf" cx="5" cy="90" rx="6" ry="3.4" transform="rotate(16 5 90)"/>'
+    + '<circle class="prop-led" cx="40" cy="6" r="2.8"/>' },
+  };
+
   function init() {
+    try { GameEngine.props.register(CH2_ART); } catch (_) {}
     if (!GameEngine.state.isChapterComplete('ch1')) {
       location.replace('../chapter1/chapter1.html');
       return;

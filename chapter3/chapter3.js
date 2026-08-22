@@ -285,21 +285,21 @@ const Chapter3 = (() => {
     addProp({ prop:'crate',    x:60, y:70, w:13, h:14 });
     addProp({ prop:'barrel',   x:6,  y:66, w:8,  h:15 });
     // ── interactive
-    addHotspot({ prop:'console', cls:'prop-guest', x:42, y:44, w:20, h:22,
+    addHotspot({ prop:'c3_array', cls:'prop-guest', x:42, y:44, w:20, h:22,
       label:'BEOBACHTUNGSARRAY', aria:'Beobachtungsarray untersuchen', fn:() => examine('array') });
-    addHotspot({ prop:'panel', x:13, y:34, w:13, h:13,
+    addHotspot({ prop:'c3_mirror', x:13, y:34, w:13, h:13,
       label:'JUSTIERSPIEGEL', aria:'Justierspiegel untersuchen', fn:() => examine('mirror') });
-    addHotspot({ prop:'terminal', anim:'prop-flicker', x:78, y:48, w:13, h:24,
+    addHotspot({ prop:'c3_logterm', anim:'prop-flicker', x:78, y:48, w:13, h:24,
       label:'BEOBACHTUNGSPROTOKOLLE', aria:'Beobachtungsprotokolle lesen', fn:() => examine('log') });
-    addHotspot({ prop:'light', anim:'prop-flicker', x:86, y:20, w:6, h:8,
+    addHotspot({ prop:'c3_lens', anim:'prop-flicker', x:86, y:20, w:6, h:8,
       label:'FLACKERNDE LINSE', aria:'Flackernde Linse untersuchen', fn:() => examine('niche') });
-    addHotspot({ prop:'sign', x:6, y:40, w:12, h:11,
+    addHotspot({ prop:'c3_board', x:6, y:40, w:12, h:11,
       label:'SEKTORTAFEL', aria:'Sektortafel untersuchen', fn:() => examine('map') });
 
     // Once the network is back, the way on is an object in the room — this
     // also guarantees the ending stays reachable no matter what.
     if (S.solved) {
-      addHotspot({ prop:'door', x:66, y:24, w:12, h:34,
+      addHotspot({ prop:'c3_obsdoor', x:66, y:24, w:12, h:34,
         label:'SEKTOR 04', aria:'Sektor 04 betreten', fn:finishChapter });
     }
   }
@@ -1271,7 +1271,90 @@ const Chapter3 = (() => {
   // ═══════════════════════════════════════════════════════════════
   // INIT
   // ═══════════════════════════════════════════════════════════════
+
+  // ─── CHAPTER ART ──────────────────────────────────────────────
+  // An optical sector. Everything here either looks at something or is
+  // used to aim something that does.
+  const CH3_ART = {
+    // the observation array: a bank of shutters behind a wide aperture
+    c3_array: { vb:'0 0 140 100', art:
+      '<ellipse class="prop-inset" cx="70" cy="94" rx="56" ry="5" opacity=".6"/>'
+    + '<path class="prop-base" d="M8 90 L18 16 h104 l10 74 Z"/>'
+    + '<rect class="prop-metal" x="20" y="12" width="100" height="9" rx="2"/>'
+    + '<rect class="prop-lite" x="20" y="12" width="100" height="2.6" rx="1"/>'
+    + '<rect class="prop-inset" x="24" y="26" width="92" height="42" rx="2"/>'
+    + [0,1,2,3].map(i => `<rect class="prop-metal" x="${29 + i*22}" y="30" width="16" height="34" rx="1"/>`
+                        + `<rect class="prop-lite" x="${29 + i*22}" y="30" width="3" height="34"/>`
+                        + `<circle class="prop-eye" cx="${37 + i*22}" cy="47" r="5"/>`).join('')
+    + '<rect class="prop-acc-dim" x="26" y="72" width="88" height="6" rx="2"/>'
+    + '<rect class="prop-acc" x="60" y="70" width="8" height="10" rx="2" opacity=".7"/>'
+    + '<circle class="prop-led" cx="16" cy="86" r="2.6"/>'
+    + '<circle class="prop-led-3" cx="124" cy="86" r="2.6"/>' },
+
+    // an adjustment mirror on a fine gimbal, very slightly out of true
+    c3_mirror: { vb:'0 0 100 96', art:
+      '<ellipse class="prop-inset" cx="50" cy="90" rx="26" ry="4" opacity=".6"/>'
+    + '<rect class="prop-base" x="44" y="56" width="12" height="32" rx="3"/>'
+    + '<rect class="prop-base" x="30" y="86" width="40" height="6" rx="2"/>'
+    + '<g transform="rotate(-9 50 34)">'
+    + '  <ellipse class="prop-metal" cx="50" cy="34" rx="34" ry="26"/>'
+    + '  <ellipse class="prop-screen" cx="50" cy="34" rx="29" ry="21"/>'
+    + '  <path class="prop-lite" d="M28 44 L58 16" stroke-width="3" opacity=".6"/>'
+    + '  <path class="prop-lite" d="M38 48 L68 20" stroke-width="1.6" opacity=".4"/>'
+    + '  <ellipse class="prop-edge" cx="50" cy="34" rx="34" ry="26" opacity=".8"/>'
+    + '</g>'
+    + '<circle class="prop-base" cx="50" cy="58" r="6"/>'
+    + '<circle class="prop-edge" cx="50" cy="58" r="3"/>' },
+
+    // the log terminal — hundreds of entries, one hand
+    c3_logterm: { vb:'0 0 100 120', art:
+      '<ellipse class="prop-inset" cx="50" cy="112" rx="32" ry="5" opacity=".6"/>'
+    + '<path class="prop-metal" d="M36 108 L40 84 h20 l4 24 Z"/>'
+    + '<rect class="prop-base" x="28" y="106" width="44" height="8" rx="2"/>'
+    + '<rect class="prop-base" x="6" y="6" width="88" height="74" rx="5"/>'
+    + '<rect class="prop-lite" x="10" y="9" width="80" height="3.4" rx="1.6"/>'
+    + '<rect class="prop-screen" x="13" y="16" width="74" height="58"/>'
+    + [0,1,2,3,4,5].map(i => `<line class="prop-scan" x1="19" y1="${24 + i*8}" x2="${72 - (i%3)*11}" y2="${24 + i*8}"/>`).join('')
+    + '<rect class="prop-cursor" x="19" y="66" width="8" height="5"/>'
+    + '<circle class="prop-led" cx="88" cy="76" r="2.6"/>' },
+
+    // the lens that flickers out of step with the others
+    c3_lens: { vb:'0 0 60 80', art:
+      '<line class="prop-thin" x1="30" y1="0" x2="30" y2="12"/>'
+    + '<path class="prop-base" d="M12 12 h36 l-6 16 h-24 Z"/>'
+    + '<rect class="prop-lite" x="16" y="14" width="28" height="3"/>'
+    + '<circle class="prop-metal" cx="30" cy="38" r="14"/>'
+    + '<circle class="prop-screen" cx="30" cy="38" r="10"/>'
+    + '<circle class="prop-core" cx="30" cy="38" r="5"/>'
+    + '<path class="prop-glow" d="M18 46 L8 76 H52 L42 46 Z"/>'
+    + '<circle class="prop-edge" cx="30" cy="38" r="14" opacity=".7"/>' },
+
+    // the sector board — more entries than there are sectors
+    c3_board: { vb:'0 0 110 84', art:
+      '<rect class="prop-base" x="5" y="6" width="100" height="70" rx="3"/>'
+    + '<rect class="prop-inset" x="11" y="12" width="88" height="58"/>'
+    + [0,1,2,3,4].map(i => `<rect class="prop-acc-dim" x="17" y="${18 + i*10}" width="${52 - (i%3)*9}" height="4" opacity="${0.5 - i*0.06}"/>`
+                          + `<line class="prop-thin" x1="17" y1="${20 + i*10}" x2="${69 - (i%3)*9}" y2="${20 + i*10}" opacity=".5"/>`).join('')
+    + '<rect class="prop-acc" x="76" y="18" width="16" height="4" opacity=".65"/>'
+    + '<circle class="prop-inset" cx="9" cy="10" r="2"/><circle class="prop-inset" cx="101" cy="10" r="2"/>'
+    + '<circle class="prop-led-2" cx="97" cy="66" r="2.4"/>' },
+
+    // the way on, ringed with aperture blades
+    c3_obsdoor: { vb:'0 0 80 120', art:
+      '<ellipse class="prop-inset" cx="40" cy="115" rx="34" ry="4" opacity=".6"/>'
+    + '<rect class="prop-base" x="5" y="2" width="70" height="112" rx="4"/>'
+    + '<rect class="prop-inset" x="12" y="9" width="56" height="98"/>'
+    + '<rect class="prop-metal" x="13" y="10" width="26" height="96"/>'
+    + '<rect class="prop-metal" x="41" y="10" width="26" height="96"/>'
+    + '<line class="prop-edge" x1="40" y1="10" x2="40" y2="106" opacity=".85"/>'
+    + '<circle class="prop-base" cx="40" cy="52" r="17"/>'
+    + [0,1,2,3,4,5].map(i => `<path class="prop-metal" d="M40 52 L${40 + 15*Math.cos(i*Math.PI/3)} ${52 + 15*Math.sin(i*Math.PI/3)} L${40 + 15*Math.cos((i+1)*Math.PI/3)} ${52 + 15*Math.sin((i+1)*Math.PI/3)} Z" opacity="${i%2 ? 0.55 : 0.8}"/>`).join('')
+    + '<circle class="prop-eye" cx="40" cy="52" r="5"/>'
+    + '<circle class="prop-led" cx="40" cy="6" r="2.8"/>' },
+  };
+
   function init() {
+    try { GameEngine.props.register(CH3_ART); } catch (_) {}
     if (!GameEngine.state.isChapterComplete('ch2')) {
       location.replace('../chapter2/chapter2.html');
       return;

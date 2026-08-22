@@ -9,14 +9,82 @@
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Barlow:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/global.css?v=20260613">
   <link rel="stylesheet" href="../css/chapter.css?v=20260613">
-  <link rel="stylesheet" href="chapter7.css?v=20260613">
+  <link rel="stylesheet" href="chapter7.css?v=20260822">
 </head>
-<body>
-  <!-- The shared chrome (sys-bar, title card, scene, choices, hint bar,
-       chapter-complete) is built by GameEngine.chapter.build() in chapter7.js.
-       This file only loads the scripts + the chapter's own stylesheet. -->
+<body class="chapter-page">
+
+  <!-- The shared chrome (sys-bar, title card, scene, robots, choices, hint bar,
+       completion card) is built by GameEngine.chapter.build() in chapter7.js.
+       Everything below is this sector's own — and some of it is lying. -->
+
+  <!-- ════════════════════════════════════════════════════════════
+       The chapter opens by claiming to be over. Presentation only:
+       nothing here touches the save, the achievement or Sektor 08.
+       ════════════════════════════════════════════════════════════ -->
+  <div class="fake-complete hidden" id="fakeComplete">
+    <div class="fc-card">
+      <div class="fc-header sys-text">KAPITEL 07 ABGESCHLOSSEN</div>
+      <div class="fc-title">SEKTOR 08 FREIGEGEBEN</div>
+      <div class="fc-next">ARCHIVSEKTOR</div>
+      <div class="fc-progress sys-text">FORTSCHRITT: 8 / 9 KAPITEL</div>
+      <button class="ka-btn primary" id="fcButton">[ WEITER ]</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       An in-universe KA-II fault screen. It stays inside the page, it
+       never claims anything happened to the player's device, and it
+       runs once.
+       ════════════════════════════════════════════════════════════ -->
+  <div class="bsod hidden" id="bsod" role="alertdialog" aria-label="KA-II Fehlerbildschirm">
+    <div class="bsod-inner">
+      <p class="bsod-face" aria-hidden="true">:(</p>
+      <p class="bsod-lead">KA-II ist auf ein Problem gestoßen.</p>
+      <p class="bsod-body">Das Reaktivierungsprotokoll muss neu gestartet werden.<br>
+         Es geht nichts verloren. Dein Gerät ist nicht betroffen.</p>
+      <p class="bsod-code sys-text">FEHLERCODE: REALITY_CHECK_FAILED</p>
+      <p class="bsod-pct sys-text" id="bsodPct">0 %</p>
+    </div>
+  </div>
+
+  <div class="joking hidden" id="joking">
+    <p class="joking-text">War nur Spaß.</p>
+    <div class="joking-face" aria-hidden="true"><i></i><i></i><span></span></div>
+  </div>
+
+  <!-- Post-reboot integrity report — corrupted, dull, and wrong about a
+       great many things. -->
+  <div class="integrity hidden" id="integrity" role="dialog" aria-label="Systemintegrität">
+    <div class="int-card">
+      <p class="int-boot sys-text">KA-II<br>REFERENZSYSTEM…<br>PRÜFUNG…</p>
+      <p class="int-h sys-text">SYSTEMINTEGRITÄT WIRD GEPRÜFT</p>
+      <ul class="int-rows" id="intRows"></ul>
+      <p class="int-foot sys-text">KEINE AUFFÄLLIGKEITEN.</p>
+      <button class="ka-btn small" id="intClose">[ BERICHT SCHLIESSEN ]</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       ECHTHEITSPRÜFUNG — one shell, four reference anchors.
+       ════════════════════════════════════════════════════════════ -->
+  <div class="puzzle-modal hidden" id="vxModal">
+    <div class="puzzle-card vx-card">
+      <div class="puzzle-card-accent"></div>
+      <div class="puzzle-header">
+        <p class="puzzle-label sys-text" id="vxLabel">ANKER</p>
+        <h2 class="puzzle-title" id="vxTitle">&mdash;</h2>
+        <p class="puzzle-sub sys-text" id="vxSub"></p>
+      </div>
+
+      <div class="vx-body" id="vxBody"></div>
+
+      <div class="puzzle-status sys-text" id="vxStatus"></div>
+      <div class="puzzle-actions" id="vxActions"></div>
+    </div>
+  </div>
+
   <script src="../js/engine.js?v=20260613"></script>
   <script src="../js/mobile-warning.js?v=20260613"></script>
-  <script src="chapter7.js?v=20260613"></script>
+  <script src="chapter7.js?v=20260822"></script>
 </body>
 </html>
