@@ -1193,6 +1193,7 @@ const Chapter9 = (() => {
     }
 
     document.body.addEventListener('click', onPanelClick);
+    el('logBtn')?.classList.remove('hidden');   // nothing to read back until we are in
     buildChapter();
 
     const card = el('titleCard');
