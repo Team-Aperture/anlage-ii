@@ -100,13 +100,14 @@ const GameEngine = (() => {
       { id: 'ch4_complete',     icon: '⊞', title: 'Groß, nicht kompliziert', desc: 'Das Vierfach-Schloss geöffnet.' },
       { id: 'ch5_complete',     icon: '▶', title: 'Weitergegangen',        desc: 'Route 14 von 14-D bis 14-I. Eine Station nach der anderen.' },
       { id: 'ch6_complete',     icon: '◫', title: 'Modell bestätigt',      desc: 'Die Blackbox verstanden, ohne sie zu öffnen.' },
-      { id: 'ch7_complete',     icon: '▣', title: 'Defragmentiert',       desc: 'Kapitel 7 abgeschlossen.' },
-      { id: 'ch8_complete',     icon: '◍', title: 'Meta',                 desc: 'Kapitel 8 abgeschlossen.' },
+      { id: 'ch7_complete',     icon: '▣', title: 'Defragmentiert',       desc: 'Belege schlagen Behauptungen. Der Vexiersektor ist durch.' },
+      { id: 'ch8_complete',     icon: '◍', title: 'Die zehnte Rekonstruktion', desc: 'Zwölf Fragmente, ein Zusammenhang. Alle regulären Sektoren online.' },
       { id: 'ch9_complete',     icon: '✦', title: 'Reaktivierung',        desc: 'Alle Sektoren, alle Frequenzen, die ganze Wahrheit. 100%.' },
       { id: 'signal_first',     icon: '◈', title: 'Frequenz',             desc: 'Erste Signalnische entdeckt.' },
       { id: 'signal_all',       icon: '▲', title: 'Die Übertragung',      desc: 'Alle Signalnischen gefunden.' },
       { id: 'italian_brainrot', icon: '🐪', title: 'Frigo Camelo',        desc: 'F–R–I–G–O. Du weißt, was du getan hast.' },
       { id: 'bayern_pmo',       icon: '🥨', title: 'A Bsuach im Bsuach',   desc: 'Eine alte bayerische Tafel angeklickt.' },
+      { id: 'archivar',         icon: '▤', title: 'Archivar',             desc: 'Die Rekonstruktion ohne einen einzigen Hinweis gelegt.' },
       { id: 'jigsaw_refused',   icon: '■', title: 'Nein.',                desc: 'Das Puzzle wurde abgelehnt. Wie immer.' },
       { id: 'all_guests',       icon: '◎', title: 'Team_Aperture Extended', desc: 'Alle Gastcharaktere getroffen.' },
       { id: 'bonus_found',      icon: '?', title: '???',                  desc: '...' },
@@ -264,9 +265,39 @@ const GameEngine = (() => {
       }, 5000);
     }
 
+    // Chapter pages carry no overlay markup, so build it on demand — the
+    // Signalarchiv has to be reachable from the end of Chapter 8 too.
+    function _ensurePanel() {
+      let back = document.getElementById('overlayBackdrop');
+      if (!back) {
+        back = document.createElement('div');
+        back.className = 'overlay-backdrop hidden';
+        back.id = 'overlayBackdrop';
+        back.addEventListener('click', closeOverlay);
+        document.body.appendChild(back);
+      }
+      let panel = document.getElementById('signalOverlay');
+      if (!panel) {
+        panel = document.createElement('div');
+        panel.className = 'overlay-panel hidden';
+        panel.id = 'signalOverlay';
+        panel.setAttribute('role', 'dialog');
+        panel.setAttribute('aria-label', 'Signalnischen');
+        panel.innerHTML = `
+          <div class="overlay-card">
+            <h2 class="overlay-title">SIGNALNISCHEN</h2>
+            <p class="overlay-subtitle sys-text">OPTIONALE ARCHIVFRAGMENTE // THE TRANSMISSION</p>
+            <div class="overlay-content" id="signalList"></div>
+            <button class="ka-btn" onclick="GameEngine.closeOverlay()">[ SCHLIESSEN ]</button>
+          </div>`;
+        document.body.appendChild(panel);
+      }
+      return panel;
+    }
+
     function showOverlay() {
+      const panel  = _ensurePanel();
       const list   = document.getElementById('signalList');
-      const panel  = document.getElementById('signalOverlay');
       const back   = document.getElementById('overlayBackdrop');
       if (!list || !panel) return;
 
@@ -278,12 +309,20 @@ const GameEngine = (() => {
             <span class="sig-chapter sys-text">KAP. ${def.chapter}</span>
           </div>
           <div class="sig-title">${found ? def.title : '???'}</div>
-          ${found ? `<div class="sig-text">${def.text}</div><div class="sig-source sys-text">${def.source}</div>` : ''}
+          ${found
+            ? `<div class="sig-text">${def.text}</div><div class="sig-source sys-text">${def.source}</div>`
+            : `<a class="ka-btn small" href="${_chapterHref(def.chapter)}">[ SEKTOR ${String(def.chapter).padStart(2,'0')} ÖFFNEN ]</a>`}
         </div>`;
       }).join('');
 
       panel.classList.remove('hidden');
       if (back) back.classList.remove('hidden');
+    }
+
+    // Works from the title page and from inside a chapter directory alike.
+    function _chapterHref(n) {
+      const inChapter = /\/chapter\d+\//.test(location.pathname);
+      return `${inChapter ? '../' : ''}chapter${n}/chapter${n}.html`;
     }
 
     return { ALL, isFound, find, showOverlay };

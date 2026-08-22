@@ -49,8 +49,13 @@ const Chapter9 = (() => {
   }
 
   // ─── LOCKED SCREEN (not all signals found) ────────────────────
-  function showLocked() {
+  function showLocked(ch8Done) {
     document.body.classList.add('chapter-page');
+    let have = 0, total = 5;
+    try {
+      total = GameEngine.signals.ALL.length;
+      have  = GameEngine.signals.ALL.filter(s => GameEngine.signals.isFound(s.id)).length;
+    } catch (_) {}
     const w = document.createElement('main');
     w.className = 'locked-wrap';
     w.innerHTML = `
@@ -58,10 +63,16 @@ const Chapter9 = (() => {
       <div class="locked-card">
         <div class="locked-label sys-text">ZUGANG VERWEIGERT</div>
         <h1 class="locked-title">████████</h1>
-        <p class="locked-text">Diese Kammer öffnet sich nur dem, der alle fünf Signalnischen gehört hat.<br>Du hast sie noch nicht alle.</p>
-        <a class="ka-btn primary" href="../index.html">[ ZURÜCK ]</a>
+        <p class="locked-text sys-text">QUERVERWEIS UNVOLLSTÄNDIG</p>
+        <p class="locked-text">${ch8Done
+          ? `FREMDSIGNALE ARCHIVIERT: ${have} / ${total}<br>Der Querverweis löst sich erst auf, wenn der Satz vollständig ist.`
+          : 'HAUPTPROTOKOLL: UNVOLLSTÄNDIG<br>Das Archiv gleicht erst ab, wenn die regulären Sektoren online sind.'}</p>
+        ${ch8Done ? '<button class="ka-btn primary" id="lockSig">[ SIGNALARCHIV ]</button>' : ''}
+        <a class="ka-btn${ch8Done ? ' small' : ' primary'}" href="../index.html">[ ZURÜCK ]</a>
       </div>`;
     document.body.appendChild(w);
+    const b = document.getElementById('lockSig');
+    if (b) b.addEventListener('click', () => { try { GameEngine.signals.showOverlay(); } catch (_) {} });
   }
 
   // ─── 9.1 ARRIVAL ──────────────────────────────────────────────
@@ -240,7 +251,11 @@ const Chapter9 = (() => {
 
   function init() {
     try { GameEngine.props.register(CH9_ART); } catch (_) {}
-    if (!allSignals()) { showLocked(); return; }
+    // Two conditions, both checked before anything from this chapter renders:
+    // the regular game has to be finished, and all five fragments archived.
+    let ch8 = false;
+    try { ch8 = GameEngine.state.isChapterComplete('ch8'); } catch (_) {}
+    if (!ch8 || !allSignals()) { showLocked(ch8); return; }
     buildChapter();
     CH.start();
   }
