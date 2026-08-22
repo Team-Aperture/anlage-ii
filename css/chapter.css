@@ -103,7 +103,8 @@
 .accent-guest { color: var(--accent-guest); }
 
 /* ─── CHOICE OVERLAY ──────────────────────────────────────────── */
-.choice-overlay { position: fixed; bottom:0; left:0; right:0; z-index:60; padding: var(--sp-md); transform: translateY(110%); transition: transform 0.4s cubic-bezier(0.16,1,0.3,1); }
+/* A long menu must not run off the top of the screen — cap it and scroll. */
+.choice-overlay { position: fixed; bottom:0; left:0; right:0; z-index:60; padding: var(--sp-md); transform: translateY(110%); transition: transform 0.4s cubic-bezier(0.16,1,0.3,1); max-height: 86vh; overflow-y: auto; }
 .choice-overlay.visible { transform: translateY(0); }
 .choice-panel { background: var(--bg-panel); border:1px solid var(--bdr-mid); border-bottom:none; max-width:720px; margin:0 auto; padding:var(--sp-md); }
 .choice-prompt { font-size:10px; letter-spacing:.15em; color:var(--text-secondary); margin-bottom:var(--sp-sm); }

@@ -110,6 +110,10 @@ const GameEngine = (() => {
       { id: 'archivar',         icon: '▤', title: 'Archivar',             desc: 'Die Rekonstruktion ohne einen einzigen Hinweis gelegt.' },
       { id: 'jigsaw_refused',   icon: '■', title: 'Nein.',                desc: 'Das Puzzle wurde abgelehnt. Wie immer.' },
       { id: 'all_guests',       icon: '◎', title: 'Team_Aperture Extended', desc: 'Alle Gastcharaktere getroffen.' },
+      { id: 'chamber',          icon: '▚', title: 'Nicht registriert',    desc: 'Eine Kammer betreten, die in keinem Plan steht.' },
+      { id: 'truth',            icon: '⌖', title: 'Die Wahrheit',         desc: 'Bis zum Ende zugehört.' },
+      { id: 'said_hiii',        icon: '☻', title: 'Hiii.',                desc: 'Am Ende doch noch einmal gegrüßt.' },
+      { id: 'will_return',      icon: '↺', title: 'Ich komme zurück',     desc: 'Ein Versprechen, das niemand widerrufen hat.' },
       { id: 'bonus_found',      icon: '?', title: '???',                  desc: '...' },
       { id: 'coordinates',      icon: '✦', title: 'Zieldaten erhalten',   desc: 'Die Koordinaten sind bereit.' },
     ];
@@ -346,6 +350,9 @@ const GameEngine = (() => {
       'ASP-1024':  { colorVar: '--accent-g6',      placeholder: 'A' },
       'AGN-H3R':   { colorVar: '--accent-g7',      placeholder: 'AG' },
       'FAX-N':     { colorVar: '--accent-g8',      placeholder: 'FX' },
+      // the person at the keyboard, and a voice nobody has identified
+      'TESTPERSON':{ colorVar: '--accent-you',     placeholder: '△' },
+      '???':       { colorVar: '--accent-unknown', placeholder: '?' },
     };
 
     // Each face echoes the character's real design (form) + a personality (idle).
@@ -361,6 +368,8 @@ const GameEngine = (() => {
       'ASP-1024':  { form: 'mouse',    idle: 'face-calm'   }, // mouse, methodical
       'AGN-H3R':   { form: 'skull',    idle: 'face-calm'   }, // skull
       'FAX-N':     { form: 'pumpkin',  idle: 'face-flicker'}, // jack-o'-lantern
+      'TESTPERSON':{ form: 'mark',     idle: 'face-calm'   }, // no portrait, just a mark
+      '???':       { form: 'carrier',  idle: 'face-flicker'}, // a carrier with nobody on it
     };
 
     function _faceSVG(speaker) {
@@ -417,6 +426,15 @@ const GameEngine = (() => {
           + '<path class="bot-skull" d="M9 30 a23 22 0 0 1 46 0 v7 q0 8 -9 9 l-3 6 h-22 l-3 -6 q-9 -1 -9 -9 Z"/>'
           + '<g class="bot-eyes"><circle class="bot-eye" cx="23" cy="29" r="7"/><circle class="bot-eye" cx="41" cy="29" r="7"/></g>'
           + '<path class="bot-nose-skull" d="M32 35 l-3 6 h6 Z"/>',
+        mark:
+            '<path class="bot-frame" d="M32 8 L57 52 H7 Z"/>'
+          + '<g class="bot-eyes"><circle class="bot-eye" cx="32" cy="36" r="7"/></g>'
+          + '<rect class="bot-mouth" x="24" y="46" width="16" height="3" rx="1.5"/>',
+        carrier:
+            '<rect class="bot-frame" x="7" y="14" width="50" height="36" rx="4"/>'
+          + '<g class="bot-eyes"><circle class="bot-eye" cx="32" cy="30" r="6"/></g>'
+          + '<rect class="bot-scan" x="13" y="42" width="38" height="2.5" rx="1.25"/>'
+          + '<line class="bot-antenna" x1="32" y1="14" x2="32" y2="2"/><circle class="bot-antenna-tip" cx="32" cy="1" r="2.5"/>',
         pumpkin:
             '<rect class="bot-stem" x="29" y="-3" width="6" height="11" rx="2"/>'
           + '<ellipse class="bot-frame" cx="32" cy="33" rx="27" ry="23"/>'
@@ -434,6 +452,8 @@ const GameEngine = (() => {
     let _typeTimer  = null;
     let _onComplete = null;
     let _container  = null;
+    const _log      = [];          // what has been said, for a replayable log
+    const LOG_MAX   = 240;
 
     function _ensureDOM() {
       if (_container) return;
@@ -480,6 +500,8 @@ const GameEngine = (() => {
 
       const line     = _queue[i];
       const spk      = SPEAKERS[line.speaker] || SPEAKERS['SYSTEM'];
+      _log.push({ speaker: line.speaker, text: line.text || '', subtitle: line.subtitle || '' });
+      if (_log.length > LOG_MAX) _log.shift();
       const colorVal = `var(${spk.colorVar})`;
 
       const box     = document.getElementById('dlgBox');
@@ -558,7 +580,10 @@ const GameEngine = (() => {
       document.getElementById('dlgPortrait')?.classList.remove('speaking');
     }
 
-    return { load, advance, hide };
+    function history() { return _log.slice(); }
+    function clearHistory() { _log.length = 0; }
+
+    return { load, advance, hide, history, clearHistory };
   })();
 
 

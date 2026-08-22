@@ -56,20 +56,61 @@ console.log("  '" + out.join("', '") + "',");
 Der Text darf beliebig aussehen — Grad, Minuten, Trennzeichen, Umlaute.
 Er wird genau so wieder zusammengesetzt, wie er eingegeben wurde.
 
+## Die Bonuszieldaten (Kapitel 9)
+
+Kapitel 9 — die versteckte Kammer — hat **eigene** Koordinaten:
+die **Bonuszieldaten**. Sie stammen erzählerisch nicht von R-3MI und V-TGM,
+sondern von der Stimme aus den fünf Fremdsignalen, und liegen deshalb als
+**fünf** Fragmente vor, eines pro Signalnische.
+
+Die Zieldaten aus Kapitel 8 und die Bonuszieldaten sind zwei getrennte
+Datensätze. Sie überschreiben sich nie gegenseitig, und das Titelterminal
+zeigt sie getrennt und beschriftet an.
+
+Ersetzen funktioniert genauso, nur mit **fünf** Teilen statt acht:
+
+```js
+const BONUS = 'N 49° 00.000 · E 012° 00.000';   // <— hier die echten Bonuszieldaten
+
+const ch = [...BONUS], n = ch.length, out = [];
+for (let j = 0; j < 5; j++) {
+  const teil = ch.slice(Math.floor(j * n / 5), Math.floor((j + 1) * n / 5));
+  out.push(teil.map(c => ((c.codePointAt(0) ^ (0x51 + j * 11)) & 0xffff)
+                          .toString(16).padStart(4, '0')).join(''));
+}
+console.log("  '" + out.join("', '") + "',");
+```
+
+Die Ausgabe kommt in `chapter9/chapter9.js` als Inhalt von `const BKAL = [ … ]`.
+
+Direkt darunter steht dort `const AUTH = [ … ]` — das ist der achtstellige
+Verifizierungscode aus der ersten Anlage, den die Autorisierungsakte in
+Kapitel 9 zurückliest. Der Spieler kennt ihn bereits (er hat ihn selbst
+eingegeben, um überhaupt anzufangen); er liegt nur deshalb verschoben vor,
+damit er nicht beiläufig im Quelltext steht. Der muss **nicht** ersetzt
+werden — es sei denn, der Zugangscode in `js/access.js` ändert sich.
+
 ## Wo die Zieldaten sonst noch auftauchen
 
 * **Abschlusskarte in Kapitel 8** — mit `[ KOORDINATEN KOPIEREN ]`.
 * **Titelterminal** — nach Abschluss von Kapitel 8 steht dort
   `ZIELDATEN: VERFÜGBAR` samt Wert, damit niemand ein Kapitel noch einmal
-  spielen muss, um die Koordinaten nachzulesen.
-* **Spielstand** — als `zieldaten_text` im `localStorage`. Das passiert erst
-  nach dem Lösen; im ausgelieferten Code steht der Wert nicht.
+  spielen muss, um die Koordinaten nachzulesen. Nach der versteckten Kammer
+  kommt ein zweiter, getrennt beschrifteter Block `BONUSZIELDATEN` dazu.
+* **Abschlusskarte in Kapitel 9** — mit `[ BONUSZIELDATEN KOPIEREN ]`, und
+  beim erneuten Betreten der Kammer über `[ BONUSZIELDATEN ]`.
+* **Spielstand** — als `zieldaten_text` und `bonuszieldaten_text` im
+  `localStorage`. Das passiert erst nach dem Lösen; im ausgelieferten Code
+  stehen die Werte nicht.
 
 Ein `[ SPIELSTAND LÖSCHEN ]` im Hauptmenü entfernt ihn wieder.
 
 ## Checkliste vor der Veröffentlichung
 
 - [ ] `KAL` in `chapter8/chapter8.js` enthält die echten Fragmente.
+- [ ] `BKAL` in `chapter9/chapter9.js` enthält die echten Bonusfragmente.
 - [ ] Kapitel 8 einmal komplett durchgespielt, Zeichenkette stimmt.
-- [ ] `[ KOORDINATEN KOPIEREN ]` liefert denselben Text.
-- [ ] Titelterminal zeigt denselben Text.
+- [ ] Kapitel 9 einmal durchgespielt, Bonuszeichenkette stimmt.
+- [ ] `[ KOORDINATEN KOPIEREN ]` und `[ BONUSZIELDATEN KOPIEREN ]` liefern
+      jeweils denselben Text.
+- [ ] Titelterminal zeigt beide Sätze, getrennt und richtig beschriftet.

@@ -31,6 +31,8 @@
   --accent-g6:  #c7ccd6;   /* ASP-1024  — mouse light grey */
   --accent-g7:  #d6dae2;   /* AGN-H3R   — skull bone-white (visible "black") */
   --accent-g8:  #ff4733;   /* FAX-N     — pumpkin bright red */
+  --accent-you: #e8edf5;   /* the person at the keyboard */
+  --accent-unknown: #8fa4c4; /* a voice nobody has identified */
 
   /* Text */
   --text-primary:   #b8ccd8;

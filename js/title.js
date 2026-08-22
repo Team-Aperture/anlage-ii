@@ -315,34 +315,47 @@
   }
 
   // ─── ZIELDATEN ───────────────────────────────────────────────
-  // Once Chapter 8 has reconstructed them, the terminal keeps them to hand —
-  // nobody should have to replay a chapter to read their coordinates back.
+  // Once a chapter has reconstructed a set of coordinates, the terminal keeps
+  // them to hand — nobody should have to replay anything to read them back.
+  // Two separate sets, always labelled, never merged.
   function initZieldaten() {
     const host = document.getElementById('sectorMap');
     if (!host || typeof GameEngine === 'undefined') return;
-    let text = '';
+
+    const sets = [];
     try {
-      if (!GameEngine.state.hasFlag('zieldaten')) return;
-      text = GameEngine.state.get('zieldaten_text') || '';
+      if (GameEngine.state.hasFlag('zieldaten')) {
+        const t = GameEngine.state.get('zieldaten_text');
+        if (t) sets.push({ id: 'main', label: 'ZIELDATEN', text: t });
+      }
+      if (GameEngine.state.hasFlag('bonuszieldaten')) {
+        const t = GameEngine.state.get('bonuszieldaten_text');
+        if (t) sets.push({ id: 'bonus', label: 'BONUSZIELDATEN', text: t });
+      }
     } catch (_) { return; }
-    if (!text) return;
+    if (!sets.length) return;
 
     const box = document.createElement('div');
     box.className = 'ziel-box';
-    box.innerHTML = `
-      <div class="ziel-label sys-text">ZIELDATEN: VERFÜGBAR</div>
-      <div class="ziel-value" id="zielValue"></div>
-      <button class="ka-btn small" id="zielCopy">[ KOPIEREN ]</button>`;
-    box.querySelector('#zielValue').textContent = text;
+    box.innerHTML = sets.map(z => `
+      <div class="ziel-set ziel-${z.id}">
+        <div class="ziel-label sys-text">${z.label}: VERFÜGBAR</div>
+        <div class="ziel-value" data-for="${z.id}"></div>
+        <button class="ka-btn small" data-copy="${z.id}">[ KOPIEREN ]</button>
+      </div>`).join('');
+    sets.forEach(z => { box.querySelector(`[data-for="${z.id}"]`).textContent = z.text; });
     host.appendChild(box);
 
-    box.querySelector('#zielCopy').addEventListener('click', function () {
-      const btn = this;
+    box.addEventListener('click', ev => {
+      const btn = ev.target.closest('[data-copy]');
+      if (!btn) return;
+      const z = sets.find(x => x.id === btn.dataset.copy);
+      if (!z) return;
       const done = ok => { btn.textContent = ok ? '[ KOPIERT ]' : '[ MARKIEREN UND KOPIEREN ]'; };
       const fallback = () => {
         try {
           const ta = document.createElement('textarea');
-          ta.value = text; ta.setAttribute('readonly', '');
+          ta.value = z.text; ta.setAttribute('readonly', '');
           ta.style.cssText = 'position:fixed;left:-9999px;';
           document.body.appendChild(ta); ta.select();
           const ok = document.execCommand('copy');
@@ -350,7 +363,7 @@
           done(ok);
         } catch (_) { done(false); }
       };
-      try { navigator.clipboard.writeText(text).then(() => done(true), fallback); }
+      try { navigator.clipboard.writeText(z.text).then(() => done(true), fallback); }
       catch (_) { fallback(); }
     });
   }
