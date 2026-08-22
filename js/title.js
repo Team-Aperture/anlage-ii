@@ -308,10 +308,51 @@
     }
     if (cap) {
       cap.textContent = nav.allDone
-        ? (nav.bonus ? 'ALLE SEKTOREN ONLINE · EINE KAMMER WARTET' : 'ALLE SEKTOREN ONLINE')
+        ? (nav.bonus ? 'ALLE SEKTOREN ONLINE · UNBEKANNTER QUERVERWEIS VERFÜGBAR' : 'ALLE SEKTOREN ONLINE')
         : `NÄCHSTER SEKTOR: ${CHAPTERS[nav.nextIdx].n} — ${CHAPTERS[nav.nextIdx].name.toUpperCase()}`;
     }
     map.classList.remove('hidden');
+  }
+
+  // ─── ZIELDATEN ───────────────────────────────────────────────
+  // Once Chapter 8 has reconstructed them, the terminal keeps them to hand —
+  // nobody should have to replay a chapter to read their coordinates back.
+  function initZieldaten() {
+    const host = document.getElementById('sectorMap');
+    if (!host || typeof GameEngine === 'undefined') return;
+    let text = '';
+    try {
+      if (!GameEngine.state.hasFlag('zieldaten')) return;
+      text = GameEngine.state.get('zieldaten_text') || '';
+    } catch (_) { return; }
+    if (!text) return;
+
+    const box = document.createElement('div');
+    box.className = 'ziel-box';
+    box.innerHTML = `
+      <div class="ziel-label sys-text">ZIELDATEN: VERFÜGBAR</div>
+      <div class="ziel-value" id="zielValue"></div>
+      <button class="ka-btn small" id="zielCopy">[ KOPIEREN ]</button>`;
+    box.querySelector('#zielValue').textContent = text;
+    host.appendChild(box);
+
+    box.querySelector('#zielCopy').addEventListener('click', function () {
+      const btn = this;
+      const done = ok => { btn.textContent = ok ? '[ KOPIERT ]' : '[ MARKIEREN UND KOPIEREN ]'; };
+      const fallback = () => {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = text; ta.setAttribute('readonly', '');
+          ta.style.cssText = 'position:fixed;left:-9999px;';
+          document.body.appendChild(ta); ta.select();
+          const ok = document.execCommand('copy');
+          document.body.removeChild(ta);
+          done(ok);
+        } catch (_) { done(false); }
+      };
+      try { navigator.clipboard.writeText(text).then(() => done(true), fallback); }
+      catch (_) { fallback(); }
+    });
   }
 
   // ─── CHAPTER PROGRESS INDICATOR ──────────────────────────────
@@ -379,6 +420,7 @@
       updateChapterProgress();
       initContinue();
       initSectorMap();
+      initZieldaten();
     });
 
   });

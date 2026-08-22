@@ -380,3 +380,20 @@ a.sector-node:hover { transform: translateY(-3px); border-color: #fff; color: #f
   .title-menu    { gap: var(--sp-sm); }
   .sector-map    { margin-top: 4px; }
 }
+
+/* ─── ZIELDATEN ───────────────────────────────────────────────
+   Shown on the terminal once Chapter 8 has reconstructed them, so the
+   coordinates can be read back without replaying anything. */
+.ziel-box {
+  margin-top: 16px; padding: 12px 14px 14px;
+  border: 1px solid var(--accent-system); background: rgba(58,143,212,0.05);
+  text-align: center;
+}
+.ziel-label { font-size: 10px; letter-spacing: .22em; color: var(--accent-system); }
+.ziel-value {
+  margin: 8px 0 10px; padding: 8px 12px;
+  font-family: var(--font-mono); font-size: clamp(14px, 3.6vw, 20px); letter-spacing: .05em;
+  color: #fff; text-shadow: 0 0 12px var(--accent-system);
+  border: 1px solid var(--bdr-mid); background: rgba(0,0,0,0.4);
+  user-select: all; word-break: break-word;
+}

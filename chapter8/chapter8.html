@@ -8,42 +8,63 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Barlow:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/global.css?v=20260613">
-  <link rel="stylesheet" href="../css/chapter.css?v=20260613">
-  <link rel="stylesheet" href="chapter8.css?v=20260613">
+  <link rel="stylesheet" href="../css/chapter.css?v=20260822">
+  <link rel="stylesheet" href="chapter8.css?v=20260822">
 </head>
 <body class="chapter-page">
 
-  <!-- Shared chrome is built by GameEngine.chapter.build() in chapter8.js.
-       Only the jigsaw puzzle modal lives here. -->
+  <!-- The shared chrome (sys-bar, title card, scene, robots, choices, hint bar,
+       completion card) is built by GameEngine.chapter.build() in chapter8.js.
+       Only the reconstruction table lives here. -->
 
   <!-- ════════════════════════════════════════════════════════════
-       DAS LETZTE BILD — a real tap-to-swap jigsaw (the 10th puzzle)
+       DIE ZEHNTE REKONSTRUKTION — twelve fragment groups, four levels.
+       Tap a group to select it, tap a second to swap, [ DREHEN ] to turn
+       the selected one. The archive notes decide where things belong.
        ════════════════════════════════════════════════════════════ -->
-  <div class="puzzle-modal hidden" id="jigModal">
-    <div class="puzzle-card jig-card">
+  <div class="puzzle-modal hidden" id="rkModal">
+    <div class="puzzle-card rk-card">
       <div class="puzzle-card-accent"></div>
       <div class="puzzle-header">
-        <p class="puzzle-label sys-text">DAS LETZTE BILD // AGN-H3R</p>
-        <h2 class="puzzle-title">DAS ZEHNTE PUZZLE</h2>
-        <p class="puzzle-sub sys-text">TIPPE ZWEI TEILE, UM SIE ZU TAUSCHEN</p>
+        <p class="puzzle-label sys-text">SEKTOR 08 // REKONSTRUKTIONSTISCH</p>
+        <h2 class="puzzle-title">DIE ZEHNTE REKONSTRUKTION</h2>
+        <p class="puzzle-sub sys-text">GRUPPE WÄHLEN · ZWEITE GRUPPE TAUSCHT · [ DREHEN ] DREHT</p>
       </div>
 
-      <div class="jig-board" id="jigBoard"></div>
-
-      <div class="jig-bar">
-        <span class="sys-text" id="jigCount">0 / 16 AN ORT</span>
-        <button class="ka-btn small" id="jigPeek" onclick="Chapter8.jigPeek()">[ VORLAGE ]</button>
+      <div class="rk-coh" aria-live="polite">
+        <span class="rk-coh-label sys-text">ARCHIVKOHÄRENZ</span>
+        <span class="rk-coh-value instabil" id="rkCoh">INSTABIL</span>
+        <span class="rk-coh-note" id="rkCohNote"></span>
       </div>
 
-      <div class="puzzle-status sys-text" id="jigStatus"></div>
-      <div class="puzzle-actions">
-        <button class="ka-btn small" onclick="Chapter8.jigShuffle()">[ NEU MISCHEN ]</button>
+      <div class="rk-stage">
+        <div class="rk-board" id="rkBoard" role="group" aria-label="Rekonstruktionstisch, vier Ebenen zu je drei Plätzen"></div>
+        <div class="rk-banner sys-text" id="rkBanner" aria-live="polite"></div>
+      </div>
+
+      <div class="puzzle-actions rk-actions" id="rkActions">
+        <button class="ka-btn primary" data-act="rotate"  id="rkRotate"  disabled>[ DREHEN ]</button>
+        <button class="ka-btn small"   data-act="inspect" id="rkInspect" disabled>[ ANSEHEN ]</button>
+        <button class="ka-btn small"   data-act="notes">[ ARCHIVNOTIZEN ]</button>
+        <button class="ka-btn small"   data-act="close">[ ZURÜCK ]</button>
       </div>
     </div>
   </div>
 
-  <script src="../js/engine.js?v=20260613"></script>
+  <!-- Fragment detail · archive notes · closing summary. A sibling of the
+       table, not a child: after the chapter is finished the table itself
+       stays closed and this sheet is what the player opens. -->
+  <div class="rk-sheet hidden" id="rkSheet" role="dialog" aria-label="Archivblatt">
+    <div class="rk-sheet-scrim"></div>
+    <div class="rk-sheet-card">
+      <h3 class="rk-sheet-title sys-text" id="rkSheetTitle">ARCHIVNOTIZEN</h3>
+      <div class="rk-sheet-body" id="rkSheetBody"></div>
+      <button class="ka-btn small" data-act="sheet-close">[ SCHLIESSEN ]</button>
+    </div>
+  </div>
+
+  <script src="../js/engine.js?v=20260822"></script>
   <script src="../js/mobile-warning.js?v=20260613"></script>
-  <script src="chapter8.js?v=20260613"></script>
+  <script src="chapter8.js?v=20260822"></script>
 </body>
 </html>
