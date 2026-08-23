@@ -534,8 +534,7 @@ const GameEngine = (() => {
         </div>`;
       }).join('');
 
-      panel.classList.remove('hidden');
-      if (back) back.classList.remove('hidden');
+      _openOverlay(panel, back);
     }
 
     return { ALL, isUnlocked, unlock, showOverlay, checkPlatinum };
@@ -616,6 +615,36 @@ const GameEngine = (() => {
       // toastOut would never run and the toast would sit there forever.
     }
 
+    // Chapter pages carry no overlay markup, so build it on demand — the
+    // Signalarchiv has to be reachable from inside a chapter too.
+    function _ensurePanel() {
+      let back = document.getElementById('overlayBackdrop');
+      if (!back) {
+        back = document.createElement('div');
+        back.className = 'overlay-backdrop hidden';
+        back.id = 'overlayBackdrop';
+        back.addEventListener('click', closeOverlay);
+        document.body.appendChild(back);
+      }
+      let panel = document.getElementById('signalOverlay');
+      if (!panel) {
+        panel = document.createElement('div');
+        panel.className = 'overlay-panel hidden';
+        panel.id = 'signalOverlay';
+        panel.setAttribute('role', 'dialog');
+        panel.setAttribute('aria-label', 'Signalnischen');
+        panel.innerHTML = `
+          <div class="overlay-card">
+            <h2 class="overlay-title">SIGNALNISCHEN</h2>
+            <p class="overlay-subtitle sys-text">OPTIONALE ARCHIVFRAGMENTE // THE TRANSMISSION</p>
+            <div class="overlay-content" id="signalList"></div>
+            <button class="ka-btn" onclick="GameEngine.closeOverlay()">[ SCHLIESSEN ]</button>
+          </div>`;
+        document.body.appendChild(panel);
+      }
+      return panel;
+    }
+
     function showOverlay() {
       const panel  = _ensurePanel();
       const list   = document.getElementById('signalList');
@@ -638,8 +667,7 @@ const GameEngine = (() => {
         </div>`;
       }).join('');
 
-      panel.classList.remove('hidden');
-      if (back) back.classList.remove('hidden');
+      _openOverlay(panel, back);
     }
 
     // Works from the title page and from inside a chapter directory alike.
@@ -858,12 +886,18 @@ const GameEngine = (() => {
       }, line.speaker);
     }
 
+    function _reduced() {
+      try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) { return false; }
+    }
+
     function _typeText(el, text, speed, onDone, speaker) {
       if (_typeTimer) clearInterval(_typeTimer);
       const full = text || '';
       let i = 0;
       el.textContent = '';
       if (!full.length) { if (onDone) onDone(); return; }
+      // A player who has asked for less motion gets the line, not the typing.
+      if (_reduced()) { el.textContent = full; if (onDone) onDone(); return; }
       _typeTimer = setInterval(() => {
         const ch = full[i++];
         el.textContent += ch;
@@ -1852,10 +1886,39 @@ const GameEngine = (() => {
   // ═══════════════════════════════════════════════════════════════
   // OVERLAY UTILITIES
   // ═══════════════════════════════════════════════════════════════
+  let _overlayOpener = null;
+
   function closeOverlay() {
+    const open = document.querySelector('.overlay-panel:not(.hidden)');
     document.querySelectorAll('.overlay-panel').forEach(el => el.classList.add('hidden'));
     document.getElementById('overlayBackdrop')?.classList.add('hidden');
+    // Put the keyboard back where the player left it.
+    if (open && _overlayOpener && document.contains(_overlayOpener)) {
+      try { _overlayOpener.focus(); } catch (_) {}
+    }
+    _overlayOpener = null;
   }
+
+  // Every overlay opens the same way: remember who opened it, move focus in,
+  // and let Escape put it away again.
+  function _openOverlay(panel, back) {
+    _overlayOpener = document.activeElement;
+    panel.classList.remove('hidden');
+    if (back) back.classList.remove('hidden');
+    // The panel covers the backdrop, so clicking "outside the card" lands here
+    // rather than on the backdrop. Close on it, once.
+    if (!panel.dataset.dismissWired) {
+      panel.dataset.dismissWired = '1';
+      panel.addEventListener('click', ev => { if (ev.target === panel) closeOverlay(); });
+    }
+    const first = panel.querySelector('button, a[href], input, [tabindex]:not([tabindex="-1"])');
+    if (first) { try { first.focus(); } catch (_) {} }
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if (document.querySelector('.overlay-panel:not(.hidden)')) { e.preventDefault(); closeOverlay(); }
+  });
 
   function showCredits() {
     // Built fresh every time so it works on chapter pages too, and so the guest
@@ -1968,8 +2031,7 @@ const GameEngine = (() => {
         </div>
         <button class="ka-btn" onclick="GameEngine.closeOverlay()">[ SCHLIESSEN ]</button>
       </div>`;
-    panel.classList.remove('hidden');
-    back.classList.remove('hidden');
+    _openOverlay(panel, back);
     panel.querySelector('.credits-content').scrollTop = 0;
   }
 
