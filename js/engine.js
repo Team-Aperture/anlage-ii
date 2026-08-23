@@ -466,8 +466,10 @@ const GameEngine = (() => {
       };
       const nudge = () => { if (!queued) { queued = true; requestAnimationFrame(apply); } };
       try {
+        // Class changes only: every panel in the game opens and closes by
+        // toggling one, and this keeps the observer quiet while a line types.
         new MutationObserver(nudge).observe(document.body, {
-          attributes: true, subtree: true, childList: true, attributeFilter: ['class'],
+          attributes: true, subtree: true, attributeFilter: ['class'],
         });
       } catch (_) {}
       apply();
