@@ -276,17 +276,6 @@ a.sector-node:hover { transform: translateY(-3px); border-color: #fff; color: #f
   100%    { left: calc(100% + 60px); }
 }
 
-/* ─── TAGLINE ────────────────────────────────────────────────── */
-.hero-tagline {
-  font-family: var(--font-body);
-  font-style: italic;
-  font-size: 16px;
-  color: var(--text-secondary);
-  letter-spacing: 0.05em;
-  text-align: center;
-  margin-top: var(--sp-md);
-}
-
 /* ─── MENU ───────────────────────────────────────────────────── */
 .title-menu {
   display: flex;
@@ -345,7 +334,6 @@ a.sector-node:hover { transform: translateY(-3px); border-color: #fff; color: #f
 @media (max-width: 768px) {
   .hero-logo-wrap { padding: var(--sp-sm) 0; }
   .hero-light { height: 40px; width: 4px; }
-  .hero-tagline { font-size: 14px; }
 
   .sys-bar { padding: var(--sp-xs) var(--sp-md); }
   .sys-bar .sys-text { font-size: 9px; }
@@ -359,7 +347,6 @@ a.sector-node:hover { transform: translateY(-3px); border-color: #fff; color: #f
 
 @media (max-width: 480px) {
   .title-main { padding: 60px var(--sp-md) 80px; gap: var(--sp-lg); }
-  .hero-tagline { font-size: 13px; }
 }
 
 /* ─── SHORT VIEWPORTS ────────────────────────────────────────────
@@ -376,7 +363,6 @@ a.sector-node:hover { transform: translateY(-3px); border-color: #fff; color: #f
 @media (max-height: 780px) {
   .title-main    { padding: 40px var(--sp-md) 32px; gap: var(--sp-sm); }
   .hero-logo     { max-height: 34vh; }
-  .hero-tagline  { font-size: 13px; margin: 0; }
   .title-menu    { gap: var(--sp-sm); }
   .sector-map    { margin-top: 4px; }
 }

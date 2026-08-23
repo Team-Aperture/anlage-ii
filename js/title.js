@@ -1,21 +1,3 @@
-  // ─── PROGRESS INDICATOR ──────────────────────────────────────
-  // Two separate numbers: how many sectors are behind the player, and how
-  // much of the facility is actually running. They are not the same thing.
-  function updateChapterProgress() {
-    const el = document.getElementById('chapterProgress');
-    if (!el || typeof GameEngine === 'undefined') return;
-    const nav = chapterNav();
-    if (!nav) return;
-    const total = CHAPTERS.length;
-    const parts = [`FORTSCHRITT: ${nav.completed.length} / ${total} KAPITEL`];
-    let pct = 0;
-    try { pct = GameEngine.progress.reactivationPct(); } catch (_) {}
-    if (nav.completed.length) parts.push(`REAKTIVIERUNG: ${pct} %`);
-    // The archive only counts once the player has heard something.
-    if (nav.sigs > 0) parts.push(`FREMDSIGNALE: ${nav.sigs} / ${nav.total}`);
-    el.innerHTML = parts.map(t => `<span class="tp-part">${t}</span>`).join('');
-  }
-
 /**
  * ═══════════════════════════════════════════════════════════════
  * KALIBRIERUNGSANLAGE II — TITLE SCREEN
@@ -463,15 +445,19 @@
     const host = document.getElementById('sectorMap');
     if (!host || typeof GameEngine === 'undefined') return;
 
+    // One target, one block. Chapter 9 does not add a second set — it
+    // confirms this one, and the terminal says so once it has been confirmed.
     const sets = [];
     try {
       if (GameEngine.state.hasFlag('zieldaten')) {
         const t = GameEngine.state.get('zieldaten_text');
-        if (t) sets.push({ id: 'main', label: 'ZIELDATEN', text: t });
-      }
-      if (GameEngine.state.hasFlag('bonuszieldaten')) {
-        const t = GameEngine.state.get('bonuszieldaten_text');
-        if (t) sets.push({ id: 'bonus', label: 'BONUSZIELDATEN', text: t });
+        const confirmed = GameEngine.state.hasFlag('truth_revealed');
+        if (t) sets.push({
+          id: 'main',
+          label: 'ZIELDATEN',
+          status: confirmed ? 'EXTERN BESTÄTIGT' : 'VERFÜGBAR',
+          text: t,
+        });
       }
     } catch (_) { return; }
     if (!sets.length) return;
@@ -480,7 +466,7 @@
     box.className = 'ziel-box';
     box.innerHTML = sets.map(z => `
       <div class="ziel-set ziel-${z.id}">
-        <div class="ziel-label sys-text">${z.label}: VERFÜGBAR</div>
+        <div class="ziel-label sys-text">${z.label}: ${z.status}</div>
         <div class="ziel-value" data-for="${z.id}"></div>
         <button class="ka-btn small" data-copy="${z.id}">[ KOPIEREN ]</button>
       </div>`).join('');
@@ -510,15 +496,25 @@
   }
 
   // ─── CHAPTER PROGRESS INDICATOR ──────────────────────────────
+  // ─── PROGRESS INDICATOR ──────────────────────────────────────
+  // Three separate readings, never blended into one percentage: how many
+  // sectors are behind the player, how much of the facility is actually
+  // running, and how much of the transmission has been heard.
   function updateChapterProgress() {
     const progressEl = document.getElementById('chapterProgress');
     if (!progressEl || typeof GameEngine === 'undefined') return;
+    const nav = chapterNav();
+    if (!nav) return;
 
-    const completed = GameEngine.state.get('chaptersCompleted') || [];
-    const total     = 9; // chapters 0–8; the hidden bonus chapter 9 is not counted
-    const pct       = Math.round((completed.length / total) * 100);
+    // chapters 0–8; the hidden chapter 9 is not counted
+    const parts = [`FORTSCHRITT: ${nav.completed.length} / ${CHAPTERS.length} KAPITEL`];
+    let pct = 0;
+    try { pct = GameEngine.progress.reactivationPct(); } catch (_) {}
+    if (nav.completed.length) parts.push(`REAKTIVIERUNG: ${pct} %`);
+    // The archive only counts once the player has heard something.
+    if (nav.sigs > 0) parts.push(`FREMDSIGNALE: ${nav.sigs} / ${nav.total}`);
 
-    progressEl.textContent = `FORTSCHRITT: ${completed.length}/${total} KAPITEL (${pct}%)`;
+    progressEl.innerHTML = parts.map(t => `<span class="tp-part">${t}</span>`).join('');
   }
 
   // ─── INIT ─────────────────────────────────────────────────────

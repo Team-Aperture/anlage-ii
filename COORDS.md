@@ -1,7 +1,8 @@
 # ZIELDATEN — die echten Koordinaten einsetzen
 
-Kapitel 8 zeigt am Ende die **Zieldaten** (die Koordinaten des offiziellen
-Ziels). Im Repository steht dort bewusst nur ein Platzhalter:
+Das Spiel hat **genau einen** Satz Koordinaten. Er wird am Ende von Kapitel 8
+rekonstruiert. Kapitel 9 vergibt kein zweites Ziel — es **bestätigt dasselbe**
+von außerhalb der Anlage. Im Repository steht dort bewusst nur ein Platzhalter:
 
 ```
 N 00° 00.000 · E 000° 00.000
@@ -21,16 +22,13 @@ Fragment ist ein Teilstück der Zeichenkette, zeichenweise verschoben abgelegt.
 Erst die Reihenfolge, die die fertige Rekonstruktion in Kapitel 8 ergibt,
 setzt sie wieder zusammen — eine falsche Reihenfolge ergibt Buchstabensalat.
 
-Beide Datensätze liegen an **einer** Stelle: im Modul `GameEngine.calibration`
+Die Fragmente liegen an **einer** Stelle: im Modul `GameEngine.calibration`
 in `js/engine.js`. Das ist auch der Grund, warum ein fertiger Spielstand seine
 Koordinaten selbst wiederherstellen kann, wenn sie einmal verloren gehen.
 
 ```js
 const MAIN = [
   '0061000f001f', '0006008600160006', ...
-];
-const BONUS = [
-  '001f00710061006100e1', ...
 ];
 ```
 
@@ -61,64 +59,52 @@ console.log("  '" + out.join("', '") + "',");
 Der Text darf beliebig aussehen — Grad, Minuten, Trennzeichen, Umlaute.
 Er wird genau so wieder zusammengesetzt, wie er eingegeben wurde.
 
-## Die Bonuszieldaten (Kapitel 9)
+**Es gibt nichts Zweites einzusetzen.** Kapitel 9 liest denselben Wert zurück.
 
-Kapitel 9 — die versteckte Kammer — hat **eigene** Koordinaten:
-die **Bonuszieldaten**. Sie stammen erzählerisch nicht von R-3MI und V-TGM,
-sondern von der Stimme aus den fünf Fremdsignalen, und liegen deshalb als
-**fünf** Fragmente vor, eines pro Signalnische.
+## Was Kapitel 9 mit den Koordinaten macht
 
-Die Zieldaten aus Kapitel 8 und die Bonuszieldaten sind zwei getrennte
-Datensätze. Sie überschreiben sich nie gegenseitig, und das Titelterminal
-zeigt sie getrennt und beschriftet an.
+Die versteckte Kammer vergibt kein eigenes Ziel. Der Rest der Übertragung —
+die Stimme aus den fünf Fremdsignalen — nennt **dieselbe Stelle**, und genau
+das ist der Punkt: es ist der einzige Teil des Ziels, der nicht von R-3MI und
+V-TGM kommt. Erzählerisch ist das die Bestätigung, dass die beiden das Ziel
+nicht erfunden haben; spielerisch ist es eine Belohnung für Vollständigkeit,
+kein zweiter Weg.
 
-Ersetzen funktioniert genauso, nur mit **fünf** Teilen statt acht:
+Im Titelterminal steht der Satz danach als
+`ZIELDATEN · EXTERN BESTÄTIGT` statt nur `ZIELDATEN` — derselbe Wert, ein
+anderes Etikett.
 
-```js
-const BONUS = 'N 49° 00.000 · E 012° 00.000';   // <— hier die echten Bonuszieldaten
+## Der Zugangscode aus Teil I
 
-const ch = [...BONUS], n = ch.length, out = [];
-for (let j = 0; j < 5; j++) {
-  const teil = ch.slice(Math.floor(j * n / 5), Math.floor((j + 1) * n / 5));
-  out.push(teil.map(c => ((c.codePointAt(0) ^ (0x51 + j * 11)) & 0xffff)
-                          .toString(16).padStart(4, '0')).join(''));
-}
-console.log("  '" + out.join("', '") + "',");
-```
+In `chapter9/chapter9.js` steht `const AUTH = [ … ]` — das ist der
+achtstellige Verifizierungscode aus der ersten Anlage, den die
+Autorisierungsakte in Kapitel 9 zurückliest. Der Spieler kennt ihn bereits
+(er hat ihn selbst eingegeben, um überhaupt anzufangen); er liegt nur deshalb
+verschoben vor, damit er nicht beiläufig im Quelltext steht. Der muss **nicht**
+ersetzt werden — es sei denn, der Zugangscode in `js/access.js` ändert sich.
 
-Die Ausgabe kommt in `js/engine.js` als Inhalt von `const BONUS = [ … ]`.
-
-In `chapter9/chapter9.js` steht außerdem `const AUTH = [ … ]` — das ist der achtstellige
-Verifizierungscode aus der ersten Anlage, den die Autorisierungsakte in
-Kapitel 9 zurückliest. Der Spieler kennt ihn bereits (er hat ihn selbst
-eingegeben, um überhaupt anzufangen); er liegt nur deshalb verschoben vor,
-damit er nicht beiläufig im Quelltext steht. Der muss **nicht** ersetzt
-werden — es sei denn, der Zugangscode in `js/access.js` ändert sich.
-
-## Wo die Zieldaten sonst noch auftauchen
+## Wo die Zieldaten auftauchen
 
 * **Abschlusskarte in Kapitel 8** — mit `[ KOORDINATEN KOPIEREN ]`.
 * **Titelterminal** — nach Abschluss von Kapitel 8 steht dort
   `ZIELDATEN: VERFÜGBAR` samt Wert, damit niemand ein Kapitel noch einmal
-  spielen muss, um die Koordinaten nachzulesen. Nach der versteckten Kammer
-  kommt ein zweiter, getrennt beschrifteter Block `BONUSZIELDATEN` dazu.
-* **Abschlusskarte in Kapitel 9** — mit `[ BONUSZIELDATEN KOPIEREN ]`, und
-  beim erneuten Betreten der Kammer über `[ BONUSZIELDATEN ]`.
-* **Spielstand** — als `zieldaten_text` und `bonuszieldaten_text` im
-  `localStorage`. Das passiert erst nach dem Lösen; im ausgelieferten Code
-  stehen die Werte nicht.
+  spielen muss, um die Koordinaten nachzulesen.
+* **Abschlusskarte in Kapitel 9** — mit `[ KOORDINATEN KOPIEREN ]`, und beim
+  erneuten Betreten der Kammer über `[ ZIELDATEN ]`. Derselbe Wert.
+* **Spielstand** — als `zieldaten_text` im `localStorage`. Das passiert erst
+  nach dem Lösen; im ausgelieferten Code steht der Wert nicht.
 
-`[ SPIELSTAND ]` im Hauptmenü zeigt an, ob beide Sätze vorhanden sind, und
+`[ SPIELSTAND ]` im Hauptmenü zeigt an, ob die Zieldaten vorhanden sind, und
 löscht sie auf Wunsch wieder.
 
 ## Checkliste vor der Veröffentlichung
 
 - [ ] `MAIN` in `js/engine.js` enthält die echten Fragmente.
-- [ ] `BONUS` in `js/engine.js` enthält die echten Bonusfragmente.
-- [ ] `KA1_LISTING_URL` in `js/access.js` zeigt auf das echte Listing der
-      ersten Anlage (steht dort noch auf einer Platzhalter-Adresse).
+- [x] `KA1_LISTING_URL` und `KA1_GAME_URL` in `js/access.js` zeigen auf die
+      erste Anlage.
 - [ ] Kapitel 8 einmal komplett durchgespielt, Zeichenkette stimmt.
-- [ ] Kapitel 9 einmal durchgespielt, Bonuszeichenkette stimmt.
-- [ ] `[ KOORDINATEN KOPIEREN ]` und `[ BONUSZIELDATEN KOPIEREN ]` liefern
-      jeweils denselben Text.
-- [ ] Titelterminal zeigt beide Sätze, getrennt und richtig beschriftet.
+- [ ] Kapitel 9 einmal durchgespielt — dieselbe Zeichenkette, Etikett
+      `EXTERN BESTÄTIGT`.
+- [ ] `[ KOORDINATEN KOPIEREN ]` liefert in Kapitel 8 und Kapitel 9 denselben
+      Text.
+- [ ] Titelterminal zeigt einen Satz, nicht zwei.
