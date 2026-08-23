@@ -65,6 +65,9 @@ const Chapter5 = (() => {
     talkSeen:  {},
     hints:     { active: null, step: 0 },
     coach:     0,
+
+    // A second walk down the line: the stations are read, not re-solved.
+    revisit:   false,
   };
 
   // live station instances — rebuilt on demand, cleared once solved
@@ -270,6 +273,7 @@ const Chapter5 = (() => {
   }
 
   function beginOrResume() {
+    if (GameEngine.progress.isRevisit(CHAPTER_ID)) { nachsuche(); return; }
     const d = loadCheckpoint();
     if (d) {
       applyCheckpoint(d);
@@ -288,6 +292,25 @@ const Chapter5 = (() => {
     }
     S.beat = 'intro';
     enterBeat('intro');
+  }
+
+  // Walking the route again after it is synchronised. The chapter drops the
+  // player at the one section that still had something to find, with the
+  // plates already sorted out — there is nothing left to work out here.
+  function nachsuche() {
+    S.revisit = true;
+    S.metTflon = true;
+    S.branch = 'haupt';
+    S.relay = true;
+    S.crossing = true;
+    S.marker = true;
+    S.restSeen = true;
+    try { S.sigFound = GameEngine.signals.isFound('sig_03'); } catch (_) {}
+    renderLog();
+    CH.showRobots(true);
+    CH.showGuest(true);
+    enterBeat('14-H');
+    GameEngine.progress.returnBar(CHAPTER_ID);
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -871,7 +894,13 @@ const Chapter5 = (() => {
     CH.addProp({ prop:'ivy',     x:86, y:22, w:10, h:26, cls:'prop-far' });
 
     addHotspot({ prop:'c5_markerwall', cls:'prop-guest', x:34, y:32, w:26, h:22,
-      label:'MARKIERUNGSWAND', aria:'Markierungen vergleichen', fn:() => openStation('marker') });
+      label:'MARKIERUNGSWAND', aria:'Markierungen vergleichen',
+      fn: () => S.revisit ? say([
+        { speaker:'SYSTEM',   text:'14-H // ALTE MARKIERUNG. Vier Platten gehören zur Strecke. Die fünfte hängt schief in der Halterung.' },
+        { speaker:'T-FLON14', text:'„Die stimmt immer noch nicht."' },
+        { speaker:'R-3MI',    text:'„Willst du sie abnehmen?"' },
+        { speaker:'T-FLON14', text:'„Nein. Sie soll auffallen."' },
+      ]) : openStation('marker') });
 
     if (S.marker) {
       addHotspot({ prop:'c5_foreign', cls:'prop-brown', x:66, y:60, w:13, h:16,
@@ -915,7 +944,7 @@ const Chapter5 = (() => {
       { speaker:'R-3MI',  text:'„Mittlerweile überrascht mich das weniger."' },
       { speaker:'T-FLON14', text:'„Mich schon."' },
       { speaker:'SYSTEM', text:'Das Gehäuse gibt ein Fragment aus.' },
-      { speaker:'V-TGM',  text:'"…the numbers do not match the map. please correct. please."', subtitle:'…die Zahlen stimmen nicht mit der Karte überein. bitte korrigieren. bitte.' },
+      { speaker:'V-TGM',  text:'"…the numbers do not match the map. an external test signature is needed. the old one is still valid…"', subtitle:'…die Zahlen stimmen nicht mit der Karte überein. Es braucht eine Testsignatur von außen. Die alte gilt noch.' },
       { speaker:'SYSTEM', text:'Stille im Gang.' },
       { speaker:'T-FLON14', text:'„Das ist keine Streckenmeldung."' },
       { speaker:'R-3MI',  text:'„Was ist es dann?"' },
@@ -1765,6 +1794,7 @@ const Chapter5 = (() => {
 
   function init() {
     try { GameEngine.props.register(CH5_ART); } catch (_) {}
+    if (!GameEngine.progress.require('ch5')) return;
     buildChapter();
     rebindHints();
     CH.showHintBar(false);

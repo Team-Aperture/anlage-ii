@@ -1,6 +1,6 @@
 # ═══════════════════════════════════════════════════════════════
 # SUNO PROMPT BIBLE — DIE KALIBRIERUNGSANLAGE II
-# Der komplette Soundtrack (34 Tracks) für suno.com
+# Der komplette Soundtrack (12 Tracks) für suno.com
 # ═══════════════════════════════════════════════════════════════
 
 ## `title_theme.mp3` — Hauptmenü

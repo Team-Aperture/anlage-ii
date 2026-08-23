@@ -47,6 +47,9 @@ const Chapter3 = (() => {
     sawWestgang: false,      // enables the ending callback
     hints:     { step: 0, active: null },
     react:     {},
+
+    // A second walk through the rows: nothing may re-run the ending.
+    revisit:   false,
   };
 
   // ═══════════════════════════════════════════════════════════════
@@ -167,14 +170,120 @@ const Chapter3 = (() => {
   }
 
   // ═══════════════════════════════════════════════════════════════
+  // RESUME
+  // A reload must not send the player back through two calibrated levels.
+  // The stage that was reached is kept; the recording itself is generated
+  // fresh, so nothing is remembered that was meant to be observed.
+  // ═══════════════════════════════════════════════════════════════
+  function saveState() {
+    if (S.solved) return;
+    try {
+      GameEngine.state.chapter(CHAPTER_ID, {
+        stage: bel ? bel.stage : 0,
+        metLux: S.metLux, sigFound: S.sigFound, logsRead: S.logsRead,
+        sawWestgang: S.sawWestgang, seen: S.seen, talkSeen: S.talkSeen, react: S.react,
+      });
+    } catch (_) {}
+  }
+  function clearSavedState() {
+    try { GameEngine.state.chapter(CHAPTER_ID, null); } catch (_) {}
+  }
+  // Returns the stage to pick the exposure array back up on, or 0 for a
+  // player who never got that far.
+  function restoreState() {
+    let d = null;
+    try { d = GameEngine.state.chapter(CHAPTER_ID); } catch (_) {}
+    if (!d || typeof d !== 'object' || !d.metLux) return 0;
+    S.metLux      = true;
+    S.sigFound    = !!d.sigFound;
+    S.logsRead    = d.logsRead | 0;
+    S.sawWestgang = !!d.sawWestgang;
+    S.seen        = (d.seen && typeof d.seen === 'object') ? d.seen : {};
+    S.talkSeen    = (d.talkSeen && typeof d.talkSeen === 'object') ? d.talkSeen : {};
+    S.react       = (d.react && typeof d.react === 'object') ? d.react : {};
+    const st = d.stage | 0;
+    return st >= 1 && st <= 3 ? st : 0;
+  }
+
+  // ═══════════════════════════════════════════════════════════════
   // TITLE CARD
   // ═══════════════════════════════════════════════════════════════
   function showTitleCard() {
     const card = document.getElementById('titleCard');
+    const revisit = GameEngine.progress.isRevisit(CHAPTER_ID);
+    const stage   = revisit ? 0 : restoreState();
+    const resume  = !revisit && S.metLux;
     setTimeout(() => {
       card.classList.add('fading');
-      setTimeout(() => { card.style.display = 'none'; act1_arrival(); }, 700);
-    }, 3000);
+      setTimeout(() => {
+        card.style.display = 'none';
+        if (revisit) nachsuche();
+        else if (resume) resumeWatch(stage);
+        else act1_arrival();
+      }, 700);
+    }, (revisit || resume) ? 900 : 3000);
+  }
+
+  // Back in the observation rows after a reload. L-UX has not moved, and the
+  // exposure array picks up on the level that was already reached.
+  function resumeWatch(stage) {
+    setScene('obs-dark');
+    setProgress(24);
+    showRobots(true);
+    showLux(true);
+    try { GameEngine.music.play('ch3_ambient'); } catch (_) {}
+    loadHotspots();
+    // Latch the array open before any dialogue runs: a lost completion
+    // callback must never cost the level that was already reached.
+    if (stage) {
+      bel = { stage: 0, reserve: RESERVE_MAX, busy: false, observedOnce: false, answer: null, event: null, wrong: 0 };
+      document.getElementById('belModal').classList.remove('hidden');
+      document.getElementById('hintBar').classList.remove('hidden');
+      startStage(stage);
+    }
+    say([
+      { speaker:'SYSTEM', text:'SEKTOR 03 — BEOBACHTUNGSSEKTOR. Die Reihen sind noch dunkel.' },
+      { speaker:'L-UX',   text: stage > 1 ? '„Du warst weg. Die Ebenen darunter stehen noch."'
+                                          : '„Du warst weg. Das Array wartet."' },
+    ]);
+  }
+
+
+  // On a second visit the way on is just a way on: the next sector is already
+  // open, so the door leads there instead of handing out an ending the player
+  // has already been given.
+  function onward(id) {
+    const href = (() => {
+      try { return GameEngine.progress.href(id); } catch (_) {
+        const n = id.replace('ch', '');
+        return `../chapter${n}/chapter${n}.html`;
+      }
+    })();
+    try { GameEngine.fx.leave(href); } catch (_) { location.href = href; }
+  }
+
+  // Coming back to a sector that can see again. The network is up, L-UX is
+  // where L-UX always is, and everything worth a closer look is still here —
+  // including the lens that never settles.
+  function nachsuche() {
+    S.revisit = true;
+    S.metLux = true;
+    S.solved = true;
+    S.lit = true;
+    try { S.sigFound = GameEngine.signals.isFound('sig_01'); } catch (_) {}
+    setScene('obs-lit');
+    setProgress(37);
+    showRobots(true);
+    showLux(true);
+    try { GameEngine.music.play('ch3_ambient'); } catch (_) {}
+    loadHotspots();
+    GameEngine.progress.returnBar(CHAPTER_ID);
+    say([
+      { speaker:'SYSTEM', text:'SEKTOR 03 — BEOBACHTUNGSSEKTOR. Die Reihen sind hell. Was hier steht, wird wieder gesehen.' },
+      { speaker:'L-UX',   text:'„Ihr seid nochmal da."' },
+      { speaker:'R-3MI',  text:'„Wir schauen uns nur um."' },
+      { speaker:'L-UX',   text:'„Gut. Genau dafür ist der Sektor gebaut."' },
+    ]);
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -274,6 +383,7 @@ const Chapter3 = (() => {
   }
 
   function loadHotspots() {
+    saveState();
     clearHotspots();
     // ── set dressing (room layout unchanged)
     addProp({ prop:'light',    x:43, y:2,  w:12, h:8  });
@@ -300,7 +410,8 @@ const Chapter3 = (() => {
     // also guarantees the ending stays reachable no matter what.
     if (S.solved) {
       addHotspot({ prop:'c3_obsdoor', x:66, y:24, w:12, h:34,
-        label:'SEKTOR 04', aria:'Sektor 04 betreten', fn:finishChapter });
+        label:'SEKTOR 04', aria:'Sektor 04 betreten',
+        fn: () => S.revisit ? onward('ch4') : finishChapter() });
     }
   }
 
@@ -416,11 +527,12 @@ const Chapter3 = (() => {
     }
     // Latch the discovery before the dialogue so a lost callback can't undo it.
     S.sigFound = true;
+    saveState();
     try { GameEngine.signals.find('sig_01'); } catch(_) {}
     say([
       { speaker:'SYSTEM', text:'Eine einzelne Linse flackert anders als die anderen. Nicht zufällig. Ein Rhythmus.' },
       { speaker:'SYSTEM', text:'Dahinter, schwach eingebrannt, ein Textfragment.' },
-      { speaker:'V-TGM',  text:'"…not everything that helps wants to save."', subtitle:'…nicht alles, was hilft, will retten.' },
+      { speaker:'V-TGM',  text:'"…not everything that helps wants to save. two units are listening in…"', subtitle:'…nicht alles, was hilft, will retten. zwei Einheiten hören mit.' },
       { speaker:'SYSTEM', text:'Kurze Stille.' },
       { speaker:'L-UX',   text:'„Das ist neu."' },
       { speaker:'R-3MI',  text:'„Neu?"' },
@@ -516,6 +628,15 @@ const Chapter3 = (() => {
   function later(fn, ms) { belTimers.push(setTimeout(fn, ms)); }
 
   function openBelichtung() {
+    if (S.revisit) {
+      say([
+        { speaker:'SYSTEM', text:'BELICHTUNGSARRAY // KALIBRIERT. DAS BEOBACHTUNGSNETZ LÄUFT.' },
+        { speaker:'L-UX',   text:'„Das steht. Da musst du nichts mehr sehen."' },
+        { speaker:'R-3MI',  text:'„Ich schaue trotzdem gern hin."' },
+        { speaker:'L-UX',   text:'„Das ist der Sinn davon."' },
+      ]);
+      return;
+    }
     if (S.solved) { finishChapter(); return; }
     if (bel) {                           // already open — just re-focus it
       document.getElementById('belModal').classList.remove('hidden');
@@ -556,6 +677,7 @@ const Chapter3 = (() => {
     document.getElementById('belStage').textContent =
       `STUFE ${stage} / 3 — ${['', 'BLENDEN I', 'BLENDEN II', 'SPEKTRUM'][stage]}`;
     document.getElementById('belTask').textContent = TASK_TEXT[stage];
+    saveState();
 
     paintReserve();
     renderScope(null);
@@ -1130,6 +1252,7 @@ const Chapter3 = (() => {
 
     // Persist before anything narrative runs.
     GameEngine.state.markChapterComplete(CHAPTER_ID);
+    clearSavedState();
 
     document.getElementById('belModal').classList.add('hidden');
     document.getElementById('hintBar').classList.add('hidden');
@@ -1183,6 +1306,7 @@ const Chapter3 = (() => {
 
   function finishChapter() {
     GameEngine.state.markChapterComplete(CHAPTER_ID);
+    clearSavedState();
     try { GameEngine.achievements.unlock('ch3_complete'); } catch(_) {}
     try { GameEngine.audio.fanfare(); } catch(_) {}
     document.getElementById('chapterComplete').classList.remove('hidden');
@@ -1355,10 +1479,7 @@ const Chapter3 = (() => {
 
   function init() {
     try { GameEngine.props.register(CH3_ART); } catch (_) {}
-    if (!GameEngine.state.isChapterComplete('ch2')) {
-      location.replace('../chapter2/chapter2.html');
-      return;
-    }
+    if (!GameEngine.progress.require('ch3')) return;
     setProgress(24);
 
     document.getElementById('belObserveBtn')?.addEventListener('click', () => observe());

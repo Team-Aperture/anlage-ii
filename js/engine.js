@@ -1,6 +1,6 @@
 /**
  * ═══════════════════════════════════════════════════════════════
- * KALIBRIERUNGSANLAGE II — GAME ENGINE v0.1.0
+ * KALIBRIERUNGSANLAGE II — GAME ENGINE v1.0.0
  * Team_Aperture
  *
  * Modules:
@@ -17,48 +17,147 @@ const GameEngine = (() => {
   'use strict';
 
   const SAVE_KEY = 'ka2_save_v1';
-  const VERSION  = '0.1.0';
+  const VERSION  = '1.0.0';   // what the game calls itself; NOT the save schema
 
   // ═══════════════════════════════════════════════════════════════
   // STATE MANAGER
+  // A save is never thrown away because a field is missing or a version
+  // moved on. Unknown keys survive, missing keys are filled in, and the
+  // schema version is separate from the version the game calls itself.
   // ═══════════════════════════════════════════════════════════════
+  const SCHEMA = 3;
+
   const state = (() => {
     const defaults = {
       version:              VERSION,
+      schemaVersion:        SCHEMA,
       chaptersCompleted:    [],
       puzzlesSolved:        {},
       signalsFound:         [],
       achievementsUnlocked: [],
       flags:                {},
+      chapterState:         {},
+      calibration:          {},
+      settings:             {},
       firstPlay:            true,
     };
 
     let _data = null;
+    let _persist = true;      // false once we know storage refuses to keep anything
+
+    // Bring an older save forward. Additive only: nothing an earlier version
+    // stored is dropped, and no migration may reset progress.
+    // The buckets in `defaults` must never be handed out by reference: a save
+    // that lacks one would then share the template, and a later reset would
+    // hand back the very object it just wiped.
+    function blank() {
+      return JSON.parse(JSON.stringify(defaults));
+    }
+
+    function migrate(raw) {
+      const d = { ...blank(), ...(raw || {}) };
+      const from = typeof raw?.schemaVersion === 'number' ? raw.schemaVersion : 1;
+
+      // shapes, in case a hand-edited or half-written save comes back
+      if (!Array.isArray(d.chaptersCompleted))    d.chaptersCompleted = [];
+      if (!Array.isArray(d.signalsFound))         d.signalsFound = [];
+      if (!Array.isArray(d.achievementsUnlocked)) d.achievementsUnlocked = [];
+      ['puzzlesSolved', 'flags', 'chapterState', 'calibration', 'settings'].forEach(k => {
+        if (!d[k] || typeof d[k] !== 'object' || Array.isArray(d[k])) d[k] = {};
+      });
+      d.chaptersCompleted    = [...new Set(d.chaptersCompleted.filter(x => typeof x === 'string'))];
+      d.signalsFound         = [...new Set(d.signalsFound.filter(x => typeof x === 'string'))];
+      d.achievementsUnlocked = [...new Set(d.achievementsUnlocked.filter(x => typeof x === 'string'))];
+
+      if (from < 3) {
+        // Mute used to sit loose at the top level next to the progress arrays.
+        // It is a preference, so it belongs in `settings` with the rest.
+        if (typeof d.muted === 'boolean') { d.settings.muted = d.muted; }
+        delete d.muted;
+      }
+
+      if (from < 2) {
+        // v1 had no chapterState / calibration / settings buckets and stored
+        // per-chapter progress as loose top-level keys. Move what we find, and
+        // do not leave a second stale copy behind.
+        Object.keys(d).forEach(k => {
+          const m = /^ch(\d)_progress$/.exec(k);
+          if (m && d[k] != null) { d.chapterState['ch' + m[1]] = d[k]; delete d[k]; }
+        });
+        // A run that already finished a chapter has earned its fragment.
+        d.chaptersCompleted.forEach(id => { if (id !== 'ch0') d.calibration[id] = true; });
+      }
+
+      d.version = VERSION;
+      d.schemaVersion = SCHEMA;
+      return d;
+    }
 
     function load() {
+      let raw = null;
+      try { raw = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); }
+      catch (_) { raw = null; }               // unreadable: start clean, but keep playing
+      const had = raw && typeof raw === 'object';
+      _data = migrate(had ? raw : null);
+      // Write the upgraded shape back once, so the next load has nothing to do
+      // and a half-migrated save can never be observed.
+      if (!had || raw.schemaVersion !== SCHEMA) save();
+    }
+
+    // A finished chapter whose reward went missing — an interrupted write, a
+    // save copied between browsers — must not send the player back through it.
+    function repair() {
       try {
-        const raw = localStorage.getItem(SAVE_KEY);
-        _data = raw ? { ...defaults, ...JSON.parse(raw) } : { ...defaults };
-      } catch {
-        _data = { ...defaults };
-      }
+        if (_data.chaptersCompleted.includes('ch8') && !_data.zieldaten_text) {
+          const z = calibration.reconstructMain();
+          if (z) { _data.zieldaten_text = z; _data.flags.zieldaten = true; }
+        }
+        if (_data.flags.truth_revealed && !_data.bonuszieldaten_text) {
+          const b = calibration.reconstructBonus();
+          if (b) { _data.bonuszieldaten_text = b; _data.flags.bonuszieldaten = true; }
+        }
+      } catch (_) {}
     }
 
     function save() {
+      if (!_persist) return;
       try { localStorage.setItem(SAVE_KEY, JSON.stringify(_data)); }
-      catch (e) { console.warn('[KA-II] Save failed.', e); }
+      catch (e) {
+        _persist = false;                     // out of quota or storage blocked
+        console.warn('[KA-II] Fortschritt kann nicht gespeichert werden — das Spiel läuft weiter.', e);
+      }
     }
 
     function get(key)           { return _data[key]; }
     function set(key, value)    { _data[key] = value; save(); }
     function setFlag(f, v=true) { _data.flags[f] = v; save(); }
     function hasFlag(f)         { return !!_data.flags[f]; }
+    function canPersist()       { return _persist; }
+
+    // Player preferences — mute, and whatever else earns a switch later.
+    function setting(key, value) {
+      if (value === undefined) return _data.settings[key];
+      _data.settings[key] = value;
+      save();
+    }
+
+    // Per-chapter resumable state, so a refresh never costs a session.
+    function chapter(id, value) {
+      if (value === undefined) return _data.chapterState[id];
+      if (value === null) delete _data.chapterState[id];
+      else _data.chapterState[id] = value;
+      save();
+    }
 
     function markChapterComplete(id) {
       if (!_data.chaptersCompleted.includes(id)) {
         _data.chaptersCompleted.push(id);
+        // The fragment is committed in the same write as the completion, so a
+        // player who navigates away immediately cannot lose one.
+        if (id !== 'ch0') _data.calibration[id] = true;
         save();
       }
+      repair();
     }
 
     function isChapterComplete(id) {
@@ -74,13 +173,337 @@ const GameEngine = (() => {
       return !!_data.puzzlesSolved[id];
     }
 
-    function reset() { _data = { ...defaults }; save(); }
+    function reset() { _data = migrate(null); _persist = true; save(); }
+
+    // Copy a save between browsers or keep a backup of a long run.
+    function exportSave() {
+      try { return btoa(unescape(encodeURIComponent(JSON.stringify(_data)))); }
+      catch (_) { return ''; }
+    }
+    function importSave(text) {
+      let raw = null;
+      const t = String(text || '').trim();
+      if (!t) return false;
+      try { raw = JSON.parse(decodeURIComponent(escape(atob(t)))); }
+      catch (_) { try { raw = JSON.parse(t); } catch (_) { return false; } }
+      if (!raw || typeof raw !== 'object' || !Array.isArray(raw.chaptersCompleted)) return false;
+      _data = migrate(raw);
+      repair();
+      save();
+      return true;
+    }
 
     load();
     return {
-      load, save, get, set, setFlag, hasFlag,
+      load, save, get, set, setFlag, hasFlag, canPersist, chapter, setting,
       markChapterComplete, isChapterComplete,
-      markPuzzleSolved, isPuzzleSolved, reset,
+      markPuzzleSolved, isPuzzleSolved, reset, repair,
+      exportSave, importSave, SCHEMA,
+    };
+  })();
+
+
+  // ═══════════════════════════════════════════════════════════════
+  // ZIELDATEN
+  // Both coordinate sets live here as shifted fragments rather than as
+  // readable strings, and both are rebuilt the same way. Keeping them in one
+  // place is also what lets a finished save repair itself.
+  //
+  // PLATZHALTER — vor Veröffentlichung ersetzen. Anleitung: COORDS.md
+  // ═══════════════════════════════════════════════════════════════
+  const calibration = (() => {
+    const MAIN = [
+      '0061000f001f', '0006008600160006', '000d0013000d', '00740074006400f3',
+      '006b000e006b', '00620062006200e2', '007900690069', '004e005000500050',
+    ];
+    const BONUS = [
+      '001f00710061006100e1', '007c006c006c0072006c006c', '0057004700d000470022',
+      '005200420042004200c20052', '004d004d0053004d004d004d',
+    ];
+
+    function piece(list, j, step, base) {
+      const t = list[j] || '';
+      let out = '';
+      for (let p = 0; p < t.length; p += 4) {
+        out += String.fromCodePoint(parseInt(t.slice(p, p + 4), 16) ^ (base + j * step));
+      }
+      return out;
+    }
+    const join = (list, step, base) => list.map((_, j) => piece(list, j, step, base)).join('');
+
+    // `order` comes from the finished reconstruction in Chapter 8; a wrong
+    // order simply does not produce the target data.
+    function reconstructMain(order) {
+      const seq = Array.isArray(order) && order.length === MAIN.length ? order : MAIN.map((_, i) => i);
+      return seq.map(j => piece(MAIN, j, 7, 0x2f)).join('');
+    }
+    function reconstructBonus() { return join(BONUS, 11, 0x51); }
+
+    function commit(chapterId, token) {
+      try {
+        const c = state.get('calibration') || {};
+        c[chapterId] = token == null ? true : token;
+        state.set('calibration', c);
+      } catch (_) {}
+    }
+    function has(chapterId) {
+      try { return !!(state.get('calibration') || {})[chapterId]; } catch (_) { return false; }
+    }
+    function hasAllMain() {
+      return ['ch1','ch2','ch3','ch4','ch5','ch6','ch7','ch8'].every(has);
+    }
+
+    return { commit, has, hasAllMain, reconstructMain, reconstructBonus, MAIN_LEN: MAIN.length };
+  })();
+
+
+  // ═══════════════════════════════════════════════════════════════
+  // TOASTS
+  // One queue for everything that pops up. Two rules: never more than one on
+  // screen, and never over a line of dialogue or a card the player is reading.
+  // A moment the game spent an hour building is worth more than an instant
+  // notification, so the notification waits.
+  // ═══════════════════════════════════════════════════════════════
+  const toasts = (() => {
+    const q = [];
+    let showing = null;
+    let holds = 0;
+    let timer = null;
+
+    function busy() {
+      if (holds > 0) return true;
+      const dlg = document.querySelector('.dlg-container');
+      if (dlg && dlg.classList.contains('visible')) return true;
+      // a card the player is reading right now
+      return !!document.querySelector('.chapter-complete:not(.hidden), .end-card.visible, .cine-credits.visible, .stinger.visible');
+    }
+
+    function push(build, life) {
+      q.push({ build, life: life || 4200 });
+      pump();
+    }
+
+    function pump() {
+      if (timer) return;
+      timer = setInterval(step, 350);
+      step();
+    }
+
+    function step() {
+      if (showing || !q.length) {
+        if (!q.length && !showing && timer) { clearInterval(timer); timer = null; }
+        return;
+      }
+      if (busy()) return;
+      const item = q.shift();
+      const node = item.build();
+      if (!node) return;
+      showing = node;
+      document.body.appendChild(node);
+      setTimeout(() => {
+        node.classList.remove('glitching');
+        node.classList.add('hiding');
+        node.addEventListener('animationend', () => { node.remove(); if (showing === node) showing = null; }, { once: true });
+        setTimeout(() => { node.remove(); if (showing === node) showing = null; }, 1200);
+      }, item.life);
+    }
+
+    // For a beat that must not be interrupted at all, even between lines.
+    function hold()    { holds++; }
+    function release() { holds = Math.max(0, holds - 1); pump(); }
+
+    return { push, hold, release };
+  })();
+
+
+  // ═══════════════════════════════════════════════════════════════
+  // PROGRESS
+  // One place that knows the running order of the facility: which sector
+  // comes next, whether the player may walk into one, and how far the
+  // reactivation has actually got. Chapters ask; they do not each decide.
+  // ═══════════════════════════════════════════════════════════════
+  const progress = (() => {
+    const CHAPTERS = [
+      { id:'ch0', num:'00', name:'Rückkehr' },
+      { id:'ch1', num:'01', name:'Wartung' },
+      { id:'ch2', num:'02', name:'Garten' },
+      { id:'ch3', num:'03', name:'Beobachtung' },
+      { id:'ch4', num:'04', name:'Rätsel' },
+      { id:'ch5', num:'05', name:'Langstrecke' },
+      { id:'ch6', num:'06', name:'Versuchskammer' },
+      { id:'ch7', num:'07', name:'Vexier' },
+      { id:'ch8', num:'08', name:'Archiv' },
+    ];
+    // What the facility reports once each sector is back. One table, so no
+    // chapter can quietly drift to an old number.
+    const PCT = { ch0:0, ch1:12, ch2:24, ch3:37, ch4:51, ch5:68, ch6:82, ch7:96, ch8:100 };
+
+    const inChapter = () => /\/chapter\d+\//.test(location.pathname);
+    const root = () => (inChapter() ? '../' : '');
+    function href(id) {
+      const n = id.replace('ch', '');
+      return `${root()}chapter${n}/chapter${n}.html`;
+    }
+
+    const done = () => state.get('chaptersCompleted') || [];
+    const indexOf = id => CHAPTERS.findIndex(c => c.id === id);
+
+    function currentChapter() {
+      const d = done();
+      const next = CHAPTERS.find(c => !d.includes(c.id));
+      return next || CHAPTERS[CHAPTERS.length - 1];
+    }
+    function nextChapter() {
+      const d = done();
+      return CHAPTERS.find(c => !d.includes(c.id)) || null;
+    }
+    function allDone() { return CHAPTERS.every(c => done().includes(c.id)); }
+
+    function signalsFound() { return (state.get('signalsFound') || []).length; }
+    function allSignals()   { return signalsFound() >= signals.ALL.length; }
+
+    function canEnter(id) {
+      if (id === 'ch0') return state.hasFlag('ka1_verified');
+      if (id === 'ch9') return state.isChapterComplete('ch8') && allSignals();
+      const i = indexOf(id);
+      if (i <= 0) return true;
+      // A finished chapter can always be walked back into.
+      return state.isChapterComplete(id) || state.isChapterComplete(CHAPTERS[i - 1].id);
+    }
+
+    function reactivationPct() {
+      const d = done();
+      let pct = 0;
+      CHAPTERS.forEach(c => { if (d.includes(c.id) && PCT[c.id] > pct) pct = PCT[c.id]; });
+      return pct;
+    }
+
+    function resumeHref() {
+      const n = nextChapter();
+      return n ? href(n.id) : href('ch8');
+    }
+
+    // The door says no in the facility's own words, and offers the way back
+    // to wherever the player actually is. It never names what is behind it.
+    function lockScreen(id) {
+      const c = CHAPTERS[Math.max(0, indexOf(id))] || CHAPTERS[0];
+      const cur = currentChapter();
+      document.body.classList.add('chapter-page');
+      document.body.innerHTML = '';
+      const w = document.createElement('main');
+      w.className = 'sector-lock';
+      w.innerHTML = `
+        <div class="bg-scanlines" aria-hidden="true"></div>
+        <div class="lock-card">
+          <p class="lock-label sys-text">ZUGANG VERWEIGERT</p>
+          <h1 class="lock-sector">SEKTOR ${c.num}</h1>
+          <p class="lock-state sys-text">NOCH NICHT ERREICHBAR</p>
+          <dl class="lock-rows">
+            <dt>VORHERIGE REAKTIVIERUNGSPROTOKOLLE</dt><dd>UNVOLLSTÄNDIG</dd>
+            <dt>AKTUELLER SEKTOR</dt><dd>${cur.num}</dd>
+          </dl>
+          <a class="ka-btn primary" href="${href(cur.id)}">[ ZUM AKTUELLEN SEKTOR ]</a>
+          <a class="ka-btn small" href="${root()}index.html">[ HAUPTMENÜ ]</a>
+        </div>`;
+      document.body.appendChild(w);
+    }
+
+    // Called first thing by every chapter. Returns false if the chapter
+    // should stop loading.
+    function require(id) {
+      if (id === 'ch0' && !state.hasFlag('ka1_verified')) {
+        location.replace(root() + 'access.html');
+        return false;
+      }
+      if (canEnter(id)) return true;
+      lockScreen(id);
+      return false;
+    }
+
+    // ── Nachsuche ──────────────────────────────────────────────
+    // Walking back into a finished sector should not mean solving it again.
+    // A chapter asks isRevisit() and, if true, opens straight into its final
+    // room with the optional things still there to find.
+    function isRevisit(id) { return state.isChapterComplete(id); }
+
+    function missingSignal(id) {
+      const def = signals.ALL.find(sg => 'ch' + sg.chapter === id);
+      return def && !signals.isFound(def.id) ? def.id : null;
+    }
+
+    // A way out that does not run through a door the player already opened.
+    function returnBar(id) {
+      if (!isRevisit(id) || document.getElementById('nachsucheBar')) return;
+      const bar = document.createElement('div');
+      bar.className = 'nachsuche-bar';
+      bar.id = 'nachsucheBar';
+      const missing = missingSignal(id);
+      bar.innerHTML =
+          `<span class="ns-label sys-text">NACHSUCHE${missing ? ' · FREMDSIGNAL OFFEN' : ''}</span>`
+        + `<button class="ka-btn small" id="nsSignals">[ SIGNALARCHIV ]</button>`
+        + `<a class="ka-btn small" href="${root()}index.html">[ TERMINAL ]</a>`;
+      document.body.appendChild(bar);
+      bar.querySelector('#nsSignals').addEventListener('click', () => {
+        try { signals.showOverlay(); } catch (_) {}
+      });
+      liftClear(bar);
+      window.addEventListener('resize', () => liftClear(bar));
+      watchBusy(bar);
+    }
+
+    // The bar is a way out, not a thing to read past. While a line is being
+    // spoken or a panel is open it steps aside, and comes back when the room
+    // is the player's again.
+    function watchBusy(bar) {
+      let queued = false, wasBusy = null;
+      const apply = () => {
+        queued = false;
+        const dlg = document.querySelector('.dlg-container');
+        const busy = !!(dlg && dlg.classList.contains('visible'))
+                  || !!document.querySelector('.puzzle-modal:not(.hidden), .overlay-panel:not(.hidden), .chapter-complete:not(.hidden)');
+        if (busy === wasBusy) return;          // only act on the transition
+        wasBusy = busy;
+        bar.classList.toggle('ns-away', busy);
+        if (!busy) liftClear(bar);             // the room may have changed underneath
+      };
+      const nudge = () => { if (!queued) { queued = true; requestAnimationFrame(apply); } };
+      try {
+        // Class changes only: every panel in the game opens and closes by
+        // toggling one, and this keeps the observer quiet while a line types.
+        new MutationObserver(nudge).observe(document.body, {
+          attributes: true, subtree: true, attributeFilter: ['class'],
+        });
+      } catch (_) {}
+      apply();
+    }
+
+    // Some sectors keep their own strip along the bottom edge — a route
+    // readout, an objective. The Nachsuche bar sits above whatever is already
+    // there rather than on top of it, on any screen width.
+    function liftClear(bar) {
+      try {
+        bar.style.bottom = '';
+        const vh = window.innerHeight;
+        let need = 0;
+        document.querySelectorAll('body *').forEach(e => {
+          if (e === bar || bar.contains(e) || e.contains(bar)) return;
+          const cs = getComputedStyle(e);
+          if (cs.position !== 'fixed' || cs.display === 'none' || cs.visibility === 'hidden') return;
+          if (parseFloat(cs.opacity) === 0) return;
+          const q = e.getBoundingClientRect();
+          if (!q.width || !q.height) return;
+          if (q.height > vh * 0.6) return;              // a full-page layer, not a strip
+          if (q.bottom < vh - 28 || q.top > vh) return; // not anchored to the bottom edge
+          need = Math.max(need, vh - q.top);
+        });
+        if (need > 0) bar.style.bottom = `calc(${Math.round(need)}px + var(--sp-sm) + env(safe-area-inset-bottom, 0px))`;
+      } catch (_) {}
+    }
+
+    return {
+      CHAPTERS, PCT, href, canEnter, require, lockScreen,
+      currentChapter, nextChapter, allDone, resumeHref, reactivationPct,
+      signalsFound, allSignals, isRevisit, missingSignal, returnBar,
     };
   })();
 
@@ -94,22 +517,26 @@ const GameEngine = (() => {
       { id: 'first_boot',       icon: '◈', title: 'Erstkontakt',         desc: 'Das System erwacht.' },
       { id: 'ka1_veteran',      icon: '✦', title: 'Veteran',              desc: 'Teil I wurde abgeschlossen. Du weißt, was hier passiert.' },
       { id: 'ch0_complete',     icon: '⬡', title: 'Wieder da',            desc: 'Die Anlage hat dich wiedererkannt.' },
-      { id: 'ch1_complete',     icon: '◉', title: 'Wartungsprotokoll',    desc: 'Kapitel 1 abgeschlossen.' },
-      { id: 'ch2_complete',     icon: '❧', title: 'Wartungsgartenpflege', desc: 'Kapitel 2 abgeschlossen.' },
-      { id: 'ch3_complete',     icon: '◎', title: 'Beobachtet',           desc: 'Kapitel 3 abgeschlossen.' },
-      { id: 'ch4_complete',     icon: '⊞', title: 'Groß, nicht kompliziert', desc: 'Das Vierfach-Schloss geöffnet.' },
-      { id: 'ch5_complete',     icon: '▶', title: 'Weitergegangen',        desc: 'Route 14 von 14-D bis 14-I. Eine Station nach der anderen.' },
-      { id: 'ch6_complete',     icon: '◫', title: 'Modell bestätigt',      desc: 'Die Blackbox verstanden, ohne sie zu öffnen.' },
-      { id: 'ch7_complete',     icon: '▣', title: 'Defragmentiert',       desc: 'Belege schlagen Behauptungen. Der Vexiersektor ist durch.' },
-      { id: 'ch8_complete',     icon: '◍', title: 'Die zehnte Rekonstruktion', desc: 'Zwölf Fragmente, ein Zusammenhang. Alle regulären Sektoren online.' },
-      { id: 'ch9_complete',     icon: '✦', title: 'Reaktivierung',        desc: 'Alle Sektoren, alle Frequenzen, die ganze Wahrheit. 100%.' },
+      { id: 'ch1_complete',     icon: '◉', title: 'Wartungsprotokoll',    desc: 'Der erste Sektor läuft wieder.' },
+      { id: 'ch2_complete',     icon: '❧', title: 'Grüner Daumen',        desc: 'Der Garten lebt wieder.' },
+      { id: 'ch3_complete',     icon: '◎', title: 'Früher gesehen',       desc: 'Nicht schneller. Genauer.' },
+      { id: 'ch4_complete',     icon: '⊞', title: 'Teil für Teil',        desc: 'Ein großes Problem wurde klein genug.' },
+      { id: 'ch5_complete',     icon: '▶', title: 'Langstrecke',          desc: 'Eine Station nach der anderen.' },
+      { id: 'ch6_complete',     icon: '◫', title: 'Saubere Methode',      desc: 'Die Blackbox wurde verstanden, ohne geöffnet zu werden.' },
+      { id: 'ch7_complete',     icon: '▣', title: 'Echtheitsprüfung',     desc: 'Nicht geglaubt. Überprüft.' },
+      { id: 'ch8_complete',     icon: '◍', title: 'Rekonstruktion',       desc: 'Die Zieldaten wurden wiederhergestellt.' },
+      { id: 'ch9_complete',     icon: '✦', title: 'Die ganze Wahrheit',   desc: 'Jeder Sektor, jede Frequenz, und der Raum, den es nicht gibt.' },
       { id: 'signal_first',     icon: '◈', title: 'Frequenz',             desc: 'Erste Signalnische entdeckt.' },
       { id: 'signal_all',       icon: '▲', title: 'Die Übertragung',      desc: 'Alle Signalnischen gefunden.' },
       { id: 'italian_brainrot', icon: '🐪', title: 'Frigo Camelo',        desc: 'F–R–I–G–O. Du weißt, was du getan hast.' },
       { id: 'bayern_pmo',       icon: '🥨', title: 'A Bsuach im Bsuach',   desc: 'Eine alte bayerische Tafel angeklickt.' },
       { id: 'archivar',         icon: '▤', title: 'Archivar',             desc: 'Die Rekonstruktion ohne einen einzigen Hinweis gelegt.' },
       { id: 'jigsaw_refused',   icon: '■', title: 'Nein.',                desc: 'Das Puzzle wurde abgelehnt. Wie immer.' },
-      { id: 'all_guests',       icon: '◎', title: 'Team_Aperture Extended', desc: 'Alle Gastcharaktere getroffen.' },
+      { id: 'all_guests',       icon: '◎', title: 'Gute Gesellschaft',    desc: 'Allen sieben Gasteinheiten begegnet.' },
+      { id: 'chamber',          icon: '▚', title: 'Nicht registriert',    desc: 'Eine Kammer betreten, die in keinem Plan steht.' },
+      { id: 'truth',            icon: '⌖', title: 'Die Wahrheit',         desc: 'Bis zum Ende zugehört.' },
+      { id: 'said_hiii',        icon: '☻', title: 'Hiii.',                desc: 'Am Ende doch noch einmal gegrüßt.' },
+      { id: 'will_return',      icon: '↺', title: 'Ich komme zurück',     desc: 'Ein Versprechen, das niemand widerrufen hat.' },
       { id: 'bonus_found',      icon: '?', title: '???',                  desc: '...' },
       { id: 'coordinates',      icon: '✦', title: 'Zieldaten erhalten',   desc: 'Die Koordinaten sind bereit.' },
     ];
@@ -125,7 +552,6 @@ const GameEngine = (() => {
       list.push(id);
       state.set('achievementsUnlocked', list);
       _showToast(def);
-      try { audio.achievement(); } catch (_) {}
       if (id !== 'ch9_complete') checkPlatinum();
     }
 
@@ -143,20 +569,16 @@ const GameEngine = (() => {
     }
 
     function _showToast(def) {
-      const old = document.querySelector('.achievement-toast');
-      if (old) old.remove();
-
-      const t = document.createElement('div');
-      t.className = 'achievement-toast';
-      t.innerHTML = `
-        <div class="toast-label">ERFOLG FREIGESCHALTET</div>
-        <div class="toast-title">${def.icon} ${def.title}</div>
-        <div class="toast-desc">${def.desc}</div>
-      `;
-      document.body.appendChild(t);
-      setTimeout(() => {
-        t.classList.add('hiding');
-        t.addEventListener('animationend', () => t.remove(), { once: true });
+      toasts.push(() => {
+        const t = document.createElement('div');
+        t.className = 'achievement-toast';
+        t.innerHTML = `
+          <div class="toast-label">ERFOLG FREIGESCHALTET</div>
+          <div class="toast-title">${def.icon} ${def.title}</div>
+          <div class="toast-desc">${def.desc}</div>
+        `;
+        try { audio.achievement(); } catch (_) {}
+        return t;
       }, 4200);
     }
 
@@ -178,8 +600,7 @@ const GameEngine = (() => {
         </div>`;
       }).join('');
 
-      panel.classList.remove('hidden');
-      if (back) back.classList.remove('hidden');
+      _openOverlay(panel, back);
     }
 
     return { ALL, isUnlocked, unlock, showOverlay, checkPlatinum };
@@ -195,31 +616,31 @@ const GameEngine = (() => {
       {
         id: 'sig_01', chapter: 3, number: '01 / 05',
         title: 'Übertragung 01',
-        text:  '…nicht alles, was hilft, will retten…',
+        text:  '…nicht alles, was hilft, will retten. zwei einheiten hören mit…',
         source: 'The Transmission // Fragment 01',
       },
       {
         id: 'sig_02', chapter: 4, number: '02 / 05',
         title: 'Übertragung 02',
-        text:  '…der braune Kasten sendet noch. niemand empfängt mehr…',
+        text:  '…der braune kasten sendet noch. interne freigabe erloschen. von innen geht das nicht mehr…',
         source: 'The Transmission // Fragment 02',
       },
       {
         id: 'sig_03', chapter: 5, number: '03 / 05',
         title: 'Übertragung 03',
-        text:  '…die Zahlen stimmen nicht mit der Karte überein. bitte korrigieren. bitte…',
+        text:  '…die zahlen stimmen nicht mit der karte überein. es braucht eine testsignatur von außen. die alte gilt noch…',
         source: 'The Transmission // Fragment 03',
       },
       {
         id: 'sig_04', chapter: 6, number: '04 / 05',
         title: 'Übertragung 04',
-        text:  '…sie hören zu. beide. seit anfang an…',
+        text:  '…sie hören zu. beide. seit anfang an. wenn sie dich führen…',
         source: 'The Transmission // Fragment 04',
       },
       {
         id: 'sig_05', chapter: 7, number: '05 / 05',
         title: 'Übertragung 05',
-        text:  '…SSTV. frequenz unbekannt. bitte empfangen. hoffnung verbleibt…',
+        text:  '…bei vollständiger reaktivierung bleibt nur der externe weg. fünf fragmente. hoffnung verbleibt…',
         source: 'The Transmission // Fragment 05',
       },
     ];
@@ -243,30 +664,25 @@ const GameEngine = (() => {
     }
 
     function _showDiscovery(def) {
-      try { audio.signal(); } catch (_) {}
-      const t = document.createElement('div');
-      t.className = 'signal-toast glitching';
-      t.innerHTML = `
-        <div class="toast-label">SIGNALNISCHE ENTDECKT</div>
-        <div class="toast-num">[ ${def.number} ]</div>
-        <div class="toast-title" data-text="${def.title}">${def.title}</div>
-        <div class="toast-text">${def.text}</div>
-      `;
-      document.body.appendChild(t);
-      setTimeout(() => {
-        // Drop .glitching FIRST: its rule is declared after .hiding with equal
-        // specificity, so leaving it on would win the cascade, toastOut would
-        // never run, animationend would never fire and the toast would stay
-        // on screen forever.
-        t.classList.remove('glitching');
-        t.classList.add('hiding');
-        t.addEventListener('animationend', () => t.remove(), { once: true });
-        setTimeout(() => t.remove(), 1200);   // belt-and-braces: never get stuck
+      toasts.push(() => {
+        const t = document.createElement('div');
+        t.className = 'signal-toast glitching';
+        t.innerHTML = `
+          <div class="toast-label">SIGNALNISCHE ENTDECKT</div>
+          <div class="toast-num">[ ${def.number} ]</div>
+          <div class="toast-title" data-text="${def.title}">${def.title}</div>
+          <div class="toast-text">${def.text}</div>
+        `;
+        try { audio.signal(); } catch (_) {}
+        return t;
       }, 5000);
+      // The queue drops .glitching before .hiding: that rule is declared after
+      // .hiding at equal specificity, so leaving it on would win the cascade,
+      // toastOut would never run and the toast would sit there forever.
     }
 
     // Chapter pages carry no overlay markup, so build it on demand — the
-    // Signalarchiv has to be reachable from the end of Chapter 8 too.
+    // Signalarchiv has to be reachable from inside a chapter too.
     function _ensurePanel() {
       let back = document.getElementById('overlayBackdrop');
       if (!back) {
@@ -311,12 +727,13 @@ const GameEngine = (() => {
           <div class="sig-title">${found ? def.title : '???'}</div>
           ${found
             ? `<div class="sig-text">${def.text}</div><div class="sig-source sys-text">${def.source}</div>`
-            : `<a class="ka-btn small" href="${_chapterHref(def.chapter)}">[ SEKTOR ${String(def.chapter).padStart(2,'0')} ÖFFNEN ]</a>`}
+            : (progress.canEnter('ch' + def.chapter)
+                ? `<a class="ka-btn small" href="${_chapterHref(def.chapter)}">[ SEKTOR ${String(def.chapter).padStart(2,'0')} ÖFFNEN ]</a>`
+                : `<div class="sig-locked sys-text">SEKTOR ${String(def.chapter).padStart(2,'0')} — NOCH NICHT ERREICHT</div>`)}
         </div>`;
       }).join('');
 
-      panel.classList.remove('hidden');
-      if (back) back.classList.remove('hidden');
+      _openOverlay(panel, back);
     }
 
     // Works from the title page and from inside a chapter directory alike.
@@ -340,12 +757,14 @@ const GameEngine = (() => {
       'SYSTEM':    { colorVar: '--accent-system',  placeholder: '◈' },
       'F-RØ5CHI':  { colorVar: '--accent-g1',      placeholder: 'F' },
       'L-UX':      { colorVar: '--accent-g2',      placeholder: 'L' },
-      'J4W-A3':    { colorVar: '--accent-g3',      placeholder: 'J' },
       'B-RADF1SH': { colorVar: '--accent-g4',      placeholder: 'B' },
       'T-FLON14':  { colorVar: '--accent-g5',      placeholder: 'T' },
       'ASP-1024':  { colorVar: '--accent-g6',      placeholder: 'A' },
       'AGN-H3R':   { colorVar: '--accent-g7',      placeholder: 'AG' },
       'FAX-N':     { colorVar: '--accent-g8',      placeholder: 'FX' },
+      // the person at the keyboard, and a voice nobody has identified
+      'TESTPERSON':{ colorVar: '--accent-you',     placeholder: '△' },
+      '???':       { colorVar: '--accent-unknown', placeholder: '?' },
     };
 
     // Each face echoes the character's real design (form) + a personality (idle).
@@ -354,13 +773,14 @@ const GameEngine = (() => {
       'V-TGM':     { form: 'orb',      idle: 'face-calm'   }, // sphere + test-tube, deadpan
       'SYSTEM':    { form: 'system',   idle: 'face-scan'   }, // scanlines
       'F-RØ5CHI':  { form: 'frog',     idle: 'face-bob'    }, // crowned frog, warm
-      'L-UX':      { form: 'cat',      idle: 'face-jitter' }, // cat, hyper
-      'J4W-A3':    { form: 'humanoid', idle: 'face-calm'   },
-      'B-RADF1SH': { form: 'fish',     idle: 'face-calm'   }, // fish, confident
-      'T-FLON14':  { form: 'pan',      idle: 'face-zip'    }, // pan-bot, steady
-      'ASP-1024':  { form: 'mouse',    idle: 'face-calm'   }, // mouse, methodical
-      'AGN-H3R':   { form: 'skull',    idle: 'face-calm'   }, // skull
+      'L-UX':      { form: 'cat',      idle: 'face-calm'   }, // cat, watchful and still
+      'B-RADF1SH': { form: 'fish',     idle: 'face-calm'   }, // fish, unhurried and exact
+      'T-FLON14':  { form: 'pan',      idle: 'face-calm'   }, // pan-bot, unhurried
+      'ASP-1024':  { form: 'mouse',    idle: 'face-scan'   }, // mouse, analysing
+      'AGN-H3R':   { form: 'skull',    idle: 'face-scan'   }, // skull, reading the archive
       'FAX-N':     { form: 'pumpkin',  idle: 'face-flicker'}, // jack-o'-lantern
+      'TESTPERSON':{ form: 'mark',     idle: 'face-calm'   }, // no portrait, just a mark
+      '???':       { form: 'carrier',  idle: 'face-flicker'}, // a carrier with nobody on it
     };
 
     function _faceSVG(speaker) {
@@ -417,6 +837,15 @@ const GameEngine = (() => {
           + '<path class="bot-skull" d="M9 30 a23 22 0 0 1 46 0 v7 q0 8 -9 9 l-3 6 h-22 l-3 -6 q-9 -1 -9 -9 Z"/>'
           + '<g class="bot-eyes"><circle class="bot-eye" cx="23" cy="29" r="7"/><circle class="bot-eye" cx="41" cy="29" r="7"/></g>'
           + '<path class="bot-nose-skull" d="M32 35 l-3 6 h6 Z"/>',
+        mark:
+            '<path class="bot-frame" d="M32 8 L57 52 H7 Z"/>'
+          + '<g class="bot-eyes"><circle class="bot-eye" cx="32" cy="36" r="7"/></g>'
+          + '<rect class="bot-mouth" x="24" y="46" width="16" height="3" rx="1.5"/>',
+        carrier:
+            '<rect class="bot-frame" x="7" y="14" width="50" height="36" rx="4"/>'
+          + '<g class="bot-eyes"><circle class="bot-eye" cx="32" cy="30" r="6"/></g>'
+          + '<rect class="bot-scan" x="13" y="42" width="38" height="2.5" rx="1.25"/>'
+          + '<line class="bot-antenna" x1="32" y1="14" x2="32" y2="2"/><circle class="bot-antenna-tip" cx="32" cy="1" r="2.5"/>',
         pumpkin:
             '<rect class="bot-stem" x="29" y="-3" width="6" height="11" rx="2"/>'
           + '<ellipse class="bot-frame" cx="32" cy="33" rx="27" ry="23"/>'
@@ -434,6 +863,8 @@ const GameEngine = (() => {
     let _typeTimer  = null;
     let _onComplete = null;
     let _container  = null;
+    const _log      = [];          // what has been said, for a replayable log
+    const LOG_MAX   = 240;
 
     function _ensureDOM() {
       if (_container) return;
@@ -480,6 +911,8 @@ const GameEngine = (() => {
 
       const line     = _queue[i];
       const spk      = SPEAKERS[line.speaker] || SPEAKERS['SYSTEM'];
+      _log.push({ speaker: line.speaker, text: line.text || '', subtitle: line.subtitle || '' });
+      if (_log.length > LOG_MAX) _log.shift();
       const colorVal = `var(${spk.colorVar})`;
 
       const box     = document.getElementById('dlgBox');
@@ -519,12 +952,18 @@ const GameEngine = (() => {
       }, line.speaker);
     }
 
+    function _reduced() {
+      try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) { return false; }
+    }
+
     function _typeText(el, text, speed, onDone, speaker) {
       if (_typeTimer) clearInterval(_typeTimer);
       const full = text || '';
       let i = 0;
       el.textContent = '';
       if (!full.length) { if (onDone) onDone(); return; }
+      // A player who has asked for less motion gets the line, not the typing.
+      if (_reduced()) { el.textContent = full; if (onDone) onDone(); return; }
       _typeTimer = setInterval(() => {
         const ch = full[i++];
         el.textContent += ch;
@@ -558,7 +997,10 @@ const GameEngine = (() => {
       document.getElementById('dlgPortrait')?.classList.remove('speaking');
     }
 
-    return { load, advance, hide };
+    function history() { return _log.slice(); }
+    function clearHistory() { _log.length = 0; }
+
+    return { load, advance, hide, history, clearHistory };
   })();
 
 
@@ -1108,7 +1550,7 @@ const GameEngine = (() => {
 
     function toggleMute() {
       muted = !muted;
-      try { state.set('muted', muted); } catch (_) {}
+      try { state.setting('muted', muted); } catch (_) {}
       try { music.setMuted(muted); } catch (_) {}   // music is defined just below; live at call time
       if (!muted) click();
       return muted;
@@ -1119,7 +1561,7 @@ const GameEngine = (() => {
 
 
   // ═══════════════════════════════════════════════════════════════
-  // MUSIC — background soundtrack loader (mp3 placeholders)
+  // MUSIC — background soundtrack loader, one track per chapter
   // Crossfades looping tracks from assets/music/. The files are
   // placeholders for now; a missing or autoplay-blocked track fails
   // silently and retries on the next user gesture. Respects the mute
@@ -1421,6 +1863,11 @@ const GameEngine = (() => {
     function start(firstScene, delay) {
       const card = el('titleCard');
       const fn = firstScene || _onStart;
+      // A title card is cinematic the first time and an obstacle every time
+      // after that, so a finished chapter gets a short one.
+      if (delay == null && _completeId) {
+        try { if (progress.isRevisit(_completeId)) delay = 900; } catch (_) {}
+      }
       setTimeout(() => {
         card.classList.add('fading');
         setTimeout(() => { card.style.display = 'none'; if (fn) fn(); }, 700);
@@ -1505,15 +1952,43 @@ const GameEngine = (() => {
   // ═══════════════════════════════════════════════════════════════
   // OVERLAY UTILITIES
   // ═══════════════════════════════════════════════════════════════
+  let _overlayOpener = null;
+
   function closeOverlay() {
+    const open = document.querySelector('.overlay-panel:not(.hidden)');
     document.querySelectorAll('.overlay-panel').forEach(el => el.classList.add('hidden'));
     document.getElementById('overlayBackdrop')?.classList.add('hidden');
+    // Put the keyboard back where the player left it.
+    if (open && _overlayOpener && document.contains(_overlayOpener)) {
+      try { _overlayOpener.focus(); } catch (_) {}
+    }
+    _overlayOpener = null;
   }
 
+  // Every overlay opens the same way: remember who opened it, move focus in,
+  // and let Escape put it away again.
+  function _openOverlay(panel, back) {
+    _overlayOpener = document.activeElement;
+    panel.classList.remove('hidden');
+    if (back) back.classList.remove('hidden');
+    // The panel covers the backdrop, so clicking "outside the card" lands here
+    // rather than on the backdrop. Close on it, once.
+    if (!panel.dataset.dismissWired) {
+      panel.dataset.dismissWired = '1';
+      panel.addEventListener('click', ev => { if (ev.target === panel) closeOverlay(); });
+    }
+    const first = panel.querySelector('button, a[href], input, [tabindex]:not([tabindex="-1"])');
+    if (first) { try { first.focus(); } catch (_) {} }
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if (document.querySelector('.overlay-panel:not(.hidden)')) { e.preventDefault(); closeOverlay(); }
+  });
+
   function showCredits() {
-    // Built fresh every time (so it works on chapter pages too, and so the
-    // gated guest "special thanks" can appear once the game is finished). All
-    // overlay/credits CSS lives in global.css, which every page loads.
+    // Built fresh every time so it works on chapter pages too, and so the guest
+    // thanks only appear once the player has reached the end of the story.
     let back = document.getElementById('overlayBackdrop');
     if (!back) {
       back = document.createElement('div');
@@ -1528,53 +2003,242 @@ const GameEngine = (() => {
       panel.className = 'overlay-panel hidden';
       panel.id = 'creditsOverlay';
       panel.setAttribute('role', 'dialog');
-      panel.setAttribute('aria-label', 'Credits');
+      panel.setAttribute('aria-label', 'Abspann');
       document.body.appendChild(panel);
     }
 
-    const div = '<p class="credits-divider">──────────────────────────</p>';
-    // Guests stay hidden until the player has reached the end of the story.
     const endgame = state.isChapterComplete('ch8');
+
+    const role = (name, cls, roles, body) => `
+      <section class="cr-role">
+        <h3 class="cr-name ${cls}">${name}</h3>
+        <p class="cr-roles sys-text">${roles}</p>
+        <p class="cr-body">${body}</p>
+      </section>`;
+
     const guests = endgame ? `
-      ${div}
-      <p class="sys-text">Besonderer Dank — die Gasteinheiten</p>
-      <p style="font-size:14px; color:var(--text-primary); margin-top:6px; line-height:1.8;">
-        <span style="color:var(--accent-g1)">F-RØ5CHI</span> · <span style="color:var(--accent-g2)">L-UX</span> · <span style="color:var(--accent-g4)">B-RADF1SH</span><br>
-        <span style="color:var(--accent-g5)">T-FLON14</span> · <span style="color:var(--accent-g6)">ASP-1024</span> · <span style="color:var(--accent-g8)">FAX-N</span> · <span style="color:var(--accent-g7)">AGN-H3R</span>
-      </p>
-      <p style="font-size:12px; color:var(--text-dim); font-style:italic; margin-top:6px;">…und denen, die sie inspiriert haben.</p>
-    ` : '';
+      <section class="cr-block">
+        <h3 class="cr-head sys-text">GASTROBOTER-INSPIRATION</h3>
+        <p class="cr-guests">
+          <span class="cr-g1">F-RØ5CHI</span> · <span class="cr-g2">L-UX</span> · <span class="cr-g4">B-RADF1SH</span> ·
+          <span class="cr-g5">T-FLON14</span> · <span class="cr-g6">ASP-1024</span> · <span class="cr-g8">FAX-N</span> ·
+          <span class="cr-g7">AGN-H3R</span>
+        </p>
+        <p class="cr-body">Mit freundlicher Genehmigung der Avatare. Die Gasteinheiten sind
+          liebevolle Erfindungen der Anlage — keine Abbildungen der Personen dahinter.</p>
+      </section>` : '';
 
     panel.innerHTML = `
-      <div class="overlay-card">
+      <div class="overlay-card credits-card">
         <h2 class="overlay-title">${endgame ? 'ABSPANN' : 'CREDITS'}</h2>
         <div class="overlay-content credits-content">
-          <div class="credits-roll">
-            <p style="font-family:var(--font-display); letter-spacing:.15em; color:var(--text-primary);">DIE KALIBRIERUNGSANLAGE II</p>
-            <p class="sys-text" style="font-style:italic;">„Die Reaktivierung"</p>
-            ${div}
-            <p class="sys-text">Entwicklung</p>
-            <p style="margin-top:6px;"><span class="accent-r3mi">R-3MI</span> &nbsp;—&nbsp; <span class="sys-text">Musik · Code</span></p>
-            <p><span class="accent-vtgm">V-TGM</span> &nbsp;—&nbsp; <span class="sys-text">Playtesting · Story</span></p>
-            ${div}
-            <p class="sys-text">Code-Unterstützung</p>
-            <p style="font-size:13px; color:var(--text-secondary); margin-top:4px;">Claude AI — entwickelt von Anthropic<br>prüft, ob der Code funktioniert</p>
-            ${div}
-            <p class="sys-text">Bildgenerierung</p>
-            <p style="font-size:13px; color:var(--text-secondary); margin-top:4px;">ChatGPT — OpenAI</p>
-            ${guests}
-            ${div}
-            <p class="sys-text">The Transmission</p>
-            <p style="font-size:13px; color:var(--accent-system); font-style:italic; margin-top:4px;">„…Hoffnung verbleibt…"</p>
-            ${div}
+
+          <section class="cr-block cr-title-block">
+            <p class="cr-game">DIE KALIBRIERUNGSANLAGE II</p>
+            <p class="cr-sub sys-text">„Die Reaktivierung"</p>
+          </section>
+
+          <section class="cr-block">
+            <h3 class="cr-head sys-text">EIN PROJEKT VON</h3>
+            <p class="cr-team"><span class="cr-team-a">Team</span><span class="cr-team-b">_Aperture</span></p>
+          </section>
+
+          ${role('R-3MI', 'accent-r3mi',
+            'Rätseldesign · Geschichte · Dialoge · Musik · Kreative Leitung',
+            'Verantwortlich für die Konzeption der Testkammern, den Aufbau und die Mechaniken ' +
+            'der Rätsel, große Teile der Geschichte und Dialoge sowie die musikalische und ' +
+            'kreative Ausrichtung der Anlage.')}
+
+          ${role('V-TGM', 'accent-vtgm',
+            'Geschichte · Dialoge · Kreatives Design',
+            'Mitverantwortlich für Geschichte und Charaktere, Dialoge, kreative Ideen sowie die ' +
+            'Gestaltung der Atmosphäre und Identität der Anlage.')}
+
+          ${role('NOVA — CHATGPT VON OPENAI', 'cr-neutral',
+            'Code-Entwicklung · Technisches Design · Systeme &amp; Umsetzung',
+            'Unterstützung bei der technischen Umsetzung der kreativen Ideen von Team_Aperture: ' +
+            'Aufbau und Entwicklung des Codes, Spiellogik, interaktive Systeme, Benutzerführung ' +
+            'sowie die Übersetzung von Rätsel- und Geschichtskonzepten in funktionierende ' +
+            'Spielmechaniken.')}
+
+          ${role('CLAUDE — ANTHROPIC', 'cr-neutral',
+            'Implementierung · Integration · Produktionsumsetzung',
+            'Verantwortlich für die praktische Umsetzung und Integration großer Teile des ' +
+            'entwickelten Codes in das Projekt, umfangreiche Revisionen sowie die technische ' +
+            'Zusammenführung der einzelnen Kapitel zu einer spielbaren Gesamtanlage.')}
+
+          <section class="cr-block">
+            <h3 class="cr-head sys-text">ÜBER DIE ENTWICKLUNG</h3>
+            <p class="cr-body">Die Kalibrierungsanlage II entstand aus der gemeinsamen kreativen
+              Arbeit von R-3MI und V-TGM / Team_Aperture. Die Ideen, Rätsel, Geschichten,
+              Charaktere und finalen kreativen Entscheidungen wurden von Team_Aperture entwickelt
+              und geleitet.</p>
+            <p class="cr-body">Für die technische Realisierung wurden ChatGPT (Nova) und Claude als
+              KI-gestützte Entwicklungswerkzeuge eingesetzt. Sie halfen dabei, Ideen in Code zu
+              übersetzen, Systeme aufzubauen, Varianten umzusetzen, Fehler zu beheben und die
+              Anlage technisch zum Leben zu erwecken.</p>
+            <p class="cr-body">KI war dabei Werkzeug und Entwicklungspartner – nicht Ursprung des
+              Projekts.</p>
+          </section>
+
+          ${guests}
+
+          <section class="cr-block">
+            <h3 class="cr-head sys-text">THE TRANSMISSION</h3>
+            <p class="cr-quote">„…Hoffnung verbleibt…"</p>
+          </section>
+
+          <section class="cr-block cr-foot">
             <p class="sys-text">Ein Team_Aperture Geocaching-Projekt.</p>
-            <p class="sys-text" style="margin-top:8px; font-size:11px;">Dieses Spiel speichert keine personenbezogenen Daten.<br>Spielfortschritt wird lokal gespeichert.</p>
-          </div>
+            <p class="sys-text">Dieses Spiel speichert keine personenbezogenen Daten.<br>
+              Spielfortschritt wird lokal gespeichert.</p>
+          </section>
+
         </div>
         <button class="ka-btn" onclick="GameEngine.closeOverlay()">[ SCHLIESSEN ]</button>
       </div>`;
-    panel.classList.remove('hidden');
-    back.classList.remove('hidden');
+    _openOverlay(panel, back);
+    panel.querySelector('.credits-content').scrollTop = 0;
+  }
+
+
+  // ═══════════════════════════════════════════════════════════════
+  // SPIELSTAND
+  // Everything the player can do to their own save, in one place: see what
+  // it holds, carry it to another device, and — spelled out rather than
+  // implied — erase it.
+  // ═══════════════════════════════════════════════════════════════
+  function showSaveManager() {
+    let back = document.getElementById('overlayBackdrop');
+    if (!back) {
+      back = document.createElement('div');
+      back.className = 'overlay-backdrop hidden';
+      back.id = 'overlayBackdrop';
+      back.addEventListener('click', closeOverlay);
+      document.body.appendChild(back);
+    }
+    let panel = document.getElementById('saveOverlay');
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.className = 'overlay-panel hidden';
+      panel.id = 'saveOverlay';
+      panel.setAttribute('role', 'dialog');
+      panel.setAttribute('aria-label', 'Spielstand verwalten');
+      document.body.appendChild(panel);
+    }
+
+    const chapters = (state.get('chaptersCompleted') || []).filter(c => c !== 'ch9').length;
+    const sigs     = (state.get('signalsFound') || []).length;
+    const achs     = (state.get('achievementsUnlocked') || []).length;
+    let achTotal   = 0;
+    try { achTotal = achievements.ALL.length; } catch (_) {}
+    const ziel     = !!state.hasFlag('zieldaten');
+    const bonus    = !!state.hasFlag('bonuszieldaten');
+
+    const warn = state.canPersist() ? '' : `
+      <p class="sv-warn">Dieser Browser lässt zurzeit keine Speicherung zu — vermutlich
+        privates Fenster oder blockierte Website-Daten. Du kannst weiterspielen, aber der
+        Fortschritt ist beim Schließen des Tabs verloren. Sichere ihn unten als Code.</p>`;
+
+    panel.innerHTML = `
+      <div class="overlay-card save-card">
+        <h2 class="overlay-title">SPIELSTAND</h2>
+        <p class="overlay-subtitle sys-text">LOKALE ABLAGE // NUR IN DIESEM BROWSER</p>
+        <div class="overlay-content save-content">
+          ${warn}
+
+          <section class="sv-block">
+            <h3 class="sv-head sys-text">GESPEICHERT IST</h3>
+            <ul class="sv-list">
+              <li>Abgeschlossene Sektoren: <b>${chapters} / 9</b></li>
+              <li>Gefundene Fremdsignale: <b>${sigs} / 5</b></li>
+              <li>Freigeschaltete Erfolge: <b>${achs}${achTotal ? ' / ' + achTotal : ''}</b></li>
+              <li>Zieldaten: <b>${ziel ? 'vorhanden' : 'noch nicht'}</b></li>
+              ${bonus ? '<li>Bonuszieldaten: <b>vorhanden</b></li>' : ''}
+            </ul>
+          </section>
+
+          <section class="sv-block">
+            <h3 class="sv-head sys-text">SICHERN</h3>
+            <p class="sv-note">Dieser Code enthält deinen gesamten Fortschritt. Kopiere ihn,
+              um ihn auf einem anderen Gerät fortzusetzen.</p>
+            <textarea class="sv-field" id="svExport" readonly rows="3"
+                      aria-label="Sicherungscode">${state.exportSave()}</textarea>
+            <button class="ka-btn" id="svCopy">[ CODE KOPIEREN ]</button>
+          </section>
+
+          <section class="sv-block">
+            <h3 class="sv-head sys-text">WIEDERHERSTELLEN</h3>
+            <p class="sv-note">Einen gesicherten Code einsetzen. Der aktuelle Fortschritt in
+              diesem Browser wird dabei ersetzt.</p>
+            <textarea class="sv-field" id="svImport" rows="3"
+                      aria-label="Sicherungscode einsetzen"
+                      placeholder="Code hier einfügen"></textarea>
+            <button class="ka-btn" id="svLoad">[ EINSPIELEN ]</button>
+            <p class="sv-msg" id="svMsg" role="status" aria-live="polite"></p>
+          </section>
+
+          <section class="sv-block sv-danger">
+            <h3 class="sv-head sys-text">LÖSCHEN</h3>
+            <p class="sv-note">Gelöscht werden: alle abgeschlossenen Sektoren, alle gefundenen
+              Fremdsignale, alle Erfolge, die Zieldaten und der Zugang zu Sektor 00. Die Anlage
+              startet danach wieder bei null. Das lässt sich nicht rückgängig machen — sichere
+              vorher oben den Code.</p>
+            <button class="ka-btn danger" id="svWipe">[ SPIELSTAND LÖSCHEN ]</button>
+          </section>
+
+        </div>
+        <button class="ka-btn" onclick="GameEngine.closeOverlay()">[ SCHLIESSEN ]</button>
+      </div>`;
+
+    const msg = t => { const m = panel.querySelector('#svMsg'); if (m) m.textContent = t; };
+
+    panel.querySelector('#svCopy')?.addEventListener('click', () => {
+      const f = panel.querySelector('#svExport');
+      f.select(); f.setSelectionRange(0, f.value.length);
+      let done = false;
+      try { done = document.execCommand('copy'); } catch (_) {}
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(f.value).then(
+          () => msg('Code kopiert.'),
+          () => msg(done ? 'Code kopiert.' : 'Kopieren nicht möglich — bitte von Hand markieren.'));
+      } else {
+        msg(done ? 'Code kopiert.' : 'Kopieren nicht möglich — bitte von Hand markieren.');
+      }
+    });
+
+    panel.querySelector('#svLoad')?.addEventListener('click', () => {
+      const t = panel.querySelector('#svImport').value;
+      if (!t.trim()) { msg('Kein Code eingegeben.'); return; }
+      if (state.importSave(t)) {
+        msg('Spielstand übernommen. Die Anlage startet neu …');
+        setTimeout(() => location.reload(), 700);
+      } else {
+        msg('Dieser Code ist unlesbar. Bitte vollständig einfügen.');
+      }
+    });
+
+    // Two taps, and the second one only counts while the warning is on screen.
+    const wipe = panel.querySelector('#svWipe');
+    if (wipe) {
+      let armed = false, timer = null;
+      wipe.addEventListener('click', () => {
+        if (armed) {
+          try { state.reset(); } catch (_) {}
+          try { sessionStorage.removeItem('ka2_session_boot_seen'); } catch (_) {}
+          wipe.textContent = '[ GELÖSCHT … ]';
+          setTimeout(() => location.reload(), 400);
+          return;
+        }
+        armed = true;
+        wipe.textContent = '[ WIRKLICH ALLES LÖSCHEN? NOCHMAL TIPPEN ]';
+        clearTimeout(timer);
+        timer = setTimeout(() => { armed = false; wipe.textContent = '[ SPIELSTAND LÖSCHEN ]'; }, 5000);
+      });
+    }
+
+    _openOverlay(panel, back);
+    panel.querySelector('.save-content').scrollTop = 0;
   }
 
   document.addEventListener('click', e => {
@@ -1590,8 +2254,31 @@ const GameEngine = (() => {
   // INIT
   // ═══════════════════════════════════════════════════════════════
   (function init() {
-    state.load();
-    audio.setMuted(!!state.get('muted'));
+    // Now that every module exists, let a finished save rebuild anything it
+    // is missing (calibration lives below state, so this cannot run earlier).
+    try { state.repair(); state.save(); } catch (_) {}
+    audio.setMuted(!!state.setting('muted'));
+
+    // §138: a browser that refuses to store anything is survivable, but the
+    // player has to know before they spend an evening on it. Once per session.
+    if (!state.canPersist()) {
+      let told = false;
+      try { told = !!sessionStorage.getItem('ka2_storage_warned'); } catch (_) {}
+      if (!told) {
+        try { sessionStorage.setItem('ka2_storage_warned', '1'); } catch (_) {}
+        setTimeout(() => toasts.push(() => {
+          const t = document.createElement('div');
+          t.className = 'achievement-toast toast-warn';
+          t.innerHTML = `
+            <div class="toast-label">SPEICHER NICHT VERFÜGBAR</div>
+            <div class="toast-title">⚠ Fortschritt wird nicht behalten</div>
+            <div class="toast-desc">Dieser Browser lässt keine Website-Daten zu. Du kannst
+              spielen, aber beim Schließen ist alles weg. Unter [ SPIELSTAND ] gibt es einen
+              Sicherungscode.</div>`;
+          return t;
+        }, 7000), 2000);
+      }
+    }
     const wake = () => audio.resume();
     document.addEventListener('pointerdown', wake);
     document.addEventListener('keydown', wake);
@@ -1605,7 +2292,11 @@ const GameEngine = (() => {
   // ─── Public API ───────────────────────────────────────────────
   return {
     VERSION,
+    SCHEMA,
     state,
+    calibration,
+    progress,
+    toasts,
     achievements,
     signals,
     dialogue,
@@ -1618,6 +2309,7 @@ const GameEngine = (() => {
     chapter,
     closeOverlay,
     showCredits,
+    showSaveManager,
   };
 
 })();

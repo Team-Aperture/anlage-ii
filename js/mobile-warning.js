@@ -1,9 +1,10 @@
 /**
  * ═══════════════════════════════════════════════════════════════
  * MOBILE WARNING OVERLAY  —  two-step
- * KA-II is built for landscape 16:9 desktop screens. On a narrow /
- * portrait device we warn the player twice (soft, dismissible):
- *   Step 1 — "Am besten auf PC / Mac"
+ * KA-II plays fine on a phone — every chapter is tested there. A bigger
+ * screen simply shows more of a room at once, so on a narrow / portrait
+ * device we say so twice (soft, dismissible) and get out of the way:
+ *   Step 1 — "Größerer Bildschirm empfohlen"
  *   Step 2 — "Bist du sicher?" confirmation
  * The "once per device" flag is stored ONLY after the final
  * confirmation, so a partial dismiss still re-warns next visit.
@@ -51,15 +52,15 @@
         <!-- STEP 1 — recommendation -->
         <div class="mw-step mw-step-one">
           <p class="mw-label">SYSTEMHINWEIS</p>
-          <h2 class="mw-title">Am besten auf PC / Mac</h2>
+          <h2 class="mw-title">Größerer Bildschirm empfohlen</h2>
           <p class="mw-msg">
-            Die Kalibrierungsanlage II wurde für Bildschirme im Querformat
-            (16:9) entwickelt. Für das volle Erlebnis empfehlen wir dir
-            einen PC oder Mac.
+            Die Kalibrierungsanlage II ist auf dem Handy vollständig spielbar —
+            alle Rätsel, alle Sektoren, alle Koordinaten.
           </p>
           <p class="mw-msg-secondary">
-            Auf dem Handy fehlen einige Bildbereiche oder sind schwer
-            erkennbar.
+            Auf einem größeren Bildschirm sieht man von den Räumen allerdings
+            mehr auf einmal, und das ein oder andere Rätsel liest sich
+            angenehmer.
           </p>
           <div class="mw-actions">
             <button class="mw-btn mw-btn-primary" id="mwContinue">[ WEITER ]</button>
@@ -70,13 +71,13 @@
         <!-- STEP 2 — confirmation -->
         <div class="mw-step mw-step-two">
           <p class="mw-label">BESTÄTIGUNG</p>
-          <h2 class="mw-title">Bist du sicher?</h2>
+          <h2 class="mw-title">Alles klar?</h2>
           <p class="mw-msg">
-            Du spielst auf einem kleinen Bildschirm. Manche Rätsel und
-            CGs sind auf einem PC oder Mac deutlich besser spielbar.
+            Kein Fortschritt geht verloren: Du kannst jederzeit auf einem
+            größeren Bildschirm weiterspielen, wenn du magst.
           </p>
           <p class="mw-msg-secondary">
-            Möchtest du trotzdem hier fortfahren?
+            Hier weitermachen?
           </p>
           <div class="mw-actions">
             <button class="mw-btn mw-btn-primary" id="mwConfirm">[ JA, TROTZDEM SPIELEN ]</button>

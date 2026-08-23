@@ -285,3 +285,27 @@
   .access-actions { flex-direction: column; align-items: stretch; }
   .access-actions .ka-btn { text-align: center; }
 }
+
+/* ─── WHAT THE ARCHIVE HAS ON FILE ────────────────────────────
+   Shown after a correct code: the eight digits are not a password, they are
+   an authorisation the facility never revoked. The player reads that, then
+   chooses to start the place up again. */
+.access-reveal { margin-top: var(--sp-lg); text-align: left; }
+.ar-rows { display: flex; flex-direction: column; gap: 6px; margin-bottom: var(--sp-lg); }
+.ar-row {
+  display: flex; justify-content: space-between; align-items: baseline; gap: var(--sp-md);
+  padding-bottom: 5px; border-bottom: 1px solid var(--bdr-dim);
+  opacity: 0; transform: translateY(3px);
+  transition: opacity .6s ease, transform .6s ease;
+}
+.ar-row.visible { opacity: 1; transform: none; }
+.ar-k { font-size: 10px; letter-spacing: .18em; color: var(--text-dim); }
+.ar-v { font-size: 11px; letter-spacing: .18em; color: var(--accent-r3mi); }
+.access-go {
+  display: block; width: 100%; opacity: 0; pointer-events: none;
+  transition: opacity 1s ease;
+}
+.access-go.visible { opacity: 1; pointer-events: auto; }
+@media (prefers-reduced-motion: reduce) {
+  .ar-row, .access-go { transition: none; }
+}

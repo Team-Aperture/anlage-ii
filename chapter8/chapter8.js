@@ -31,23 +31,12 @@ const Chapter8 = (() => {
 
   // ═══════════════════════════════════════════════════════════════
   // ZIELDATEN
-  // The target data is held as eight calibration fragments. Each entry is
-  // one piece of the string, stored shifted; only the order the archive
-  // reconstructs puts them back together.
-  //
-  // PLATZHALTER — vor Veröffentlichung ersetzen. Anleitung: COORDS.md
+  // The fragments and the rebuilding live in GameEngine.calibration, so a
+  // finished save can restore them without replaying this chapter.
   // ═══════════════════════════════════════════════════════════════
-  const KAL = [
-    '0061000f001f', '0006008600160006', '000d0013000d', '00740074006400f3',
-    '006b000e006b', '00620062006200e2', '007900690069', '004e005000500050',
-  ];
-  function kalPiece(j) {
-    const t = KAL[j] || '';
-    let s = '';
-    for (let p = 0; p < t.length; p += 4) s += String.fromCodePoint(parseInt(t.slice(p, p + 4), 16) ^ (0x2f + j * 7));
-    return s;
+  function reconstructZiel(order) {
+    try { return GameEngine.calibration.reconstructMain(order); } catch (_) { return ''; }
   }
-  function reconstructZiel(order) { return order.map(j => kalPiece(j)).join(''); }
 
   // ═══════════════════════════════════════════════════════════════
   // BOARD GEOMETRY
@@ -953,6 +942,8 @@ const Chapter8 = (() => {
   function solveBoard() {
     if (S.solved) return;
     S.solved = true;                 // latched before anything async runs
+    // Nothing pops up over the lock-in, the reconstruction or the coordinates.
+    try { GameEngine.toasts.hold(); } catch (_) {}
     B.sel = -1;
     save();
     closeSheet();
@@ -1038,6 +1029,8 @@ const Chapter8 = (() => {
     card.appendChild(credits);
 
     later(() => archiveCheck(card, terminal), reduceMotion() ? 600 : 2600);
+    // The card is up and read; anything that was waiting may land now.
+    later(() => { try { GameEngine.toasts.release(); } catch (_) {} }, reduceMotion() ? 1200 : 5200);
   }
 
   function copyCoords() {
@@ -1454,16 +1447,15 @@ const Chapter8 = (() => {
 
   function init() {
     registerArt();
-    if (!GameEngine.state.isChapterComplete('ch7') && !GameEngine.state.isChapterComplete(CHAPTER_ID)) {
-      location.replace('../chapter7/chapter7.html');
-      return;
-    }
+    if (!GameEngine.progress.require('ch8')) return;
     const done = GameEngine.state.isChapterComplete(CHAPTER_ID);
     const cp = loadCheckpoint();
     if (done) {
       S.solved = true; S.presorted = true; S.act = 4; S.ended = true;
       try { S.ziel = GameEngine.state.get('zieldaten_text') || ''; } catch (_) {}
       clearSave();
+      // Same way out of a finished sector as everywhere else.
+      try { GameEngine.progress.returnBar(CHAPTER_ID); } catch (_) {}
     } else if (cp) {
       const d = cp.d;
       S.act = d.act; S.presorted = !!d.presorted; S.refused = !!d.refused;

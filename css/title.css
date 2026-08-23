@@ -384,16 +384,44 @@ a.sector-node:hover { transform: translateY(-3px); border-color: #fff; color: #f
 /* ─── ZIELDATEN ───────────────────────────────────────────────
    Shown on the terminal once Chapter 8 has reconstructed them, so the
    coordinates can be read back without replaying anything. */
-.ziel-box {
-  margin-top: 16px; padding: 12px 14px 14px;
+.ziel-box { margin-top: 16px; display: flex; flex-direction: column; gap: 12px; }
+.ziel-set {
+  padding: 12px 14px 14px;
   border: 1px solid var(--accent-system); background: rgba(58,143,212,0.05);
   text-align: center;
 }
+.ziel-set.ziel-bonus { border-color: #8fa4c4; background: rgba(143,164,196,0.05); }
 .ziel-label { font-size: 10px; letter-spacing: .22em; color: var(--accent-system); }
+.ziel-bonus .ziel-label { color: #8fa4c4; }
 .ziel-value {
   margin: 8px 0 10px; padding: 8px 12px;
-  font-family: var(--font-mono); font-size: clamp(14px, 3.6vw, 20px); letter-spacing: .05em;
+  font-family: var(--font-mono); font-size: clamp(13px, 3.2vw, 18px); letter-spacing: .04em;
   color: #fff; text-shadow: 0 0 12px var(--accent-system);
   border: 1px solid var(--bdr-mid); background: rgba(0,0,0,0.4);
   user-select: all; word-break: break-word;
 }
+.ziel-bonus .ziel-value { text-shadow: 0 0 12px #8fa4c4; }
+
+/* ─── BOOT SKIP ───────────────────────────────────────────────
+   The BIOS is part of the game's personality, but nobody should have to sit
+   through it twice in one session. */
+.boot-skip {
+  position: fixed; right: var(--sp-md); bottom: var(--sp-md); z-index: 1001;
+  opacity: 0; pointer-events: none; transition: opacity .6s ease;
+}
+.boot-skip.visible { opacity: .5; pointer-events: auto; }
+.boot-skip:hover, .boot-skip:focus-visible { opacity: 1; }
+
+/* ─── IDLE COMMENT SPEAKER ────────────────────────────────────
+   The label is coloured by whoever is actually talking. */
+.idle-comment[data-who="SYSTEM"] .idle-comment-speaker { color: var(--accent-system); }
+.idle-comment[data-who="R-3MI"]  .idle-comment-speaker { color: var(--accent-r3mi); }
+.idle-comment[data-who="V-TGM"]  .idle-comment-speaker { color: var(--accent-vtgm); }
+
+@media (prefers-reduced-motion: reduce) { .boot-skip { transition: none; } }
+
+/* Progress line: sectors behind you, facility online, fragments archived —
+   three separate readings, not one blended number. */
+#chapterProgress { display: flex; gap: var(--sp-md); justify-content: center; flex-wrap: wrap; }
+.tp-part { white-space: nowrap; }
+@media (max-width: 600px) { #chapterProgress { gap: var(--sp-sm); font-size: 10px; } }

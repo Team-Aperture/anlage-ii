@@ -94,6 +94,9 @@ const Chapter6 = (() => {
     hints: { active:null, step:0 },
     coach: 0,
     excuse: 0,
+
+    // A second walk through the chamber: nothing is proved twice.
+    revisit: false,
   };
 
   let openModal = null;   // 'bb' | 'vp' | null
@@ -329,14 +332,52 @@ const Chapter6 = (() => {
 
     if (S.solved) {
       addHotspot({ prop:'c6_labdoor', x:44, y:60, w:13, h:34,
-        label:'SEKTOR 07', aria:'Sektor 07 betreten', fn:() => finishChapter() });
+        label:'SEKTOR 07', aria:'Sektor 07 betreten',
+        fn: () => S.revisit ? onward('ch7') : finishChapter() });
     }
+  }
+
+
+  // On a second visit the way on is just a way on: the next sector is already
+  // open, so the door leads there instead of handing out an ending the player
+  // has already been given.
+  function onward(id) {
+    const href = (() => {
+      try { return GameEngine.progress.href(id); } catch (_) {
+        const n = id.replace('ch', '');
+        return `../chapter${n}/chapter${n}.html`;
+      }
+    })();
+    try { GameEngine.fx.leave(href); } catch (_) { location.href = href; }
+  }
+
+  // Coming back to a chamber whose model is already confirmed. A fresh series
+  // is laid out so the archive can be read again, but nothing has to be
+  // proved a second time — including the record that was never ASP's.
+  function nachsuche() {
+    S.revisit = true;
+    S.rule = buildRule() || { p1:'pa', cond:'ca', p2:'pc' };
+    S.archive = buildArchive(S.rule);
+    S.phase = 2;
+    S.metAsp = true;
+    S.solved = true;
+    try { S.sigFound = GameEngine.signals.isFound('sig_04'); } catch (_) {}
+    S.anomalySeen = S.sigFound;
+    loadRoom();
+    GameEngine.progress.returnBar(CHAPTER_ID);
+    say([
+      { speaker:'SYSTEM', text:`VERSUCHSREIHE ${SERIES} // MODELL BESTÄTIGT. ARCHIV GEÖFFNET.` },
+      { speaker:'ASP-1024', text:'„Moin. Das Protokoll liegt noch da."' },
+      { speaker:'R-3MI',  text:'„Wir schauen nur."' },
+      { speaker:'ASP-1024', text:'„Dafür ist es da."' },
+    ]);
   }
 
   // ═══════════════════════════════════════════════════════════════
   // OPENING — the experiment is already running
   // ═══════════════════════════════════════════════════════════════
   function begin() {
+    if (GameEngine.progress.isRevisit(CHAPTER_ID)) { nachsuche(); return; }
     const d = loadCheckpoint();
     if (d) {
       S.rule = d.rule; S.archive = d.archive; S.tests = d.tests;
@@ -503,6 +544,14 @@ const Chapter6 = (() => {
   }
 
   function openBlackbox() {
+    if (S.revisit) {
+      say([
+        { speaker:'SYSTEM',   text:`VERSUCHSREIHE ${SERIES} // MODELL BESTÄTIGT. WEITERE LÄUFE NICHT ERFORDERLICH.` },
+        { speaker:'ASP-1024', text:'„Läuft. Kannste laufen lassen."' },
+        { speaker:'V-TGM',    text:'"The model held."', subtitle:'Das Modell hat gehalten.' },
+      ]);
+      return;
+    }
     if (S.solved) { finishChapter(); return; }
     if (openModal === 'vp') closeModal();
     openModal = 'bb';
@@ -1027,7 +1076,7 @@ const Chapter6 = (() => {
       { speaker:'V-TGM',  text:'"Delete it."', subtitle:'Lösch ihn.' },
       { speaker:'R-3MI',  text:'„Warum so schnell?"' },
       { speaker:'SYSTEM', text:'V-TGM antwortet nicht. Der Datensatz gibt ein Fragment aus.' },
-      { speaker:'V-TGM',  text:'"…they are listening. both. from the start."', subtitle:'…sie hören zu. beide. seit anfang an.' },
+      { speaker:'V-TGM',  text:'"…they are listening. both. from the start. when they guide you…"', subtitle:'…sie hören zu. beide. seit anfang an. Wenn sie dich führen.' },
       { speaker:'SYSTEM', text:'Stille in der Kammer.' },
       { speaker:'R-3MI',  text:'„Wessen Test war das?"' },
       { speaker:'ASP-1024', text:'„Gute Frage."' },
@@ -1295,6 +1344,7 @@ const Chapter6 = (() => {
 
   function init() {
     try { GameEngine.props.register(CH6_ART); } catch (_) {}
+    if (!GameEngine.progress.require('ch6')) return;
     buildChapter();
     rebindHints();
     CH.showHintBar(false);

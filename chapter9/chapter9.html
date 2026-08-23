@@ -3,21 +3,108 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>KA-II // ?</title>
+  <title>KA-II // —</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Barlow:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/global.css?v=20260613">
-  <link rel="stylesheet" href="../css/chapter.css?v=20260822">
-  <link rel="stylesheet" href="chapter9.css?v=20260613">
+  <link rel="stylesheet" href="../css/global.css?v=20260823b">
+  <link rel="stylesheet" href="../css/chapter.css?v=20260823b">
+  <link rel="stylesheet" href="chapter9.css?v=20260823b">
 </head>
 <body class="chapter-page">
 
-  <!-- The hidden bonus chamber. Built entirely by GameEngine.chapter +
-       chapter9.js. Access is gated on having found all five Signalnischen. -->
+  <!-- Access is checked in chapter9.js before anything below is used. The
+       shared chrome is built by GameEngine.chapter.build(). -->
 
-  <script src="../js/engine.js?v=20260822"></script>
-  <script src="../js/mobile-warning.js?v=20260613"></script>
-  <script src="chapter9.js?v=20260822"></script>
+  <!-- The page opens by insisting there is nothing here. -->
+  <div class="cold-open hidden" id="coldOpen" aria-hidden="true">
+    <div class="co-rows" id="coldRows"></div>
+  </div>
+
+  <!-- Records, console status and the bonus readout all share one card. -->
+  <div class="puzzle-modal hidden" id="evModal">
+    <div class="puzzle-card ev-card">
+      <div class="puzzle-card-accent"></div>
+      <div class="puzzle-header">
+        <p class="puzzle-label sys-text" id="evLabel">AKTE</p>
+        <h2 class="puzzle-title" id="evTitle">&mdash;</h2>
+        <p class="puzzle-sub sys-text" id="evSub"></p>
+      </div>
+      <div class="ev-body" id="evBody"></div>
+      <div class="puzzle-actions">
+        <button class="ka-btn small" data-act="ev-close">[ SCHLIESSEN ]</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Five channels and one button. It cannot fail. -->
+  <div class="puzzle-modal hidden" id="sgModal">
+    <div class="puzzle-card sg-card">
+      <div class="puzzle-card-accent"></div>
+      <div class="puzzle-header">
+        <p class="puzzle-label sys-text">SIGNALEMPFÄNGER // FÜNF KANÄLE</p>
+        <h2 class="puzzle-title">FREMDSIGNALE</h2>
+        <p class="puzzle-sub sys-text">DIE AUFNAHMEN LAUFEN GEGENEINANDER VERSCHOBEN</p>
+      </div>
+      <div class="sg-body" id="sgBody"></div>
+      <div class="puzzle-status sys-text" id="sgStatus">KOHÄRENZ: &mdash;</div>
+      <div class="puzzle-actions">
+        <button class="ka-btn primary" data-act="sg-sync" id="sgSync">[ SYNCHRONISIEREN ]</button>
+        <button class="ka-btn small" data-act="sg-close">[ ZURÜCK ]</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Whom do you turn to? -->
+  <div class="face-bar hidden" id="faceBar">
+    <span class="fb-prompt sys-text">WEM WENDEST DU DICH ZU?</span>
+    <button class="ka-btn small" data-act="face-r3mi"><span class="accent-r3mi">[ R-3MI ]</span></button>
+    <button class="ka-btn small" data-act="face-vtgm"><span class="accent-vtgm">[ V-TGM ]</span></button>
+  </div>
+
+  <!-- Everything said in this room can be read back. -->
+  <button class="log-btn ka-btn small hidden" data-act="log-open" id="logBtn">[ PROTOKOLL ]</button>
+  <div class="log-sheet hidden" id="logSheet" role="dialog" aria-label="Gesprächsprotokoll">
+    <div class="log-scrim" data-act="log-close"></div>
+    <div class="log-card">
+      <h3 class="log-title sys-text">GESPRÄCHSPROTOKOLL</h3>
+      <div class="log-body" id="logBody"></div>
+      <button class="ka-btn small" data-act="log-close">[ SCHLIESSEN ]</button>
+    </div>
+  </div>
+
+  <!-- The way out. -->
+  <div class="end-card hidden" id="endCard">
+    <div class="ec-inner">
+      <div class="ec-label sys-text">BONUSPROTOKOLL ABGESCHLOSSEN</div>
+      <dl class="ec-rows">
+        <dt>BONUSZIELDATEN</dt><dd class="ok">VERFÜGBAR</dd>
+        <dt>QUELLE</dt><dd>EXTERNES NOTFALLDEPOT</dd>
+        <dt>AUSGANG</dt><dd class="ok">OFFEN</dd>
+      </dl>
+      <div class="ec-coords" id="endCoords"></div>
+      <div class="ec-actions">
+        <button class="ka-btn small" data-act="end-copy" id="endCopy">[ BONUSZIELDATEN KOPIEREN ]</button>
+        <button class="ka-btn primary" data-act="end-leave">[ DIE ANLAGE VERLASSEN ]</button>
+        <button class="ka-btn small" data-act="end-credits">[ CREDITS ]</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Credits, one card at a time. -->
+  <div class="cine-credits hidden" id="cineCredits" aria-label="Abspann">
+    <div class="cc-stage" id="cineStage" aria-live="polite"></div>
+    <button class="ka-btn small cine-skip" data-act="cine-skip" id="cineSkip">[ ÜBERSPRINGEN ]</button>
+  </div>
+
+  <!-- After. -->
+  <div class="stinger hidden" id="stinger">
+    <div class="st-body" id="stingerBody"></div>
+    <a class="ka-btn small st-exit" id="stingerExit" href="../index.html">[ ZURÜCK ZUM TERMINAL ]</a>
+  </div>
+
+  <script src="../js/engine.js?v=20260823b"></script>
+  <script src="../js/mobile-warning.js?v=20260823b"></script>
+  <script src="chapter9.js?v=20260823b"></script>
 </body>
 </html>

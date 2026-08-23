@@ -26,10 +26,37 @@ still — die Engine bricht nicht ab.
 | `ch9_ambient` | `ch9_bonus.mp3` | Kapitel 9 — Bonus | die Wahrheit, unangenehm ruhig |
 | `credits` | `credits_theme.mp3` | Abspann | Abschied, warm, ausklingend |
 
+## Stimmung je Kapitel
+
+Die Tabelle nennt die Slots; hier steht, wonach sie klingen sollen. Die
+Kapitel haben sich in der Überarbeitung verändert — die Beschreibungen unten
+gelten für die finale Fassung.
+
+| Kapitel | Stimmung |
+|---|---|
+| 01 Wartung | vorsichtige Wärme, erste Gesellschaft nach langer Stille |
+| 02 Garten | gefrorene Ruhe, die langsam in einen lebenden Garten übergeht |
+| 03 Beobachtung | zurückgenommener optischer Fokus, aufmerksam, geduldig |
+| 04 Rätsel | Werkstatt, mechanisch, geduldige Komplexität |
+| 05 Langstrecke | Vorwärtsbewegung, weite Wege, Station um Station |
+| 06 Versuchskammer | dunkles Labor, analytisch, Instrumentensummen |
+| 07 Vexier | verspielte Unzuverlässigkeit, etwas stimmt hier nicht |
+| 08 Archiv | großer Archivbau, Rekonstruktion, Kulmination |
+| 09 (versteckt) | karg, die Wahrheit, emotionaler Bruch |
+
+Ein optionales Motiv, das in Kapitel 2 (Wiederherstellung), Kapitel 5 (letzte
+Etappe) und Kapitel 8 (100 %) leise wiederkehrt, würde die Anlage
+zusammenbinden — nötig ist es nicht.
+
 ## Verhalten
 
 - Ein Titel pro Kapitel, gestartet beim Betreten (`GameEngine.music.play('chN_ambient')`).
 - Loopbar schneiden, **kein Fade-out** am Dateiende.
 - Der globale Mute-Zustand gilt für Musik und Effekte gemeinsam und
   überlebt Kapitelwechsel.
-- Fehlende Dateien sind kein Fehlerfall.
+- Fehlende Dateien sind kein Fehlerfall. Die Engine spielt, was da ist, und
+  schweigt über den Rest — ohne 404-Lärm in der Konsole.
+- **Kein Rätsel ist ohne Ton lösbar-abhängig.** Jeder informative Klang hat
+  eine sichtbare Entsprechung; das ganze Spiel ist stummgeschaltet spielbar.
+- Alte Dateinamen dürfen bleiben. Wird ein Slot umbenannt, wird die alte Datei
+  weiterverwendet statt gelöscht — der Slot ist die Semantik, die Datei nicht.
