@@ -1110,6 +1110,10 @@ body.fx-leaving { animation: fxLeave 0.42s ease forwards; }
 @media (prefers-reduced-motion: reduce) {
   .fx-flash, .fx-shake, .fx-pulse, body.fx-leaving,
   .cc-card > *, .sector-node { animation: none !important; }
+  /* Toasts appear and disappear in place. The queue removes them on a timer
+     as well as on animationend, so losing the animation loses nothing. */
+  .achievement-toast, .signal-toast,
+  .achievement-toast.hiding, .signal-toast.hiding { animation: none !important; }
   .ka-btn:active { transform: none; }
 }
 
