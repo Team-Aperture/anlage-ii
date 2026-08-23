@@ -455,14 +455,16 @@ const GameEngine = (() => {
     // spoken or a panel is open it steps aside, and comes back when the room
     // is the player's again.
     function watchBusy(bar) {
-      let queued = false;
+      let queued = false, wasBusy = null;
       const apply = () => {
         queued = false;
         const dlg = document.querySelector('.dlg-container');
         const busy = !!(dlg && dlg.classList.contains('visible'))
                   || !!document.querySelector('.puzzle-modal:not(.hidden), .overlay-panel:not(.hidden), .chapter-complete:not(.hidden)');
+        if (busy === wasBusy) return;          // only act on the transition
+        wasBusy = busy;
         bar.classList.toggle('ns-away', busy);
-        if (!busy) liftClear(bar);
+        if (!busy) liftClear(bar);             // the room may have changed underneath
       };
       const nudge = () => { if (!queued) { queued = true; requestAnimationFrame(apply); } };
       try {
