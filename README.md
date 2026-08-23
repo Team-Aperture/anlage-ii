@@ -78,7 +78,16 @@ actually up to, rather than a redirect chain or a blank page.
 Walking back into a finished sector opens **Nachsuche**: the room in its final
 state, the puzzle already solved, the optional things still there, and a way
 out that does not run through a door you already opened. Nothing points at what
-you missed — you still have to look.
+you missed — you still have to look. All nine sectors have one, and none of
+them replays an ending or hands out a completion twice. First contact in
+Sector 01 in particular happens exactly once: the empty hall, the KLONK and
+the eleven-minute repair belong to that first walk-in and stay there.
+
+Sectors 02, 03 and 04 also survive a reload mid-chapter. What the player has
+actually earned — the thaw state, the exposure level, the finished subsystems
+and their reference values — is written into `chapterState` and picked back
+up on the next load. Live puzzle instances are always generated fresh, so
+nothing that was meant to be observed is remembered on the player's behalf.
 
 ---
 
@@ -116,10 +125,17 @@ wrong shapes are repaired rather than discarded. The schema version is separate
 from the version the game calls itself, so releasing a new build never resets
 anybody. A finished run that has somehow lost its coordinates rebuilds them.
 
-`GameEngine.state.exportSave()` / `importSave()` move a run between browsers.
+`[ SPIELSTAND ]` on the title screen is where a player meets all of this:
+what the save holds, a code to copy out and paste into another browser
+(`GameEngine.state.exportSave()` / `importSave()` underneath), and an erase
+that names what it erases before it takes the second tap.
 
 If `localStorage` is unavailable the game still plays; it simply cannot
-remember.
+remember — and it says so, once, in a toast that points at the backup code
+rather than letting the player find out at the end of the evening.
+
+Player preferences live in `settings`. Progress lives in the arrays and in
+`chapterState`. Nothing sits loose at the top level any more.
 
 ---
 
@@ -146,8 +162,14 @@ a unique solution before the player ever sees them.
 - Nothing is solvable only by ear. Every audio cue has a visible equivalent.
 - `prefers-reduced-motion` is respected throughout; no content is removed with
   it, only the motion.
-- No puzzle answer depends on colour alone.
+- No puzzle answer depends on colour alone. Chapter 8's fragments carry their
+  metadata and their orientation as words, not as a hue.
 - Dialogue can be replayed — Chapter 9 keeps a full `[ PROTOKOLL ]`.
+- Overlays open from the keyboard, take focus, close on Escape or on a click
+  beside the card, and hand focus back to whatever opened them.
+- Under `prefers-reduced-motion` a line of dialogue arrives whole instead of
+  typing itself out.
+- The dialogue box keeps clear of the phone gesture bar.
 
 ---
 

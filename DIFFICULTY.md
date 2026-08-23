@@ -108,3 +108,10 @@ instance, the instance is verified solvable and unique before the player sees
 it; where a chapter gives feedback, it is qualitative rather than a number that
 can be climbed. If a player is confused about *what they can do* rather than
 *what the answer is*, that is a bug in the chapter, not its rating.
+
+**A closed tab is not a penalty.** Sectors 02, 03 and 04 keep the work already
+done across a reload — the thaw state, the exposure level, the finished
+subsystems — so the only thing a refresh costs is the instance currently on
+screen, which regenerates. This matters for the rated chapters more than the
+easy ones: nobody should think twice about closing a tab in the middle of the
+Vierfach-Schloss.

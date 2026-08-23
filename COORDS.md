@@ -21,11 +21,16 @@ Fragment ist ein Teilstück der Zeichenkette, zeichenweise verschoben abgelegt.
 Erst die Reihenfolge, die die fertige Rekonstruktion in Kapitel 8 ergibt,
 setzt sie wieder zusammen — eine falsche Reihenfolge ergibt Buchstabensalat.
 
-Im Quelltext (`chapter8/chapter8.js`) sieht das so aus:
+Beide Datensätze liegen an **einer** Stelle: im Modul `GameEngine.calibration`
+in `js/engine.js`. Das ist auch der Grund, warum ein fertiger Spielstand seine
+Koordinaten selbst wiederherstellen kann, wenn sie einmal verloren gehen.
 
 ```js
-const KAL = [
+const MAIN = [
   '0061000f001f', '0006008600160006', ...
+];
+const BONUS = [
+  '001f00710061006100e1', ...
 ];
 ```
 
@@ -47,7 +52,7 @@ for (let j = 0; j < 8; j++) {
 console.log("  '" + out.join("', '") + "',");
 ```
 
-3. Die ausgegebene Zeile in `chapter8/chapter8.js` als Inhalt von `const KAL = [ … ]`
+3. Die ausgegebene Zeile in `js/engine.js` als Inhalt von `const MAIN = [ … ]`
    einsetzen (die alten Platzhalter-Werte ersetzen).
 4. Kapitel 8 einmal durchspielen (oder einen vorhandenen Spielstand mit
    abgeschlossenem Kapitel 8 nehmen) und prüfen, dass unten auf der
@@ -81,9 +86,9 @@ for (let j = 0; j < 5; j++) {
 console.log("  '" + out.join("', '") + "',");
 ```
 
-Die Ausgabe kommt in `chapter9/chapter9.js` als Inhalt von `const BKAL = [ … ]`.
+Die Ausgabe kommt in `js/engine.js` als Inhalt von `const BONUS = [ … ]`.
 
-Direkt darunter steht dort `const AUTH = [ … ]` — das ist der achtstellige
+In `chapter9/chapter9.js` steht außerdem `const AUTH = [ … ]` — das ist der achtstellige
 Verifizierungscode aus der ersten Anlage, den die Autorisierungsakte in
 Kapitel 9 zurückliest. Der Spieler kennt ihn bereits (er hat ihn selbst
 eingegeben, um überhaupt anzufangen); er liegt nur deshalb verschoben vor,
@@ -103,12 +108,15 @@ werden — es sei denn, der Zugangscode in `js/access.js` ändert sich.
   `localStorage`. Das passiert erst nach dem Lösen; im ausgelieferten Code
   stehen die Werte nicht.
 
-Ein `[ SPIELSTAND LÖSCHEN ]` im Hauptmenü entfernt ihn wieder.
+`[ SPIELSTAND ]` im Hauptmenü zeigt an, ob beide Sätze vorhanden sind, und
+löscht sie auf Wunsch wieder.
 
 ## Checkliste vor der Veröffentlichung
 
-- [ ] `KAL` in `chapter8/chapter8.js` enthält die echten Fragmente.
-- [ ] `BKAL` in `chapter9/chapter9.js` enthält die echten Bonusfragmente.
+- [ ] `MAIN` in `js/engine.js` enthält die echten Fragmente.
+- [ ] `BONUS` in `js/engine.js` enthält die echten Bonusfragmente.
+- [ ] `KA1_LISTING_URL` in `js/access.js` zeigt auf das echte Listing der
+      ersten Anlage (steht dort noch auf einer Platzhalter-Adresse).
 - [ ] Kapitel 8 einmal komplett durchgespielt, Zeichenkette stimmt.
 - [ ] Kapitel 9 einmal durchgespielt, Bonuszeichenkette stimmt.
 - [ ] `[ KOORDINATEN KOPIEREN ]` und `[ BONUSZIELDATEN KOPIEREN ]` liefern

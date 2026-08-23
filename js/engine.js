@@ -2078,6 +2078,8 @@ const GameEngine = (() => {
     const chapters = (state.get('chaptersCompleted') || []).filter(c => c !== 'ch9').length;
     const sigs     = (state.get('signalsFound') || []).length;
     const achs     = (state.get('achievementsUnlocked') || []).length;
+    let achTotal   = 0;
+    try { achTotal = achievements.ALL.length; } catch (_) {}
     const ziel     = !!state.hasFlag('zieldaten');
     const bonus    = !!state.hasFlag('bonuszieldaten');
 
@@ -2098,7 +2100,7 @@ const GameEngine = (() => {
             <ul class="sv-list">
               <li>Abgeschlossene Sektoren: <b>${chapters} / 9</b></li>
               <li>Gefundene Fremdsignale: <b>${sigs} / 5</b></li>
-              <li>Freigeschaltete Erfolge: <b>${achs}</b></li>
+              <li>Freigeschaltete Erfolge: <b>${achs}${achTotal ? ' / ' + achTotal : ''}</b></li>
               <li>Zieldaten: <b>${ziel ? 'vorhanden' : 'noch nicht'}</b></li>
               ${bonus ? '<li>Bonuszieldaten: <b>vorhanden</b></li>' : ''}
             </ul>

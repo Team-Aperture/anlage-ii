@@ -103,6 +103,8 @@
     function finish() {
       if (finished) return;
       finished = true;
+      // The skip offer belongs to the boot; it must not outlive it.
+      skipBtn?.classList.remove('visible');
       timers.forEach(clearTimeout);
       document.removeEventListener('keydown', onKey);
       seqEl.removeEventListener('click', finish);
