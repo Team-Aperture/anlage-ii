@@ -79,8 +79,13 @@ Walking back into a finished sector opens **Nachsuche**: the room in its final
 state, the puzzle already solved, the optional things still there, and a way
 out that does not run through a door you already opened. Nothing points at what
 you missed — you still have to look. All nine sectors have one, and none of
-them replays an ending or hands out a completion twice. First contact in
-Sector 01 in particular happens exactly once: the empty hall, the KLONK and
+them replays an ending or hands out a completion twice: the object that
+finished the chapter answers with a line instead, and a door that promised
+the next sector simply leads there, because it is already open. What is
+still worth finding — an unheard Signalnische, an archive row nobody
+inspected — is still exactly where it was.
+
+First contact in Sector 01 happens exactly once: the empty hall, the KLONK and
 the eleven-minute repair belong to that first walk-in and stay there.
 
 Sectors 02, 03 and 04 also survive a reload mid-chapter. What the player has
