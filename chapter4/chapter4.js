@@ -160,6 +160,59 @@ const Chapter4 = (() => {
     return r;
   }
   function solvedCount() { return ORDER.filter(k => S.modules[k].solved).length; }
+
+  // ── RESUME ──────────────────────────────────────────────────
+  // A reload in the middle of the workshop must not cost four subsystems.
+  // Only what the player has actually earned is written down; the live puzzle
+  // instances are cheap and get rebuilt the next time a module is opened.
+  function saveState() {
+    if (S.ended) return;
+    try {
+      const mods = {};
+      ORDER.forEach(k => {
+        const m = S.modules[k];
+        mods[k] = { solved: m.solved, output: m.output, opened: m.opened, fails: m.fails };
+      });
+      GameEngine.state.chapter(CHAPTER_ID, {
+        modules: mods,
+        finalSolved: S.finalSolved,
+        sigFound: S.sigFound,
+        froschiMentioned: S.froschiMentioned,
+        seen: S.seen,
+        talkSeen: S.talkSeen,
+        praise: S.praise,
+      });
+    } catch (_) {}
+  }
+
+  function clearSavedState() {
+    try { GameEngine.state.chapter(CHAPTER_ID, null); } catch (_) {}
+  }
+
+  // Returns true when there is something worth resuming.
+  function restoreState() {
+    let d = null;
+    try { d = GameEngine.state.chapter(CHAPTER_ID); } catch (_) {}
+    if (!d || typeof d !== 'object') return false;
+    ORDER.forEach(k => {
+      const m = d.modules && d.modules[k];
+      if (!m) return;
+      S.modules[k].solved = !!m.solved;
+      S.modules[k].output = m.output === undefined ? null : m.output;
+      S.modules[k].opened = m.opened | 0;
+      S.modules[k].fails  = m.fails | 0;
+    });
+    S.finalSolved      = !!d.finalSolved;
+    S.sigFound         = !!d.sigFound;
+    S.froschiMentioned = !!d.froschiMentioned;
+    S.seen             = (d.seen && typeof d.seen === 'object') ? d.seen : {};
+    S.talkSeen         = (d.talkSeen && typeof d.talkSeen === 'object') ? d.talkSeen : {};
+    S.praise           = d.praise | 0;
+    // A module that claims to be solved but kept no reference value would
+    // leave the central lock unsolvable — treat it as unsolved instead.
+    ORDER.forEach(k => { if (S.modules[k].solved && S.modules[k].output == null) S.modules[k].solved = false; });
+    return solvedCount() > 0;
+  }
   function esc(s) { return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
   // ═══════════════════════════════════════════════════════════════
@@ -202,13 +255,32 @@ const Chapter4 = (() => {
   function showTitleCard() {
     const card = document.getElementById('titleCard');
     const revisit = GameEngine.progress.isRevisit(CHAPTER_ID);
+    const resume  = !revisit && restoreState();
     setTimeout(() => {
       card.classList.add('fading');
       setTimeout(() => {
         card.style.display = 'none';
-        if (revisit) nachsuche(); else arrival();
+        if (revisit) nachsuche();
+        else if (resume) resumeWork();
+        else arrival();
       }, 700);
-    }, revisit ? 900 : 3000);
+    }, (revisit || resume) ? 900 : 3000);
+  }
+
+  // Back at the bench after a reload. The introductions already happened, so
+  // the room simply picks up where it stood.
+  function resumeWork() {
+    S.started = true;
+    setScene(sceneKey());
+    showRobots(true);
+    showBradfish(true);
+    try { GameEngine.music.play('ch4_ambient'); } catch (_) {}
+    loadRoom();
+    const n = solvedCount();
+    say([
+      { speaker:'SYSTEM', text:`SEKTOR 04 — RÄTSELSEKTOR. ZENTRALVERSCHLUSS: ${n} / 4 REFERENZWERTE VERFÜGBAR.` },
+      { speaker:'B-RADF1SH', text: n >= 3 ? '„Da bist du ja wieder. Fast fertig."' : '„Da bist du ja wieder. Steht alles noch."' },
+    ]);
   }
 
   // Coming back to a workshop that is already running. The lock stands open,
@@ -293,6 +365,7 @@ const Chapter4 = (() => {
   }
 
   function loadRoom() {
+    saveState();
     clearHotspots();
     setScene(sceneKey());
     setProgress(S.finalSolved ? 51 : 37 + solvedCount() * 3);
@@ -436,6 +509,7 @@ const Chapter4 = (() => {
     }
     // Latch before any dialogue runs — a lost callback must not lose the find.
     S.sigFound = true;
+    saveState();
     try { GameEngine.signals.find('sig_02'); } catch(_) {}
     say([
       { speaker:'SYSTEM', text:'Unter der Werkbank, halb hinter Geröll: eine braune Plastikbox. Kratzer, alte Wasserflecken, kein Werkstattzeichen.' },
@@ -1188,6 +1262,7 @@ const Chapter4 = (() => {
     m.solved = true;
     m.output = output;
     inst[key] = null;
+    saveState();
 
     clearTimers();
     playSound('ch4_module.mp3');
@@ -1225,6 +1300,7 @@ const Chapter4 = (() => {
     // Persist before anything narrative runs.
     S.finalSolved = true;
     try { GameEngine.state.markChapterComplete(CHAPTER_ID); } catch(_) {}
+    clearSavedState();
 
     closeModal();
     inst.final = null;
@@ -1290,6 +1366,7 @@ const Chapter4 = (() => {
     if (S.ended) return;
     S.ended = true;
     try { GameEngine.state.markChapterComplete(CHAPTER_ID); } catch(_) {}
+    clearSavedState();
     try { GameEngine.achievements.unlock('ch4_complete'); } catch(_) {}
     try { GameEngine.audio.fanfare(); } catch(_) {}
     el('chapterComplete').classList.remove('hidden');

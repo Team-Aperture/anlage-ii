@@ -45,6 +45,10 @@ const Chapter1 = (() => {
     // reactive puzzle chatter (each beat fires at most once per puzzle)
     react: { p1: {}, p2: {} },
     rotations: { p1: 0, p2: 0 },
+
+    // Set only when the sector is being walked a second time — nothing here
+    // may re-run the ending or hand out a completion that already happened.
+    revisit: false,
   };
 
   const HINT_MAX = 3;
@@ -643,14 +647,43 @@ const Chapter1 = (() => {
   // ═══════════════════════════════════════════════════════════════
   function showTitleCard() {
     const card = document.getElementById('titleCard');
+    const revisit = GameEngine.progress.isRevisit('ch1');
     card.classList.remove('fading');
     setTimeout(() => {
       card.classList.add('fading');
       setTimeout(() => {
         card.style.display = 'none';
-        act1_hallEmpty();
+        if (revisit) nachsuche(); else act1_hallEmpty();
       }, 700);
-    }, 2800);
+    }, revisit ? 900 : 2800);
+  }
+
+  // Coming back to a sector that has power again. First contact happened once
+  // and does not happen twice: the empty hall, the KLONK and the eleven-minute
+  // repair belong to that first walk-in and stay there. What is left is the
+  // maintenance hall as the player made it — lit, wired, and with the inner
+  // gate standing open towards the node.
+  function nachsuche() {
+    S.revisit      = true;
+    S.metRobots    = true;
+    S.klonkDone    = true;
+    S.corridorOpen = true;
+    S.p1Solved     = true;
+    S.p2Solved     = true;
+    S.sectorAwake  = true;
+    setScene('room-a');
+    setProgress(12);
+    showRobots(true);
+    try { GameEngine.music.play('ch1_ambient'); } catch (_) {}
+    loadHallHotspots(true);
+    GameEngine.progress.returnBar('ch1');
+    say([
+      { speaker:'SYSTEM', text:'SEKTOR 01 — WARTUNGSSEKTOR. Die Grundversorgung steht. Die Leitungen brummen leise vor sich hin.' },
+      { speaker:'R-3MI',  text:'„Oh! Der Sektor, in dem alles angefangen hat."' },
+      { speaker:'V-TGM',  text:'"It is a corridor with pipes."', subtitle:'Es ist ein Gang mit Rohren.' },
+      { speaker:'R-3MI',  text:'„Es ist ein HISTORISCHER Gang mit Rohren."' },
+      { speaker:'SYSTEM', text:'Das innere Tor steht offen. Dahinter geht es weiter zum Wartungsknoten.' },
+    ]);
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -1525,8 +1558,25 @@ const Chapter1 = (() => {
   function clickNode(key) {
     const n = bump('node_' + key);
 
+    if (key === 'console' && S.revisit) {
+      say([
+        { speaker:'SYSTEM', text:'HILFSPROTOKOLL KALIBRIERT. BEIDE SIGNALWEGE STABIL.' },
+        { speaker:'V-TGM',  text:'"Still separate."', subtitle:'Immer noch getrennt.' },
+        { speaker:'R-3MI',  text:'„Wie es sich gehört."' },
+      ]);
+      return;
+    }
     if (key === 'console' && !S.p2Solved) {
       say(NODE_LINES.console[1], () => openPuzzle2());
+      return;
+    }
+    if (key === 'door' && S.revisit) {
+      say([
+        { speaker:'SYSTEM', text:'SEKTOR 02 — WARTUNGSGARTEN. HILFSPROTOKOLL KALIBRIERT. DURCHGANG FREI.' },
+        { speaker:'R-3MI',  text:'„Die steht jetzt einfach offen. Ich finde das immer noch großartig."' },
+        { speaker:'V-TGM',  text:'"It is a door."', subtitle:'Es ist eine Tür.' },
+        { speaker:'R-3MI',  text:'„Es ist eine ÜBERZEUGTE Tür."' },
+      ]);
       return;
     }
     if (key === 'door' && S.p2Solved) { finishChapter(); return; }

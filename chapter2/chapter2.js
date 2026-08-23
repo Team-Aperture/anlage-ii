@@ -43,6 +43,9 @@ const Chapter2 = (() => {
     hints:  { step: 0, active: null },
     react:  { p1: {}, p2: {} },
     p1Fails: 0,
+
+    // A second walk through the garden: nothing here may re-run the ending.
+    revisit: false,
   };
 
   // ═══════════════════════════════════════════════════════════════
@@ -179,17 +182,108 @@ const Chapter2 = (() => {
   }
 
   // ═══════════════════════════════════════════════════════════════
+  // RESUME
+  // The garden thaws in two steps. A reload must not refreeze it.
+  // ═══════════════════════════════════════════════════════════════
+  function saveState() {
+    if (S.thawState === RESTORED) return;
+    try {
+      GameEngine.state.chapter(CHAPTER_ID, {
+        thawState: S.thawState, metFroschi: S.metFroschi, plantsStudied: S.plantsStudied,
+        orgelNudged: S.orgelNudged, wellRevealed: S.wellRevealed,
+        p1Solved: S.p1Solved, p2Solved: S.p2Solved, bayernPMOFound: S.bayernPMOFound,
+        seen: S.seen, talkSeen: S.talkSeen, react: S.react, p1Fails: S.p1Fails,
+      });
+    } catch (_) {}
+  }
+  function clearSavedState() {
+    try { GameEngine.state.chapter(CHAPTER_ID, null); } catch (_) {}
+  }
+  // True when F-RØ5CHI has already been met and the garden can simply reopen.
+  function restoreState() {
+    let d = null;
+    try { d = GameEngine.state.chapter(CHAPTER_ID); } catch (_) {}
+    if (!d || typeof d !== 'object' || !d.metFroschi) return false;
+    S.thawState      = (d.thawState === PARTIAL || d.thawState === RESTORED) ? d.thawState : FROZEN;
+    S.metFroschi     = true;
+    S.plantsStudied  = !!d.plantsStudied;
+    S.orgelNudged    = !!d.orgelNudged;
+    S.wellRevealed   = !!d.wellRevealed;
+    S.p1Solved       = !!d.p1Solved;
+    S.p2Solved       = !!d.p2Solved;
+    S.bayernPMOFound = !!d.bayernPMOFound;
+    S.seen           = (d.seen && typeof d.seen === 'object') ? d.seen : {};
+    S.talkSeen       = (d.talkSeen && typeof d.talkSeen === 'object') ? d.talkSeen : {};
+    S.react          = (d.react && typeof d.react === 'object') ? d.react : { p1:{}, p2:{} };
+    S.p1Fails        = d.p1Fails | 0;
+    // The first half of the thaw is what moves the garden on; keep the two in
+    // step so a half-written record cannot show a thawed garden that is not.
+    if (S.thawState === FROZEN && S.p1Solved) S.thawState = PARTIAL;
+    return true;
+  }
+
+  // ═══════════════════════════════════════════════════════════════
   // TITLE CARD
   // ═══════════════════════════════════════════════════════════════
   function showTitleCard() {
     const card = document.getElementById('titleCard');
+    const revisit = GameEngine.progress.isRevisit(CHAPTER_ID);
+    const resume  = !revisit && restoreState();
     setTimeout(() => {
       card.classList.add('fading');
       setTimeout(() => {
         card.style.display = 'none';
-        act1_arrival();
+        if (revisit) nachsuche();
+        else if (resume) resumeGarden();
+        else act1_arrival();
       }, 700);
-    }, 3000);
+    }, (revisit || resume) ? 900 : 3000);
+  }
+
+  // Coming back to a garden that is running again. The ice is gone, the water
+  // moves, and F-RØ5CHI is exactly where F-RØ5CHI would be. Everything that
+  // was worth a closer look is still worth a closer look — it just answers
+  // differently now that it can.
+  function nachsuche() {
+    S.revisit       = true;
+    S.thawState     = RESTORED;
+    S.metFroschi    = true;
+    S.plantsStudied = true;
+    S.orgelNudged   = true;
+    S.wellRevealed  = true;
+    S.p1Solved      = true;
+    S.p2Solved      = true;
+    setProgress(24);
+    showRobots(true);
+    showFroschi(true);
+    try { GameEngine.music.play('ch2_ambient'); } catch (_) {}
+    enterGarden();
+    GameEngine.progress.returnBar(CHAPTER_ID);
+    say([
+      { speaker:'SYSTEM',   text:'SEKTOR 02 — GARTENSEKTOR. Warme Luft, nasse Erde, irgendwo tropft es in ein Becken.' },
+      { speaker:'F-RØ5CHI', text:'„Schee, dass\'d wieda do bist. Schau di um, es wachst grad."',
+        subtitle:'Schön, dass du wieder da bist. Schau dich um, es wächst gerade.' },
+      { speaker:'R-3MI',    text:'„Es riecht hier immer noch nach Erfolg."' },
+      { speaker:'V-TGM',    text:'"It smells like soil."', subtitle:'Es riecht nach Erde.' },
+      { speaker:'R-3MI',    text:'„Erfolg riecht nach Erde."' },
+    ]);
+  }
+
+  // Back in the garden after a reload. The introductions are behind us and
+  // the ice is exactly as warm as it was left.
+  function resumeGarden() {
+    clearHotspots();
+    showRobots(true);
+    showFroschi(true);
+    try { GameEngine.music.play('ch2_ambient'); } catch (_) {}
+    enterGarden();
+    say([
+      { speaker:'SYSTEM',   text: S.thawState === PARTIAL
+          ? 'SEKTOR 02 — GARTENSEKTOR. Der obere Kreislauf läuft. Weiter unten steht das Wasser noch.'
+          : 'SEKTOR 02 — GARTENSEKTOR. Es ist immer noch kalt.' },
+      { speaker:'F-RØ5CHI', text:'„Ah, do bist wieda. Es rennt ned weg, des Ganze."',
+        subtitle:'Ah, da bist du wieder. Es läuft nicht weg, das Ganze.' },
+    ]);
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -306,6 +400,7 @@ const Chapter2 = (() => {
   }
 
   function loadGardenHotspots() {
+    saveState();
     clearHotspots();
     // ── set dressing (room layout unchanged across all three states)
     addProp({ prop:'light',  x:43, y:2,  w:12, h:8  });
@@ -339,7 +434,12 @@ const Chapter2 = (() => {
     // This also guarantees the chapter can always be finished from here.
     if (S.p2Solved) {
       addHotspot({ prop:'c2_gardendoor', x:44, y:22, w:13, h:34,
-        label:'SEKTOR 03', aria:'Sektor 03 betreten', fn:finishChapter });
+        label:'SEKTOR 03', aria:'Sektor 03 betreten',
+        fn: S.revisit ? () => say([
+              { speaker:'SYSTEM',   text:'SEKTOR 03 — BEOBACHTUNGSSEKTOR. DURCHGANG FREI.' },
+              { speaker:'F-RØ5CHI', text:'„Der do drüben is ned so gsprächig. Aber er schaut guat hi."',
+                subtitle:'Der da drüben ist nicht so gesprächig. Aber er schaut gut hin.' },
+            ]) : finishChapter });
     }
   }
 
@@ -802,6 +902,7 @@ const Chapter2 = (() => {
 
       if (p1State.plants.every(Boolean)) {
         S.p1Solved = true;
+        saveState();
         setTimeout(() => solvePuzzle1(), 1100);
       }
       return;
@@ -875,6 +976,7 @@ const Chapter2 = (() => {
     // State and control first, narration second. The player must get the
     // changed room back even if the dialogue below is interrupted.
     S.thawState = PARTIAL;
+    saveState();
     setScene('partial-wide');
     setFrostLevel(2);
     setProgress(18);
@@ -1059,6 +1161,7 @@ const Chapter2 = (() => {
 
     if (win && !S.p2Solved) {
       S.p2Solved = true;
+      saveState();
       setTimeout(() => solvePuzzle2(), 900);
     }
   }
@@ -1086,6 +1189,7 @@ const Chapter2 = (() => {
     // Persist and switch the room before anything narrative runs.
     S.thawState = RESTORED;
     GameEngine.state.markChapterComplete(CHAPTER_ID);
+    clearSavedState();
     GameEngine.state.setFlag('has_eissplitter');
 
     setScene('thawed-wide');
@@ -1144,6 +1248,7 @@ const Chapter2 = (() => {
 
   function finishChapter() {
     GameEngine.state.markChapterComplete(CHAPTER_ID);
+    clearSavedState();
     GameEngine.state.setFlag('has_eissplitter');
     try { GameEngine.achievements.unlock('ch2_complete'); } catch(_) {}
     try { GameEngine.audio.fanfare(); } catch(_) {}
