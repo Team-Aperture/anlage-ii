@@ -270,6 +270,7 @@ const Chapter5 = (() => {
   }
 
   function beginOrResume() {
+    if (GameEngine.progress.isRevisit(CHAPTER_ID)) { nachsuche(); return; }
     const d = loadCheckpoint();
     if (d) {
       applyCheckpoint(d);
@@ -288,6 +289,24 @@ const Chapter5 = (() => {
     }
     S.beat = 'intro';
     enterBeat('intro');
+  }
+
+  // Walking the route again after it is synchronised. The chapter drops the
+  // player at the one section that still had something to find, with the
+  // plates already sorted out — there is nothing left to work out here.
+  function nachsuche() {
+    S.metTflon = true;
+    S.branch = 'haupt';
+    S.relay = true;
+    S.crossing = true;
+    S.marker = true;
+    S.restSeen = true;
+    try { S.sigFound = GameEngine.signals.isFound('sig_03'); } catch (_) {}
+    renderLog();
+    CH.showRobots(true);
+    CH.showGuest(true);
+    enterBeat('14-H');
+    GameEngine.progress.returnBar(CHAPTER_ID);
   }
 
   // ═══════════════════════════════════════════════════════════════

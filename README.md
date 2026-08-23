@@ -1,152 +1,160 @@
 # DIE KALIBRIERUNGSANLAGE II: Die Reaktivierung
-### A Team_Aperture Geocaching Project
+
+A browser puzzle adventure that ends in a set of coordinates. Static HTML, CSS
+and JavaScript — no build step, no framework, no backend. It runs from any
+static host, GitHub Pages included, and stores nothing anywhere but the
+player's own browser.
+
+A sequel: the player is the same test subject who shut the first Anlage down,
+and the eight digits they carry over are what gets them back in.
 
 ---
 
-## Project Structure
+## Structure
 
 ```
 /
-├── index.html              ← Title screen (start here)
-├── access.html             ← KA-I code gate (8-digit verification)
+├── index.html            Title terminal — boot, sector map, overlays
+├── access.html           The KA-I authorisation gate
 ├── css/
-│   ├── global.css          ← Full design system, shared by ALL pages
-│   ├── title.css           ← Title screen specific styles
-│   └── access.css          ← Code-gate specific styles
+│   ├── global.css        Design system, shared by every page
+│   ├── chapter.css       Shared chapter chrome (scaffold chapters)
+│   ├── title.css         Title terminal
+│   └── access.css        Access gate
 ├── js/
-│   ├── engine.js           ← Game engine (state, dialogue, achievements,
-│   │                          signals, scene, puzzle) — load on every page
-│   ├── title.js            ← Title screen logic (boot, particles, idle)
-│   └── access.js           ← Code-gate verification logic
+│   ├── engine.js         GameEngine — load on every page
+│   ├── title.js          Title terminal
+│   ├── access.js         Authorisation gate
+│   └── mobile-warning.js Two-step "better on a bigger screen" notice
 ├── assets/
-│   ├── logo.png            ← Title logo
-│   └── portraits/          ← Speaker portraits (optional per dialogue line)
-├── chapter0/               ← Kapitel 0: Rückkehr (implemented)
-├── chapter1/               ← Kapitel 1: Wartungssektor (implemented)
-├── chapter2/               ← Kapitel 2: Wartungsgarten (implemented)
-└── chapter3/               ← Kapitel 3: Beobachtungssektor (stub — in Entwicklung)
-    (chapter4/ … chapter9/ to follow)
+│   ├── logo.png
+│   ├── portraits/        Optional per-line speaker portraits
+│   └── music/            One track per chapter (see MUSIC.md)
+└── chapter0/ … chapter9/ chapterN.html · chapterN.js · chapterN.css
 ```
 
-Each implemented chapter holds its own `chapterN.html`, `chapterN.js`,
-`chapterN.css`, and a `cg/` folder for scene art (with a `CG_PROMPT.txt`
-describing the intended image). Missing CGs and audio degrade gracefully:
-a CSS placeholder scene is shown and sound calls are wrapped in `try/catch`.
+Every room is drawn in code as inline SVG through `GameEngine.props` — there
+are no scene images to ship or lose. Missing audio is not an error: the engine
+plays what exists and stays quiet about the rest.
 
 ---
 
-## Every Chapter Page Must:
+## The chapters
 
-1. Load `../css/global.css` (and its own chapter CSS)
-2. Load `../js/engine.js` FIRST, then chapter-specific JS
-3. Use `GameEngine.dialogue.load([...])` for all dialogue
-4. Use `GameEngine.puzzle.define({...})` for all puzzles
-5. Call `GameEngine.state.markChapterComplete('ch0')` on chapter end
-6. Call `GameEngine.achievements.unlock('ch0_complete')` on chapter end
+| | Sector | Guest | What it asks of you |
+|---|---|---|---|
+| 00 | Rückkehr | — | Getting back inside |
+| 01 | Wartung | R-3MI · V-TGM | Meeting whoever is still here |
+| 02 | Garten | F-RØ5CHI | One place, changing as you work |
+| 03 | Beobachtung | L-UX | Looking properly, not quickly |
+| 04 | Rätsel | B-RADF1SH | Breaking something large into parts |
+| 05 | Langstrecke | T-FLON14 | Keeping a route straight, station by station |
+| 06 | Versuchskammer | ASP-1024 | Understanding a box without opening it |
+| 07 | Vexier | FAX-N | Believing the hardware, not the screen |
+| 08 | Archiv | AGN-H3R | Rebuilding a record from its fragments |
+| 09 | — | — | Hidden. Not part of the regular route. |
 
----
+Chapters 00–08 are the game: nine sectors, and the reactivation runs
+12 → 24 → 37 → 51 → 68 → 82 → 96 → 100 %. Chapter 9 is bonus content and does
+not count towards that.
 
-## Dialogue Line Format
-
-```javascript
-GameEngine.dialogue.load([
-  {
-    speaker:  'R-3MI',
-    text:     'Oh. Du bist zurückgekommen. Interessant.',
-    portrait: '../assets/portraits/r3mi_neutral.png', // optional
-  },
-  {
-    speaker:  'V-TGM',
-    text:     'We have been waiting.',
-    subtitle: 'Wir haben gewartet.',            // German subtitle for V-TGM
-    portrait: '../assets/portraits/vtgm_calm.png',
-  },
-  {
-    speaker:  'SYSTEM',
-    text:     'SEKTOR 01 — ENTSPERRT.',
-  },
-], () => {
-  // onComplete callback
-});
-```
-
-**Available speakers:** R-3MI, V-TGM, SYSTEM, F-RØ5CHI, L-UX, J4W-A3,
-B-RADF1SH, T-FLON14, ASP-1024, AGN-H3R
+`DIFFICULTY.md` describes what each chapter actually does, without giving
+answers away.
 
 ---
 
-## Puzzle Format
+## Progression
 
-```javascript
-GameEngine.puzzle.define({
-  id:            'ch1_puzzle1',
-  solution:      '42',           // or array: ['42', 'zweiundvierzig']
-  hint:          'Denk an den Wartungscodex.',
-  achievementId: 'ch1_complete', // optional
-  onSolve: () => {
-    // open gate, play dialogue, etc.
-  },
-  onFail: () => {
-    // shake animation, R-3MI comment, etc.
-  },
-});
+`GameEngine.progress` owns the running order. A chapter asks
+`progress.require('chN')` as the first thing it does; if the player has not got
+there yet they get an in-universe refusal and a route to the sector they are
+actually up to, rather than a redirect chain or a blank page.
 
-// Then somewhere:
-GameEngine.puzzle.submit(inputField.value);
-```
+- `access.html` needs the eight digits from the first Anlage.
+- Each chapter needs the one before it — and a finished chapter can always be
+  entered again.
+- Chapter 9 needs Chapter 8 finished **and** all five Signalnischen.
+
+Walking back into a finished sector opens **Nachsuche**: the room in its final
+state, the puzzle already solved, the optional things still there, and a way
+out that does not run through a door you already opened. Nothing points at what
+you missed — you still have to look.
 
 ---
 
-## Signal Nische (The Transmission collectible)
+## Signalnischen
 
-Place this in a chapter scene. Player must discover and click it:
-
-```javascript
-// When player finds the hidden area:
-GameEngine.signals.find('sig_03'); // triggers toast + achievement check
-```
+Five optional fragments, one each in chapters 3–7. Alone each is a scrap of a
+degraded transmission; together they are a single warning, and Chapter 9 is
+where they become one. They are never required for the main coordinates.
 
 ---
 
-## State Flags
+## Coordinates
 
-```javascript
-GameEngine.state.setFlag('gate_1_open');
-GameEngine.state.hasFlag('gate_1_open'); // → true/false
-```
+The main Zieldaten are reconstructed at the end of Chapter 8, regardless of how
+many fragments were found. The Bonuszieldaten belong to Chapter 9 and come from
+somewhere else entirely. The two are stored separately and neither ever
+overwrites the other; both persist, so nothing has to be replayed to read them
+back.
 
----
-
-## Guest Character Colors (CSS variables)
-
-| Character   | Variable         | Chapter |
-|-------------|------------------|---------|
-| F-RØ5CHI    | `--accent-g1`    | 2       |
-| L-UX        | `--accent-g2`    | 3       |
-| J4W-A3      | `--accent-g3`    | 4       |
-| B-RADF1SH   | `--accent-g4`    | 5       |
-| T-FLON14    | `--accent-g5`    | 6       |
-| ASP-1024    | `--accent-g6`    | 7       |
-| AGN-H3R     | `--accent-g7`    | 8       |
+Neither set is a readable string in the source. Both live in
+`GameEngine.calibration` as shifted fragments that are put back together at the
+moment they are earned. This is not security — static JavaScript never is — it
+only keeps the answer from falling out of a search. **`COORDS.md` is the one
+document you need before release.**
 
 ---
 
-## Geocaching Compliance Checklist
+## Saves
 
-- ✅ No user tracking or analytics
-- ✅ No cookies beyond localStorage (progress only, user-controlled)
-- ✅ No external data sent anywhere
-- ✅ No login required
-- ✅ Works fully offline after first load (no backend)
-- ✅ Coordinates only revealed after all chapters complete
+One key, `ka2_save_v1`, in `localStorage`. Nothing leaves the browser.
+
+`migrate()` carries older saves forward: chapters, signals, achievements and
+flags are never dropped, loose per-chapter keys move into their bucket, and
+wrong shapes are repaired rather than discarded. The schema version is separate
+from the version the game calls itself, so releasing a new build never resets
+anybody. A finished run that has somehow lost its coordinates rebuilds them.
+
+`GameEngine.state.exportSave()` / `importSave()` move a run between browsers.
+
+If `localStorage` is unavailable the game still plays; it simply cannot
+remember.
 
 ---
 
-*Sie hätte abgeschaltet bleiben sollen.*
+## Writing a chapter page
+
+1. Load `css/global.css`, then the chapter's own CSS.
+2. Load `js/engine.js` before the chapter script.
+3. First line of `init()`: `if (!GameEngine.progress.require('chN')) return;`
+4. Register the chapter's art with `GameEngine.props.register({ … })` before
+   any hotspot that uses it.
+5. Chapters 5–9 build their chrome with `GameEngine.chapter.build({ … })`;
+   0–4 predate it and build their own. Both are fine — the point of the
+   redesign was that the sectors should not all feel the same.
+
+Puzzles are validated by a solver, not by comparing against a stored answer, so
+there is nothing in the source to read off. Generated instances are checked for
+a unique solution before the player ever sees them.
 
 ---
 
-**Release-Hinweis:** Alle lokalen CSS/JS-Verweise tragen einen Cache-Buster
-(`?v=JJJJMMTT`). Nach inhaltlichen Änderungen vor dem Merge die Version in
-allen HTML-Dateien anheben:
-`sed -i 's/?v=[0-9]*/?v=NEUES_DATUM/g' *.html chapter*/*.html`
+## Accessibility
+
+- V-TGM speaks English; every line carries a German subtitle.
+- Nothing is solvable only by ear. Every audio cue has a visible equivalent.
+- `prefers-reduced-motion` is respected throughout; no content is removed with
+  it, only the motion.
+- No puzzle answer depends on colour alone.
+- Dialogue can be replayed — Chapter 9 keeps a full `[ PROTOKOLL ]`.
+
+---
+
+## Credits
+
+Made by Team_Aperture — R-3MI and V-TGM. ChatGPT (Nova) and Claude were used
+as development tools. The full breakdown is in the game's own credits, which
+is where it belongs.
+
+*Ein Team_Aperture Geocaching-Projekt.*

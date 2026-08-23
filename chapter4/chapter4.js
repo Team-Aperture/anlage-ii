@@ -201,10 +201,36 @@ const Chapter4 = (() => {
   // ═══════════════════════════════════════════════════════════════
   function showTitleCard() {
     const card = document.getElementById('titleCard');
+    const revisit = GameEngine.progress.isRevisit(CHAPTER_ID);
     setTimeout(() => {
       card.classList.add('fading');
-      setTimeout(() => { card.style.display = 'none'; arrival(); }, 700);
-    }, 3000);
+      setTimeout(() => {
+        card.style.display = 'none';
+        if (revisit) nachsuche(); else arrival();
+      }, 700);
+    }, revisit ? 900 : 3000);
+  }
+
+  // Coming back to a workshop that is already running. The lock stands open,
+  // the four subsystems are done, and the things worth a second look — the
+  // bench, the drawings, that brown box nobody has claimed — are still here.
+  function nachsuche() {
+    Object.keys(S.modules).forEach(k => { S.modules[k].solved = true; S.modules[k].opened = 1; });
+    S.finalSolved = true;
+    S.started = true;
+    try { S.sigFound = GameEngine.signals.isFound('sig_02'); } catch (_) {}
+    setScene(sceneKey());
+    showRobots(true);
+    showBradfish(true);
+    try { GameEngine.music.play('ch4_ambient'); } catch (_) {}
+    loadRoom();
+    GameEngine.progress.returnBar(CHAPTER_ID);
+    say([
+      { speaker:'SYSTEM', text:'SEKTOR 04 — RÄTSELSEKTOR. Der Zentralverschluss steht offen. In der Werkstatt läuft wieder das gleichmäßige Klacken von vorher.' },
+      { speaker:'B-RADF1SH', text:'„Na? Was vergessen?"' },
+      { speaker:'R-3MI', text:'„Wir schauen nur."' },
+      { speaker:'B-RADF1SH', text:'„Machts nur. Ich bin eh da."' },
+    ]);
   }
 
   // ═══════════════════════════════════════════════════════════════

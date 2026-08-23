@@ -171,10 +171,37 @@ const Chapter3 = (() => {
   // ═══════════════════════════════════════════════════════════════
   function showTitleCard() {
     const card = document.getElementById('titleCard');
+    const revisit = GameEngine.progress.isRevisit(CHAPTER_ID);
     setTimeout(() => {
       card.classList.add('fading');
-      setTimeout(() => { card.style.display = 'none'; act1_arrival(); }, 700);
-    }, 3000);
+      setTimeout(() => {
+        card.style.display = 'none';
+        if (revisit) nachsuche(); else act1_arrival();
+      }, 700);
+    }, revisit ? 900 : 3000);
+  }
+
+  // Coming back to a sector that can see again. The network is up, L-UX is
+  // where L-UX always is, and everything worth a closer look is still here —
+  // including the lens that never settles.
+  function nachsuche() {
+    S.metLux = true;
+    S.solved = true;
+    S.lit = true;
+    try { S.sigFound = GameEngine.signals.isFound('sig_01'); } catch (_) {}
+    setScene('obs-lit');
+    setProgress(37);
+    showRobots(true);
+    showLux(true);
+    try { GameEngine.music.play('ch3_ambient'); } catch (_) {}
+    loadHotspots();
+    GameEngine.progress.returnBar(CHAPTER_ID);
+    say([
+      { speaker:'SYSTEM', text:'SEKTOR 03 — BEOBACHTUNGSSEKTOR. Die Reihen sind hell. Was hier steht, wird wieder gesehen.' },
+      { speaker:'L-UX',   text:'„Ihr seid nochmal da."' },
+      { speaker:'R-3MI',  text:'„Wir schauen uns nur um."' },
+      { speaker:'L-UX',   text:'„Gut. Genau dafür ist der Sektor gebaut."' },
+    ]);
   }
 
   // ═══════════════════════════════════════════════════════════════

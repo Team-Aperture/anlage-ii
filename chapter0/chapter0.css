@@ -57,7 +57,7 @@ html.gate-blocked body { visibility: hidden; }
 }
 .back-link:hover { color: var(--accent-system); }
 
-/* ─── PLACEHOLDER SCENE (visible until CG is loaded) ─────────── */
+/* ─── SCENE (drawn in CSS — there is no image behind this) ───── */
 .placeholder-scene {
   position: absolute;
   inset: 0;

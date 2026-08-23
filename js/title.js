@@ -533,7 +533,7 @@
     }
 
     // Start the title theme (autoplay may be blocked until the first click —
-    // the engine retries on the next user gesture). Placeholder until an mp3 exists.
+    // the engine retries on the next user gesture). Silent until an mp3 exists.
     if (typeof GameEngine !== 'undefined' && GameEngine.music) GameEngine.music.play('title');
 
     // Delete-save button — two-step confirm so it can't be hit by accident.

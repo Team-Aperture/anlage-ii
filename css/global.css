@@ -25,7 +25,7 @@
   /* Guest character accents */
   --accent-g1:  #e84a8c;   /* F-RØ5CHI  — pink */
   --accent-g2:  #e8893a;   /* L-UX      — warm orange */
-  --accent-g3:  #7ab83a;   /* J4W-A3    — (dropped) */
+  --accent-g3:  #7ab83a;   /* unused guest slot — kept so the palette stays whole */
   --accent-g4:  #f3c623;   /* B-RADF1SH — yellow fish (A-RM1N) */
   --accent-g5:  #36b8e8;   /* T-FLON14  — pan blue */
   --accent-g6:  #c7ccd6;   /* ASP-1024  — mouse light grey */

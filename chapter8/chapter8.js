@@ -942,6 +942,8 @@ const Chapter8 = (() => {
   function solveBoard() {
     if (S.solved) return;
     S.solved = true;                 // latched before anything async runs
+    // Nothing pops up over the lock-in, the reconstruction or the coordinates.
+    try { GameEngine.toasts.hold(); } catch (_) {}
     B.sel = -1;
     save();
     closeSheet();
@@ -1027,6 +1029,8 @@ const Chapter8 = (() => {
     card.appendChild(credits);
 
     later(() => archiveCheck(card, terminal), reduceMotion() ? 600 : 2600);
+    // The card is up and read; anything that was waiting may land now.
+    later(() => { try { GameEngine.toasts.release(); } catch (_) {} }, reduceMotion() ? 1200 : 5200);
   }
 
   function copyCoords() {

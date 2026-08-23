@@ -333,10 +333,32 @@ const Chapter6 = (() => {
     }
   }
 
+  // Coming back to a chamber whose model is already confirmed. A fresh series
+  // is laid out so the archive can be read again, but nothing has to be
+  // proved a second time — including the record that was never ASP's.
+  function nachsuche() {
+    S.rule = buildRule() || { p1:'pa', cond:'ca', p2:'pc' };
+    S.archive = buildArchive(S.rule);
+    S.phase = 2;
+    S.metAsp = true;
+    S.solved = true;
+    try { S.sigFound = GameEngine.signals.isFound('sig_04'); } catch (_) {}
+    S.anomalySeen = S.sigFound;
+    loadRoom();
+    GameEngine.progress.returnBar(CHAPTER_ID);
+    say([
+      { speaker:'SYSTEM', text:`VERSUCHSREIHE ${SERIES} // MODELL BESTÄTIGT. ARCHIV GEÖFFNET.` },
+      { speaker:'ASP-1024', text:'„Moin. Das Protokoll liegt noch da."' },
+      { speaker:'R-3MI',  text:'„Wir schauen nur."' },
+      { speaker:'ASP-1024', text:'„Dafür ist es da."' },
+    ]);
+  }
+
   // ═══════════════════════════════════════════════════════════════
   // OPENING — the experiment is already running
   // ═══════════════════════════════════════════════════════════════
   function begin() {
+    if (GameEngine.progress.isRevisit(CHAPTER_ID)) { nachsuche(); return; }
     const d = loadCheckpoint();
     if (d) {
       S.rule = d.rule; S.archive = d.archive; S.tests = d.tests;

@@ -202,7 +202,9 @@ const Chapter7 = (() => {
     }
 
     if (S.solved) {
-      addHotspot({ prop:'door', x:44, y:60, w:13, h:34,
+      // Left of the counterfeit panel on purpose: the two used to overlap, and
+      // the door covered the one thing a player might still be looking for.
+      addHotspot({ prop:'door', x:36, y:64, w:12, h:30,
         label:'SEKTOR 08', aria:'Sektor 08 betreten', fn:() => finishChapter() });
     }
   }
@@ -211,6 +213,7 @@ const Chapter7 = (() => {
   // ACT 1 — the chapter opens by claiming it is over
   // ═══════════════════════════════════════════════════════════════
   function begin() {
+    if (GameEngine.progress.isRevisit(CHAPTER_ID)) { nachsuche(); return; }
     const d = loadCheckpoint();
     if (d) {
       S.act = d.act; S.fakeCompleteSeen = true; S.metFaxn = !!d.metFaxn;
@@ -227,6 +230,27 @@ const Chapter7 = (() => {
       return;
     }
     fakeComplete();
+  }
+
+  // Coming back to a sector that is already honest. Nothing here re-runs: the
+  // anchors stand, the interface has stopped lying, and the counterfeit panel
+  // is still there for anyone who walked past it the first time.
+  function nachsuche() {
+    S.act = 6;
+    S.fakeCompleteSeen = true;
+    S.metFaxn = true;
+    S.anchors = { labels:true, displays:true, actions:true };
+    S.bsodSeen = true;
+    S.integritySeen = true;
+    S.solved = true;
+    try { S.sigFound = GameEngine.signals.isFound('sig_05'); } catch (_) {}
+    loadRoom();
+    GameEngine.progress.returnBar(CHAPTER_ID);
+    say([
+      { speaker:'SYSTEM', text:'SEKTOR 07 // DARSTELLUNGSEBENE STABIL.' },
+      { speaker:'FAX-N',  text:'„Ah. Wieder da. Diesmal stimmt alles, was hier steht."' },
+      { speaker:'R-3MI',  text:'„Das ist irgendwie unheimlicher als vorher."' },
+    ]);
   }
 
   function fakeComplete() {

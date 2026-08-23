@@ -244,6 +244,65 @@ const GameEngine = (() => {
 
 
   // ═══════════════════════════════════════════════════════════════
+  // TOASTS
+  // One queue for everything that pops up. Two rules: never more than one on
+  // screen, and never over a line of dialogue or a card the player is reading.
+  // A moment the game spent an hour building is worth more than an instant
+  // notification, so the notification waits.
+  // ═══════════════════════════════════════════════════════════════
+  const toasts = (() => {
+    const q = [];
+    let showing = null;
+    let holds = 0;
+    let timer = null;
+
+    function busy() {
+      if (holds > 0) return true;
+      const dlg = document.querySelector('.dlg-container');
+      if (dlg && dlg.classList.contains('visible')) return true;
+      // a card the player is reading right now
+      return !!document.querySelector('.chapter-complete:not(.hidden), .end-card.visible, .cine-credits.visible, .stinger.visible');
+    }
+
+    function push(build, life) {
+      q.push({ build, life: life || 4200 });
+      pump();
+    }
+
+    function pump() {
+      if (timer) return;
+      timer = setInterval(step, 350);
+      step();
+    }
+
+    function step() {
+      if (showing || !q.length) {
+        if (!q.length && !showing && timer) { clearInterval(timer); timer = null; }
+        return;
+      }
+      if (busy()) return;
+      const item = q.shift();
+      const node = item.build();
+      if (!node) return;
+      showing = node;
+      document.body.appendChild(node);
+      setTimeout(() => {
+        node.classList.remove('glitching');
+        node.classList.add('hiding');
+        node.addEventListener('animationend', () => { node.remove(); if (showing === node) showing = null; }, { once: true });
+        setTimeout(() => { node.remove(); if (showing === node) showing = null; }, 1200);
+      }, item.life);
+    }
+
+    // For a beat that must not be interrupted at all, even between lines.
+    function hold()    { holds++; }
+    function release() { holds = Math.max(0, holds - 1); pump(); }
+
+    return { push, hold, release };
+  })();
+
+
+  // ═══════════════════════════════════════════════════════════════
   // PROGRESS
   // One place that knows the running order of the facility: which sector
   // comes next, whether the player may walk into one, and how far the
@@ -427,7 +486,6 @@ const GameEngine = (() => {
       list.push(id);
       state.set('achievementsUnlocked', list);
       _showToast(def);
-      try { audio.achievement(); } catch (_) {}
       if (id !== 'ch9_complete') checkPlatinum();
     }
 
@@ -445,20 +503,16 @@ const GameEngine = (() => {
     }
 
     function _showToast(def) {
-      const old = document.querySelector('.achievement-toast');
-      if (old) old.remove();
-
-      const t = document.createElement('div');
-      t.className = 'achievement-toast';
-      t.innerHTML = `
-        <div class="toast-label">ERFOLG FREIGESCHALTET</div>
-        <div class="toast-title">${def.icon} ${def.title}</div>
-        <div class="toast-desc">${def.desc}</div>
-      `;
-      document.body.appendChild(t);
-      setTimeout(() => {
-        t.classList.add('hiding');
-        t.addEventListener('animationend', () => t.remove(), { once: true });
+      toasts.push(() => {
+        const t = document.createElement('div');
+        t.className = 'achievement-toast';
+        t.innerHTML = `
+          <div class="toast-label">ERFOLG FREIGESCHALTET</div>
+          <div class="toast-title">${def.icon} ${def.title}</div>
+          <div class="toast-desc">${def.desc}</div>
+        `;
+        try { audio.achievement(); } catch (_) {}
+        return t;
       }, 4200);
     }
 
@@ -545,56 +599,21 @@ const GameEngine = (() => {
     }
 
     function _showDiscovery(def) {
-      try { audio.signal(); } catch (_) {}
-      const t = document.createElement('div');
-      t.className = 'signal-toast glitching';
-      t.innerHTML = `
-        <div class="toast-label">SIGNALNISCHE ENTDECKT</div>
-        <div class="toast-num">[ ${def.number} ]</div>
-        <div class="toast-title" data-text="${def.title}">${def.title}</div>
-        <div class="toast-text">${def.text}</div>
-      `;
-      document.body.appendChild(t);
-      setTimeout(() => {
-        // Drop .glitching FIRST: its rule is declared after .hiding with equal
-        // specificity, so leaving it on would win the cascade, toastOut would
-        // never run, animationend would never fire and the toast would stay
-        // on screen forever.
-        t.classList.remove('glitching');
-        t.classList.add('hiding');
-        t.addEventListener('animationend', () => t.remove(), { once: true });
-        setTimeout(() => t.remove(), 1200);   // belt-and-braces: never get stuck
+      toasts.push(() => {
+        const t = document.createElement('div');
+        t.className = 'signal-toast glitching';
+        t.innerHTML = `
+          <div class="toast-label">SIGNALNISCHE ENTDECKT</div>
+          <div class="toast-num">[ ${def.number} ]</div>
+          <div class="toast-title" data-text="${def.title}">${def.title}</div>
+          <div class="toast-text">${def.text}</div>
+        `;
+        try { audio.signal(); } catch (_) {}
+        return t;
       }, 5000);
-    }
-
-    // Chapter pages carry no overlay markup, so build it on demand — the
-    // Signalarchiv has to be reachable from the end of Chapter 8 too.
-    function _ensurePanel() {
-      let back = document.getElementById('overlayBackdrop');
-      if (!back) {
-        back = document.createElement('div');
-        back.className = 'overlay-backdrop hidden';
-        back.id = 'overlayBackdrop';
-        back.addEventListener('click', closeOverlay);
-        document.body.appendChild(back);
-      }
-      let panel = document.getElementById('signalOverlay');
-      if (!panel) {
-        panel = document.createElement('div');
-        panel.className = 'overlay-panel hidden';
-        panel.id = 'signalOverlay';
-        panel.setAttribute('role', 'dialog');
-        panel.setAttribute('aria-label', 'Signalnischen');
-        panel.innerHTML = `
-          <div class="overlay-card">
-            <h2 class="overlay-title">SIGNALNISCHEN</h2>
-            <p class="overlay-subtitle sys-text">OPTIONALE ARCHIVFRAGMENTE // THE TRANSMISSION</p>
-            <div class="overlay-content" id="signalList"></div>
-            <button class="ka-btn" onclick="GameEngine.closeOverlay()">[ SCHLIESSEN ]</button>
-          </div>`;
-        document.body.appendChild(panel);
-      }
-      return panel;
+      // The queue drops .glitching before .hiding: that rule is declared after
+      // .hiding at equal specificity, so leaving it on would win the cascade,
+      // toastOut would never run and the toast would sit there forever.
     }
 
     function showOverlay() {
@@ -644,7 +663,6 @@ const GameEngine = (() => {
       'SYSTEM':    { colorVar: '--accent-system',  placeholder: '◈' },
       'F-RØ5CHI':  { colorVar: '--accent-g1',      placeholder: 'F' },
       'L-UX':      { colorVar: '--accent-g2',      placeholder: 'L' },
-      'J4W-A3':    { colorVar: '--accent-g3',      placeholder: 'J' },
       'B-RADF1SH': { colorVar: '--accent-g4',      placeholder: 'B' },
       'T-FLON14':  { colorVar: '--accent-g5',      placeholder: 'T' },
       'ASP-1024':  { colorVar: '--accent-g6',      placeholder: 'A' },
@@ -661,12 +679,11 @@ const GameEngine = (() => {
       'V-TGM':     { form: 'orb',      idle: 'face-calm'   }, // sphere + test-tube, deadpan
       'SYSTEM':    { form: 'system',   idle: 'face-scan'   }, // scanlines
       'F-RØ5CHI':  { form: 'frog',     idle: 'face-bob'    }, // crowned frog, warm
-      'L-UX':      { form: 'cat',      idle: 'face-jitter' }, // cat, hyper
-      'J4W-A3':    { form: 'humanoid', idle: 'face-calm'   },
-      'B-RADF1SH': { form: 'fish',     idle: 'face-calm'   }, // fish, confident
-      'T-FLON14':  { form: 'pan',      idle: 'face-zip'    }, // pan-bot, steady
-      'ASP-1024':  { form: 'mouse',    idle: 'face-calm'   }, // mouse, methodical
-      'AGN-H3R':   { form: 'skull',    idle: 'face-calm'   }, // skull
+      'L-UX':      { form: 'cat',      idle: 'face-calm'   }, // cat, watchful and still
+      'B-RADF1SH': { form: 'fish',     idle: 'face-calm'   }, // fish, unhurried and exact
+      'T-FLON14':  { form: 'pan',      idle: 'face-calm'   }, // pan-bot, unhurried
+      'ASP-1024':  { form: 'mouse',    idle: 'face-scan'   }, // mouse, analysing
+      'AGN-H3R':   { form: 'skull',    idle: 'face-scan'   }, // skull, reading the archive
       'FAX-N':     { form: 'pumpkin',  idle: 'face-flicker'}, // jack-o'-lantern
       'TESTPERSON':{ form: 'mark',     idle: 'face-calm'   }, // no portrait, just a mark
       '???':       { form: 'carrier',  idle: 'face-flicker'}, // a carrier with nobody on it
@@ -1444,7 +1461,7 @@ const GameEngine = (() => {
 
 
   // ═══════════════════════════════════════════════════════════════
-  // MUSIC — background soundtrack loader (mp3 placeholders)
+  // MUSIC — background soundtrack loader, one track per chapter
   // Crossfades looping tracks from assets/music/. The files are
   // placeholders for now; a missing or autoplay-blocked track fails
   // silently and retries on the next user gesture. Respects the mute
@@ -1746,6 +1763,11 @@ const GameEngine = (() => {
     function start(firstScene, delay) {
       const card = el('titleCard');
       const fn = firstScene || _onStart;
+      // A title card is cinematic the first time and an obstacle every time
+      // after that, so a finished chapter gets a short one.
+      if (delay == null && _completeId) {
+        try { if (progress.isRevisit(_completeId)) delay = 900; } catch (_) {}
+      }
       setTimeout(() => {
         card.classList.add('fading');
         setTimeout(() => { card.style.display = 'none'; if (fn) fn(); }, 700);
@@ -1985,6 +2007,7 @@ const GameEngine = (() => {
     state,
     calibration,
     progress,
+    toasts,
     achievements,
     signals,
     dialogue,

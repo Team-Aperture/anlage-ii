@@ -774,6 +774,9 @@ const Chapter9 = (() => {
   // ═══════════════════════════════════════════════════════════════
   function remainder() {
     CH.hideChoices();
+    // The last of the transmission and the coordinates it carries are not
+    // interrupted by anything.
+    try { GameEngine.toasts.hold(); } catch (_) {}
     S.bonus = bonusData();
     try {
       GameEngine.state.setFlag('bonuszieldaten', true);
@@ -865,6 +868,7 @@ const Chapter9 = (() => {
     el('endCoords').textContent = S.bonus;
     wrap.classList.remove('hidden');
     requestAnimationFrame(() => wrap.classList.add('visible'));
+    later(() => { try { GameEngine.toasts.release(); } catch (_) {} }, reduceMotion() ? 600 : 2600);
   }
 
   function copyBonus() {

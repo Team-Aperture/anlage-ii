@@ -85,3 +85,26 @@ second ~0.5 above, bracketing it — the chapter *average* is the number above.
 
 These are all simple constants — tune, playtest, repeat. Ratings are estimates;
 expect to nudge them after a real playthrough.
+
+---
+
+## After the integration pass
+
+The curve above is unchanged, but three things now hold across all of it.
+
+**Nothing is gated on a secret.** The main Zieldaten come out of Chapter 8
+whatever the signal count. Only Chapter 9 needs the five fragments, and only
+Chapter 9 is optional.
+
+**A finished sector is not a wall.** Walking back into one opens Nachsuche: the
+final room, the puzzle already solved, the optional things still there, and a
+way out that does not run through a door you already opened. Nothing points at
+what was missed — the search is still a search, only the repetition is gone.
+This is what stops a missed Signalnische from costing a whole chapter.
+
+**Difficulty is never the interface.** Every hard thing in the game is hard
+because of what it asks you to work out. Where a chapter randomises an
+instance, the instance is verified solvable and unique before the player sees
+it; where a chapter gives feedback, it is qualitative rather than a number that
+can be climbed. If a player is confused about *what they can do* rather than
+*what the answer is*, that is a bug in the chapter, not its rating.
