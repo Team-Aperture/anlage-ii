@@ -15,13 +15,21 @@
 
   <!-- The shared chrome (sys-bar, title card, scene, robots, choices, hint bar,
        completion card) is built by GameEngine.chapter.build() in chapter7.js.
-       Everything below is this sector's own — and some of it is lying. -->
+       Everything below is this sector's own — and some of it is lying.
+
+       Every element that imitates real facility chrome carries
+       data-fictional-ui="…". The attribute is the boundary: inside it a
+       panel is allowed to claim things that are not true, and outside it
+       nothing may. Nothing in a data-fictional-ui subtree writes to the
+       save, unlocks an achievement or opens a sector — check that before
+       moving one of these, and never add the attribute to a control that
+       actually does something. -->
 
   <!-- ════════════════════════════════════════════════════════════
        The chapter opens by claiming to be over. Presentation only:
        nothing here touches the save, the achievement or Sektor 08.
        ════════════════════════════════════════════════════════════ -->
-  <div class="fake-complete hidden" id="fakeComplete">
+  <div class="fake-complete hidden" id="fakeComplete" data-fictional-ui="abschlusskarte">
     <div class="fc-card">
       <div class="fc-header sys-text">KAPITEL 07 ABGESCHLOSSEN</div>
       <div class="fc-title">SEKTOR 08 FREIGEGEBEN</div>
@@ -36,7 +44,7 @@
        never claims anything happened to the player's device, and it
        runs once.
        ════════════════════════════════════════════════════════════ -->
-  <div class="bsod hidden" id="bsod" role="alertdialog" aria-label="KA-II Fehlerbildschirm">
+  <div class="bsod hidden" id="bsod" data-fictional-ui="fehlerbildschirm" role="alertdialog" aria-label="KA-II Fehlerbildschirm">
     <div class="bsod-inner">
       <p class="bsod-face" aria-hidden="true">:(</p>
       <p class="bsod-lead">KA-II ist auf ein Problem gestoßen.</p>
@@ -54,7 +62,7 @@
 
   <!-- Post-reboot integrity report — corrupted, dull, and wrong about a
        great many things. -->
-  <div class="integrity hidden" id="integrity" role="dialog" aria-label="Systemintegrität">
+  <div class="integrity hidden" id="integrity" data-fictional-ui="integritaetsbericht" role="dialog" aria-label="Systemintegrität">
     <div class="int-card">
       <p class="int-boot sys-text">KA-II<br>REFERENZSYSTEM…<br>PRÜFUNG…</p>
       <p class="int-h sys-text">SYSTEMINTEGRITÄT WIRD GEPRÜFT</p>

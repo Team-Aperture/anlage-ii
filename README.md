@@ -159,6 +159,12 @@ Puzzles are validated by a solver, not by comparing against a stored answer, so
 there is nothing in the source to read off. Generated instances are checked for
 a unique solution before the player ever sees them.
 
+Chapter 7 is the one sector whose interface lies to the player, and it says so
+in its own markup: every element that imitates real facility chrome carries
+`data-fictional-ui="…"`. Inside that boundary a panel may claim things that are
+not true; outside it nothing may, and nothing inside it writes to the save,
+unlocks an achievement or opens a sector.
+
 ---
 
 ## Accessibility
