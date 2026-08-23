@@ -287,6 +287,10 @@ const Chapter0 = (() => {
     doorRead:   false,
     unlocked:   false,
     introDone:  false,
+
+    // Walking back into a sector that is already behind the player. Nothing
+    // here may re-run the ending they have already been given.
+    revisit:    false,
   };
 
   // ═══════════════════════════════════════════════════════════════
@@ -446,8 +450,10 @@ const Chapter0 = (() => {
 
       try { GameEngine.music.play('ch0_ambient'); } catch (_) {}
 
-      const alreadyOpen = GameEngine.state.isPuzzleSolved(PUZZLE_ID)
-                       || GameEngine.state.isChapterComplete(CHAPTER_ID);
+      // Solving the ring is not the same as having walked through the door:
+      // only a finished chapter counts as a second visit.
+      S.revisit = GameEngine.state.isChapterComplete(CHAPTER_ID);
+      const alreadyOpen = GameEngine.state.isPuzzleSolved(PUZZLE_ID) || S.revisit;
 
       if (alreadyOpen) startReturning();
       else            startFirstVisit();
@@ -477,6 +483,7 @@ const Chapter0 = (() => {
   function startReturning() {
     S.unlocked = true;
     setAwake(true);
+    if (S.revisit) { try { GameEngine.progress.returnBar(CHAPTER_ID); } catch (_) {} }
     // Safety net: if a prior visit solved the ring but the tab closed before
     // the (delayed, queued-after-the-quiet-moment) achievement toast fired,
     // this catches it on return. unlock() is idempotent — no-op if already
@@ -578,6 +585,18 @@ const Chapter0 = (() => {
   }
 
   function clickDoor() {
+    // On a second visit the seal is simply open, and the way through leads
+    // where it says it leads.
+    if (S.revisit) {
+      const href = (() => {
+        try { return GameEngine.progress.href('ch1'); } catch (_) { return '../chapter1/chapter1.html'; }
+      })();
+      GameEngine.dialogue.load([
+        { speaker: 'SYSTEM', text: 'SCHLEUSE // FREIGEGEBEN.' },
+        { speaker: 'SYSTEM', text: 'SEKTOR 01 // ERREICHBAR.' },
+      ], () => { try { GameEngine.fx.leave(href); } catch (_) { location.href = href; } });
+      return;
+    }
     if (S.unlocked) {
       GameEngine.dialogue.load([
         { speaker: 'SYSTEM', text: 'SCHLEUSE // FREIGEGEBEN.' },
