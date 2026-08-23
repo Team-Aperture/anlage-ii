@@ -446,6 +446,31 @@ const GameEngine = (() => {
       bar.querySelector('#nsSignals').addEventListener('click', () => {
         try { signals.showOverlay(); } catch (_) {}
       });
+      liftClear(bar);
+      window.addEventListener('resize', () => liftClear(bar));
+    }
+
+    // Some sectors keep their own strip along the bottom edge — a route
+    // readout, an objective. The Nachsuche bar sits above whatever is already
+    // there rather than on top of it, on any screen width.
+    function liftClear(bar) {
+      try {
+        bar.style.bottom = '';
+        const vh = window.innerHeight;
+        let need = 0;
+        document.querySelectorAll('body *').forEach(e => {
+          if (e === bar || bar.contains(e) || e.contains(bar)) return;
+          const cs = getComputedStyle(e);
+          if (cs.position !== 'fixed' || cs.display === 'none' || cs.visibility === 'hidden') return;
+          if (parseFloat(cs.opacity) === 0) return;
+          const q = e.getBoundingClientRect();
+          if (!q.width || !q.height) return;
+          if (q.height > vh * 0.6) return;              // a full-page layer, not a strip
+          if (q.bottom < vh - 28 || q.top > vh) return; // not anchored to the bottom edge
+          need = Math.max(need, vh - q.top);
+        });
+        if (need > 0) bar.style.bottom = `calc(${Math.round(need)}px + var(--sp-sm) + env(safe-area-inset-bottom, 0px))`;
+      } catch (_) {}
     }
 
     return {

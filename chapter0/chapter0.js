@@ -483,7 +483,12 @@ const Chapter0 = (() => {
   function startReturning() {
     S.unlocked = true;
     setAwake(true);
-    if (S.revisit) { try { GameEngine.progress.returnBar(CHAPTER_ID); } catch (_) {} }
+    if (S.revisit) {
+      // Nothing left to aim at and nothing left to hint: the objective HUD
+      // would only sit under the Nachsuche bar repeating a solved task.
+      document.querySelector('.chapter-hud')?.classList.add('hidden');
+      try { GameEngine.progress.returnBar(CHAPTER_ID); } catch (_) {}
+    }
     // Safety net: if a prior visit solved the ring but the tab closed before
     // the (delayed, queued-after-the-quiet-moment) achievement toast fired,
     // this catches it on return. unlock() is idempotent — no-op if already
