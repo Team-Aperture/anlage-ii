@@ -25,7 +25,7 @@ const GameEngine = (() => {
   // moved on. Unknown keys survive, missing keys are filled in, and the
   // schema version is separate from the version the game calls itself.
   // ═══════════════════════════════════════════════════════════════
-  const SCHEMA = 2;
+  const SCHEMA = 3;
 
   const state = (() => {
     const defaults = {
@@ -68,6 +68,13 @@ const GameEngine = (() => {
       d.chaptersCompleted    = [...new Set(d.chaptersCompleted.filter(x => typeof x === 'string'))];
       d.signalsFound         = [...new Set(d.signalsFound.filter(x => typeof x === 'string'))];
       d.achievementsUnlocked = [...new Set(d.achievementsUnlocked.filter(x => typeof x === 'string'))];
+
+      if (from < 3) {
+        // Mute used to sit loose at the top level next to the progress arrays.
+        // It is a preference, so it belongs in `settings` with the rest.
+        if (typeof d.muted === 'boolean') { d.settings.muted = d.muted; }
+        delete d.muted;
+      }
 
       if (from < 2) {
         // v1 had no chapterState / calibration / settings buckets and stored
@@ -127,6 +134,13 @@ const GameEngine = (() => {
     function hasFlag(f)         { return !!_data.flags[f]; }
     function canPersist()       { return _persist; }
 
+    // Player preferences — mute, and whatever else earns a switch later.
+    function setting(key, value) {
+      if (value === undefined) return _data.settings[key];
+      _data.settings[key] = value;
+      save();
+    }
+
     // Per-chapter resumable state, so a refresh never costs a session.
     function chapter(id, value) {
       if (value === undefined) return _data.chapterState[id];
@@ -181,7 +195,7 @@ const GameEngine = (() => {
 
     load();
     return {
-      load, save, get, set, setFlag, hasFlag, canPersist, chapter,
+      load, save, get, set, setFlag, hasFlag, canPersist, chapter, setting,
       markChapterComplete, isChapterComplete,
       markPuzzleSolved, isPuzzleSolved, reset, repair,
       exportSave, importSave, SCHEMA,
@@ -1484,7 +1498,7 @@ const GameEngine = (() => {
 
     function toggleMute() {
       muted = !muted;
-      try { state.set('muted', muted); } catch (_) {}
+      try { state.setting('muted', muted); } catch (_) {}
       try { music.setMuted(muted); } catch (_) {}   // music is defined just below; live at call time
       if (!muted) click();
       return muted;
@@ -2035,6 +2049,144 @@ const GameEngine = (() => {
     panel.querySelector('.credits-content').scrollTop = 0;
   }
 
+
+  // ═══════════════════════════════════════════════════════════════
+  // SPIELSTAND
+  // Everything the player can do to their own save, in one place: see what
+  // it holds, carry it to another device, and — spelled out rather than
+  // implied — erase it.
+  // ═══════════════════════════════════════════════════════════════
+  function showSaveManager() {
+    let back = document.getElementById('overlayBackdrop');
+    if (!back) {
+      back = document.createElement('div');
+      back.className = 'overlay-backdrop hidden';
+      back.id = 'overlayBackdrop';
+      back.addEventListener('click', closeOverlay);
+      document.body.appendChild(back);
+    }
+    let panel = document.getElementById('saveOverlay');
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.className = 'overlay-panel hidden';
+      panel.id = 'saveOverlay';
+      panel.setAttribute('role', 'dialog');
+      panel.setAttribute('aria-label', 'Spielstand verwalten');
+      document.body.appendChild(panel);
+    }
+
+    const chapters = (state.get('chaptersCompleted') || []).filter(c => c !== 'ch9').length;
+    const sigs     = (state.get('signalsFound') || []).length;
+    const achs     = (state.get('achievementsUnlocked') || []).length;
+    const ziel     = !!state.hasFlag('zieldaten');
+    const bonus    = !!state.hasFlag('bonuszieldaten');
+
+    const warn = state.canPersist() ? '' : `
+      <p class="sv-warn">Dieser Browser lässt zurzeit keine Speicherung zu — vermutlich
+        privates Fenster oder blockierte Website-Daten. Du kannst weiterspielen, aber der
+        Fortschritt ist beim Schließen des Tabs verloren. Sichere ihn unten als Code.</p>`;
+
+    panel.innerHTML = `
+      <div class="overlay-card save-card">
+        <h2 class="overlay-title">SPIELSTAND</h2>
+        <p class="overlay-subtitle sys-text">LOKALE ABLAGE // NUR IN DIESEM BROWSER</p>
+        <div class="overlay-content save-content">
+          ${warn}
+
+          <section class="sv-block">
+            <h3 class="sv-head sys-text">GESPEICHERT IST</h3>
+            <ul class="sv-list">
+              <li>Abgeschlossene Sektoren: <b>${chapters} / 9</b></li>
+              <li>Gefundene Fremdsignale: <b>${sigs} / 5</b></li>
+              <li>Freigeschaltete Erfolge: <b>${achs}</b></li>
+              <li>Zieldaten: <b>${ziel ? 'vorhanden' : 'noch nicht'}</b></li>
+              ${bonus ? '<li>Bonuszieldaten: <b>vorhanden</b></li>' : ''}
+            </ul>
+          </section>
+
+          <section class="sv-block">
+            <h3 class="sv-head sys-text">SICHERN</h3>
+            <p class="sv-note">Dieser Code enthält deinen gesamten Fortschritt. Kopiere ihn,
+              um ihn auf einem anderen Gerät fortzusetzen.</p>
+            <textarea class="sv-field" id="svExport" readonly rows="3"
+                      aria-label="Sicherungscode">${state.exportSave()}</textarea>
+            <button class="ka-btn" id="svCopy">[ CODE KOPIEREN ]</button>
+          </section>
+
+          <section class="sv-block">
+            <h3 class="sv-head sys-text">WIEDERHERSTELLEN</h3>
+            <p class="sv-note">Einen gesicherten Code einsetzen. Der aktuelle Fortschritt in
+              diesem Browser wird dabei ersetzt.</p>
+            <textarea class="sv-field" id="svImport" rows="3"
+                      aria-label="Sicherungscode einsetzen"
+                      placeholder="Code hier einfügen"></textarea>
+            <button class="ka-btn" id="svLoad">[ EINSPIELEN ]</button>
+            <p class="sv-msg" id="svMsg" role="status" aria-live="polite"></p>
+          </section>
+
+          <section class="sv-block sv-danger">
+            <h3 class="sv-head sys-text">LÖSCHEN</h3>
+            <p class="sv-note">Gelöscht werden: alle abgeschlossenen Sektoren, alle gefundenen
+              Fremdsignale, alle Erfolge, die Zieldaten und der Zugang zu Sektor 00. Die Anlage
+              startet danach wieder bei null. Das lässt sich nicht rückgängig machen — sichere
+              vorher oben den Code.</p>
+            <button class="ka-btn danger" id="svWipe">[ SPIELSTAND LÖSCHEN ]</button>
+          </section>
+
+        </div>
+        <button class="ka-btn" onclick="GameEngine.closeOverlay()">[ SCHLIESSEN ]</button>
+      </div>`;
+
+    const msg = t => { const m = panel.querySelector('#svMsg'); if (m) m.textContent = t; };
+
+    panel.querySelector('#svCopy')?.addEventListener('click', () => {
+      const f = panel.querySelector('#svExport');
+      f.select(); f.setSelectionRange(0, f.value.length);
+      let done = false;
+      try { done = document.execCommand('copy'); } catch (_) {}
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(f.value).then(
+          () => msg('Code kopiert.'),
+          () => msg(done ? 'Code kopiert.' : 'Kopieren nicht möglich — bitte von Hand markieren.'));
+      } else {
+        msg(done ? 'Code kopiert.' : 'Kopieren nicht möglich — bitte von Hand markieren.');
+      }
+    });
+
+    panel.querySelector('#svLoad')?.addEventListener('click', () => {
+      const t = panel.querySelector('#svImport').value;
+      if (!t.trim()) { msg('Kein Code eingegeben.'); return; }
+      if (state.importSave(t)) {
+        msg('Spielstand übernommen. Die Anlage startet neu …');
+        setTimeout(() => location.reload(), 700);
+      } else {
+        msg('Dieser Code ist unlesbar. Bitte vollständig einfügen.');
+      }
+    });
+
+    // Two taps, and the second one only counts while the warning is on screen.
+    const wipe = panel.querySelector('#svWipe');
+    if (wipe) {
+      let armed = false, timer = null;
+      wipe.addEventListener('click', () => {
+        if (armed) {
+          try { state.reset(); } catch (_) {}
+          try { sessionStorage.removeItem('ka2_session_boot_seen'); } catch (_) {}
+          wipe.textContent = '[ GELÖSCHT … ]';
+          setTimeout(() => location.reload(), 400);
+          return;
+        }
+        armed = true;
+        wipe.textContent = '[ WIRKLICH ALLES LÖSCHEN? NOCHMAL TIPPEN ]';
+        clearTimeout(timer);
+        timer = setTimeout(() => { armed = false; wipe.textContent = '[ SPIELSTAND LÖSCHEN ]'; }, 5000);
+      });
+    }
+
+    _openOverlay(panel, back);
+    panel.querySelector('.save-content').scrollTop = 0;
+  }
+
   document.addEventListener('click', e => {
     audio.resume();
     try { music._retry(); } catch (_) {}
@@ -2051,7 +2203,28 @@ const GameEngine = (() => {
     // Now that every module exists, let a finished save rebuild anything it
     // is missing (calibration lives below state, so this cannot run earlier).
     try { state.repair(); state.save(); } catch (_) {}
-    audio.setMuted(!!state.get('muted'));
+    audio.setMuted(!!state.setting('muted'));
+
+    // §138: a browser that refuses to store anything is survivable, but the
+    // player has to know before they spend an evening on it. Once per session.
+    if (!state.canPersist()) {
+      let told = false;
+      try { told = !!sessionStorage.getItem('ka2_storage_warned'); } catch (_) {}
+      if (!told) {
+        try { sessionStorage.setItem('ka2_storage_warned', '1'); } catch (_) {}
+        setTimeout(() => toasts.push(() => {
+          const t = document.createElement('div');
+          t.className = 'achievement-toast toast-warn';
+          t.innerHTML = `
+            <div class="toast-label">SPEICHER NICHT VERFÜGBAR</div>
+            <div class="toast-title">⚠ Fortschritt wird nicht behalten</div>
+            <div class="toast-desc">Dieser Browser lässt keine Website-Daten zu. Du kannst
+              spielen, aber beim Schließen ist alles weg. Unter [ SPIELSTAND ] gibt es einen
+              Sicherungscode.</div>`;
+          return t;
+        }, 7000), 2000);
+      }
+    }
     const wake = () => audio.resume();
     document.addEventListener('pointerdown', wake);
     document.addEventListener('keydown', wake);
@@ -2082,6 +2255,7 @@ const GameEngine = (() => {
     chapter,
     closeOverlay,
     showCredits,
+    showSaveManager,
   };
 
 })();

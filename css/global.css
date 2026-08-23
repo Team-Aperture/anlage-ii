@@ -356,7 +356,10 @@ body {
 .dlg-container {
   position: fixed;
   bottom: 0; left: 0; right: 0;
+  /* The gesture bar on a modern phone sits over the bottom edge: keep the
+     dialogue box clear of it. */
   padding: var(--sp-md);
+  padding-bottom: calc(var(--sp-md) + env(safe-area-inset-bottom, 0px));
   /* Above puzzle modals (200) so mid-puzzle hint dialogue is never trapped
      behind a modal's dark backdrop; below toasts (300) and chapter-end (400). */
   z-index: 210;
@@ -583,6 +586,10 @@ body {
   border-left-color: var(--accent-system);
   top: calc(var(--sp-lg) + 160px);
 }
+
+/* A warning, not a reward: same slot, different voice. */
+.achievement-toast.toast-warn { border-left-color: var(--accent-r3mi); max-width: 330px; }
+.achievement-toast.toast-warn .toast-label { color: var(--accent-r3mi); }
 
 .achievement-toast.hiding,
 .signal-toast.hiding {
@@ -1155,3 +1162,50 @@ body.fx-leaving { animation: fxLeave 0.42s ease forwards; }
 
 /* A fragment in a sector the player has not reached yet: stated, not linked. */
 .sig-locked { font-size: 10px; letter-spacing: .14em; color: var(--text-dim); margin-top: 6px; }
+
+/* ─── SPIELSTAND ─────────────────────────────────────────────
+   One panel for everything the player owns: what the save holds, a code to
+   carry it elsewhere, and an erase that says out loud what it erases.
+   ──────────────────────────────────────────────────────────── */
+.save-card { max-width: 600px; width: 100%; }
+.save-content {
+  max-height: min(62vh, 460px);
+  overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-width: thin;
+}
+
+.sv-block { padding: var(--sp-md) 0; border-bottom: 1px solid var(--bdr-dim); }
+.sv-block:last-child { border-bottom: none; }
+.sv-head { font-size: 10px; letter-spacing: .26em; color: var(--text-dim); margin-bottom: var(--sp-sm); }
+
+.sv-list { list-style: none; margin: 0; padding: 0; }
+.sv-list li { font-size: 13px; color: var(--text-secondary); padding: 3px 0; }
+.sv-list b { color: var(--text-primary); font-weight: 400; }
+
+.sv-note { font-size: 12px; line-height: 1.55; color: var(--text-secondary); margin-bottom: var(--sp-sm); }
+.sv-msg  { font-size: 12px; color: var(--accent-system); margin-top: var(--sp-sm); min-height: 1.2em; }
+
+.sv-warn {
+  font-size: 12px; line-height: 1.55;
+  color: var(--accent-r3mi);
+  border: 1px solid var(--accent-r3mi);
+  padding: var(--sp-sm) var(--sp-md);
+  margin-bottom: var(--sp-md);
+}
+
+.sv-field {
+  display: block; width: 100%;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px; line-height: 1.5;
+  color: var(--text-secondary);
+  background: var(--bg-deep, #0a0c0b);
+  border: 1px solid var(--bdr-mid);
+  padding: var(--sp-sm);
+  margin-bottom: var(--sp-sm);
+  resize: vertical;
+  word-break: break-all;
+}
+.sv-field:focus { outline: none; border-color: var(--accent-system); }
+
+.sv-danger .sv-note { color: var(--text-secondary); }
