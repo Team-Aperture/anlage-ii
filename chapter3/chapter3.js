@@ -420,7 +420,7 @@ const Chapter3 = (() => {
     say([
       { speaker:'SYSTEM', text:'Eine einzelne Linse flackert anders als die anderen. Nicht zufällig. Ein Rhythmus.' },
       { speaker:'SYSTEM', text:'Dahinter, schwach eingebrannt, ein Textfragment.' },
-      { speaker:'V-TGM',  text:'"…not everything that helps wants to save."', subtitle:'…nicht alles, was hilft, will retten.' },
+      { speaker:'V-TGM',  text:'"…not everything that helps wants to save. two units are listening in…"', subtitle:'…nicht alles, was hilft, will retten. zwei Einheiten hören mit.' },
       { speaker:'SYSTEM', text:'Kurze Stille.' },
       { speaker:'L-UX',   text:'„Das ist neu."' },
       { speaker:'R-3MI',  text:'„Neu?"' },
@@ -1355,10 +1355,7 @@ const Chapter3 = (() => {
 
   function init() {
     try { GameEngine.props.register(CH3_ART); } catch (_) {}
-    if (!GameEngine.state.isChapterComplete('ch2')) {
-      location.replace('../chapter2/chapter2.html');
-      return;
-    }
+    if (!GameEngine.progress.require('ch3')) return;
     setProgress(24);
 
     document.getElementById('belObserveBtn')?.addEventListener('click', () => observe());

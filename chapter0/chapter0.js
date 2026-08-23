@@ -427,10 +427,7 @@ const Chapter0 = (() => {
   function init() {
     // Authorisation gate — the head script redirects first; this is the
     // in-engine backstop in case the save was cleared between the two.
-    if (!GameEngine.state.hasFlag('ka1_verified')) {
-      location.replace('../access.html');
-      return;
-    }
+    if (!GameEngine.progress.require('ch0')) return;
 
     try {
       // Chapter-local artwork first: every hotspot below resolves its

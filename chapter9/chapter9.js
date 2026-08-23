@@ -26,17 +26,13 @@ const Chapter9 = (() => {
 
   // ═══════════════════════════════════════════════════════════════
   // BONUSZIELDATEN
-  // Held as five fragments, one per Fremdsignal, stored shifted. Only the
-  // complete set puts them back together.
+  // The fragments and the rebuilding live in GameEngine.calibration, next to
+  // the main set but kept strictly apart from it.
   //
-  // PLATZHALTER — vor Veröffentlichung ersetzen. Anleitung: COORDS.md
+  // The authorisation on file from the first Anlage: the player typed it
+  // themselves to get in here, so the record only reads it back. Stored
+  // shifted so it is not sitting in a second file in the clear.
   // ═══════════════════════════════════════════════════════════════
-  const BKAL = [
-    '001f00710061006100e1', '007c006c006c0072006c006c', '0057004700d000470022',
-    '005200420042004200c20052', '004d004d0053004d004d004d',
-  ];
-  // The authorisation on file from the first Anlage. The player has typed it
-  // themselves to get in here; the record only reads it back.
   const AUTH = ['00690062', '006d006a', '0055005e', '00460045'];
 
   function unshift(list, j) {
@@ -46,6 +42,9 @@ const Chapter9 = (() => {
     return s;
   }
   function joinTokens(list) { return list.map((_, j) => unshift(list, j)).join(''); }
+  function bonusData() {
+    try { return GameEngine.calibration.reconstructBonus(); } catch (_) { return ''; }
+  }
 
   // ═══════════════════════════════════════════════════════════════
   // STATE
@@ -775,7 +774,7 @@ const Chapter9 = (() => {
   // ═══════════════════════════════════════════════════════════════
   function remainder() {
     CH.hideChoices();
-    S.bonus = joinTokens(BKAL);
+    S.bonus = bonusData();
     try {
       GameEngine.state.setFlag('bonuszieldaten', true);
       GameEngine.state.set('bonuszieldaten_text', S.bonus);
@@ -892,13 +891,94 @@ const Chapter9 = (() => {
   const STINGER = [
     { sys:true, k:'EXTERNE VERBINDUNG:', v:'GETRENNT' },
     { sys:true, k:'TESTPERSON:', v:'HAT ANLAGE VERLASSEN' },
-    { who:'R-3MI', t:'„Glaubst du, die kommt wieder?"' },
+    { who:'R-3MI', t:'„Glaubst du, unsere Testperson kommt wieder?"' },
     { who:'V-TGM', t:'"Yes."' },
     { who:'R-3MI', t:'„Wie sicher?"' },
     { who:'V-TGM', t:'"Very."' },
   ];
 
-  function leave() {
+  // ═══════════════════════════════════════════════════════════════
+  // CREDITS — one card at a time, role first, then who
+  // ═══════════════════════════════════════════════════════════════
+  const CARDS = [
+    { role:'Konzept & Kreative Leitung', name:'Team_Aperture', team:true },
+    { role:'Rätseldesign', name:'R-3MI', cls:'cc-r' },
+    { role:'Geschichte & Dialoge', name:'R-3MI · V-TGM', cls:'cc-rv' },
+    { role:'Kreatives Design', name:'V-TGM · R-3MI', cls:'cc-vr' },
+    { role:'Musik', name:'R-3MI', cls:'cc-r' },
+    { role:'Code-Entwicklung & Technisches Design', name:'Nova — ChatGPT von OpenAI' },
+    { role:'Implementierung & Integration', name:'Claude — Anthropic' },
+    { role:'Gastroboter-Inspiration', name:'F-RØ5CHI · L-UX · B-RADF1SH · T-FLON14 · ASP-1024 · FAX-N · AGN-H3R', small:true },
+    { role:'Danke fürs Testen.', name:'Team_Aperture', team:true },
+  ];
+
+  let creditsDone = null;
+
+  function runCredits(after) {
+    creditsDone = after;
+    try { GameEngine.music.play('credits'); } catch (_) {}
+    el('endCard')?.classList.add('hidden');
+    const w = el('cineCredits');
+    if (!w) { finishCredits(); return; }
+    w.classList.remove('hidden');
+    requestAnimationFrame(() => w.classList.add('visible'));
+    el('cineSkip')?.classList.add('visible');
+    playCard(0);
+  }
+
+  function playCard(i) {
+    if (creditsDone === null) return;                 // skipped
+    const stage = el('cineStage');
+    if (!stage) { finishCredits(); return; }
+    if (i >= CARDS.length) { later(finishCredits, reduceMotion() ? 200 : 900); return; }
+
+    const c = CARDS[i];
+    const fast = reduceMotion();
+    stage.innerHTML =
+        `<p class="cc-role">${esc(c.role)}</p>`
+      + `<p class="cc-name${c.team ? ' cc-team' : ''}${c.cls ? ' ' + c.cls : ''}${c.small ? ' cc-small' : ''}">`
+      + (c.team
+          ? '<span class="cc-team-a">Team</span><span class="cc-team-b">_Aperture</span>'
+          : esc(c.name))
+      + `</p>`;
+    const roleEl = stage.querySelector('.cc-role');
+    const nameEl = stage.querySelector('.cc-name');
+
+    const hold  = fast ? 700 : 2100;
+    const gap   = fast ? 60  : 380;
+    const out   = fast ? 120 : 750;
+    const pause = fast ? 120 : 520;
+
+    requestAnimationFrame(() => roleEl.classList.add('visible'));
+    later(() => nameEl.classList.add('visible'), gap);
+    later(() => {
+      roleEl.classList.remove('visible');
+      nameEl.classList.remove('visible');
+      later(() => playCard(i + 1), out + pause);
+    }, gap + hold);
+  }
+
+  function skipCredits() {
+    clearTimers();
+    finishCredits();
+  }
+
+  function finishCredits() {
+    const after = creditsDone;
+    creditsDone = null;
+    try { GameEngine.state.setFlag('ch9_credits_seen', true); } catch (_) {}
+    const w = el('cineCredits');
+    if (w) {
+      w.classList.remove('visible');
+      el('cineSkip')?.classList.remove('visible');
+      setTimeout(() => w.classList.add('hidden'), 700);
+    }
+    setTimeout(() => { if (after) after(); }, reduceMotion() ? 120 : 700);
+  }
+
+  function leave() { runCredits(stinger); }
+
+  function stinger() {
     try { GameEngine.music.stop(600); } catch (_) {}
     el('endCard')?.classList.add('hidden');
     const w = el('stinger');
@@ -933,6 +1013,7 @@ const Chapter9 = (() => {
         const d = document.createElement('div');
         d.className = 'st-final';
         d.textContent = 'KALIBRIERUNG BEENDET.';
+        try { GameEngine.state.setFlag('ch9_stinger_seen', true); } catch (_) {}
         body.appendChild(d);
         requestAnimationFrame(() => d.classList.add('visible'));
         later(() => el('stingerExit')?.classList.add('visible'), fast ? 300 : 1800);
@@ -1175,6 +1256,7 @@ const Chapter9 = (() => {
       case 'end-copy':    copyBonus(); break;
       case 'end-leave':   leave(); break;
       case 'end-credits': GameEngine.showCredits(); break;
+      case 'cine-skip':   skipCredits(); break;
       case 'face-r3mi':   faceUnit('r3mi'); break;
       case 'face-vtgm':   faceUnit('vtgm'); break;
     }

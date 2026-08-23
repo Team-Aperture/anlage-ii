@@ -401,3 +401,27 @@ a.sector-node:hover { transform: translateY(-3px); border-color: #fff; color: #f
   user-select: all; word-break: break-word;
 }
 .ziel-bonus .ziel-value { text-shadow: 0 0 12px #8fa4c4; }
+
+/* ─── BOOT SKIP ───────────────────────────────────────────────
+   The BIOS is part of the game's personality, but nobody should have to sit
+   through it twice in one session. */
+.boot-skip {
+  position: fixed; right: var(--sp-md); bottom: var(--sp-md); z-index: 1001;
+  opacity: 0; pointer-events: none; transition: opacity .6s ease;
+}
+.boot-skip.visible { opacity: .5; pointer-events: auto; }
+.boot-skip:hover, .boot-skip:focus-visible { opacity: 1; }
+
+/* ─── IDLE COMMENT SPEAKER ────────────────────────────────────
+   The label is coloured by whoever is actually talking. */
+.idle-comment[data-who="SYSTEM"] .idle-comment-speaker { color: var(--accent-system); }
+.idle-comment[data-who="R-3MI"]  .idle-comment-speaker { color: var(--accent-r3mi); }
+.idle-comment[data-who="V-TGM"]  .idle-comment-speaker { color: var(--accent-vtgm); }
+
+@media (prefers-reduced-motion: reduce) { .boot-skip { transition: none; } }
+
+/* Progress line: sectors behind you, facility online, fragments archived —
+   three separate readings, not one blended number. */
+#chapterProgress { display: flex; gap: var(--sp-md); justify-content: center; flex-wrap: wrap; }
+.tp-part { white-space: nowrap; }
+@media (max-width: 600px) { #chapterProgress { gap: var(--sp-sm); font-size: 10px; } }

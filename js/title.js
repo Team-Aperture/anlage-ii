@@ -1,3 +1,21 @@
+  // ─── PROGRESS INDICATOR ──────────────────────────────────────
+  // Two separate numbers: how many sectors are behind the player, and how
+  // much of the facility is actually running. They are not the same thing.
+  function updateChapterProgress() {
+    const el = document.getElementById('chapterProgress');
+    if (!el || typeof GameEngine === 'undefined') return;
+    const nav = chapterNav();
+    if (!nav) return;
+    const total = CHAPTERS.length;
+    const parts = [`FORTSCHRITT: ${nav.completed.length} / ${total} KAPITEL`];
+    let pct = 0;
+    try { pct = GameEngine.progress.reactivationPct(); } catch (_) {}
+    if (nav.completed.length) parts.push(`REAKTIVIERUNG: ${pct} %`);
+    // The archive only counts once the player has heard something.
+    if (nav.sigs > 0) parts.push(`FREMDSIGNALE: ${nav.sigs} / ${nav.total}`);
+    el.innerHTML = parts.map(t => `<span class="tp-part">${t}</span>`).join('');
+  }
+
 /**
  * ═══════════════════════════════════════════════════════════════
  * KALIBRIERUNGSANLAGE II — TITLE SCREEN
@@ -9,54 +27,116 @@
 (function () {
   'use strict';
 
-  // ─── BOOT SEQUENCE ────────────────────────────────────────────
-  const BOOT_LINES = [
-    { text: 'KA-II BIOS v2.4.7 // TEAM_APERTURE',         cls: 'dim',     delay: 0   },
-    { text: 'Systemprüfung wird gestartet…',              cls: '',        delay: 300 },
-    { text: '> Speicher: 2048 MB erkannt',                cls: '',        delay: 500 },
-    { text: '> Sensoreinheiten: FEHLER — nicht reagierend', cls: 'error', delay: 700 },
-    { text: '> Zentralsteuerung: OFFLINE',                cls: 'error',   delay: 900 },
-    { text: '> Einheit R-3MI: STATUS UNBEKANNT',          cls: 'warn',    delay: 1100 },
-    { text: '> Einheit V-TGM: STATUS UNBEKANNT',          cls: 'warn',    delay: 1300 },
-    { text: '.',                                           cls: 'dim',     delay: 1700 },
-    { text: '. .',                                         cls: 'dim',     delay: 1900 },
-    { text: '. . .',                                       cls: 'dim',     delay: 2100 },
-    { text: '> Notfallwiederherstellung erkannt.',         cls: 'success', delay: 2400 },
-    { text: '> Reaktivierungsprotokoll geladen.',          cls: 'success', delay: 2700 },
-    { text: 'WARNUNG: Anlage war abgeschaltet. Ursache: unbekannt.', cls: 'warn', delay: 3000 },
-    { text: 'Starte Benutzeroberfläche…',                 cls: '',        delay: 3400 },
-  ];
+  // ─── PROGRESSION STATE ────────────────────────────────────────
+  // Everything on this screen adapts to how far the player has come. Before
+  // Chapter 1 the facility has no crew on record, and the title must not say
+  // otherwise — meeting R-3MI and V-TGM is Chapter 1's job.
+  function stateOf() {
+    let done = [], sigs = 0, truth = false;
+    try {
+      done = GameEngine.state.get('chaptersCompleted') || [];
+      sigs = (GameEngine.state.get('signalsFound') || []).length;
+      truth = GameEngine.state.hasFlag('truth_revealed');
+    } catch (_) {}
+    const has = id => done.includes(id);
+    return {
+      done, sigs, truth,
+      metRobots: has('ch1'),
+      finished:  has('ch8'),
+      stage: truth ? 'POST_CH9' : has('ch8') ? 'POST_CH8' : has('ch1') ? 'MID' : 'PRE_CH1',
+    };
+  }
 
+  // ─── BOOT SEQUENCE ────────────────────────────────────────────
+  const BOOT_SESSION_KEY = 'ka2_session_boot_seen';
+
+  function bootLines(st) {
+    // Two lines change once the player knows who is in here.
+    const crew = st.metRobots
+      ? [ { text: '> Einheit R-3MI: ERFASST',              cls: 'success', delay: 1100 },
+          { text: '> Einheit V-TGM: ERFASST',              cls: 'success', delay: 1300 } ]
+      : [ { text: '> Mobile Einheiten: KEINE ANTWORT',     cls: 'warn',    delay: 1100 },
+          { text: '> Personenregister: NICHT VERFÜGBAR',   cls: 'warn',    delay: 1300 } ];
+    return [
+      { text: 'KA-II BIOS v2.4.7 // TEAM_APERTURE',         cls: 'dim',     delay: 0   },
+      { text: 'Systemprüfung wird gestartet…',              cls: '',        delay: 300 },
+      { text: '> Speicher: 2048 MB erkannt',                cls: '',        delay: 500 },
+      { text: '> Sensoreinheiten: FEHLER — nicht reagierend', cls: 'error', delay: 700 },
+      { text: '> Zentralsteuerung: OFFLINE',                cls: 'error',   delay: 900 },
+      ...crew,
+      { text: '.',                                          cls: 'dim',     delay: 1700 },
+      { text: '. .',                                        cls: 'dim',     delay: 1900 },
+      { text: '. . .',                                      cls: 'dim',     delay: 2100 },
+      { text: '> Notfallwiederherstellung erkannt.',        cls: 'success', delay: 2400 },
+      { text: '> Reaktivierungsprotokoll geladen.',         cls: 'success', delay: 2700 },
+      { text: 'WARNUNG: Anlage war abgeschaltet. Ursache: unbekannt.', cls: 'warn', delay: 3000 },
+      { text: 'Starte Benutzeroberfläche…',                 cls: '',        delay: 3400 },
+    ];
+  }
+
+  // The full BIOS is part of the game's personality, but only the first time
+  // per browser session. Coming back to the menu gets a short resume instead,
+  // and either can be cut short at any moment.
   function runBootSequence(onDone) {
     const seqEl = document.getElementById('bootSequence');
     if (!seqEl) { onDone(); return; }
 
-    // Plays in full on every title-screen visit (Energy-Star nostalgia, by request).
+    let seen = false;
+    try { seen = sessionStorage.getItem(BOOT_SESSION_KEY) === '1'; } catch (_) {}
+    try { sessionStorage.setItem(BOOT_SESSION_KEY, '1'); } catch (_) {}
+
+    let reduced = false;
+    try { reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) {}
+
+    const st = stateOf();
+    const lines = (seen || reduced)
+      ? [ { text: 'KA-II // SITZUNG WIRD FORTGESETZT', cls: 'dim', delay: 0 },
+          { text: '> Benutzeroberfläche bereit.',      cls: 'success', delay: 220 } ]
+      : bootLines(st);
+
+    const timers = [];
+    let finished = false;
+
+    const skipBtn = document.getElementById('bootSkip');
+    if (skipBtn && lines.length > 2) skipBtn.classList.add('visible');
+
+    function finish() {
+      if (finished) return;
+      finished = true;
+      timers.forEach(clearTimeout);
+      document.removeEventListener('keydown', onKey);
+      seqEl.removeEventListener('click', finish);
+      skipBtn?.removeEventListener('click', finish);
+      seqEl.style.transition = 'opacity 0.45s ease';
+      seqEl.style.opacity = '0';
+      setTimeout(() => { seqEl.remove(); onDone(); }, 470);
+    }
+    function onKey(e) {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') { e.preventDefault(); finish(); }
+    }
+
     let max = 0;
-    BOOT_LINES.forEach(({ text, cls, delay }, i) => {
-      setTimeout(() => {
+    lines.forEach(({ text, cls, delay }) => {
+      timers.push(setTimeout(() => {
         const line = document.createElement('div');
         line.className = 'boot-line' + (cls ? ' ' + cls : '');
         line.textContent = text;
         seqEl.appendChild(line);
         requestAnimationFrame(() => requestAnimationFrame(() => line.classList.add('visible')));
-      }, delay);
+      }, delay));
       max = Math.max(max, delay);
     });
 
-    // Add cursor
-    setTimeout(() => {
+    timers.push(setTimeout(() => {
       const cursor = document.createElement('span');
       cursor.className = 'boot-cursor';
       seqEl.appendChild(cursor);
-    }, max + 100);
+    }, max + 100));
 
-    // Fade out boot screen
-    setTimeout(() => {
-      seqEl.style.transition = 'opacity 0.6s ease';
-      seqEl.style.opacity = '0';
-      setTimeout(() => { seqEl.remove(); onDone(); }, 640);
-    }, max + 900);
+    seqEl.addEventListener('click', finish);
+    skipBtn?.addEventListener('click', finish);
+    document.addEventListener('keydown', onKey);
+    timers.push(setTimeout(finish, max + (lines.length > 2 ? 900 : 420)));
   }
 
   // ─── PARTICLES ───────────────────────────────────────────────
@@ -124,7 +204,24 @@
   }
 
   // ─── STATUS BAR UPDATE ────────────────────────────────────────
+  // The crew line only names anyone once the player has actually met them.
+  function updateCrewLine() {
+    const el = document.getElementById('sysCrew');
+    if (!el) return;
+    const st = stateOf();
+    if (st.truth) {
+      el.innerHTML = 'ADMINISTRATIVE EINHEITEN: '
+        + '<span class="accent-r3mi">R-3MI</span>&nbsp;/&nbsp;<span class="accent-vtgm">V-TGM</span>';
+    } else if (st.metRobots) {
+      el.innerHTML = 'SEKTOR&nbsp;7C // '
+        + '<span class="accent-r3mi">R-3MI</span>&nbsp;/&nbsp;<span class="accent-vtgm">V-TGM</span>';
+    } else {
+      el.innerHTML = 'MOBILE EINHEITEN: <span class="accent-warn">KEINE ANTWORT</span>';
+    }
+  }
+
   function updateStatusBar() {
+    updateCrewLine();
     const statusEl = document.getElementById('sysStatus');
     if (!statusEl) return;
 
@@ -154,42 +251,77 @@
     setTimeout(doGlitch, 3500);
   }
 
-  // ─── IDLE R-3MI COMMENTS ─────────────────────────────────────
-  const IDLE_COMMENTS = [
-    'Du hast die Seite geladen. Beeindruckend. Wirklich.',
-    '…ich hoffe, du weißt, was du tust. Ich auch nicht, aber trotzdem.',
-    'Klick einfach auf Starten. Das wäre nett.',
-    'Wir haben gewartet. V-TGM wollte das nicht erwähnen, aber ich schon.',
-    'Bitte nicht "Erfolge" anklicken. Da steht noch nichts. …fast nichts.',
-    'Die Anlage ist offiziell nicht bewohnt. Offiziell.',
-    'V-TGM sagt, ich soll aufhören zu reden. V-TGM hat Unrecht.',
-    'Du hast die Seite jetzt schon eine Weile offen. Interessant.',
-    'Ich distanziere mich von allem, was gleich passiert.',
-  ];
+  // ─── IDLE COMMENTS ───────────────────────────────────────────
+  // Who speaks here depends on how much the player knows. Before Chapter 1
+  // the facility talks to itself; afterwards R-3MI cannot help himself.
+  const IDLE = {
+    PRE_CH1: [
+      ['SYSTEM', 'Keine aktive Besatzung erkannt.'],
+      ['SYSTEM', 'Letzte Vollsynchronisierung: vor 2.847 Tagen.'],
+      ['SYSTEM', 'Ein Teil der Anlage antwortet nicht.'],
+      ['SYSTEM', 'Reaktivierungsprotokoll wartet auf autorisierte Testsignatur.'],
+      ['SYSTEM', 'Umgebungstemperatur unter Sollwert. Seit längerem.'],
+      ['SYSTEM', 'Personenregister: nicht verfügbar.'],
+    ],
+    MID: [
+      ['R-3MI', '„Du hast die Seite geladen. Beeindruckend. Wirklich."'],
+      ['R-3MI', '„…ich hoffe, du weißt, was du tust. Ich auch nicht, aber trotzdem."'],
+      ['R-3MI', '„Klick einfach auf Weiter. Das wäre nett."'],
+      ['R-3MI', '„Bitte nicht »Erfolge« anklicken. Da steht noch nichts. …fast nichts."'],
+      ['V-TGM', '"He has been talking to the menu for a while now."'],
+      ['R-3MI', '„V-TGM sagt, ich soll aufhören zu reden. V-TGM hat Unrecht."'],
+      ['R-3MI', '„Du hast die Seite jetzt schon eine Weile offen. Interessant."'],
+      ['R-3MI', '„Ich distanziere mich von allem, was gleich passiert."'],
+    ],
+    POST_CH8: [
+      ['SYSTEM', 'REAKTIVIERUNG: 100 %.'],
+      ['R-3MI', '„Hundert Prozent. Ich sag das immer noch gern."'],
+      ['R-3MI', '„Gerhilde lebt. Ich werde immer noch beobachtet."'],
+      ['R-3MI', '„Ich möchte offiziell keine Langstrecken mehr sehen."'],
+      ['V-TGM', '"The Anlage runs. All of it."'],
+      ['R-3MI', '„Die Zieldaten stehen unten. Du musst nichts nochmal spielen."'],
+    ],
+    POST_CH9: [
+      ['R-3MI', '„Du bist noch da."'],
+      ['V-TGM', '"We did not expect you to come back to the menu, of all places."'],
+      ['R-3MI', '„Die Tür ist übrigens immer noch offen. In beide Richtungen."'],
+      ['SYSTEM', 'ADMINISTRATIVE EINHEITEN: 02.'],
+      ['R-3MI', '„…Hiii."'],
+    ],
+  };
 
-  let commentIndex = 0;
-  let commentEl = null;
+  let idleQueue = [];
+  let idleEl = null;
+  let idleTimer = null;
+
+  function overlayOpen() {
+    return !!document.querySelector('.overlay-panel:not(.hidden)');
+  }
 
   function showIdleComment() {
-    if (!commentEl) return;
-    const text  = IDLE_COMMENTS[commentIndex % IDLE_COMMENTS.length];
-    commentIndex++;
+    if (!idleEl) return;
+    // Nobody talks over an open panel.
+    if (overlayOpen()) { idleTimer = setTimeout(showIdleComment, 6000); return; }
+    if (!idleQueue.length) {
+      const pool = IDLE[stateOf().stage] || IDLE.PRE_CH1;
+      idleQueue = pool.slice().sort(() => Math.random() - 0.5);
+    }
+    const [who, text] = idleQueue.shift();
+    idleEl.querySelector('.idle-comment-speaker').textContent = who;
+    idleEl.dataset.who = who;
+    idleEl.querySelector('.idle-comment-text').textContent = text;
+    idleEl.classList.add('visible');
 
-    commentEl.querySelector('.idle-comment-text').textContent = text;
-    commentEl.classList.add('visible');
-
-    setTimeout(() => {
-      commentEl.classList.remove('visible');
-      // Next comment in 15–25s
-      setTimeout(showIdleComment, 15000 + Math.random() * 10000);
+    idleTimer = setTimeout(() => {
+      idleEl.classList.remove('visible');
+      idleTimer = setTimeout(showIdleComment, 15000 + Math.random() * 10000);
     }, 7000);
   }
 
   function initIdleComments() {
-    commentEl = document.querySelector('.idle-comment');
-    if (!commentEl) return;
-    // First comment after 12s idle
-    setTimeout(showIdleComment, 12000);
+    idleEl = document.querySelector('.idle-comment');
+    if (!idleEl) return;
+    idleTimer = setTimeout(showIdleComment, 12000);
   }
 
   // ─── REVEAL ANIMATION ────────────────────────────────────────
@@ -256,9 +388,16 @@
     const completed = GameEngine.state.get('chaptersCompleted') || [];
     const nextIdx   = CHAPTERS.findIndex(c => !completed.includes(c.id));
     const allDone   = nextIdx === -1;
-    let bonus = false;
-    try { bonus = GameEngine.signals.ALL.every(s => GameEngine.signals.isFound(s.id)); } catch (_) {}
-    return { completed, nextIdx, allDone, bonus };
+    let sigs = 0, total = 5, allSigs = false;
+    try {
+      total   = GameEngine.signals.ALL.length;
+      sigs    = GameEngine.progress.signalsFound();
+      allSigs = GameEngine.progress.allSignals();
+    } catch (_) {}
+    // The unregistered route needs BOTH: the regular game finished and every
+    // fragment archived. Five signals on their own reveal nothing.
+    const bonus = allSigs && completed.includes('ch8');
+    return { completed, nextIdx, allDone, bonus, sigs, total, allSigs };
   }
 
   function initContinue() {
@@ -274,8 +413,10 @@
       btn.href = 'chapter9/chapter9.html';
       btn.textContent = '[ ??? ]';
     } else {
+      // The game is finished. Sending them back through it is not the offer —
+      // the sectors are all open below, and the Zieldaten are on the page.
       btn.href = CHAPTERS[CHAPTERS.length - 1].href;
-      btn.textContent = '[ ERNEUT SPIELEN ]';
+      btn.textContent = '[ SEKTOREN ERKUNDEN ]';
     }
     btn.classList.remove('hidden');
   }

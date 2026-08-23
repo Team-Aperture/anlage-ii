@@ -420,7 +420,7 @@ const Chapter4 = (() => {
       { speaker:'R-3MI',  text:'„Sieht alt aus."' },
       { speaker:'B-RADF1SH', text:'„Ist es."' },
       { speaker:'SYSTEM', text:'Im Inneren blinkt schwach ein Sender.' },
-      { speaker:'V-TGM',  text:'"…the brown box still transmits. no one receives anymore."', subtitle:'…der braune Kasten sendet noch. niemand empfängt mehr.' },
+      { speaker:'V-TGM',  text:'"…the brown box still transmits. internal clearance expired. from the inside this no longer works…"', subtitle:'…der braune Kasten sendet noch. Interne Freigabe erloschen. Von innen geht das nicht mehr.' },
       { speaker:'SYSTEM', text:'Stille in der Werkstatt.' },
       { speaker:'B-RADF1SH', text:'„Nicht meins."' },
       { speaker:'SYSTEM', text:'Dann greift er wieder nach dem Prüfhaken.' },
@@ -1673,10 +1673,7 @@ const Chapter4 = (() => {
 
   function init() {
     try { GameEngine.props.register(CH4_ART); } catch (_) {}
-    if (!GameEngine.state.isChapterComplete('ch3')) {
-      location.replace('../chapter3/chapter3.html');
-      return;
-    }
+    if (!GameEngine.progress.require('ch4')) return;
     setProgress(37);
     el('modBody').addEventListener('click', onModalClick);
     el('modActions').addEventListener('click', onModalClick);

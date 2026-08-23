@@ -1354,10 +1354,7 @@ const Chapter2 = (() => {
 
   function init() {
     try { GameEngine.props.register(CH2_ART); } catch (_) {}
-    if (!GameEngine.state.isChapterComplete('ch1')) {
-      location.replace('../chapter1/chapter1.html');
-      return;
-    }
+    if (!GameEngine.progress.require('ch2')) return;
     setProgress(12);
     showTitleCard();
   }

@@ -915,7 +915,7 @@ const Chapter5 = (() => {
       { speaker:'R-3MI',  text:'„Mittlerweile überrascht mich das weniger."' },
       { speaker:'T-FLON14', text:'„Mich schon."' },
       { speaker:'SYSTEM', text:'Das Gehäuse gibt ein Fragment aus.' },
-      { speaker:'V-TGM',  text:'"…the numbers do not match the map. please correct. please."', subtitle:'…die Zahlen stimmen nicht mit der Karte überein. bitte korrigieren. bitte.' },
+      { speaker:'V-TGM',  text:'"…the numbers do not match the map. an external test signature is needed. the old one is still valid…"', subtitle:'…die Zahlen stimmen nicht mit der Karte überein. Es braucht eine Testsignatur von außen. Die alte gilt noch.' },
       { speaker:'SYSTEM', text:'Stille im Gang.' },
       { speaker:'T-FLON14', text:'„Das ist keine Streckenmeldung."' },
       { speaker:'R-3MI',  text:'„Was ist es dann?"' },
@@ -1765,13 +1765,7 @@ const Chapter5 = (() => {
 
   function init() {
     try { GameEngine.props.register(CH5_ART); } catch (_) {}
-    // the same entry gate every other chapter has: no skipping ahead,
-    // but a finished chapter can always be replayed
-    if (!GameEngine.state.isChapterComplete('ch4')
-        && !GameEngine.state.isChapterComplete('ch5')) {
-      location.replace('../chapter4/chapter4.html');
-      return;
-    }
+    if (!GameEngine.progress.require('ch5')) return;
     buildChapter();
     rebindHints();
     CH.showHintBar(false);

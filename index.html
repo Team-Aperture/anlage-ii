@@ -21,6 +21,7 @@
 
   <!-- ── BOOT SEQUENCE OVERLAY ──────────────────────────────── -->
   <div class="boot-sequence" id="bootSequence" aria-hidden="true"></div>
+  <button class="ka-btn small boot-skip" id="bootSkip">[ BOOT ÜBERSPRINGEN ]</button>
 
   <!-- ── SYSTEM BAR ─────────────────────────────────────────── -->
   <header class="sys-bar">
@@ -28,11 +29,10 @@
       KA-II SYSTEM //
       STATUS: <span id="sysStatus" class="blink status-offline">OFFLINE</span>
     </span>
-    <span class="sys-text">
-      SEKTOR&nbsp;7C //
-      <span class="accent-r3mi">R-3MI</span>
-      &nbsp;/&nbsp;
-      <span class="accent-vtgm">V-TGM</span>
+    <!-- Filled in by title.js: before Chapter 1 the facility has no crew on
+         record, and this line must not say otherwise. -->
+    <span class="sys-text" id="sysCrew">
+      MOBILE EINHEITEN: <span class="accent-warn">KEINE ANTWORT</span>
     </span>
   </header>
 
@@ -115,15 +115,17 @@
 
   </main>
 
-  <!-- ── IDLE COMMENT (R-3MI) ────────────────────────────────── -->
-  <aside class="idle-comment" aria-live="polite">
-    <div class="idle-comment-speaker">R-3MI</div>
+  <!-- ── IDLE COMMENT ────────────────────────────────────────────
+       Who speaks depends on progress: before Chapter 1 the facility talks to
+       itself, because the player has not met anyone yet. -->
+  <aside class="idle-comment" aria-live="polite" data-who="SYSTEM">
+    <div class="idle-comment-speaker">SYSTEM</div>
     <div class="idle-comment-text"></div>
   </aside>
 
   <!-- ── VERSION TAG ─────────────────────────────────────────── -->
   <div class="version-tag">
-    <span class="sys-text">v0.1.0 // TEAM_APERTURE</span>
+    <span class="sys-text">v1.0.0 // TEAM_APERTURE</span>
   </div>
 
   <!-- ════════════════════════════════════════════════════════════

@@ -1,6 +1,6 @@
 /**
  * ═══════════════════════════════════════════════════════════════
- * KALIBRIERUNGSANLAGE II — GAME ENGINE v0.1.0
+ * KALIBRIERUNGSANLAGE II — GAME ENGINE v1.0.0
  * Team_Aperture
  *
  * Modules:
@@ -17,48 +17,133 @@ const GameEngine = (() => {
   'use strict';
 
   const SAVE_KEY = 'ka2_save_v1';
-  const VERSION  = '0.1.0';
+  const VERSION  = '1.0.0';   // what the game calls itself; NOT the save schema
 
   // ═══════════════════════════════════════════════════════════════
   // STATE MANAGER
+  // A save is never thrown away because a field is missing or a version
+  // moved on. Unknown keys survive, missing keys are filled in, and the
+  // schema version is separate from the version the game calls itself.
   // ═══════════════════════════════════════════════════════════════
+  const SCHEMA = 2;
+
   const state = (() => {
     const defaults = {
       version:              VERSION,
+      schemaVersion:        SCHEMA,
       chaptersCompleted:    [],
       puzzlesSolved:        {},
       signalsFound:         [],
       achievementsUnlocked: [],
       flags:                {},
+      chapterState:         {},
+      calibration:          {},
+      settings:             {},
       firstPlay:            true,
     };
 
     let _data = null;
+    let _persist = true;      // false once we know storage refuses to keep anything
+
+    // Bring an older save forward. Additive only: nothing an earlier version
+    // stored is dropped, and no migration may reset progress.
+    // The buckets in `defaults` must never be handed out by reference: a save
+    // that lacks one would then share the template, and a later reset would
+    // hand back the very object it just wiped.
+    function blank() {
+      return JSON.parse(JSON.stringify(defaults));
+    }
+
+    function migrate(raw) {
+      const d = { ...blank(), ...(raw || {}) };
+      const from = typeof raw?.schemaVersion === 'number' ? raw.schemaVersion : 1;
+
+      // shapes, in case a hand-edited or half-written save comes back
+      if (!Array.isArray(d.chaptersCompleted))    d.chaptersCompleted = [];
+      if (!Array.isArray(d.signalsFound))         d.signalsFound = [];
+      if (!Array.isArray(d.achievementsUnlocked)) d.achievementsUnlocked = [];
+      ['puzzlesSolved', 'flags', 'chapterState', 'calibration', 'settings'].forEach(k => {
+        if (!d[k] || typeof d[k] !== 'object' || Array.isArray(d[k])) d[k] = {};
+      });
+      d.chaptersCompleted    = [...new Set(d.chaptersCompleted.filter(x => typeof x === 'string'))];
+      d.signalsFound         = [...new Set(d.signalsFound.filter(x => typeof x === 'string'))];
+      d.achievementsUnlocked = [...new Set(d.achievementsUnlocked.filter(x => typeof x === 'string'))];
+
+      if (from < 2) {
+        // v1 had no chapterState / calibration / settings buckets and stored
+        // per-chapter progress as loose top-level keys. Move what we find, and
+        // do not leave a second stale copy behind.
+        Object.keys(d).forEach(k => {
+          const m = /^ch(\d)_progress$/.exec(k);
+          if (m && d[k] != null) { d.chapterState['ch' + m[1]] = d[k]; delete d[k]; }
+        });
+        // A run that already finished a chapter has earned its fragment.
+        d.chaptersCompleted.forEach(id => { if (id !== 'ch0') d.calibration[id] = true; });
+      }
+
+      d.version = VERSION;
+      d.schemaVersion = SCHEMA;
+      return d;
+    }
 
     function load() {
+      let raw = null;
+      try { raw = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); }
+      catch (_) { raw = null; }               // unreadable: start clean, but keep playing
+      const had = raw && typeof raw === 'object';
+      _data = migrate(had ? raw : null);
+      // Write the upgraded shape back once, so the next load has nothing to do
+      // and a half-migrated save can never be observed.
+      if (!had || raw.schemaVersion !== SCHEMA) save();
+    }
+
+    // A finished chapter whose reward went missing — an interrupted write, a
+    // save copied between browsers — must not send the player back through it.
+    function repair() {
       try {
-        const raw = localStorage.getItem(SAVE_KEY);
-        _data = raw ? { ...defaults, ...JSON.parse(raw) } : { ...defaults };
-      } catch {
-        _data = { ...defaults };
-      }
+        if (_data.chaptersCompleted.includes('ch8') && !_data.zieldaten_text) {
+          const z = calibration.reconstructMain();
+          if (z) { _data.zieldaten_text = z; _data.flags.zieldaten = true; }
+        }
+        if (_data.flags.truth_revealed && !_data.bonuszieldaten_text) {
+          const b = calibration.reconstructBonus();
+          if (b) { _data.bonuszieldaten_text = b; _data.flags.bonuszieldaten = true; }
+        }
+      } catch (_) {}
     }
 
     function save() {
+      if (!_persist) return;
       try { localStorage.setItem(SAVE_KEY, JSON.stringify(_data)); }
-      catch (e) { console.warn('[KA-II] Save failed.', e); }
+      catch (e) {
+        _persist = false;                     // out of quota or storage blocked
+        console.warn('[KA-II] Fortschritt kann nicht gespeichert werden — das Spiel läuft weiter.', e);
+      }
     }
 
     function get(key)           { return _data[key]; }
     function set(key, value)    { _data[key] = value; save(); }
     function setFlag(f, v=true) { _data.flags[f] = v; save(); }
     function hasFlag(f)         { return !!_data.flags[f]; }
+    function canPersist()       { return _persist; }
+
+    // Per-chapter resumable state, so a refresh never costs a session.
+    function chapter(id, value) {
+      if (value === undefined) return _data.chapterState[id];
+      if (value === null) delete _data.chapterState[id];
+      else _data.chapterState[id] = value;
+      save();
+    }
 
     function markChapterComplete(id) {
       if (!_data.chaptersCompleted.includes(id)) {
         _data.chaptersCompleted.push(id);
+        // The fragment is committed in the same write as the completion, so a
+        // player who navigates away immediately cannot lose one.
+        if (id !== 'ch0') _data.calibration[id] = true;
         save();
       }
+      repair();
     }
 
     function isChapterComplete(id) {
@@ -74,13 +159,226 @@ const GameEngine = (() => {
       return !!_data.puzzlesSolved[id];
     }
 
-    function reset() { _data = { ...defaults }; save(); }
+    function reset() { _data = migrate(null); _persist = true; save(); }
+
+    // Copy a save between browsers or keep a backup of a long run.
+    function exportSave() {
+      try { return btoa(unescape(encodeURIComponent(JSON.stringify(_data)))); }
+      catch (_) { return ''; }
+    }
+    function importSave(text) {
+      let raw = null;
+      const t = String(text || '').trim();
+      if (!t) return false;
+      try { raw = JSON.parse(decodeURIComponent(escape(atob(t)))); }
+      catch (_) { try { raw = JSON.parse(t); } catch (_) { return false; } }
+      if (!raw || typeof raw !== 'object' || !Array.isArray(raw.chaptersCompleted)) return false;
+      _data = migrate(raw);
+      repair();
+      save();
+      return true;
+    }
 
     load();
     return {
-      load, save, get, set, setFlag, hasFlag,
+      load, save, get, set, setFlag, hasFlag, canPersist, chapter,
       markChapterComplete, isChapterComplete,
-      markPuzzleSolved, isPuzzleSolved, reset,
+      markPuzzleSolved, isPuzzleSolved, reset, repair,
+      exportSave, importSave, SCHEMA,
+    };
+  })();
+
+
+  // ═══════════════════════════════════════════════════════════════
+  // ZIELDATEN
+  // Both coordinate sets live here as shifted fragments rather than as
+  // readable strings, and both are rebuilt the same way. Keeping them in one
+  // place is also what lets a finished save repair itself.
+  //
+  // PLATZHALTER — vor Veröffentlichung ersetzen. Anleitung: COORDS.md
+  // ═══════════════════════════════════════════════════════════════
+  const calibration = (() => {
+    const MAIN = [
+      '0061000f001f', '0006008600160006', '000d0013000d', '00740074006400f3',
+      '006b000e006b', '00620062006200e2', '007900690069', '004e005000500050',
+    ];
+    const BONUS = [
+      '001f00710061006100e1', '007c006c006c0072006c006c', '0057004700d000470022',
+      '005200420042004200c20052', '004d004d0053004d004d004d',
+    ];
+
+    function piece(list, j, step, base) {
+      const t = list[j] || '';
+      let out = '';
+      for (let p = 0; p < t.length; p += 4) {
+        out += String.fromCodePoint(parseInt(t.slice(p, p + 4), 16) ^ (base + j * step));
+      }
+      return out;
+    }
+    const join = (list, step, base) => list.map((_, j) => piece(list, j, step, base)).join('');
+
+    // `order` comes from the finished reconstruction in Chapter 8; a wrong
+    // order simply does not produce the target data.
+    function reconstructMain(order) {
+      const seq = Array.isArray(order) && order.length === MAIN.length ? order : MAIN.map((_, i) => i);
+      return seq.map(j => piece(MAIN, j, 7, 0x2f)).join('');
+    }
+    function reconstructBonus() { return join(BONUS, 11, 0x51); }
+
+    function commit(chapterId, token) {
+      try {
+        const c = state.get('calibration') || {};
+        c[chapterId] = token == null ? true : token;
+        state.set('calibration', c);
+      } catch (_) {}
+    }
+    function has(chapterId) {
+      try { return !!(state.get('calibration') || {})[chapterId]; } catch (_) { return false; }
+    }
+    function hasAllMain() {
+      return ['ch1','ch2','ch3','ch4','ch5','ch6','ch7','ch8'].every(has);
+    }
+
+    return { commit, has, hasAllMain, reconstructMain, reconstructBonus, MAIN_LEN: MAIN.length };
+  })();
+
+
+  // ═══════════════════════════════════════════════════════════════
+  // PROGRESS
+  // One place that knows the running order of the facility: which sector
+  // comes next, whether the player may walk into one, and how far the
+  // reactivation has actually got. Chapters ask; they do not each decide.
+  // ═══════════════════════════════════════════════════════════════
+  const progress = (() => {
+    const CHAPTERS = [
+      { id:'ch0', num:'00', name:'Rückkehr' },
+      { id:'ch1', num:'01', name:'Wartung' },
+      { id:'ch2', num:'02', name:'Garten' },
+      { id:'ch3', num:'03', name:'Beobachtung' },
+      { id:'ch4', num:'04', name:'Rätsel' },
+      { id:'ch5', num:'05', name:'Langstrecke' },
+      { id:'ch6', num:'06', name:'Versuchskammer' },
+      { id:'ch7', num:'07', name:'Vexier' },
+      { id:'ch8', num:'08', name:'Archiv' },
+    ];
+    // What the facility reports once each sector is back. One table, so no
+    // chapter can quietly drift to an old number.
+    const PCT = { ch0:0, ch1:12, ch2:24, ch3:37, ch4:51, ch5:68, ch6:82, ch7:96, ch8:100 };
+
+    const inChapter = () => /\/chapter\d+\//.test(location.pathname);
+    const root = () => (inChapter() ? '../' : '');
+    function href(id) {
+      const n = id.replace('ch', '');
+      return `${root()}chapter${n}/chapter${n}.html`;
+    }
+
+    const done = () => state.get('chaptersCompleted') || [];
+    const indexOf = id => CHAPTERS.findIndex(c => c.id === id);
+
+    function currentChapter() {
+      const d = done();
+      const next = CHAPTERS.find(c => !d.includes(c.id));
+      return next || CHAPTERS[CHAPTERS.length - 1];
+    }
+    function nextChapter() {
+      const d = done();
+      return CHAPTERS.find(c => !d.includes(c.id)) || null;
+    }
+    function allDone() { return CHAPTERS.every(c => done().includes(c.id)); }
+
+    function signalsFound() { return (state.get('signalsFound') || []).length; }
+    function allSignals()   { return signalsFound() >= signals.ALL.length; }
+
+    function canEnter(id) {
+      if (id === 'ch0') return state.hasFlag('ka1_verified');
+      if (id === 'ch9') return state.isChapterComplete('ch8') && allSignals();
+      const i = indexOf(id);
+      if (i <= 0) return true;
+      // A finished chapter can always be walked back into.
+      return state.isChapterComplete(id) || state.isChapterComplete(CHAPTERS[i - 1].id);
+    }
+
+    function reactivationPct() {
+      const d = done();
+      let pct = 0;
+      CHAPTERS.forEach(c => { if (d.includes(c.id) && PCT[c.id] > pct) pct = PCT[c.id]; });
+      return pct;
+    }
+
+    function resumeHref() {
+      const n = nextChapter();
+      return n ? href(n.id) : href('ch8');
+    }
+
+    // The door says no in the facility's own words, and offers the way back
+    // to wherever the player actually is. It never names what is behind it.
+    function lockScreen(id) {
+      const c = CHAPTERS[Math.max(0, indexOf(id))] || CHAPTERS[0];
+      const cur = currentChapter();
+      document.body.classList.add('chapter-page');
+      document.body.innerHTML = '';
+      const w = document.createElement('main');
+      w.className = 'sector-lock';
+      w.innerHTML = `
+        <div class="bg-scanlines" aria-hidden="true"></div>
+        <div class="lock-card">
+          <p class="lock-label sys-text">ZUGANG VERWEIGERT</p>
+          <h1 class="lock-sector">SEKTOR ${c.num}</h1>
+          <p class="lock-state sys-text">NOCH NICHT ERREICHBAR</p>
+          <dl class="lock-rows">
+            <dt>VORHERIGE REAKTIVIERUNGSPROTOKOLLE</dt><dd>UNVOLLSTÄNDIG</dd>
+            <dt>AKTUELLER SEKTOR</dt><dd>${cur.num}</dd>
+          </dl>
+          <a class="ka-btn primary" href="${href(cur.id)}">[ ZUM AKTUELLEN SEKTOR ]</a>
+          <a class="ka-btn small" href="${root()}index.html">[ HAUPTMENÜ ]</a>
+        </div>`;
+      document.body.appendChild(w);
+    }
+
+    // Called first thing by every chapter. Returns false if the chapter
+    // should stop loading.
+    function require(id) {
+      if (id === 'ch0' && !state.hasFlag('ka1_verified')) {
+        location.replace(root() + 'access.html');
+        return false;
+      }
+      if (canEnter(id)) return true;
+      lockScreen(id);
+      return false;
+    }
+
+    // ── Nachsuche ──────────────────────────────────────────────
+    // Walking back into a finished sector should not mean solving it again.
+    // A chapter asks isRevisit() and, if true, opens straight into its final
+    // room with the optional things still there to find.
+    function isRevisit(id) { return state.isChapterComplete(id); }
+
+    function missingSignal(id) {
+      const def = signals.ALL.find(sg => 'ch' + sg.chapter === id);
+      return def && !signals.isFound(def.id) ? def.id : null;
+    }
+
+    // A way out that does not run through a door the player already opened.
+    function returnBar(id) {
+      if (!isRevisit(id) || document.getElementById('nachsucheBar')) return;
+      const bar = document.createElement('div');
+      bar.className = 'nachsuche-bar';
+      bar.id = 'nachsucheBar';
+      const missing = missingSignal(id);
+      bar.innerHTML =
+          `<span class="ns-label sys-text">NACHSUCHE${missing ? ' · FREMDSIGNAL OFFEN' : ''}</span>`
+        + `<button class="ka-btn small" id="nsSignals">[ SIGNALARCHIV ]</button>`
+        + `<a class="ka-btn small" href="${root()}index.html">[ TERMINAL ]</a>`;
+      document.body.appendChild(bar);
+      bar.querySelector('#nsSignals').addEventListener('click', () => {
+        try { signals.showOverlay(); } catch (_) {}
+      });
+    }
+
+    return {
+      CHAPTERS, PCT, href, canEnter, require, lockScreen,
+      currentChapter, nextChapter, allDone, resumeHref, reactivationPct,
+      signalsFound, allSignals, isRevisit, missingSignal, returnBar,
     };
   })();
 
@@ -94,22 +392,22 @@ const GameEngine = (() => {
       { id: 'first_boot',       icon: '◈', title: 'Erstkontakt',         desc: 'Das System erwacht.' },
       { id: 'ka1_veteran',      icon: '✦', title: 'Veteran',              desc: 'Teil I wurde abgeschlossen. Du weißt, was hier passiert.' },
       { id: 'ch0_complete',     icon: '⬡', title: 'Wieder da',            desc: 'Die Anlage hat dich wiedererkannt.' },
-      { id: 'ch1_complete',     icon: '◉', title: 'Wartungsprotokoll',    desc: 'Kapitel 1 abgeschlossen.' },
-      { id: 'ch2_complete',     icon: '❧', title: 'Wartungsgartenpflege', desc: 'Kapitel 2 abgeschlossen.' },
-      { id: 'ch3_complete',     icon: '◎', title: 'Beobachtet',           desc: 'Kapitel 3 abgeschlossen.' },
-      { id: 'ch4_complete',     icon: '⊞', title: 'Groß, nicht kompliziert', desc: 'Das Vierfach-Schloss geöffnet.' },
-      { id: 'ch5_complete',     icon: '▶', title: 'Weitergegangen',        desc: 'Route 14 von 14-D bis 14-I. Eine Station nach der anderen.' },
-      { id: 'ch6_complete',     icon: '◫', title: 'Modell bestätigt',      desc: 'Die Blackbox verstanden, ohne sie zu öffnen.' },
-      { id: 'ch7_complete',     icon: '▣', title: 'Defragmentiert',       desc: 'Belege schlagen Behauptungen. Der Vexiersektor ist durch.' },
-      { id: 'ch8_complete',     icon: '◍', title: 'Die zehnte Rekonstruktion', desc: 'Zwölf Fragmente, ein Zusammenhang. Alle regulären Sektoren online.' },
-      { id: 'ch9_complete',     icon: '✦', title: 'Reaktivierung',        desc: 'Alle Sektoren, alle Frequenzen, die ganze Wahrheit. 100%.' },
+      { id: 'ch1_complete',     icon: '◉', title: 'Wartungsprotokoll',    desc: 'Der erste Sektor läuft wieder.' },
+      { id: 'ch2_complete',     icon: '❧', title: 'Grüner Daumen',        desc: 'Der Garten lebt wieder.' },
+      { id: 'ch3_complete',     icon: '◎', title: 'Früher gesehen',       desc: 'Nicht schneller. Genauer.' },
+      { id: 'ch4_complete',     icon: '⊞', title: 'Teil für Teil',        desc: 'Ein großes Problem wurde klein genug.' },
+      { id: 'ch5_complete',     icon: '▶', title: 'Langstrecke',          desc: 'Eine Station nach der anderen.' },
+      { id: 'ch6_complete',     icon: '◫', title: 'Saubere Methode',      desc: 'Die Blackbox wurde verstanden, ohne geöffnet zu werden.' },
+      { id: 'ch7_complete',     icon: '▣', title: 'Echtheitsprüfung',     desc: 'Nicht geglaubt. Überprüft.' },
+      { id: 'ch8_complete',     icon: '◍', title: 'Rekonstruktion',       desc: 'Die Zieldaten wurden wiederhergestellt.' },
+      { id: 'ch9_complete',     icon: '✦', title: 'Die ganze Wahrheit',   desc: 'Jeder Sektor, jede Frequenz, und der Raum, den es nicht gibt.' },
       { id: 'signal_first',     icon: '◈', title: 'Frequenz',             desc: 'Erste Signalnische entdeckt.' },
       { id: 'signal_all',       icon: '▲', title: 'Die Übertragung',      desc: 'Alle Signalnischen gefunden.' },
       { id: 'italian_brainrot', icon: '🐪', title: 'Frigo Camelo',        desc: 'F–R–I–G–O. Du weißt, was du getan hast.' },
       { id: 'bayern_pmo',       icon: '🥨', title: 'A Bsuach im Bsuach',   desc: 'Eine alte bayerische Tafel angeklickt.' },
       { id: 'archivar',         icon: '▤', title: 'Archivar',             desc: 'Die Rekonstruktion ohne einen einzigen Hinweis gelegt.' },
       { id: 'jigsaw_refused',   icon: '■', title: 'Nein.',                desc: 'Das Puzzle wurde abgelehnt. Wie immer.' },
-      { id: 'all_guests',       icon: '◎', title: 'Team_Aperture Extended', desc: 'Alle Gastcharaktere getroffen.' },
+      { id: 'all_guests',       icon: '◎', title: 'Gute Gesellschaft',    desc: 'Allen sieben Gasteinheiten begegnet.' },
       { id: 'chamber',          icon: '▚', title: 'Nicht registriert',    desc: 'Eine Kammer betreten, die in keinem Plan steht.' },
       { id: 'truth',            icon: '⌖', title: 'Die Wahrheit',         desc: 'Bis zum Ende zugehört.' },
       { id: 'said_hiii',        icon: '☻', title: 'Hiii.',                desc: 'Am Ende doch noch einmal gegrüßt.' },
@@ -199,31 +497,31 @@ const GameEngine = (() => {
       {
         id: 'sig_01', chapter: 3, number: '01 / 05',
         title: 'Übertragung 01',
-        text:  '…nicht alles, was hilft, will retten…',
+        text:  '…nicht alles, was hilft, will retten. zwei einheiten hören mit…',
         source: 'The Transmission // Fragment 01',
       },
       {
         id: 'sig_02', chapter: 4, number: '02 / 05',
         title: 'Übertragung 02',
-        text:  '…der braune Kasten sendet noch. niemand empfängt mehr…',
+        text:  '…der braune kasten sendet noch. interne freigabe erloschen. von innen geht das nicht mehr…',
         source: 'The Transmission // Fragment 02',
       },
       {
         id: 'sig_03', chapter: 5, number: '03 / 05',
         title: 'Übertragung 03',
-        text:  '…die Zahlen stimmen nicht mit der Karte überein. bitte korrigieren. bitte…',
+        text:  '…die zahlen stimmen nicht mit der karte überein. es braucht eine testsignatur von außen. die alte gilt noch…',
         source: 'The Transmission // Fragment 03',
       },
       {
         id: 'sig_04', chapter: 6, number: '04 / 05',
         title: 'Übertragung 04',
-        text:  '…sie hören zu. beide. seit anfang an…',
+        text:  '…sie hören zu. beide. seit anfang an. wenn sie dich führen…',
         source: 'The Transmission // Fragment 04',
       },
       {
         id: 'sig_05', chapter: 7, number: '05 / 05',
         title: 'Übertragung 05',
-        text:  '…SSTV. frequenz unbekannt. bitte empfangen. hoffnung verbleibt…',
+        text:  '…bei vollständiger reaktivierung bleibt nur der externe weg. fünf fragmente. hoffnung verbleibt…',
         source: 'The Transmission // Fragment 05',
       },
     ];
@@ -315,7 +613,9 @@ const GameEngine = (() => {
           <div class="sig-title">${found ? def.title : '???'}</div>
           ${found
             ? `<div class="sig-text">${def.text}</div><div class="sig-source sys-text">${def.source}</div>`
-            : `<a class="ka-btn small" href="${_chapterHref(def.chapter)}">[ SEKTOR ${String(def.chapter).padStart(2,'0')} ÖFFNEN ]</a>`}
+            : (progress.canEnter('ch' + def.chapter)
+                ? `<a class="ka-btn small" href="${_chapterHref(def.chapter)}">[ SEKTOR ${String(def.chapter).padStart(2,'0')} ÖFFNEN ]</a>`
+                : `<div class="sig-locked sys-text">SEKTOR ${String(def.chapter).padStart(2,'0')} — NOCH NICHT ERREICHT</div>`)}
         </div>`;
       }).join('');
 
@@ -1536,9 +1836,8 @@ const GameEngine = (() => {
   }
 
   function showCredits() {
-    // Built fresh every time (so it works on chapter pages too, and so the
-    // gated guest "special thanks" can appear once the game is finished). All
-    // overlay/credits CSS lives in global.css, which every page loads.
+    // Built fresh every time so it works on chapter pages too, and so the guest
+    // thanks only appear once the player has reached the end of the story.
     let back = document.getElementById('overlayBackdrop');
     if (!back) {
       back = document.createElement('div');
@@ -1553,53 +1852,103 @@ const GameEngine = (() => {
       panel.className = 'overlay-panel hidden';
       panel.id = 'creditsOverlay';
       panel.setAttribute('role', 'dialog');
-      panel.setAttribute('aria-label', 'Credits');
+      panel.setAttribute('aria-label', 'Abspann');
       document.body.appendChild(panel);
     }
 
-    const div = '<p class="credits-divider">──────────────────────────</p>';
-    // Guests stay hidden until the player has reached the end of the story.
     const endgame = state.isChapterComplete('ch8');
+
+    const role = (name, cls, roles, body) => `
+      <section class="cr-role">
+        <h3 class="cr-name ${cls}">${name}</h3>
+        <p class="cr-roles sys-text">${roles}</p>
+        <p class="cr-body">${body}</p>
+      </section>`;
+
     const guests = endgame ? `
-      ${div}
-      <p class="sys-text">Besonderer Dank — die Gasteinheiten</p>
-      <p style="font-size:14px; color:var(--text-primary); margin-top:6px; line-height:1.8;">
-        <span style="color:var(--accent-g1)">F-RØ5CHI</span> · <span style="color:var(--accent-g2)">L-UX</span> · <span style="color:var(--accent-g4)">B-RADF1SH</span><br>
-        <span style="color:var(--accent-g5)">T-FLON14</span> · <span style="color:var(--accent-g6)">ASP-1024</span> · <span style="color:var(--accent-g8)">FAX-N</span> · <span style="color:var(--accent-g7)">AGN-H3R</span>
-      </p>
-      <p style="font-size:12px; color:var(--text-dim); font-style:italic; margin-top:6px;">…und denen, die sie inspiriert haben.</p>
-    ` : '';
+      <section class="cr-block">
+        <h3 class="cr-head sys-text">GASTROBOTER-INSPIRATION</h3>
+        <p class="cr-guests">
+          <span class="cr-g1">F-RØ5CHI</span> · <span class="cr-g2">L-UX</span> · <span class="cr-g4">B-RADF1SH</span> ·
+          <span class="cr-g5">T-FLON14</span> · <span class="cr-g6">ASP-1024</span> · <span class="cr-g8">FAX-N</span> ·
+          <span class="cr-g7">AGN-H3R</span>
+        </p>
+        <p class="cr-body">Mit freundlicher Genehmigung der Avatare. Die Gasteinheiten sind
+          liebevolle Erfindungen der Anlage — keine Abbildungen der Personen dahinter.</p>
+      </section>` : '';
 
     panel.innerHTML = `
-      <div class="overlay-card">
+      <div class="overlay-card credits-card">
         <h2 class="overlay-title">${endgame ? 'ABSPANN' : 'CREDITS'}</h2>
         <div class="overlay-content credits-content">
-          <div class="credits-roll">
-            <p style="font-family:var(--font-display); letter-spacing:.15em; color:var(--text-primary);">DIE KALIBRIERUNGSANLAGE II</p>
-            <p class="sys-text" style="font-style:italic;">„Die Reaktivierung"</p>
-            ${div}
-            <p class="sys-text">Entwicklung</p>
-            <p style="margin-top:6px;"><span class="accent-r3mi">R-3MI</span> &nbsp;—&nbsp; <span class="sys-text">Musik · Code</span></p>
-            <p><span class="accent-vtgm">V-TGM</span> &nbsp;—&nbsp; <span class="sys-text">Playtesting · Story</span></p>
-            ${div}
-            <p class="sys-text">Code-Unterstützung</p>
-            <p style="font-size:13px; color:var(--text-secondary); margin-top:4px;">Claude AI — entwickelt von Anthropic<br>prüft, ob der Code funktioniert</p>
-            ${div}
-            <p class="sys-text">Bildgenerierung</p>
-            <p style="font-size:13px; color:var(--text-secondary); margin-top:4px;">ChatGPT — OpenAI</p>
-            ${guests}
-            ${div}
-            <p class="sys-text">The Transmission</p>
-            <p style="font-size:13px; color:var(--accent-system); font-style:italic; margin-top:4px;">„…Hoffnung verbleibt…"</p>
-            ${div}
+
+          <section class="cr-block cr-title-block">
+            <p class="cr-game">DIE KALIBRIERUNGSANLAGE II</p>
+            <p class="cr-sub sys-text">„Die Reaktivierung"</p>
+          </section>
+
+          <section class="cr-block">
+            <h3 class="cr-head sys-text">EIN PROJEKT VON</h3>
+            <p class="cr-team"><span class="cr-team-a">Team</span><span class="cr-team-b">_Aperture</span></p>
+          </section>
+
+          ${role('R-3MI', 'accent-r3mi',
+            'Rätseldesign · Geschichte · Dialoge · Musik · Kreative Leitung',
+            'Verantwortlich für die Konzeption der Testkammern, den Aufbau und die Mechaniken ' +
+            'der Rätsel, große Teile der Geschichte und Dialoge sowie die musikalische und ' +
+            'kreative Ausrichtung der Anlage.')}
+
+          ${role('V-TGM', 'accent-vtgm',
+            'Geschichte · Dialoge · Kreatives Design',
+            'Mitverantwortlich für Geschichte und Charaktere, Dialoge, kreative Ideen sowie die ' +
+            'Gestaltung der Atmosphäre und Identität der Anlage.')}
+
+          ${role('NOVA — CHATGPT VON OPENAI', 'cr-neutral',
+            'Code-Entwicklung · Technisches Design · Systeme &amp; Umsetzung',
+            'Unterstützung bei der technischen Umsetzung der kreativen Ideen von Team_Aperture: ' +
+            'Aufbau und Entwicklung des Codes, Spiellogik, interaktive Systeme, Benutzerführung ' +
+            'sowie die Übersetzung von Rätsel- und Geschichtskonzepten in funktionierende ' +
+            'Spielmechaniken.')}
+
+          ${role('CLAUDE — ANTHROPIC', 'cr-neutral',
+            'Implementierung · Integration · Produktionsumsetzung',
+            'Verantwortlich für die praktische Umsetzung und Integration großer Teile des ' +
+            'entwickelten Codes in das Projekt, umfangreiche Revisionen sowie die technische ' +
+            'Zusammenführung der einzelnen Kapitel zu einer spielbaren Gesamtanlage.')}
+
+          <section class="cr-block">
+            <h3 class="cr-head sys-text">ÜBER DIE ENTWICKLUNG</h3>
+            <p class="cr-body">Die Kalibrierungsanlage II entstand aus der gemeinsamen kreativen
+              Arbeit von R-3MI und V-TGM / Team_Aperture. Die Ideen, Rätsel, Geschichten,
+              Charaktere und finalen kreativen Entscheidungen wurden von Team_Aperture entwickelt
+              und geleitet.</p>
+            <p class="cr-body">Für die technische Realisierung wurden ChatGPT (Nova) und Claude als
+              KI-gestützte Entwicklungswerkzeuge eingesetzt. Sie halfen dabei, Ideen in Code zu
+              übersetzen, Systeme aufzubauen, Varianten umzusetzen, Fehler zu beheben und die
+              Anlage technisch zum Leben zu erwecken.</p>
+            <p class="cr-body">KI war dabei Werkzeug und Entwicklungspartner – nicht Ursprung des
+              Projekts.</p>
+          </section>
+
+          ${guests}
+
+          <section class="cr-block">
+            <h3 class="cr-head sys-text">THE TRANSMISSION</h3>
+            <p class="cr-quote">„…Hoffnung verbleibt…"</p>
+          </section>
+
+          <section class="cr-block cr-foot">
             <p class="sys-text">Ein Team_Aperture Geocaching-Projekt.</p>
-            <p class="sys-text" style="margin-top:8px; font-size:11px;">Dieses Spiel speichert keine personenbezogenen Daten.<br>Spielfortschritt wird lokal gespeichert.</p>
-          </div>
+            <p class="sys-text">Dieses Spiel speichert keine personenbezogenen Daten.<br>
+              Spielfortschritt wird lokal gespeichert.</p>
+          </section>
+
         </div>
         <button class="ka-btn" onclick="GameEngine.closeOverlay()">[ SCHLIESSEN ]</button>
       </div>`;
     panel.classList.remove('hidden');
     back.classList.remove('hidden');
+    panel.querySelector('.credits-content').scrollTop = 0;
   }
 
   document.addEventListener('click', e => {
@@ -1615,7 +1964,9 @@ const GameEngine = (() => {
   // INIT
   // ═══════════════════════════════════════════════════════════════
   (function init() {
-    state.load();
+    // Now that every module exists, let a finished save rebuild anything it
+    // is missing (calibration lives below state, so this cannot run earlier).
+    try { state.repair(); state.save(); } catch (_) {}
     audio.setMuted(!!state.get('muted'));
     const wake = () => audio.resume();
     document.addEventListener('pointerdown', wake);
@@ -1630,7 +1981,10 @@ const GameEngine = (() => {
   // ─── Public API ───────────────────────────────────────────────
   return {
     VERSION,
+    SCHEMA,
     state,
+    calibration,
+    progress,
     achievements,
     signals,
     dialogue,

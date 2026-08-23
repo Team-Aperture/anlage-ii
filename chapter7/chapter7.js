@@ -998,7 +998,7 @@ const Chapter7 = (() => {
       { speaker:'SYSTEM', text:'BITTE SCHLIESSEN.' },
       { speaker:'FAX-N',  text:'„Jetzt würd ich\'s erst recht offen lassen."' },
       { speaker:'SYSTEM', text:'Der Sender gibt ein Fragment aus.' },
-      { speaker:'V-TGM',  text:'"…SSTV. frequency unknown. please receive. hope remains…"', subtitle:'…SSTV. frequenz unbekannt. bitte empfangen. hoffnung verbleibt…' },
+      { speaker:'V-TGM',  text:'"…at full reactivation only the external way remains. five fragments. hope remains…"', subtitle:'…bei vollständiger Reaktivierung bleibt nur der externe Weg. Fünf Fragmente. Hoffnung verbleibt.' },
       { speaker:'SYSTEM', text:'Stille im Sektor.' },
       { speaker:'R-3MI',  text:'„Wer baut so was?"' },
       { speaker:'FAX-N',  text:'„Nicht von mir."' },
@@ -1337,13 +1337,7 @@ const Chapter7 = (() => {
 
   function init() {
     registerArt();
-    // the same entry gate every other chapter has: no skipping ahead,
-    // but a finished chapter can always be replayed
-    if (!GameEngine.state.isChapterComplete('ch6')
-        && !GameEngine.state.isChapterComplete('ch7')) {
-      location.replace('../chapter6/chapter6.html');
-      return;
-    }
+    if (!GameEngine.progress.require('ch7')) return;
     buildChapter();
     rebindHints();
     CH.showHintBar(false);

@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Barlow:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/global.css?v=20260822">
-  <link rel="stylesheet" href="css/access.css?v=20260613"></head>
+  <link rel="stylesheet" href="css/access.css?v=20260823"></head>
 <body class="access-page">
 
   <!-- ── ATMOSPHERIC LAYERS ──────────────────────────────────── -->
@@ -55,17 +55,19 @@
       <div class="access-message">
         <p>
           Diese Anlage wurde nach dem ersten Kalibrierungsdurchlauf
-          versiegelt. Nur autorisierte Testpersonen dürfen fortfahren.
+          abgeschaltet und versiegelt. Sie antwortet nur noch auf eine
+          Autorisierung, die sie bereits kennt.
         </p>
         <p class="access-instruction">
-          Bitte den achtstelligen Verifizierungscode aus
+          Bitte den achtstelligen Abschaltcode aus
           <em>Die Kalibrierungsanlage I</em> eingeben.
         </p>
       </div>
 
       <!-- 8-digit input -->
       <div class="code-input-wrap">
-        <div class="code-input-row" id="codeRow">
+        <p id="codeHint" class="visually-hidden">Achtstelliger Abschaltcode aus der ersten Anlage</p>
+        <div class="code-input-row" id="codeRow" role="group" aria-labelledby="codeHint">
           <input type="text" class="code-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" autofocus aria-label="Stelle 1">
           <input type="text" class="code-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" aria-label="Stelle 2">
           <input type="text" class="code-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" aria-label="Stelle 3">
@@ -78,6 +80,12 @@
         </div>
 
         <p class="access-status sys-text" id="accessStatus">BEREIT.</p>
+      </div>
+
+      <!-- What the archive has on file for those eight digits. -->
+      <div class="access-reveal hidden" id="accessReveal" aria-live="polite">
+        <div class="ar-rows" id="accessRows"></div>
+        <button class="ka-btn primary access-go" id="accessGo">[ REAKTIVIERUNG EINLEITEN ]</button>
       </div>
 
       <!-- Actions -->
@@ -98,12 +106,9 @@
           erscheint am Ende des ersten Teils.
         </p>
         <p>
-          <a href="https://www.geocaching.com/" class="access-link" target="_blank" rel="noopener">
-            → Den ersten Teil auf Geocaching.com finden
+          <a href="https://www.geocaching.com/" id="ka1Listing" class="access-link" target="_blank" rel="noopener">
+            → Den ersten Teil finden
           </a>
-        </p>
-        <p class="sys-text" style="margin-top:12px; color: var(--text-dim); font-size: 11px;">
-          (Remi: ersetze diesen Link durch die echte Cache-URL.)
         </p>
       </div>
     </details>
@@ -113,7 +118,7 @@
   <!-- ── SCRIPTS ─────────────────────────────────────────────── -->
   <script src="js/engine.js?v=20260822"></script>
   <script src="js/mobile-warning.js?v=20260613"></script>
-  <script src="js/access.js?v=20260613"></script>
+  <script src="js/access.js?v=20260823"></script>
 
 </body>
 </html>

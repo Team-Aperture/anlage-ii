@@ -1817,10 +1817,7 @@ const Chapter1 = (() => {
   function init() {
     // Progression guard: the maintenance sector is only reachable once the
     // entrance has actually been opened.
-    if (!GameEngine.state.isChapterComplete('ch0')) {
-      location.replace('../chapter0/chapter0.html');
-      return;
-    }
+    if (!GameEngine.progress.require('ch1')) return;
     registerArt();
     setProgress(0);
     showTitleCard();

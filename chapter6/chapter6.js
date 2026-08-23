@@ -1027,7 +1027,7 @@ const Chapter6 = (() => {
       { speaker:'V-TGM',  text:'"Delete it."', subtitle:'Lösch ihn.' },
       { speaker:'R-3MI',  text:'„Warum so schnell?"' },
       { speaker:'SYSTEM', text:'V-TGM antwortet nicht. Der Datensatz gibt ein Fragment aus.' },
-      { speaker:'V-TGM',  text:'"…they are listening. both. from the start."', subtitle:'…sie hören zu. beide. seit anfang an.' },
+      { speaker:'V-TGM',  text:'"…they are listening. both. from the start. when they guide you…"', subtitle:'…sie hören zu. beide. seit anfang an. Wenn sie dich führen.' },
       { speaker:'SYSTEM', text:'Stille in der Kammer.' },
       { speaker:'R-3MI',  text:'„Wessen Test war das?"' },
       { speaker:'ASP-1024', text:'„Gute Frage."' },
@@ -1295,13 +1295,7 @@ const Chapter6 = (() => {
 
   function init() {
     try { GameEngine.props.register(CH6_ART); } catch (_) {}
-    // the same entry gate every other chapter has: no skipping ahead,
-    // but a finished chapter can always be replayed
-    if (!GameEngine.state.isChapterComplete('ch5')
-        && !GameEngine.state.isChapterComplete('ch6')) {
-      location.replace('../chapter5/chapter5.html');
-      return;
-    }
+    if (!GameEngine.progress.require('ch6')) return;
     buildChapter();
     rebindHints();
     CH.showHintBar(false);
