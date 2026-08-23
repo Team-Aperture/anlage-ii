@@ -448,6 +448,29 @@ const GameEngine = (() => {
       });
       liftClear(bar);
       window.addEventListener('resize', () => liftClear(bar));
+      watchBusy(bar);
+    }
+
+    // The bar is a way out, not a thing to read past. While a line is being
+    // spoken or a panel is open it steps aside, and comes back when the room
+    // is the player's again.
+    function watchBusy(bar) {
+      let queued = false;
+      const apply = () => {
+        queued = false;
+        const dlg = document.querySelector('.dlg-container');
+        const busy = !!(dlg && dlg.classList.contains('visible'))
+                  || !!document.querySelector('.puzzle-modal:not(.hidden), .overlay-panel:not(.hidden), .chapter-complete:not(.hidden)');
+        bar.classList.toggle('ns-away', busy);
+        if (!busy) liftClear(bar);
+      };
+      const nudge = () => { if (!queued) { queued = true; requestAnimationFrame(apply); } };
+      try {
+        new MutationObserver(nudge).observe(document.body, {
+          attributes: true, subtree: true, childList: true, attributeFilter: ['class'],
+        });
+      } catch (_) {}
+      apply();
     }
 
     // Some sectors keep their own strip along the bottom edge — a route

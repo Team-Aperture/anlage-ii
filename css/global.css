@@ -1158,6 +1158,10 @@ body.fx-leaving { animation: fxLeave 0.42s ease forwards; }
   border: 1px solid var(--bdr-mid); backdrop-filter: blur(4px);
 }
 .ns-label { font-size: 9px; letter-spacing: .2em; color: var(--text-dim); }
+/* Stepped aside while something else has the player's attention. */
+.nachsuche-bar { transition: opacity .25s ease, transform .25s ease; }
+.nachsuche-bar.ns-away { opacity: 0; pointer-events: none; transform: translateX(-50%) translateY(8px); }
+@media (prefers-reduced-motion: reduce) { .nachsuche-bar { transition: none; } }
 @media (max-width: 640px) {
   .nachsuche-bar { bottom: calc(4px + env(safe-area-inset-bottom, 0px)); padding: 5px 8px; gap: 6px; }
   .nachsuche-bar .ka-btn.small { padding: 5px 8px; font-size: 10px; }
