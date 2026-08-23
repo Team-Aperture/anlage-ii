@@ -166,7 +166,9 @@ const Chapter4 = (() => {
   // Only what the player has actually earned is written down; the live puzzle
   // instances are cheap and get rebuilt the next time a module is opened.
   function saveState() {
-    if (S.ended) return;
+    // Nothing to resume once the chapter is over, and a Nachsuche must not
+    // leave a "finished" record behind for a save that has no such chapter.
+    if (S.ended || S.finalSolved) return;
     try {
       const mods = {};
       ORDER.forEach(k => {

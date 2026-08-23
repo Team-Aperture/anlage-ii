@@ -230,18 +230,19 @@ const Chapter3 = (() => {
     showLux(true);
     try { GameEngine.music.play('ch3_ambient'); } catch (_) {}
     loadHotspots();
-    say([
-      { speaker:'SYSTEM', text:'SEKTOR 03 — BEOBACHTUNGSSEKTOR. Die Reihen sind noch dunkel.' },
-      { speaker:'L-UX',   text: stage > 1 ? '„Du warst weg. Die Ebenen darunter stehen noch."'
-                                          : '„Du warst weg. Das Array wartet."' },
-    ], () => {
-      if (!stage) return;
-      // Straight back into the array, on the level that was reached.
+    // Latch the array open before any dialogue runs: a lost completion
+    // callback must never cost the level that was already reached.
+    if (stage) {
       bel = { stage: 0, reserve: RESERVE_MAX, busy: false, observedOnce: false, answer: null, event: null, wrong: 0 };
       document.getElementById('belModal').classList.remove('hidden');
       document.getElementById('hintBar').classList.remove('hidden');
       startStage(stage);
-    });
+    }
+    say([
+      { speaker:'SYSTEM', text:'SEKTOR 03 — BEOBACHTUNGSSEKTOR. Die Reihen sind noch dunkel.' },
+      { speaker:'L-UX',   text: stage > 1 ? '„Du warst weg. Die Ebenen darunter stehen noch."'
+                                          : '„Du warst weg. Das Array wartet."' },
+    ]);
   }
 
   // Coming back to a sector that can see again. The network is up, L-UX is
