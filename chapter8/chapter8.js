@@ -1454,6 +1454,8 @@ const Chapter8 = (() => {
       S.solved = true; S.presorted = true; S.act = 4; S.ended = true;
       try { S.ziel = GameEngine.state.get('zieldaten_text') || ''; } catch (_) {}
       clearSave();
+      // Same way out of a finished sector as everywhere else.
+      try { GameEngine.progress.returnBar(CHAPTER_ID); } catch (_) {}
     } else if (cp) {
       const d = cp.d;
       S.act = d.act; S.presorted = !!d.presorted; S.refused = !!d.refused;

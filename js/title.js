@@ -373,17 +373,15 @@
   }
 
   // ─── SECTOR MAP + CONTINUE ───────────────────────────────────
-  const CHAPTERS = [
-    { id:'ch0', n:'00', name:'Rückkehr',     href:'chapter0/chapter0.html' },
-    { id:'ch1', n:'01', name:'Wartung',      href:'chapter1/chapter1.html' },
-    { id:'ch2', n:'02', name:'Garten',       href:'chapter2/chapter2.html' },
-    { id:'ch3', n:'03', name:'Beobachtung',  href:'chapter3/chapter3.html' },
-    { id:'ch4', n:'04', name:'Rätsel',       href:'chapter4/chapter4.html' },
-    { id:'ch5', n:'05', name:'Langstrecke',  href:'chapter5/chapter5.html' },
-    { id:'ch6', n:'06', name:'Versuchskammer', href:'chapter6/chapter6.html' },
-    { id:'ch7', n:'07', name:'Vexier',       href:'chapter7/chapter7.html' },
-    { id:'ch8', n:'08', name:'Archiv',       href:'chapter8/chapter8.html' },
-  ];
+  // The running order has exactly one home: GameEngine.progress. The terminal
+  // reads it rather than keeping a second list that can quietly drift.
+  const CHAPTERS = (() => {
+    try {
+      return GameEngine.progress.CHAPTERS.map(c => ({
+        id: c.id, n: c.num, name: c.name, href: GameEngine.progress.href(c.id),
+      }));
+    } catch (_) { return []; }
+  })();
 
   function chapterNav() {
     if (typeof GameEngine === 'undefined') return null;

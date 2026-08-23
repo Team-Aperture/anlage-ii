@@ -435,12 +435,18 @@ const Chapter2 = (() => {
     if (S.p2Solved) {
       addHotspot({ prop:'c2_gardendoor', x:44, y:22, w:13, h:34,
         label:'SEKTOR 03', aria:'Sektor 03 betreten',
-        fn: S.revisit ? () => say([
-              { speaker:'SYSTEM',   text:'SEKTOR 03 — BEOBACHTUNGSSEKTOR. DURCHGANG FREI.' },
-              { speaker:'F-RØ5CHI', text:'„Der do drüben is ned so gsprächig. Aber er schaut guat hi."',
-                subtitle:'Der da drüben ist nicht so gesprächig. Aber er schaut gut hin.' },
-            ]) : finishChapter });
+        fn: S.revisit ? onward : finishChapter });
     }
+  }
+
+  // On a second visit the way on is just a way on: the sector next door is
+  // already open, so the door leads there instead of handing out an ending
+  // that has already been handed out.
+  function onward() {
+    const href = (() => {
+      try { return GameEngine.progress.href('ch3'); } catch (_) { return '../chapter3/chapter3.html'; }
+    })();
+    try { GameEngine.fx.leave(href); } catch (_) { location.href = href; }
   }
 
   // ─── Per-state descriptions. The same object, a different answer. ───

@@ -66,6 +66,7 @@ const Chapter4 = (() => {
     froschiMentioned: false,
     started:     false,          // room is live
     ended:       false,
+    revisit:     false,          // second visit: never re-run the ending
     seen:        {},             // hotspot examine counts
     talkSeen:    {},
     coaching:    { pool:{}, lastModule:null, switches:0 },
@@ -289,6 +290,7 @@ const Chapter4 = (() => {
   // the four subsystems are done, and the things worth a second look — the
   // bench, the drawings, that brown box nobody has claimed — are still here.
   function nachsuche() {
+    S.revisit = true;
     Object.keys(S.modules).forEach(k => { S.modules[k].solved = true; S.modules[k].opened = 1; });
     S.finalSolved = true;
     S.started = true;
@@ -534,6 +536,15 @@ const Chapter4 = (() => {
   // ═══════════════════════════════════════════════════════════════
   function clickLock() {
     const n = bump('lock');
+    if (S.revisit) {
+      say([
+        { speaker:'SYSTEM', text:'ZENTRALVERSCHLUSS: 4 / 4 REFERENZWERTE VERFÜGBAR. SYNCHRONISATION ABGESCHLOSSEN.' },
+        { speaker:'B-RADF1SH', text:'„Steht. Bleibt auch."' },
+        { speaker:'R-3MI',  text:'„Du klingst fast zufrieden."' },
+        { speaker:'B-RADF1SH', text:'„Fast."' },
+      ]);
+      return;
+    }
     if (S.finalSolved) { finishChapter(); return; }
     if (solvedCount() === 4) { openFinal(); return; }
 

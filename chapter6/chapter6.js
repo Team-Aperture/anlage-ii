@@ -94,6 +94,9 @@ const Chapter6 = (() => {
     hints: { active:null, step:0 },
     coach: 0,
     excuse: 0,
+
+    // A second walk through the chamber: nothing is proved twice.
+    revisit: false,
   };
 
   let openModal = null;   // 'bb' | 'vp' | null
@@ -329,14 +332,30 @@ const Chapter6 = (() => {
 
     if (S.solved) {
       addHotspot({ prop:'c6_labdoor', x:44, y:60, w:13, h:34,
-        label:'SEKTOR 07', aria:'Sektor 07 betreten', fn:() => finishChapter() });
+        label:'SEKTOR 07', aria:'Sektor 07 betreten',
+        fn: () => S.revisit ? onward('ch7') : finishChapter() });
     }
+  }
+
+
+  // On a second visit the way on is just a way on: the next sector is already
+  // open, so the door leads there instead of handing out an ending the player
+  // has already been given.
+  function onward(id) {
+    const href = (() => {
+      try { return GameEngine.progress.href(id); } catch (_) {
+        const n = id.replace('ch', '');
+        return `../chapter${n}/chapter${n}.html`;
+      }
+    })();
+    try { GameEngine.fx.leave(href); } catch (_) { location.href = href; }
   }
 
   // Coming back to a chamber whose model is already confirmed. A fresh series
   // is laid out so the archive can be read again, but nothing has to be
   // proved a second time — including the record that was never ASP's.
   function nachsuche() {
+    S.revisit = true;
     S.rule = buildRule() || { p1:'pa', cond:'ca', p2:'pc' };
     S.archive = buildArchive(S.rule);
     S.phase = 2;
@@ -525,6 +544,14 @@ const Chapter6 = (() => {
   }
 
   function openBlackbox() {
+    if (S.revisit) {
+      say([
+        { speaker:'SYSTEM',   text:`VERSUCHSREIHE ${SERIES} // MODELL BESTÄTIGT. WEITERE LÄUFE NICHT ERFORDERLICH.` },
+        { speaker:'ASP-1024', text:'„Läuft. Kannste laufen lassen."' },
+        { speaker:'V-TGM',    text:'"The model held."', subtitle:'Das Modell hat gehalten.' },
+      ]);
+      return;
+    }
     if (S.solved) { finishChapter(); return; }
     if (openModal === 'vp') closeModal();
     openModal = 'bb';

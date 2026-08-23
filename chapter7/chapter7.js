@@ -56,6 +56,9 @@ const Chapter7 = (() => {
     coach:    0,
     excuse:   0,
     wrongFinal: 0,
+
+    // A second walk through the sector: the ending happened once.
+    revisit:  false,
   };
 
   const P = { doors:null, wires:null, latches:null, exits:null };
@@ -205,7 +208,8 @@ const Chapter7 = (() => {
       // Left of the counterfeit panel on purpose: the two used to overlap, and
       // the door covered the one thing a player might still be looking for.
       addHotspot({ prop:'door', x:36, y:64, w:12, h:30,
-        label:'SEKTOR 08', aria:'Sektor 08 betreten', fn:() => finishChapter() });
+        label:'SEKTOR 08', aria:'Sektor 08 betreten',
+        fn: () => S.revisit ? onward('ch8') : finishChapter() });
     }
   }
 
@@ -235,7 +239,22 @@ const Chapter7 = (() => {
   // Coming back to a sector that is already honest. Nothing here re-runs: the
   // anchors stand, the interface has stopped lying, and the counterfeit panel
   // is still there for anyone who walked past it the first time.
+
+  // On a second visit the way on is just a way on: the next sector is already
+  // open, so the door leads there instead of handing out an ending the player
+  // has already been given.
+  function onward(id) {
+    const href = (() => {
+      try { return GameEngine.progress.href(id); } catch (_) {
+        const n = id.replace('ch', '');
+        return `../chapter${n}/chapter${n}.html`;
+      }
+    })();
+    try { GameEngine.fx.leave(href); } catch (_) { location.href = href; }
+  }
+
   function nachsuche() {
+    S.revisit = true;
     S.act = 6;
     S.fakeCompleteSeen = true;
     S.metFaxn = true;

@@ -65,6 +65,9 @@ const Chapter5 = (() => {
     talkSeen:  {},
     hints:     { active: null, step: 0 },
     coach:     0,
+
+    // A second walk down the line: the stations are read, not re-solved.
+    revisit:   false,
   };
 
   // live station instances — rebuilt on demand, cleared once solved
@@ -295,6 +298,7 @@ const Chapter5 = (() => {
   // player at the one section that still had something to find, with the
   // plates already sorted out — there is nothing left to work out here.
   function nachsuche() {
+    S.revisit = true;
     S.metTflon = true;
     S.branch = 'haupt';
     S.relay = true;
@@ -890,7 +894,13 @@ const Chapter5 = (() => {
     CH.addProp({ prop:'ivy',     x:86, y:22, w:10, h:26, cls:'prop-far' });
 
     addHotspot({ prop:'c5_markerwall', cls:'prop-guest', x:34, y:32, w:26, h:22,
-      label:'MARKIERUNGSWAND', aria:'Markierungen vergleichen', fn:() => openStation('marker') });
+      label:'MARKIERUNGSWAND', aria:'Markierungen vergleichen',
+      fn: () => S.revisit ? say([
+        { speaker:'SYSTEM',   text:'14-H // ALTE MARKIERUNG. Vier Platten gehören zur Strecke. Die fünfte hängt schief in der Halterung.' },
+        { speaker:'T-FLON14', text:'„Die stimmt immer noch nicht."' },
+        { speaker:'R-3MI',    text:'„Willst du sie abnehmen?"' },
+        { speaker:'T-FLON14', text:'„Nein. Sie soll auffallen."' },
+      ]) : openStation('marker') });
 
     if (S.marker) {
       addHotspot({ prop:'c5_foreign', cls:'prop-brown', x:66, y:60, w:13, h:16,

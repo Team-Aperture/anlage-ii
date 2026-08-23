@@ -47,6 +47,9 @@ const Chapter3 = (() => {
     sawWestgang: false,      // enables the ending callback
     hints:     { step: 0, active: null },
     react:     {},
+
+    // A second walk through the rows: nothing may re-run the ending.
+    revisit:   false,
   };
 
   // ═══════════════════════════════════════════════════════════════
@@ -245,10 +248,25 @@ const Chapter3 = (() => {
     ]);
   }
 
+
+  // On a second visit the way on is just a way on: the next sector is already
+  // open, so the door leads there instead of handing out an ending the player
+  // has already been given.
+  function onward(id) {
+    const href = (() => {
+      try { return GameEngine.progress.href(id); } catch (_) {
+        const n = id.replace('ch', '');
+        return `../chapter${n}/chapter${n}.html`;
+      }
+    })();
+    try { GameEngine.fx.leave(href); } catch (_) { location.href = href; }
+  }
+
   // Coming back to a sector that can see again. The network is up, L-UX is
   // where L-UX always is, and everything worth a closer look is still here —
   // including the lens that never settles.
   function nachsuche() {
+    S.revisit = true;
     S.metLux = true;
     S.solved = true;
     S.lit = true;
@@ -392,7 +410,8 @@ const Chapter3 = (() => {
     // also guarantees the ending stays reachable no matter what.
     if (S.solved) {
       addHotspot({ prop:'c3_obsdoor', x:66, y:24, w:12, h:34,
-        label:'SEKTOR 04', aria:'Sektor 04 betreten', fn:finishChapter });
+        label:'SEKTOR 04', aria:'Sektor 04 betreten',
+        fn: () => S.revisit ? onward('ch4') : finishChapter() });
     }
   }
 
@@ -609,6 +628,15 @@ const Chapter3 = (() => {
   function later(fn, ms) { belTimers.push(setTimeout(fn, ms)); }
 
   function openBelichtung() {
+    if (S.revisit) {
+      say([
+        { speaker:'SYSTEM', text:'BELICHTUNGSARRAY // KALIBRIERT. DAS BEOBACHTUNGSNETZ LÄUFT.' },
+        { speaker:'L-UX',   text:'„Das steht. Da musst du nichts mehr sehen."' },
+        { speaker:'R-3MI',  text:'„Ich schaue trotzdem gern hin."' },
+        { speaker:'L-UX',   text:'„Das ist der Sinn davon."' },
+      ]);
+      return;
+    }
     if (S.solved) { finishChapter(); return; }
     if (bel) {                           // already open — just re-focus it
       document.getElementById('belModal').classList.remove('hidden');
