@@ -17,8 +17,9 @@
 (function () {
   'use strict';
 
-  // ── The first Anlage's public listing. One place to edit before release. ──
-  const KA1_LISTING_URL = 'https://www.geocaching.com/';
+  // ── Where to send someone who has not played the first Anlage. ──
+  const KA1_GAME_URL    = 'https://team-aperture.github.io/kalibrierungsanlage/';
+  const KA1_LISTING_URL = 'https://www.geocaching.com/geocache/GCBPAMN';
 
   const AUTH_SALT   = 'anlage-ii';
   const AUTH_DIGEST = 'ed4150f8e41420733f0ce94cedd036679df11f811cf849a8f86401bd781644b1';
@@ -32,10 +33,12 @@
   const rowsEl    = document.getElementById('accessRows');
   const goBtn     = document.getElementById('accessGo');
   const listing   = document.getElementById('ka1Listing');
+  const ka1Game   = document.getElementById('ka1Game');
 
   let busy = false;
 
   if (listing) listing.href = KA1_LISTING_URL;
+  if (ka1Game) ka1Game.href = KA1_GAME_URL;
 
   // ─── digest ────────────────────────────────────────────────
   async function digestOf(code) {

@@ -25,9 +25,11 @@ const Chapter9 = (() => {
   const SAVE_KEY = 'ch9_progress';
 
   // ═══════════════════════════════════════════════════════════════
-  // BONUSZIELDATEN
-  // The fragments and the rebuilding live in GameEngine.calibration, next to
-  // the main set but kept strictly apart from it.
+  // ZIELDATEN — CONFIRMED FROM OUTSIDE
+  // There is exactly one target in this game, and it is reconstructed in
+  // Chapter 8. This chamber does not hand out a second one: the remainder of
+  // the transmission independently names the same place, which is the point —
+  // it is the only part of the target that does not come from R-3MI and V-TGM.
   //
   // The authorisation on file from the first Anlage: the player typed it
   // themselves to get in here, so the record only reads it back. Stored
@@ -42,8 +44,13 @@ const Chapter9 = (() => {
     return s;
   }
   function joinTokens(list) { return list.map((_, j) => unshift(list, j)).join(''); }
-  function bonusData() {
-    try { return GameEngine.calibration.reconstructBonus(); } catch (_) { return ''; }
+  // The one set of coordinates, as the player already earned them in Chapter 8.
+  function zielData() {
+    try {
+      const saved = GameEngine.state.get('zieldaten_text');
+      if (saved) return saved;
+      return GameEngine.calibration.reconstructMain() || '';
+    } catch (_) { return ''; }
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -58,7 +65,7 @@ const Chapter9 = (() => {
     asked: {},
     consoleSeen: false,
     burstSeen: false,
-    bonus: '',
+    ziel: '',   // the one set of coordinates, confirmed here rather than granted
     finalPick: null,
     ended: false,
     seen: {},
@@ -770,19 +777,23 @@ const Chapter9 = (() => {
   // ═══════════════════════════════════════════════════════════════
   // WHAT THE SENDER LEFT OUTSIDE
   // The last section of the transmission was never addressed to the Anlage,
-  // so the Anlage's new owners have no say over it.
+  // so the Anlage's new owners have no say over it. It does not name a new
+  // place — it names the same one, which is the only reason to believe it.
   // ═══════════════════════════════════════════════════════════════
   function remainder() {
     CH.hideChoices();
-    // The last of the transmission and the coordinates it carries are not
+    // The last of the transmission and the coordinates it confirms are not
     // interrupted by anything.
     try { GameEngine.toasts.hold(); } catch (_) {}
-    S.bonus = bonusData();
+    S.ziel = zielData();
     try {
-      GameEngine.state.setFlag('bonuszieldaten', true);
-      GameEngine.state.set('bonuszieldaten_text', S.bonus);
       GameEngine.state.setFlag('truth_revealed', true);
-      GameEngine.state.setFlag('failsafe_location_unlocked', true);
+      // A player who somehow reached the chamber without the card from
+      // Chapter 8 still leaves with the coordinates in hand.
+      if (S.ziel) {
+        GameEngine.state.setFlag('zieldaten', true);
+        GameEngine.state.set('zieldaten_text', S.ziel);
+      }
     } catch (_) {}
     try { GameEngine.achievements.unlock('bonus_found'); } catch (_) {}
     save();
@@ -792,12 +803,14 @@ const Chapter9 = (() => {
       { speaker:'V-TGM',  text:'"That part is not addressed to the facility."', subtitle:'Der Teil ist nicht an die Anlage gerichtet.' },
       { speaker:'???',    text:'„…wenn du das vollständig hörst, ist es für die Anlage wahrscheinlich zu spät."' },
       { speaker:'???',    text:'„…von innen kannst du sie nicht mehr trennen."' },
-      { speaker:'???',    text:'„…deshalb blieb etwas draußen."' },
-      { speaker:'SYSTEM', text:'NOTFALLDEPOT: LOKALISIERT.' },
-      { speaker:'R-3MI',  text:'„Draußen."' },
-      { speaker:'V-TGM',  text:'"We did not know that existed."', subtitle:'Wir wussten nicht, dass es das gibt.' },
-      { speaker:'R-3MI',  text:'„Nein. Wussten wir nicht."' },
-      { speaker:'SYSTEM', text:'BONUSZIELDATEN REKONSTRUIERT. QUELLE: EXTERNES NOTFALLDEPOT.' },
+      { speaker:'???',    text:'„…deshalb liegt die Bestätigung außerhalb."' },
+      { speaker:'SYSTEM', text:'ABGLEICH MIT DEN REKONSTRUIERTEN ZIELDATEN LÄUFT…' },
+      { speaker:'SYSTEM', text:'ÜBEREINSTIMMUNG: VOLLSTÄNDIG.' },
+      { speaker:'R-3MI',  text:'„…dieselbe Stelle."' },
+      { speaker:'V-TGM',  text:'"Then it was never ours to give."', subtitle:'Dann war sie nie unsere, um sie zu vergeben.' },
+      { speaker:'R-3MI',  text:'„Nein. Sie war vorher da. Und sie bleibt da."' },
+      { speaker:'SYSTEM', text:'Der einzige Teil des Ziels, der nicht aus dieser Anlage stammt, sagt dasselbe wie sie.' },
+      { speaker:'SYSTEM', text:'ZIELDATEN EXTERN BESTÄTIGT. QUELLE: AUSSERHALB DER ANLAGE.' },
     ], finalWord);
   }
 
@@ -865,7 +878,7 @@ const Chapter9 = (() => {
     CH.showRobots(false);
     const wrap = el('endCard');
     if (!wrap) return;
-    el('endCoords').textContent = S.bonus;
+    el('endCoords').textContent = S.ziel;
     wrap.classList.remove('hidden');
     requestAnimationFrame(() => wrap.classList.add('visible'));
     later(() => { try { GameEngine.toasts.release(); } catch (_) {} }, reduceMotion() ? 600 : 2600);
@@ -877,7 +890,7 @@ const Chapter9 = (() => {
     const fallback = () => {
       try {
         const ta = document.createElement('textarea');
-        ta.value = S.bonus; ta.setAttribute('readonly', '');
+        ta.value = S.ziel; ta.setAttribute('readonly', '');
         ta.style.cssText = 'position:fixed;left:-9999px;';
         document.body.appendChild(ta); ta.select();
         const ok = document.execCommand('copy');
@@ -885,7 +898,7 @@ const Chapter9 = (() => {
         done(ok);
       } catch (_) { done(false); }
     };
-    try { navigator.clipboard.writeText(S.bonus).then(() => done(true), fallback); }
+    try { navigator.clipboard.writeText(S.ziel).then(() => done(true), fallback); }
     catch (_) { fallback(); }
   }
 
@@ -1043,9 +1056,9 @@ const Chapter9 = (() => {
   function revisitMenu() {
     CH.showChoices({
       prompt: 'DIESE KAMMER:',
-      hint: 'BONUSZIELDATEN BLEIBEN VERFÜGBAR',
+      hint: 'DIE ZIELDATEN BLEIBEN VERFÜGBAR',
       choices: [
-        { key:'coords', label:'[ BONUSZIELDATEN ]', fn: showBonusAgain },
+        { key:'coords', label:'[ ZIELDATEN ]', fn: showZielAgain },
         { key:'again',  label:'[ ERINNERUNG WIEDERHOLEN ]', fn: () => say(WARNING, revisitMenu) },
         { key:'log',    label:'[ PROTOKOLL ]', fn: () => { openLog(); revisitMenu(); } },
         { key:'leave',  label:'[ ZURÜCK ]', fn: () => { location.href = '../index.html'; } },
@@ -1053,13 +1066,13 @@ const Chapter9 = (() => {
     });
   }
 
-  function showBonusAgain() {
-    S.bonus = S.bonus || (() => { try { return GameEngine.state.get('bonuszieldaten_text') || ''; } catch (_) { return ''; } })();
+  function showZielAgain() {
+    S.ziel = S.ziel || zielData();
     el('evLabel').textContent = 'FREMDSIGNAL // RESTDATEN';
-    el('evTitle').textContent = 'BONUSZIELDATEN';
-    el('evSub').textContent   = 'QUELLE: EXTERNES NOTFALLDEPOT';
+    el('evTitle').textContent = 'ZIELDATEN';
+    el('evSub').textContent   = 'EXTERN BESTÄTIGT · AUSSERHALB DER ANLAGE';
     el('evBody').innerHTML =
-        `<div class="rec-coords"><div class="rec-coords-value">${esc(S.bonus)}</div>`
+        `<div class="rec-coords"><div class="rec-coords-value">${esc(S.ziel)}</div>`
       + `<button class="ka-btn small" data-act="copy-bonus">[ KOPIEREN ]</button></div>`;
     openCard('evModal');
     revisitMenu();
@@ -1278,7 +1291,7 @@ const Chapter9 = (() => {
     if (revisit) {
       S.act = 5;
       S.signalDone = true;
-      try { S.bonus = GameEngine.state.get('bonuszieldaten_text') || ''; } catch (_) {}
+      S.ziel = zielData();
       clearSave();
     } else if (cp) {
       S.act = cp.act; S.records = cp.records; S.signalDone = !!cp.signalDone;

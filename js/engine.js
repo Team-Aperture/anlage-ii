@@ -112,10 +112,6 @@ const GameEngine = (() => {
           const z = calibration.reconstructMain();
           if (z) { _data.zieldaten_text = z; _data.flags.zieldaten = true; }
         }
-        if (_data.flags.truth_revealed && !_data.bonuszieldaten_text) {
-          const b = calibration.reconstructBonus();
-          if (b) { _data.bonuszieldaten_text = b; _data.flags.bonuszieldaten = true; }
-        }
       } catch (_) {}
     }
 
@@ -205,9 +201,11 @@ const GameEngine = (() => {
 
   // ═══════════════════════════════════════════════════════════════
   // ZIELDATEN
-  // Both coordinate sets live here as shifted fragments rather than as
-  // readable strings, and both are rebuilt the same way. Keeping them in one
-  // place is also what lets a finished save repair itself.
+  // The game has exactly ONE set of coordinates. It lives here as shifted
+  // fragments rather than as a readable string, and it is rebuilt from the
+  // order the player reconstructs in Chapter 8. Chapter 9 does not hand out a
+  // second target — it confirms this one from outside the facility.
+  // Keeping it in one place is also what lets a finished save repair itself.
   //
   // PLATZHALTER — vor Veröffentlichung ersetzen. Anleitung: COORDS.md
   // ═══════════════════════════════════════════════════════════════
@@ -216,11 +214,6 @@ const GameEngine = (() => {
       '0061000f001f', '0006008600160006', '000d0013000d', '00740074006400f3',
       '006b000e006b', '00620062006200e2', '007900690069', '004e005000500050',
     ];
-    const BONUS = [
-      '001f00710061006100e1', '007c006c006c0072006c006c', '0057004700d000470022',
-      '005200420042004200c20052', '004d004d0053004d004d004d',
-    ];
-
     function piece(list, j, step, base) {
       const t = list[j] || '';
       let out = '';
@@ -229,16 +222,12 @@ const GameEngine = (() => {
       }
       return out;
     }
-    const join = (list, step, base) => list.map((_, j) => piece(list, j, step, base)).join('');
-
     // `order` comes from the finished reconstruction in Chapter 8; a wrong
     // order simply does not produce the target data.
     function reconstructMain(order) {
       const seq = Array.isArray(order) && order.length === MAIN.length ? order : MAIN.map((_, i) => i);
       return seq.map(j => piece(MAIN, j, 7, 0x2f)).join('');
     }
-    function reconstructBonus() { return join(BONUS, 11, 0x51); }
-
     function commit(chapterId, token) {
       try {
         const c = state.get('calibration') || {};
@@ -253,7 +242,7 @@ const GameEngine = (() => {
       return ['ch1','ch2','ch3','ch4','ch5','ch6','ch7','ch8'].every(has);
     }
 
-    return { commit, has, hasAllMain, reconstructMain, reconstructBonus, MAIN_LEN: MAIN.length };
+    return { commit, has, hasAllMain, reconstructMain, MAIN_LEN: MAIN.length };
   })();
 
 
@@ -2133,7 +2122,6 @@ const GameEngine = (() => {
     let achTotal   = 0;
     try { achTotal = achievements.ALL.length; } catch (_) {}
     const ziel     = !!state.hasFlag('zieldaten');
-    const bonus    = !!state.hasFlag('bonuszieldaten');
 
     const warn = state.canPersist() ? '' : `
       <p class="sv-warn">Dieser Browser lässt zurzeit keine Speicherung zu — vermutlich
@@ -2154,7 +2142,6 @@ const GameEngine = (() => {
               <li>Gefundene Fremdsignale: <b>${sigs} / 5</b></li>
               <li>Freigeschaltete Erfolge: <b>${achs}${achTotal ? ' / ' + achTotal : ''}</b></li>
               <li>Zieldaten: <b>${ziel ? 'vorhanden' : 'noch nicht'}</b></li>
-              ${bonus ? '<li>Bonuszieldaten: <b>vorhanden</b></li>' : ''}
             </ul>
           </section>
 
