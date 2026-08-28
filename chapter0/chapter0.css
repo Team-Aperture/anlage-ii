@@ -614,6 +614,7 @@ html.gate-blocked body { visibility: hidden; }
   align-items: center;
   justify-content: center;
   padding: var(--sp-lg);
+  overflow-y: auto;   /* tall content on a short screen must stay reachable */
 }
 
 .puzzle-card {
@@ -623,6 +624,7 @@ html.gate-blocked body { visibility: hidden; }
   max-width: 480px;
   width: 100%;
   position: relative;
+  margin: auto;
 }
 
 .puzzle-card::before {

@@ -286,11 +286,13 @@
   z-index:200;
   display: flex; align-items:center; justify-content:center;
   padding: var(--sp-lg);
+  overflow-y: auto;   /* tall content on a short screen must stay reachable */
 }
 .puzzle-card {
   background:var(--bg-panel); border:1px solid var(--bdr-bright);
   padding:var(--sp-lg); position:relative;
   max-width:360px; width:100%;
+  margin: auto;
 }
 .puzzle-card-accent { position:absolute; top:0; left:0; right:0; height:2px; }
 .p1-accent { background:linear-gradient(90deg, var(--accent-r3mi), var(--accent-system)); }

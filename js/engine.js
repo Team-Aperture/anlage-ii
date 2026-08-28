@@ -931,6 +931,8 @@ const GameEngine = (() => {
       }
 
       _container.classList.add('visible');
+      _watchDlgSize();
+      _syncDlgSpace();
       portEl.classList.add('speaking');
       _typing = true;
 
@@ -939,6 +941,32 @@ const GameEngine = (() => {
         portEl.classList.remove('speaking');
         advEl.style.opacity = '1';
       }, line.speaker);
+    }
+
+    // The dialogue strip is fixed to the bottom edge at z-index 210, above the
+    // puzzle modals at 200 — deliberately, so a mid-puzzle hint is never
+    // trapped behind a modal's backdrop. The cost is that it lands squarely on
+    // a modal's action row and makes those buttons unclickable while a line is
+    // up. So whenever the strip is visible the page publishes its height and
+    // open modals reserve exactly that much room underneath.
+    let _spaceObs = null;
+    function _syncDlgSpace() {
+      try {
+        const up = !!(_container && _container.classList.contains('visible'));
+        document.body.classList.toggle('dlg-up', up);
+        if (!up) return;
+        const h = Math.ceil(_container.getBoundingClientRect().height);
+        if (h) document.documentElement.style.setProperty('--dlg-h', h + 'px');
+      } catch (_) {}
+    }
+    function _watchDlgSize() {
+      if (_spaceObs || !_container) return;
+      try {
+        // The box grows as a line types and as it wraps, so measure it live.
+        _spaceObs = new ResizeObserver(_syncDlgSpace);
+        _spaceObs.observe(_container);
+      } catch (_) { _spaceObs = null; }
+      try { window.addEventListener('resize', _syncDlgSpace); } catch (_) {}
     }
 
     function _reduced() {
@@ -984,6 +1012,7 @@ const GameEngine = (() => {
     function hide() {
       _container?.classList.remove('visible');
       document.getElementById('dlgPortrait')?.classList.remove('speaking');
+      _syncDlgSpace();
     }
 
     function history() { return _log.slice(); }

@@ -1217,3 +1217,30 @@ body.fx-leaving { animation: fxLeave 0.42s ease forwards; }
 .sv-field:focus { outline: none; border-color: var(--accent-system); }
 
 .sv-danger .sv-note { color: var(--text-secondary); }
+
+/* ─── MODALS UNDER THE DIALOGUE STRIP ─────────────────────────
+   .dlg-container is fixed to the bottom at z-index 210, above the puzzle
+   modals at 200 — on purpose, so a mid-puzzle hint is never trapped behind a
+   modal backdrop. Without this rule it also lands on the modal's action row
+   and the buttons there become visible but unclickable, which reads to the
+   player as "the puzzle is broken".
+
+   While a line is on screen the modal docks to the top and reserves the
+   strip's measured height (--dlg-h, published by the dialogue module) so its
+   controls always stay reachable.
+   ──────────────────────────────────────────────────────────── */
+body.dlg-up .puzzle-modal {
+  align-items: flex-start;
+  padding-bottom: calc(var(--dlg-h, 170px) + var(--sp-md));
+}
+body.dlg-up .puzzle-modal > * { margin-top: 0; margin-bottom: auto; }
+
+/* Chapter 8's board docks its action row to the bottom of the modal on a phone
+   (position: sticky), which puts it right under the strip. Lift any docked
+   action row by the same measured height. No effect on a static row. */
+body.dlg-up .puzzle-actions { bottom: calc(var(--dlg-h, 170px) + var(--sp-xs)); }
+
+/* Chapter 8's phone layout zeroes the modal's bottom padding with an ID rule
+   so its docked action row sits flush. An ID out-specifies the rule above, so
+   restate it here for that one modal rather than weakening the phone layout. */
+body.dlg-up #rkModal { padding-bottom: calc(var(--dlg-h, 170px) + var(--sp-md)); }
