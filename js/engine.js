@@ -264,7 +264,9 @@ const GameEngine = (() => {
       const dlg = document.querySelector('.dlg-container');
       if (dlg && dlg.classList.contains('visible')) return true;
       // a card the player is reading right now
-      return !!document.querySelector('.chapter-complete:not(.hidden), .end-card.visible, .cine-credits.visible, .stinger.visible');
+      // An overlay now sits above the story layers, so a toast behind it would
+      // be invisible; hold it until the player closes the panel.
+      return !!document.querySelector('.chapter-complete:not(.hidden), .end-card.visible, .cine-credits.visible, .stinger.visible, .overlay-panel:not(.hidden)');
     }
 
     function push(build, life) {
