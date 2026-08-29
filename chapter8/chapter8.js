@@ -970,7 +970,6 @@ const Chapter8 = (() => {
     S.ziel = reconstructZiel(kalOrder());
     try {
       GameEngine.state.setFlag('zieldaten', true);
-      GameEngine.state.set('zieldaten_text', S.ziel);
     } catch (_) {}
     try { GameEngine.achievements.unlock('coordinates'); } catch (_) {}
     save();
@@ -1107,7 +1106,7 @@ const Chapter8 = (() => {
   // ─── revisit: the archive is already finished ─────────────────
   function finishedArchive() {
     const have = signalCount(), total = signalTotal();
-    const z = S.ziel || (() => { try { return GameEngine.state.get('zieldaten_text') || ''; } catch (_) { return ''; } })();
+    const z = S.ziel || (() => { try { return GameEngine.state.zieldaten(); } catch (_) { return ''; } })();
     el('rkSheetTitle').textContent = 'ARCHIVABSCHLUSS';
     el('rkSheetBody').innerHTML =
         '<div class="rk-final">'
@@ -1452,7 +1451,7 @@ const Chapter8 = (() => {
     const cp = loadCheckpoint();
     if (done) {
       S.solved = true; S.presorted = true; S.act = 4; S.ended = true;
-      try { S.ziel = GameEngine.state.get('zieldaten_text') || ''; } catch (_) {}
+      try { S.ziel = GameEngine.state.zieldaten(); } catch (_) {}
       clearSave();
       // Same way out of a finished sector as everywhere else.
       try { GameEngine.progress.returnBar(CHAPTER_ID); } catch (_) {}

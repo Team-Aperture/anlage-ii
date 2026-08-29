@@ -450,7 +450,7 @@
     const sets = [];
     try {
       if (GameEngine.state.hasFlag('zieldaten')) {
-        const t = GameEngine.state.get('zieldaten_text');
+        const t = GameEngine.state.zieldaten();
         const confirmed = GameEngine.state.hasFlag('truth_revealed');
         if (t) sets.push({
           id: 'main',

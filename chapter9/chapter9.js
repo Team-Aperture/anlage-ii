@@ -47,9 +47,7 @@ const Chapter9 = (() => {
   // The one set of coordinates, as the player already earned them in Chapter 8.
   function zielData() {
     try {
-      const saved = GameEngine.state.get('zieldaten_text');
-      if (saved) return saved;
-      return GameEngine.calibration.reconstructMain() || '';
+      return GameEngine.state.zieldaten() || '';
     } catch (_) { return ''; }
   }
 
@@ -829,7 +827,6 @@ const Chapter9 = (() => {
       // Chapter 8 still leaves with the coordinates in hand.
       if (S.ziel) {
         GameEngine.state.setFlag('zieldaten', true);
-        GameEngine.state.set('zieldaten_text', S.ziel);
       }
     } catch (_) {}
     try { GameEngine.achievements.unlock('bonus_found'); } catch (_) {}
