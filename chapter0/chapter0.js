@@ -896,8 +896,8 @@ const Chapter0 = (() => {
     const prog = document.getElementById('ccProgress');
     if (!cc) return;
 
-    const completed = (GameEngine.state.get('chaptersCompleted') || []).length;
-    if (prog) prog.textContent = `FORTSCHRITT: ${completed} / 9`;
+    const m = GameEngine.progress.mainProgress();
+    if (prog) prog.textContent = `FORTSCHRITT: ${m.done} / ${m.total} SEKTOREN`;
 
     cc.classList.remove('hidden');
     setTimeout(() => document.getElementById('ccEnter')?.focus(), 700);

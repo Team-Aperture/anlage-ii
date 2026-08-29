@@ -415,6 +415,16 @@ const GameEngine = (() => {
     // Walking back into a finished sector should not mean solving it again.
     // A chapter asks isRevisit() and, if true, opens straight into its final
     // room with the optional things still there to find.
+    // The visible main progression counts only the eight sectors that get
+    // reactivated. Sector 00 is the entrance, not one of them, and chapter 9
+    // is not part of the count at all — telling a fresh player there are nine
+    // chapters gives away that something follows sector 08.
+    const MAIN_SECTORS = ['ch1','ch2','ch3','ch4','ch5','ch6','ch7','ch8'];
+    function mainProgress() {
+      const have = done();
+      return { done: MAIN_SECTORS.filter(id => have.includes(id)).length, total: MAIN_SECTORS.length };
+    }
+
     function isRevisit(id) { return state.isChapterComplete(id); }
 
     function missingSignal(id) {
@@ -494,7 +504,7 @@ const GameEngine = (() => {
     return {
       CHAPTERS, PCT, href, canEnter, require, lockScreen,
       currentChapter, nextChapter, allDone, resumeHref, reactivationPct,
-      signalsFound, allSignals, isRevisit, missingSignal, returnBar,
+      signalsFound, allSignals, isRevisit, missingSignal, returnBar, mainProgress,
     };
   })();
 
@@ -1711,7 +1721,6 @@ const GameEngine = (() => {
     let _hints      = null;   // { counts, max, banks, names, empty }
     let _completeId = null;   // e.g. 'ch7'
     let _completeAch= null;   // e.g. 'ch7_complete'
-    let _chapterCount = 9;    // denominator for the progress readout
 
     const el = id => document.getElementById(id);
 
@@ -1721,7 +1730,6 @@ const GameEngine = (() => {
       _onStart      = c.onStart || null;
       _completeId   = c.completeId  || null;
       _completeAch  = c.completeAch || null;
-      if (c.chapterCount) _chapterCount = c.chapterCount;
       if (c.title) document.title = c.title;
       document.body.classList.add('chapter-page');
       try { music.play(c.music || ('ch' + parseInt(c.num, 10) + '_ambient')); } catch (_) {}
@@ -1955,7 +1963,7 @@ const GameEngine = (() => {
       try { achievements.checkPlatinum(); } catch (_) {}
       el('chapterComplete')?.classList.remove('hidden');
       const p = el('ccProgress');
-      if (p) p.textContent = `FORTSCHRITT: ${state.get('chaptersCompleted').length} / ${_chapterCount} KAPITEL`;
+      if (p) { const m = progress.mainProgress(); p.textContent = `FORTSCHRITT: ${m.done} / ${m.total} SEKTOREN`; }
     }
 
     return {
@@ -2147,7 +2155,8 @@ const GameEngine = (() => {
       document.body.appendChild(panel);
     }
 
-    const chapters = (state.get('chaptersCompleted') || []).filter(c => c !== 'ch9').length;
+    const mp       = progress.mainProgress();
+    const chapters = mp.done, chTotal = mp.total;
     const sigs     = (state.get('signalsFound') || []).length;
     const achs     = (state.get('achievementsUnlocked') || []).length;
     let achTotal   = 0;
@@ -2169,7 +2178,7 @@ const GameEngine = (() => {
           <section class="sv-block">
             <h3 class="sv-head sys-text">GESPEICHERT IST</h3>
             <ul class="sv-list">
-              <li>Abgeschlossene Sektoren: <b>${chapters} / 9</b></li>
+              <li>Abgeschlossene Sektoren: <b>${chapters} / ${chTotal}</b></li>
               <li>Gefundene Fremdsignale: <b>${sigs} / 5</b></li>
               <li>Freigeschaltete Erfolge: <b>${achs}${achTotal ? ' / ' + achTotal : ''}</b></li>
               <li>Zieldaten: <b>${ziel ? 'vorhanden' : 'noch nicht'}</b></li>
