@@ -47,9 +47,7 @@ const Chapter9 = (() => {
   // The one set of coordinates, as the player already earned them in Chapter 8.
   function zielData() {
     try {
-      const saved = GameEngine.state.get('zieldaten_text');
-      if (saved) return saved;
-      return GameEngine.calibration.reconstructMain() || '';
+      return GameEngine.state.zieldaten() || '';
     } catch (_) { return ''; }
   }
 
@@ -65,6 +63,7 @@ const Chapter9 = (() => {
     asked: {},
     consoleSeen: false,
     burstSeen: false,
+    revisit:   false,   // set only by truth_revealed, never inferred from S.act
     ziel: '',   // the one set of coordinates, confirmed here rather than granted
     finalPick: null,
     ended: false,
@@ -239,7 +238,14 @@ const Chapter9 = (() => {
   // ═══════════════════════════════════════════════════════════════
   function begin() {
     try { GameEngine.achievements.unlock('chamber'); } catch (_) {}
-    if (S.act >= 5) { returning(); return; }
+    // Only a finished run gets the epilogue. A checkpoint that merely reached
+    // act 5 is a player mid-conversation, and sending them to the revisit menu
+    // would skip the ending they have not had yet.
+    if (S.revisit) { returning(); return; }
+    // Acts 4 and 5 are conversations, not rooms: resuming into the room alone
+    // leaves nothing to click, because the menus are the only way forward.
+    if (S.act >= 5) { resumeTalk(); return; }
+    if (S.act === 4) { resumeConfrontation(); return; }
     if (S.act >= 2 && (recordsDone() || S.signalDone)) { midway(); return; }
     CH.setScene('vault-dim');
     CH.showRobots(true);
@@ -253,6 +259,35 @@ const Chapter9 = (() => {
       { speaker:'V-TGM',  text:'"Somebody kept this room. Off the map, but maintained."', subtitle:'Jemand hat diesen Raum gehalten. Nicht im Plan, aber gepflegt.' },
       { speaker:'R-3MI',  text:'„Schau dich halt um. Ist ja doch nur… altes Zeug."' },
     ], () => { S.act = 2; save(); loadRoom(); });
+  }
+
+  // Act 4: the room has gone quiet and the player owes someone a question.
+  // Either they had not chosen a unit yet (offer the bar again) or they had
+  // (reopen the ask menu) — previously neither happened and the chapter could
+  // not be finished from here.
+  function resumeConfrontation() {
+    CH.setScene('vault-lit');
+    CH.showRobots(true);
+    dressRoom();
+    say([
+      { speaker:'SYSTEM', text:'KAMMER: NICHT REGISTRIERT. Es ist still. Keiner der beiden ist gegangen.' },
+    ], () => {
+      if (S.facedFirst) { askMenu(); return; }
+      el('faceBar')?.classList.remove('hidden');
+    });
+  }
+
+  // Act 5: the handover is on the console. Pick the conversation back up at
+  // the point the burst leaves it, without replaying the burst.
+  function resumeTalk() {
+    CH.setScene('vault-live');
+    CH.showRobots(true);
+    dressRoom();
+    const bar = el('reactProgress');
+    if (bar) bar.textContent = 'REAKTIVIERUNG: 100 % · ADMINISTRATIVE ÜBERGABE: ABGESCHLOSSEN';
+    say([
+      { speaker:'SYSTEM', text:'KAMMER: NICHT REGISTRIERT. Die Konsole läuft noch. Der Empfänger auch.' },
+    ], () => { if (S.burstSeen) postMenu(); else guestBurst(); });
   }
 
   function midway() {
@@ -792,7 +827,6 @@ const Chapter9 = (() => {
       // Chapter 8 still leaves with the coordinates in hand.
       if (S.ziel) {
         GameEngine.state.setFlag('zieldaten', true);
-        GameEngine.state.set('zieldaten_text', S.ziel);
       }
     } catch (_) {}
     try { GameEngine.achievements.unlock('bonus_found'); } catch (_) {}
@@ -884,8 +918,10 @@ const Chapter9 = (() => {
     later(() => { try { GameEngine.toasts.release(); } catch (_) {} }, reduceMotion() ? 600 : 2600);
   }
 
-  function copyBonus() {
-    const btn = el('endCopy');
+  function copyBonus(btn) {
+    // The revisit card renders its own [ KOPIEREN ]; writing feedback to the
+    // end card's hidden button made a failed copy look exactly like a good one.
+    btn = btn || el('endCopy');
     const done = ok => { if (btn) btn.textContent = ok ? '[ KOPIERT ]' : '[ MARKIEREN UND KOPIEREN ]'; };
     const fallback = () => {
       try {
@@ -1269,7 +1305,7 @@ const Chapter9 = (() => {
       case 'sg-sync':     synchronise(); break;
       case 'log-open':    openLog(); break;
       case 'log-close':   closeLog(); break;
-      case 'copy-bonus':  copyBonus(); break;
+      case 'copy-bonus':  copyBonus(btn); break;
       case 'end-copy':    copyBonus(); break;
       case 'end-leave':   leave(); break;
       case 'end-credits': GameEngine.showCredits(); break;
@@ -1289,6 +1325,7 @@ const Chapter9 = (() => {
     try { revisit = GameEngine.state.hasFlag('truth_revealed'); } catch (_) {}
     const cp = loadCheckpoint();
     if (revisit) {
+      S.revisit = true;
       S.act = 5;
       S.signalDone = true;
       S.ziel = zielData();

@@ -1311,7 +1311,7 @@ const Chapter3 = (() => {
     try { GameEngine.audio.fanfare(); } catch(_) {}
     document.getElementById('chapterComplete').classList.remove('hidden');
     document.getElementById('ccProgress').textContent =
-      `FORTSCHRITT: ${GameEngine.state.get('chaptersCompleted').length} / 9 KAPITEL`;
+      `FORTSCHRITT: ${GameEngine.progress.mainProgress().done} / ${GameEngine.progress.mainProgress().total} SEKTOREN`;
     setTimeout(() => document.getElementById('ccEnter')?.focus(), 700);
   }
 

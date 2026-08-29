@@ -128,12 +128,22 @@ JavaScript never is — it only keeps the answer from falling out of a search.
 ## Saves
 
 One key, `ka2_save_v1`, in `localStorage`. Nothing leaves the browser.
+`SAVE.md` documents the format, the invariants and their honest limits.
 
 `migrate()` carries older saves forward: chapters, signals, achievements and
 flags are never dropped, loose per-chapter keys move into their bucket, and
 wrong shapes are repaired rather than discarded. The schema version is separate
 from the version the game calls itself, so releasing a new build never resets
 anybody. A finished run that has somehow lost its coordinates rebuilds them.
+
+A save is only as far along as its own evidence supports. Chapters must form
+an unbroken chain, a Signalnische only counts if its sector was reachable, the
+hidden chamber needs Chapter 8 *and* all five fragments — never a single
+boolean — and an achievement needs the thing it is awarded for. Contradictions
+are normalised downwards and reported rather than trusted or rejected. The
+coordinates are never stored as text; they are rebuilt from the calibration
+fragments of a run that actually finished the reconstruction. **None of this is
+security** — see `SAVE.md` for what it does and does not achieve.
 
 `[ SPIELSTAND ]` on the title screen is where a player meets all of this:
 what the save holds, a code to copy out and paste into another browser

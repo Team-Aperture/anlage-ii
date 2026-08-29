@@ -17,7 +17,7 @@ const GameEngine = (() => {
   'use strict';
 
   const SAVE_KEY = 'ka2_save_v1';
-  const VERSION  = '1.0.0';   // what the game calls itself; NOT the save schema
+  const VERSION  = '1.1.0';   // what the game calls itself; NOT the save schema
 
   // ═══════════════════════════════════════════════════════════════
   // STATE MANAGER
@@ -25,7 +25,7 @@ const GameEngine = (() => {
   // moved on. Unknown keys survive, missing keys are filled in, and the
   // schema version is separate from the version the game calls itself.
   // ═══════════════════════════════════════════════════════════════
-  const SCHEMA = 3;
+  const SCHEMA = 4;
 
   const state = (() => {
     const defaults = {
@@ -40,6 +40,7 @@ const GameEngine = (() => {
       calibration:          {},
       settings:             {},
       firstPlay:            true,
+      provenance:           '',   // 'beta' for a run carried over from the beta
     };
 
     let _data = null;
@@ -69,6 +70,22 @@ const GameEngine = (() => {
       d.signalsFound         = [...new Set(d.signalsFound.filter(x => typeof x === 'string'))];
       d.achievementsUnlocked = [...new Set(d.achievementsUnlocked.filter(x => typeof x === 'string'))];
 
+      if (from < 4) {
+        // The coordinates are no longer kept as readable text in the save;
+        // they are rebuilt from the calibration fragments of a run that
+        // actually finished the reconstruction.
+        delete d.zieldaten_text;
+        delete d.bonuszieldaten_text;
+        delete d.flags.bonuszieldaten;
+        // Having finished a sector IS evidence of passing the entrance gate, so
+        // an older save that never recorded the flag keeps its progress instead
+        // of being normalised away by the chain check below.
+        if (!d.flags.ka1_verified && d.chaptersCompleted.length) d.flags.ka1_verified = true;
+        // A run that started before the release schema came from the beta.
+        // Cosmetic only: it unlocks nothing and is never used as a check.
+        if (!d.provenance && d.chaptersCompleted.length) d.provenance = 'beta';
+      }
+
       if (from < 3) {
         // Mute used to sit loose at the top level next to the progress arrays.
         // It is a preference, so it belongs in `settings` with the rest.
@@ -93,12 +110,108 @@ const GameEngine = (() => {
       return d;
     }
 
+
+    // ═══════════════════════════════════════════════════════════
+    // PROGRESSION INVARIANTS
+    //
+    // A save is only as far along as its own evidence supports. This is NOT
+    // security: everything here runs in the browser and anyone can read it.
+    // What it does is separate PORTABILITY from TRUST — a save that merely
+    // claims to be finished is not treated as finished unless the rest of it
+    // is consistent with having got there.
+    //
+    // Contradictions are normalised DOWNWARDS (the unsupported claim is
+    // dropped) rather than rejected, so a slightly odd but legitimate save
+    // still plays. Everything dropped is reported so the import can say so.
+    // ═══════════════════════════════════════════════════════════
+    const CHAIN   = ['ch0','ch1','ch2','ch3','ch4','ch5','ch6','ch7','ch8'];
+    const SIG_IDS = ['sig_01','sig_02','sig_03','sig_04','sig_05'];
+    const SIG_CH  = { sig_01:3, sig_02:4, sig_03:5, sig_04:6, sig_05:7 };
+    // Achievements that can only exist once the hidden chamber has been seen.
+    const TRUTH_ACH = ['bonus_found','chamber','truth','said_hiii','will_return','ch9_complete'];
+
+    function normalise(d) {
+      const dropped = [];
+      const drop = what => { if (dropped.indexOf(what) < 0) dropped.push(what); };
+
+      // ── chapters form an unbroken chain, and ch0 needs the KA-I code ──
+      const have = new Set(d.chaptersCompleted);
+      const kept = [];
+      let broken = false;
+      for (const id of CHAIN) {
+        if (!have.has(id)) { broken = true; continue; }
+        if (broken || (id === 'ch0' && !d.flags.ka1_verified)) { drop(id); continue; }
+        kept.push(id);
+      }
+      // anything outside the chain was never a chapter
+      d.chaptersCompleted.forEach(id => { if (CHAIN.indexOf(id) < 0) drop(id); });
+      d.chaptersCompleted = kept;
+      const done = new Set(kept);
+
+      // ── a signal can only have been heard in a sector you could reach ──
+      d.signalsFound = d.signalsFound.filter(id => {
+        if (SIG_IDS.indexOf(id) < 0) { drop(id); return false; }
+        const prev = CHAIN[SIG_CH[id] - 1];          // the sector before its own
+        if (!done.has(prev)) { drop(id); return false; }
+        return true;
+      });
+      const sigs = d.signalsFound.length;
+
+      // ── a calibration fragment exists for every finished sector ──
+      Object.keys(d.calibration).forEach(id => { if (!done.has(id)) delete d.calibration[id]; });
+      kept.forEach(id => { if (id !== 'ch0') d.calibration[id] = d.calibration[id] || true; });
+
+      // ── the hidden chamber is never unlocked by one boolean ──
+      const chamberEarned = done.has('ch8') && sigs === SIG_IDS.length;
+      if (d.flags.truth_revealed && !chamberEarned) { delete d.flags.truth_revealed; drop('truth_revealed'); }
+      if (d.flags.zieldaten && !done.has('ch8'))    { delete d.flags.zieldaten;      drop('zieldaten'); }
+
+      // ── achievements need the thing they are awarded for ──
+      d.achievementsUnlocked = d.achievementsUnlocked.filter(a => {
+        const m = /^ch(\d)_complete$/.exec(a);
+        if (m && m[1] !== '9' && !done.has('ch' + m[1]))            { drop(a); return false; }
+        if (a === 'signal_first' && sigs < 1)                       { drop(a); return false; }
+        if (a === 'signal_all'   && sigs < SIG_IDS.length)          { drop(a); return false; }
+        if (TRUTH_ACH.indexOf(a) >= 0 && !d.flags.truth_revealed)   { drop(a); return false; }
+        return true;
+      });
+
+      return { data: d, dropped };
+    }
+
+    // A save's own coordinates are never stored as readable text; they are
+    // rebuilt from the fragments, and only for a run that actually finished
+    // the reconstruction.
+    function zieldaten() {
+      try {
+        if (!_data.chaptersCompleted.includes('ch8')) return '';
+        return calibration.reconstructMain() || '';
+      } catch (_) { return ''; }
+    }
+
+    // A plain, non-secret checksum. It cannot stop anyone — the function is
+    // right here — but it makes a hand-edited field obvious, and it is what
+    // lets an import say "this was changed" instead of trusting it silently.
+    function sum(d) {
+      const material = JSON.stringify([
+        d.schemaVersion, d.chaptersCompleted, d.signalsFound.slice().sort(),
+        d.achievementsUnlocked.slice().sort(), Object.keys(d.calibration).sort(),
+        !!d.flags.ka1_verified, !!d.flags.truth_revealed, !!d.flags.zieldaten,
+      ]);
+      let h = 0x811c9dc5;
+      for (let i = 0; i < material.length; i++) {
+        h ^= material.charCodeAt(i);
+        h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+      }
+      return h.toString(16).padStart(8, '0');
+    }
+
     function load() {
       let raw = null;
       try { raw = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); }
       catch (_) { raw = null; }               // unreadable: start clean, but keep playing
       const had = raw && typeof raw === 'object';
-      _data = migrate(had ? raw : null);
+      _data = normalise(migrate(had ? raw : null)).data;
       // Write the upgraded shape back once, so the next load has nothing to do
       // and a half-migrated save can never be observed.
       if (!had || raw.schemaVersion !== SCHEMA) save();
@@ -106,14 +219,15 @@ const GameEngine = (() => {
 
     // A finished chapter whose reward went missing — an interrupted write, a
     // save copied between browsers — must not send the player back through it.
+    // A finished run that lost its flag still gets its coordinates back — the
+    // value itself is always derived, so there is nothing to reconstruct here
+    // beyond the claim that it was earned.
     function repair() {
       try {
-        if (_data.chaptersCompleted.includes('ch8') && !_data.zieldaten_text) {
-          const z = calibration.reconstructMain();
-          if (z) { _data.zieldaten_text = z; _data.flags.zieldaten = true; }
-        }
+        if (_data.chaptersCompleted.includes('ch8')) _data.flags.zieldaten = true;
       } catch (_) {}
     }
+
 
     function save() {
       if (!_persist) return;
@@ -173,26 +287,44 @@ const GameEngine = (() => {
 
     // Copy a save between browsers or keep a backup of a long run.
     function exportSave() {
-      try { return btoa(unescape(encodeURIComponent(JSON.stringify(_data)))); }
-      catch (_) { return ''; }
+      try {
+        const out = { ..._data, checksum: sum(_data) };
+        return btoa(unescape(encodeURIComponent(JSON.stringify(out))));
+      } catch (_) { return ''; }
     }
+    // Returns a report rather than a bare boolean: the player is told what the
+    // code actually contained, including anything the invariants had to drop.
     function importSave(text) {
       let raw = null;
       const t = String(text || '').trim();
-      if (!t) return false;
+      if (!t) return { ok: false, reason: 'empty' };
       try { raw = JSON.parse(decodeURIComponent(escape(atob(t)))); }
-      catch (_) { try { raw = JSON.parse(t); } catch (_) { return false; } }
-      if (!raw || typeof raw !== 'object' || !Array.isArray(raw.chaptersCompleted)) return false;
-      _data = migrate(raw);
+      catch (_) { try { raw = JSON.parse(t); } catch (_) { return { ok: false, reason: 'unreadable' }; } }
+      if (!raw || typeof raw !== 'object' || !Array.isArray(raw.chaptersCompleted)) {
+        return { ok: false, reason: 'unreadable' };
+      }
+      const claimed = raw.checksum;
+      const migrated = migrate(raw);
+      // The checksum is computed over the migrated shape, so a code exported by
+      // an older build still matches. A mismatch is reported, never fatal —
+      // the invariants below are what actually decide how far the save gets.
+      const edited = typeof claimed === 'string' && claimed !== sum(migrated);
+      const { data, dropped } = normalise(migrated);
+      _data = data;
       repair();
       save();
-      return true;
+      return {
+        ok: true, edited, dropped,
+        untracked: typeof claimed !== 'string',
+        chapters: _data.chaptersCompleted.length,
+        signals: _data.signalsFound.length,
+      };
     }
 
     load();
     return {
       load, save, get, set, setFlag, hasFlag, canPersist, chapter, setting,
-      markChapterComplete, isChapterComplete,
+      markChapterComplete, isChapterComplete, zieldaten,
       markPuzzleSolved, isPuzzleSolved, reset, repair,
       exportSave, importSave, SCHEMA,
     };
@@ -264,7 +396,9 @@ const GameEngine = (() => {
       const dlg = document.querySelector('.dlg-container');
       if (dlg && dlg.classList.contains('visible')) return true;
       // a card the player is reading right now
-      return !!document.querySelector('.chapter-complete:not(.hidden), .end-card.visible, .cine-credits.visible, .stinger.visible');
+      // An overlay now sits above the story layers, so a toast behind it would
+      // be invisible; hold it until the player closes the panel.
+      return !!document.querySelector('.chapter-complete:not(.hidden), .end-card.visible, .cine-credits.visible, .stinger.visible, .overlay-panel:not(.hidden)');
     }
 
     function push(build, life) {
@@ -413,6 +547,16 @@ const GameEngine = (() => {
     // Walking back into a finished sector should not mean solving it again.
     // A chapter asks isRevisit() and, if true, opens straight into its final
     // room with the optional things still there to find.
+    // The visible main progression counts only the eight sectors that get
+    // reactivated. Sector 00 is the entrance, not one of them, and chapter 9
+    // is not part of the count at all — telling a fresh player there are nine
+    // chapters gives away that something follows sector 08.
+    const MAIN_SECTORS = ['ch1','ch2','ch3','ch4','ch5','ch6','ch7','ch8'];
+    function mainProgress() {
+      const have = done();
+      return { done: MAIN_SECTORS.filter(id => have.includes(id)).length, total: MAIN_SECTORS.length };
+    }
+
     function isRevisit(id) { return state.isChapterComplete(id); }
 
     function missingSignal(id) {
@@ -492,7 +636,7 @@ const GameEngine = (() => {
     return {
       CHAPTERS, PCT, href, canEnter, require, lockScreen,
       currentChapter, nextChapter, allDone, resumeHref, reactivationPct,
-      signalsFound, allSignals, isRevisit, missingSignal, returnBar,
+      signalsFound, allSignals, isRevisit, missingSignal, returnBar, mainProgress,
     };
   })();
 
@@ -931,6 +1075,8 @@ const GameEngine = (() => {
       }
 
       _container.classList.add('visible');
+      _watchDlgSize();
+      _syncDlgSpace();
       portEl.classList.add('speaking');
       _typing = true;
 
@@ -939,6 +1085,32 @@ const GameEngine = (() => {
         portEl.classList.remove('speaking');
         advEl.style.opacity = '1';
       }, line.speaker);
+    }
+
+    // The dialogue strip is fixed to the bottom edge at z-index 210, above the
+    // puzzle modals at 200 — deliberately, so a mid-puzzle hint is never
+    // trapped behind a modal's backdrop. The cost is that it lands squarely on
+    // a modal's action row and makes those buttons unclickable while a line is
+    // up. So whenever the strip is visible the page publishes its height and
+    // open modals reserve exactly that much room underneath.
+    let _spaceObs = null;
+    function _syncDlgSpace() {
+      try {
+        const up = !!(_container && _container.classList.contains('visible'));
+        document.body.classList.toggle('dlg-up', up);
+        if (!up) return;
+        const h = Math.ceil(_container.getBoundingClientRect().height);
+        if (h) document.documentElement.style.setProperty('--dlg-h', h + 'px');
+      } catch (_) {}
+    }
+    function _watchDlgSize() {
+      if (_spaceObs || !_container) return;
+      try {
+        // The box grows as a line types and as it wraps, so measure it live.
+        _spaceObs = new ResizeObserver(_syncDlgSpace);
+        _spaceObs.observe(_container);
+      } catch (_) { _spaceObs = null; }
+      try { window.addEventListener('resize', _syncDlgSpace); } catch (_) {}
     }
 
     function _reduced() {
@@ -984,6 +1156,7 @@ const GameEngine = (() => {
     function hide() {
       _container?.classList.remove('visible');
       document.getElementById('dlgPortrait')?.classList.remove('speaking');
+      _syncDlgSpace();
     }
 
     function history() { return _log.slice(); }
@@ -1680,7 +1853,6 @@ const GameEngine = (() => {
     let _hints      = null;   // { counts, max, banks, names, empty }
     let _completeId = null;   // e.g. 'ch7'
     let _completeAch= null;   // e.g. 'ch7_complete'
-    let _chapterCount = 9;    // denominator for the progress readout
 
     const el = id => document.getElementById(id);
 
@@ -1690,7 +1862,6 @@ const GameEngine = (() => {
       _onStart      = c.onStart || null;
       _completeId   = c.completeId  || null;
       _completeAch  = c.completeAch || null;
-      if (c.chapterCount) _chapterCount = c.chapterCount;
       if (c.title) document.title = c.title;
       document.body.classList.add('chapter-page');
       try { music.play(c.music || ('ch' + parseInt(c.num, 10) + '_ambient')); } catch (_) {}
@@ -1924,7 +2095,7 @@ const GameEngine = (() => {
       try { achievements.checkPlatinum(); } catch (_) {}
       el('chapterComplete')?.classList.remove('hidden');
       const p = el('ccProgress');
-      if (p) p.textContent = `FORTSCHRITT: ${state.get('chaptersCompleted').length} / ${_chapterCount} KAPITEL`;
+      if (p) { const m = progress.mainProgress(); p.textContent = `FORTSCHRITT: ${m.done} / ${m.total} SEKTOREN`; }
     }
 
     return {
@@ -2116,7 +2287,8 @@ const GameEngine = (() => {
       document.body.appendChild(panel);
     }
 
-    const chapters = (state.get('chaptersCompleted') || []).filter(c => c !== 'ch9').length;
+    const mp       = progress.mainProgress();
+    const chapters = mp.done, chTotal = mp.total;
     const sigs     = (state.get('signalsFound') || []).length;
     const achs     = (state.get('achievementsUnlocked') || []).length;
     let achTotal   = 0;
@@ -2138,7 +2310,9 @@ const GameEngine = (() => {
           <section class="sv-block">
             <h3 class="sv-head sys-text">GESPEICHERT IST</h3>
             <ul class="sv-list">
-              <li>Abgeschlossene Sektoren: <b>${chapters} / 9</b></li>
+              ${state.get('provenance') === 'beta'
+                ? '<li>Herkunft: <b>TESTSUBJEKT · VORAB-LAUF</b></li>' : ''}
+              <li>Abgeschlossene Sektoren: <b>${chapters} / ${chTotal}</b></li>
               <li>Gefundene Fremdsignale: <b>${sigs} / 5</b></li>
               <li>Freigeschaltete Erfolge: <b>${achs}${achTotal ? ' / ' + achTotal : ''}</b></li>
               <li>Zieldaten: <b>${ziel ? 'vorhanden' : 'noch nicht'}</b></li>
@@ -2197,12 +2371,18 @@ const GameEngine = (() => {
     panel.querySelector('#svLoad')?.addEventListener('click', () => {
       const t = panel.querySelector('#svImport').value;
       if (!t.trim()) { msg('Kein Code eingegeben.'); return; }
-      if (state.importSave(t)) {
-        msg('Spielstand übernommen. Die Anlage startet neu …');
-        setTimeout(() => location.reload(), 700);
-      } else {
-        msg('Dieser Code ist unlesbar. Bitte vollständig einfügen.');
+      const r = state.importSave(t);
+      if (!r || !r.ok) { msg('Dieser Code ist unlesbar. Bitte vollständig einfügen.'); return; }
+      // Say what actually arrived, including anything the consistency check
+      // had to drop. A code that claims more than it can account for is
+      // imported at the point it can account for — never at its own word.
+      const parts = [`Übernommen: ${r.chapters} Sektoren, ${r.signals} Fremdsignale.`];
+      if (r.dropped && r.dropped.length) {
+        parts.push(`Nicht übernommen, weil der Spielstand dazu keinen Fortschritt enthält: ${r.dropped.join(', ')}.`);
       }
+      if (r.edited) parts.push('Hinweis: Dieser Code wurde nach dem Export verändert.');
+      msg(parts.join(' ') + ' Die Anlage startet neu …');
+      setTimeout(() => location.reload(), r.dropped && r.dropped.length ? 2600 : 900);
     });
 
     // Two taps, and the second one only counts while the warning is on screen.

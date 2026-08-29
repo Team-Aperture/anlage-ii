@@ -1334,7 +1334,7 @@ const Chapter5 = (() => {
     if (openModal === 'gallery') {
       body.innerHTML = renderGallery();
       acts.innerHTML = `<button class="ka-btn primary" data-act="sg-commit">[ SAMMELSCHALTER ]</button>
-                        <button class="ka-btn small" data-act="sg-clear">[ ALLE LÖSEN ]</button>
+                        <button class="ka-btn small" data-act="sg-clear">[ SCHALTER ZURÜCKSETZEN ]</button>
                         <button class="ka-btn small" data-act="close">[ ZURÜCK ]</button>`;
     } else if (openModal === 'supply') {
       body.innerHTML = renderSupply();
@@ -1361,7 +1361,7 @@ const Chapter5 = (() => {
 
     switch (act) {
       case 'sg-key':    galleryKey(btn.dataset.id); break;
-      case 'sg-clear':  inst.gallery.latched.clear(); setStatus('ALLE SCHALTER GELÖST.', ''); render(); break;
+      case 'sg-clear':  inst.gallery.latched.clear(); setStatus('ALLE SCHALTER ZURÜCKGESETZT.', ''); render(); break;
       case 'sg-commit': galleryCommit(); break;
 
       case 'vg-sup':    supplyToggle(btn.dataset.id); break;

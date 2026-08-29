@@ -73,8 +73,9 @@
           <p class="mw-label">BESTÄTIGUNG</p>
           <h2 class="mw-title">Alles klar?</h2>
           <p class="mw-msg">
-            Kein Fortschritt geht verloren: Du kannst jederzeit auf einem
-            größeren Bildschirm weiterspielen, wenn du magst.
+            Kein Fortschritt geht verloren. Der Spielstand liegt in diesem
+            Browser; über <b>[ SPIELSTAND ]</b> im Hauptmenü bekommst du einen
+            Code, mit dem du auf einem größeren Bildschirm weitermachen kannst.
           </p>
           <p class="mw-msg-secondary">
             Hier weitermachen?

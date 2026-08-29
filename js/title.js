@@ -450,7 +450,7 @@
     const sets = [];
     try {
       if (GameEngine.state.hasFlag('zieldaten')) {
-        const t = GameEngine.state.get('zieldaten_text');
+        const t = GameEngine.state.zieldaten();
         const confirmed = GameEngine.state.hasFlag('truth_revealed');
         if (t) sets.push({
           id: 'main',
@@ -507,7 +507,8 @@
     if (!nav) return;
 
     // chapters 0–8; the hidden chapter 9 is not counted
-    const parts = [`FORTSCHRITT: ${nav.completed.length} / ${CHAPTERS.length} KAPITEL`];
+    const m = GameEngine.progress.mainProgress();
+    const parts = [`FORTSCHRITT: ${m.done} / ${m.total} SEKTOREN`];
     let pct = 0;
     try { pct = GameEngine.progress.reactivationPct(); } catch (_) {}
     if (nav.completed.length) parts.push(`REAKTIVIERUNG: ${pct} %`);

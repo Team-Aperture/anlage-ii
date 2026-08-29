@@ -614,6 +614,7 @@ html.gate-blocked body { visibility: hidden; }
   align-items: center;
   justify-content: center;
   padding: var(--sp-lg);
+  overflow-y: auto;   /* tall content on a short screen must stay reachable */
 }
 
 .puzzle-card {
@@ -623,6 +624,7 @@ html.gate-blocked body { visibility: hidden; }
   max-width: 480px;
   width: 100%;
   position: relative;
+  margin: auto;
 }
 
 .puzzle-card::before {
@@ -738,43 +740,70 @@ html.gate-blocked body { visibility: hidden; }
   background: radial-gradient(circle, rgba(58,143,212,0.05) 0%, transparent 75%);
 }
 
+/* The button is a pure hit target and its box NEVER moves. Every visual
+   state lives on the disc drawn underneath it.
+
+   This used to be one shared rule that hardcoded translate(-50%, -50%) for
+   the pressed state and forced it with !important. That translate is only
+   correct for the top and left keys; for the right key (▲) and the bottom
+   key (■) it REPLACED their own position, so pressing them threw the button
+   a full 56px out from under the pointer. A click needs pointerdown and
+   pointerup on the same element, so on Windows those two symbols often did
+   not register at all — and everywhere else you could still see them jump.
+
+   Position is now declared once, per key, and no state rule touches
+   transform on the button again. */
 .puzzle-key {
-  background: var(--bg-surface);
-  border: 1px solid var(--bdr-mid);
+  background: none;
+  border: 0;
+  padding: 0;
   color: var(--text-primary);
   font-family: var(--font-display);
   font-size: 26px;
   line-height: 1;
   width: 56px;
   height: 56px;
-  border-radius: 50%;
   cursor: pointer;
-  transition: transform 0.12s ease, border-color var(--t-fast), background var(--t-fast), color var(--t-fast);
   user-select: none;
   position: absolute;
+  isolation: isolate;
+  touch-action: manipulation;     /* no double-tap-zoom delay on a phone */
+  transition: color var(--t-fast);
 }
 
+/* the visible disc — this is what reacts, not the hit target */
+.puzzle-key::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  border: 1px solid var(--bdr-mid);
+  transition: transform 0.12s ease, border-color var(--t-fast), background var(--t-fast);
+}
+
+/* position only — never overridden by a state */
 .ring-top    { top: 0;    left: 50%; transform: translate(-50%, -50%); }
 .ring-right  { right: 0;  top: 50%;  transform: translate(50%, -50%); }
 .ring-bottom { bottom: 0; left: 50%; transform: translate(-50%, 50%); }
 .ring-left   { left: 0;   top: 50%;  transform: translate(-50%, -50%); }
 
 .puzzle-key:hover,
-.puzzle-key:focus-visible {
+.puzzle-key:focus-visible { color: #fff; outline: none; }
+.puzzle-key:hover::before,
+.puzzle-key:focus-visible::before {
   border-color: var(--accent-system);
   background: var(--bg-raised);
-  color: #fff;
-  outline: none;
 }
-.ring-top:hover, .ring-top:focus-visible       { transform: translate(-50%, -50%) translateY(-2px); }
-.ring-right:hover, .ring-right:focus-visible   { transform: translate(50%, -50%) translateX(2px); }
-.ring-bottom:hover, .ring-bottom:focus-visible { transform: translate(-50%, 50%) translateY(2px); }
-.ring-left:hover, .ring-left:focus-visible     { transform: translate(-50%, -50%) translateX(-2px); }
+/* keyboard focus still has to be obvious without moving anything */
+.puzzle-key:focus-visible::before { box-shadow: 0 0 0 2px var(--accent-system); }
 
-.puzzle-key:active,
-.puzzle-key.hit {
+.puzzle-key:active::before,
+.puzzle-key.hit::before {
   background: var(--accent-system-lo);
-  transform: translate(-50%, -50%) scale(0.9) !important;
+  border-color: var(--accent-system);
+  transform: scale(0.9);
 }
 
 .puzzle-key.locked {
@@ -902,13 +931,17 @@ body:has(.dlg-container.visible) .chapter-hud { opacity: 0.3; }
   .ring-plate { display: none; }
   .puzzle-key,
   .ring-top, .ring-right, .ring-bottom, .ring-left {
-    position: static;
-    transform: none !important;
+    /* relative, not static: the disc below is absolutely positioned and needs
+       its own button as the containing block. Left static it escapes to the
+       nearest positioned ancestor, and four full-panel discs stack on top of
+       each other so only the last key is tappable. */
+    position: relative;
+    transform: none;
     width: 100%;
     height: 64px;
     font-size: 26px;
   }
-  .puzzle-key:active, .puzzle-key.hit { transform: scale(0.92) !important; }
+  .puzzle-key:active::before, .puzzle-key.hit::before { transform: scale(0.92); }
 }
 
 /* ─── MODAL SCROLL — small phones ────────────────────────────── */
