@@ -205,6 +205,7 @@ const Chapter9 = (() => {
   // the room itself, with nothing to click — used again once the evidence
   // stops mattering and only the two of them do
   function dressRoom() {
+    releaseToast();
     CH.clearHotspots();
     CH.addProp({ prop:'c9_stack',  x:0,  y:10, w:9,  h:62 });
     CH.addProp({ prop:'c9_stack',  x:91, y:10, w:9,  h:62 });
@@ -213,6 +214,7 @@ const Chapter9 = (() => {
   }
 
   function loadRoom() {
+    releaseToast();
     dressRoom();
     CH.showRobots(true);
     CH.showGuest(false);
@@ -236,7 +238,16 @@ const Chapter9 = (() => {
   // ═══════════════════════════════════════════════════════════════
   // ACT 1 — arrival
   // ═══════════════════════════════════════════════════════════════
+  // The "Nicht registriert" card is earned on arrival, but it must not land on
+  // top of KAMMER: NICHT REGISTRIERT — the room's first line is the point of
+  // the room. Hold the toast until the room is the player's; a timer stands
+  // in for any path that never hands the room over.
+  let _toastHeld = false;
+  function holdToast()    { if (_toastHeld) return; _toastHeld = true; try { GameEngine.toasts.hold(); } catch (_) {} later(releaseToast, 14000); }
+  function releaseToast() { if (!_toastHeld) return; _toastHeld = false; try { GameEngine.toasts.release(); } catch (_) {} }
+
   function begin() {
+    holdToast();
     try { GameEngine.achievements.unlock('chamber'); } catch (_) {}
     // Only a finished run gets the epilogue. A checkpoint that merely reached
     // act 5 is a player mid-conversation, and sending them to the revisit menu
@@ -1090,6 +1101,7 @@ const Chapter9 = (() => {
   }
 
   function revisitMenu() {
+    releaseToast();
     CH.showChoices({
       prompt: 'DIESE KAMMER:',
       hint: 'DIE ZIELDATEN BLEIBEN VERFÜGBAR',

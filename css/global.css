@@ -200,9 +200,16 @@ body {
   z-index: 20;
   backdrop-filter: blur(4px);
 }
+/* Unit names are never broken at their hyphen. */
+.sys-bar .accent-r3mi, .sys-bar .accent-vtgm, .sys-bar .accent-system, .sys-bar .accent-guest { white-space: nowrap; }
 @media (max-width: 640px) {
   .sys-bar { padding: var(--sp-xs) var(--sp-md); }
   .sys-bar .sys-text { font-size: 9px; }
+}
+/* On a phone the two readouts do not fit side by side; stacked, each keeps
+   its own line instead of wrapping mid-word (R- / 3MI). */
+@media (max-width: 480px) {
+  .sys-bar { flex-direction: column; align-items: flex-start; gap: 2px; }
 }
 
 /* ─── OVERLAY SYSTEM ─────────────────────────────────────────── */
@@ -533,8 +540,16 @@ body {
   font-size: 10px;
   color: var(--text-dim);
   text-align: right;
+  white-space: nowrap;      /* never a lone ] on its own line */
   transition: opacity var(--t-mid);
   animation: blinkAdv 1.2s step-end infinite;
+}
+/* A phone has no space bar and nobody clicks it: say "tippen", and say it
+   short enough to fit beside the portrait at 360px. */
+.dlg-advance .adv-coarse { display: none; }
+@media (pointer: coarse), (max-width: 480px) {
+  .dlg-advance .adv-fine   { display: none; }
+  .dlg-advance .adv-coarse { display: inline; }
 }
 
 @keyframes blinkAdv {

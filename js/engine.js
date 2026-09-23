@@ -1016,7 +1016,7 @@ const GameEngine = (() => {
             <div class="dlg-speaker" id="dlgSpeaker"></div>
             <div class="dlg-text"    id="dlgText"></div>
             <div class="dlg-sub"     id="dlgSub"></div>
-            <div class="dlg-advance" id="dlgAdvance">[ WEITER — KLICKEN ODER LEERTASTE ]</div>
+            <div class="dlg-advance" id="dlgAdvance"><span class="adv-fine">[ WEITER — KLICKEN ODER LEERTASTE ]</span><span class="adv-coarse">[ WEITER — TIPPEN ]</span></div>
           </div>
         </div>
       `;
