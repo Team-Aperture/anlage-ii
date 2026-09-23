@@ -9,7 +9,8 @@ const CODE = H.localSecret('KA1_CODE');
   console.log('\n[A] wrong code');
   { const { ctx, p, errs } = await H.open(b, '/access.html', undefined); await type(p, '00000000'); await p.waitForTimeout(1500);
     check(!/chapter0/.test(p.url()) && !(await p.locator('.access-go.visible').count()), 'a wrong code opens nothing');
-    check(!/83162947|ABSCHALTCODE ERKANNT/.test(await p.evaluate(() => document.body.innerText)), '  and reveals nothing');
+    { const txt = await p.evaluate(() => document.body.innerText);
+      check(!txt.includes(CODE) && !/ABSCHALTCODE ERKANNT/.test(txt), '  and reveals nothing'); }
     check(errs.length === 0, '  no page errors'); await ctx.close(); }
   console.log('\n[B] the real code');
   { const { ctx, p, errs } = await H.open(b, '/access.html', undefined); await type(p, CODE);
@@ -20,7 +21,11 @@ const CODE = H.localSecret('KA1_CODE');
     check(st.flags.ka1_verified === true && st.achievementsUnlocked.includes('ka1_veteran'), '  flag and veteran achievement set');
     await p.locator('#accessGo').click(); await p.waitForTimeout(1800);
     check(/chapter0/.test(p.url()), '  the facility starts only on the player\'s choice');
-    check(!/83162947/.test(H.fs.readFileSync(H.path.join(H.ROOT,'js/access.js'),'utf8') + H.fs.readFileSync(H.path.join(H.ROOT,'access.html'),'utf8')), '  the code is not in the shipped source');
+    // Not in ANY committed file — GitHub Pages serves the whole repository,
+    // tests included. The code only ever lives in the git-ignored .local.json.
+    { const tracked = require('child_process').execSync('git ls-files', { cwd: H.ROOT, encoding: 'utf8' }).split('\n').filter(Boolean);
+      const hits = tracked.filter(f => { try { return H.fs.readFileSync(H.path.join(H.ROOT, f), 'utf8').includes(CODE); } catch (_) { return false; } });
+      check(hits.length === 0, `  the code is in no committed file (${hits.join(', ') || 'none'})`); }
     check(errs.length === 0, '  no page errors'); await ctx.close(); }
   await b.close(); finish();
 })();
