@@ -1248,6 +1248,9 @@ const Chapter5 = (() => {
   };
 
   function useHint(who) {
+    // a tap while a line is up advances it — a hint started here would replace
+    // the line's continuation, and a double tap would spend two hints
+    if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch (_) {} return; }
     const ladder = HINTS[S.hints.active];
     if (!ladder) { say(coachLines()); return; }
     if (S.hints.step >= HINT_MAX) {
@@ -1585,6 +1588,8 @@ const Chapter5 = (() => {
     if (S.ended) return;
     // Persist before any narration runs.
     try { GameEngine.state.markChapterComplete(CHAPTER_ID); } catch (_) {}
+    // earned with the completion — a reload during the ending must not lose it
+    try { GameEngine.achievements.unlock('ch5_complete'); } catch (_) {}
     inst.terminal = null;
     closeModal();
     logAdd('14-I // STRECKENENDE', 'TRASSE 14-D → 14-I ABGENOMMEN.');

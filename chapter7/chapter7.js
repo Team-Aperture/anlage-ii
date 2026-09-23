@@ -229,6 +229,10 @@ const Chapter7 = (() => {
       S.bsodSeen = !!d.bsodSeen; S.integritySeen = !!d.integritySeen;
       S.sigFound = !!d.sigFound; S.luxSeen = !!d.luxSeen;
       loadRoom();
+      // The third anchor stood, but the crash and the integrity report never
+      // played (a reload in the lines between). They are the sector's turn,
+      // and Chapter 9 leans on that report — play them now, not never.
+      if (anchorsDone() === 3 && !S.integritySeen) { S.act = 5; save(); crashSequence(); return; }
       say([
         { speaker:'SYSTEM', text:'SEKTOR 07 // DARSTELLUNGSEBENE WIRD NEU GELADEN.' },
         { speaker:'FAX-N',  text:'„Ah. Wieder da."' },
@@ -874,6 +878,8 @@ const Chapter7 = (() => {
     if (S.solved) return;
     S.solved = true;
     try { GameEngine.state.markChapterComplete(CHAPTER_ID); } catch (_) {}
+    // earned with the completion — a reload during the ending must not lose it
+    try { GameEngine.achievements.unlock('ch7_complete'); } catch (_) {}
     P.exits = null;
     save();
     closeModal();
@@ -1196,6 +1202,9 @@ const Chapter7 = (() => {
   };
 
   function useHint(who) {
+    // a tap while a line is up advances it — a hint started here would replace
+    // the line's continuation, and a double tap would spend two hints
+    if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch (_) {} return; }
     const ladder = HINTS[S.hints.active];
     if (!ladder) { say(coachLines()); return; }
     if (S.hints.step >= HINT_MAX) {

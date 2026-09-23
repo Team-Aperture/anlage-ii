@@ -128,7 +128,10 @@ const GameEngine = (() => {
     const SIG_IDS = ['sig_01','sig_02','sig_03','sig_04','sig_05'];
     const SIG_CH  = { sig_01:3, sig_02:4, sig_03:5, sig_04:6, sig_05:7 };
     // Achievements that can only exist once the hidden chamber has been seen.
-    const TRUTH_ACH = ['bonus_found','chamber','truth','said_hiii','will_return','ch9_complete'];
+    // 'chamber' is not here: it is earned by entering the chamber, which only
+    // needs the chamber to be reachable (checked below) — tying it to the truth
+    // flag stripped it on every load and re-toasted it on every re-entry.
+    const TRUTH_ACH = ['bonus_found','truth','said_hiii','will_return','ch9_complete'];
 
     function normalise(d) {
       const dropped = [];
@@ -173,8 +176,19 @@ const GameEngine = (() => {
         if (a === 'signal_first' && sigs < 1)                       { drop(a); return false; }
         if (a === 'signal_all'   && sigs < SIG_IDS.length)          { drop(a); return false; }
         if (TRUTH_ACH.indexOf(a) >= 0 && !d.flags.truth_revealed)   { drop(a); return false; }
+        if (a === 'chamber' && !chamberEarned)                      { drop(a); return false; }
         return true;
       });
+      // ── …and the other way round: a finished chapter carries its chapter
+      // achievement. Chapters save their completion before their ending plays,
+      // so a reload (or a menu visit) in the middle of an ending used to lose
+      // the achievement for good. Repaired silently on every load and import.
+      for (let n = 0; n <= 8; n++) {
+        const a = 'ch' + n + '_complete';
+        if (done.has('ch' + n) && d.achievementsUnlocked.indexOf(a) < 0) d.achievementsUnlocked.push(a);
+      }
+      if (sigs >= 1 && d.achievementsUnlocked.indexOf('signal_first') < 0) d.achievementsUnlocked.push('signal_first');
+      if (sigs >= SIG_IDS.length && d.achievementsUnlocked.indexOf('signal_all') < 0) d.achievementsUnlocked.push('signal_all');
 
       return { data: d, dropped };
     }
@@ -683,7 +697,7 @@ const GameEngine = (() => {
       { id: 'truth',            icon: '⌖', title: 'Die Wahrheit',         desc: 'Bis zum Ende zugehört.' },
       { id: 'said_hiii',        icon: '☻', title: 'Hiii.',                desc: 'Am Ende doch noch einmal gegrüßt.' },
       { id: 'will_return',      icon: '↺', title: 'Ich komme zurück',     desc: 'Ein Versprechen, das niemand widerrufen hat.' },
-      { id: 'bonus_found',      icon: '?', title: '???',                  desc: '...' },
+      { id: 'bonus_found',      icon: '?', title: '???',                  desc: '…' },
       { id: 'coordinates',      icon: '✦', title: 'Zieldaten erhalten',   desc: 'Die Koordinaten sind bereit.' },
     ];
 
@@ -2183,6 +2197,10 @@ const GameEngine = (() => {
     }
     function useHint(who) {
       if (!_hints) return;
+      // A tap while a line is up advances it. Starting a hint here would
+      // replace the running line's one continuation (a stage change, an
+      // ending), and a double tap would spend two hints for one read.
+      if (dialogueUp()) { try { dialogue.advance(); } catch (_) {} return; }
       const name = _hints.names[who] || who;
       const done = () => { if (_hints.onClose) _hints.onClose(); };
       if (_hints.onOpen) _hints.onOpen();

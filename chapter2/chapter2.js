@@ -359,7 +359,7 @@ const Chapter2 = (() => {
       { speaker:'F-RØ5CHI', text:'„A Bsuach! A echter Bsuach! Wia lang hob i scho keinen mehr g\'sehn!"', subtitle:'Ein Besuch! Ein echter Besuch! Wie lang hab ich schon keinen mehr gesehen!' },
       { speaker:'F-RØ5CHI', text:'„Kemmt eina, kemmt eina! Hosd Hunger? Wos kann i da geben? Oh, mei…"', subtitle:'Kommt herein, kommt herein! Hast du Hunger? Was kann ich dir geben? Oh je…' },
       { speaker:'F-RØ5CHI', text:'„…i hob nix do. Olles is g\'frorn."', subtitle:'…ich hab nichts da. Alles ist gefroren.' },
-      { speaker:'V-TGM',    text:'"Including you."', subtitle:'Einschließlich dich.' },
+      { speaker:'V-TGM',    text:'"Including you."', subtitle:'Dich eingeschlossen.' },
       { speaker:'F-RØ5CHI', text:'„Wos?"', subtitle:'Was?' },
       { speaker:'SYSTEM',   text:'F-RØ5CHI schaut langsam an sich herunter. Sie hat eine Eisschicht auf den Schultern.' },
       { speaker:'F-RØ5CHI', text:'„…ach, des aa no."', subtitle:'…ach, das auch noch.' },
@@ -787,7 +787,7 @@ const Chapter2 = (() => {
     vtgm: [
       { key:'assess', label:'[ Wie schätzt du sie ein? ]',
         lines:[ { speaker:'V-TGM', text:'"She is functional. But she has been alone too long."', subtitle:'Sie ist funktionsfähig. Aber sie war zu lange allein.' } ],
-        again:[ { speaker:'V-TGM', text:'"Note: she does not ask why we never came back."', subtitle:'Notiz: sie fragt nicht, warum wir nie zurückgekommen sind.' } ] },
+        again:[ { speaker:'V-TGM', text:'"Note: she does not ask why we never came back."', subtitle:'Notiz: Sie fragt nicht, warum wir nie zurückgekommen sind.' } ] },
       { key:'kind', label:'[ Ist das Freundlichkeit? ]',
         lines:[ { speaker:'V-TGM', text:'"That is either kindness or memory loss."', subtitle:'Das ist entweder Freundlichkeit oder Gedächtnisverlust.' } ] },
     ],
@@ -1306,7 +1306,7 @@ const Chapter2 = (() => {
       { speaker:'F-RØ5CHI', text:'„Pfiat eich, ihr Drei. Kemmts wieder, gell?"', subtitle:'Pfiat euch, ihr drei. Kommt wieder, gell?' },
       { speaker:'SYSTEM',   text:'SEKTOR 03 — BEOBACHTUNGSSEKTOR — FREIGEGEBEN.' },
       { speaker:'R-3MI',    text:'„L-UX wird sich freuen."' },
-      { speaker:'V-TGM',    text:'"If he holds still long enough for us to find him."', subtitle:'Wenn er lange genug stillhält, dass wir ihn finden.' },
+      { speaker:'V-TGM',    text:'"If he holds still long enough for us to find him."', subtitle:'Wenn er lange genug stillhält, damit wir ihn finden.' },
       { speaker:'R-3MI',    text:'„Das ist auch ein Wenn."' },
     ], finishChapter);
   }

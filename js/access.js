@@ -121,6 +121,10 @@
   function initDigitNav() {
     digits.forEach((input, i) => {
       input.addEventListener('keydown', e => {
+        // A virtual keyboard often reports its keys as "Unidentified" (key
+        // code 229) and delivers the digit through the input event instead.
+        // Never block those — the input handler below keeps the box digits-only.
+        if (e.isComposing || e.keyCode === 229 || e.key === 'Unidentified' || e.key === 'Process') return;
         if (!/^\d$/.test(e.key) &&
             !['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Enter'].includes(e.key) &&
             !e.ctrlKey && !e.metaKey) {
