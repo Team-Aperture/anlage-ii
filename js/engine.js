@@ -1556,6 +1556,7 @@ const GameEngine = (() => {
       const interactive = typeof cfg.onClick === 'function';
       const e = document.createElement(interactive ? 'button' : 'div');
       e.className = 'scene-prop' + (interactive ? ' prop-interactive' : '') + (cfg.anim ? ' ' + cfg.anim : '') + (cfg.cls ? ' ' + cfg.cls : '');
+      e.dataset.prop = type;   // which drawing this is — for chapter CSS/JS that fits a box to its art
       e.style.cssText = `left:${cfg.x}%;top:${cfg.y}%;width:${cfg.w || 12}%;height:${cfg.h || 16}%;`;
       e.innerHTML = '<span class="prop-shadow" aria-hidden="true"></span>' + svg(type);
       if (cfg.label) {

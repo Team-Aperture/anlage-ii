@@ -343,7 +343,8 @@ const Chapter0 = (() => {
     ring: {
       label:   'SCHLEUSENRING',
       aria:    'Schleusenring untersuchen',
-      pos:     { x: 37.5, y: 26, w: 24, h: 44 },
+      // no pos: the seal's hit box is the drawn door itself (chapter0.css
+      // .hotspot.door-hotspot), on every screen size
       lines: [
         { speaker: 'SYSTEM', text: 'EXTERNE TESTSIGNATUR // GÜLTIG.' },
         { speaker: 'SYSTEM', text: 'SCHLEUSENRING // MANUELL VERRIEGELT.' },
@@ -383,7 +384,7 @@ const Chapter0 = (() => {
     },
     {
       key: 'light', label: 'NOTBELEUCHTUNG', aria: 'Notbeleuchtung untersuchen',
-      prop: 'c0_lamp', pos: { x: 44, y: 1, w: 11, h: 7 },
+      prop: 'c0_lamp', pos: { x: 44, y: 6, w: 11, h: 7 },   /* y:6 — clear of the fixed header */
       lines: [
         { speaker: 'SYSTEM', text: 'NOTBELEUCHTUNG // OFFLINE.' },
         { speaker: 'SYSTEM', text: 'ENERGIEVERSORGUNG: UNZUREICHEND.' },
@@ -574,7 +575,6 @@ const Chapter0 = (() => {
 
     // the seal itself
     hs.push({
-      ...REFERENCES.ring.pos,
       label:     REFERENCES.ring.label,
       aria:      S.unlocked ? 'Sektor 01 betreten' : 'Schleusenring untersuchen',
       className: 'door-hotspot ref-ring',
@@ -594,7 +594,31 @@ const Chapter0 = (() => {
     });
 
     GameEngine.scene.load({ hotspots: hs });
+    // the engine gives every hotspot a percentage box; the seal's is the
+    // drawn door (see chapter0.css), so drop the inline one
+    document.querySelector('.hotspot.door-hotspot')?.removeAttribute('style');
+    fitPropBoxes();
     if (S.unlocked) document.querySelector('.env-light')?.classList.add('ch0-lit');
+  }
+
+  // A prop's percentage box is tuned for a wide screen. In a portrait
+  // viewport the same box is far taller than the art it holds (the SVG
+  // letterboxes inside it), so the beacon that says "clickable" floated up
+  // to 60px below the object and most of the hit area was empty wall.
+  // Fit each box to its art: never taller than the drawing, and re-centred
+  // so the object itself stays exactly where the layout put it. The scene
+  // canvas is the whole viewport, so w% of it is w vw.
+  function fitPropBoxes() {
+    document.querySelectorAll('.scene-canvas .scene-prop.prop-interactive[data-prop]').forEach(el => {
+      const art = CH0_ART[el.dataset.prop];
+      const vb  = art ? String(art.vb).trim().split(/[\s,]+/).map(Number) : [];
+      if (vb.length !== 4 || !(vb[2] > 0 && vb[3] > 0)) return;
+      const y = parseFloat(el.style.top), h = parseFloat(el.style.height), w = parseFloat(el.style.width);
+      if (![y, h, w].every(Number.isFinite)) return;
+      const artH = (w * vb[3] / vb[2]).toFixed(3);            // in vw
+      el.style.height = `min(${h}%, ${artH}vw)`;
+      el.style.top    = `calc(${y + h / 2}% - min(${h / 2}%, ${(artH / 2).toFixed(3)}vw))`;
+    });
   }
 
   function examineReference(key) {

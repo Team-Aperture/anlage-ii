@@ -170,7 +170,9 @@ html.gate-blocked body { visibility: hidden; }
   position: absolute;
   top: 50%; left: 50%;
   transform: translate(-50%, -55%);
-  width: min(420px, 38vw);
+  /* also bounded by height: on a short window (1280×600) a width-only size
+     dropped the rim onto the floor stencil */
+  width: min(420px, 38vw, 56vh);
   aspect-ratio: 1;
   display: flex;
   align-items: center;
@@ -483,6 +485,19 @@ html.gate-blocked body { visibility: hidden; }
   box-shadow: 0 0 18px var(--accent-operational);
 }
 
+/* The seal's hit box IS the drawn seal: same size, same centre, round — so
+   the hover ring sits on the rim instead of boxing the door, and on a phone
+   it no longer reaches 45px above and below a 240px door. Chapter0.js strips
+   the engine's percentage box from this one hotspot so these rules apply. */
+.hotspot.door-hotspot {
+  left: 50%; top: 50%;
+  width: min(420px, 38vw, 56vh);
+  height: auto;
+  aspect-ratio: 1;
+  transform: translate(-50%, -55%);
+  border-radius: 50%;
+}
+
 .hotspot-label {
   position: absolute;
   bottom: calc(100% + 6px);
@@ -596,8 +611,11 @@ html.gate-blocked body { visibility: hidden; }
   letter-spacing: 0.12em;
 }
 
-/* a single, restrained nudge — not a demand */
-#hintBtn.nudge { animation: hintNudge 0.6s ease 2; }
+/* a single, restrained nudge — not a demand. The modal has its own hint
+   button and that is the one the third failure nudges (the HUD's sits under
+   the backdrop), so both ids are named here. */
+#hintBtn.nudge,
+#puzzleHintBtn.nudge { animation: hintNudge 0.6s ease 2; }
 @keyframes hintNudge {
   0%, 100% { box-shadow: none; }
   50% { box-shadow: 0 0 10px var(--accent-system); border-color: var(--accent-system); }
@@ -716,7 +734,7 @@ html.gate-blocked body { visibility: hidden; }
   text-align: center;
   min-height: 12px;
   margin-bottom: var(--sp-md);
-  color: var(--text-dim);
+  color: var(--text-secondary);   /* --text-dim was 1.65:1 on the card — unreadable at 10px */
   font-size: 10px;
   letter-spacing: 0.1em;
 }
@@ -730,7 +748,9 @@ html.gate-blocked body { visibility: hidden; }
   position: relative;
   width: min(220px, 60vw);
   aspect-ratio: 1;
-  margin: 0 auto var(--sp-md);
+  /* the top and bottom keys hang half their 56px outside the box — reserve
+     that, or ● cuts through the status line and ■ runs under the buttons */
+  margin: 28px auto calc(var(--sp-md) + 28px);
 }
 
 .ring-plate {
@@ -814,8 +834,13 @@ html.gate-blocked body { visibility: hidden; }
 .puzzle-actions {
   display: flex;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: var(--sp-sm);
 }
+/* three buttons now: a label never breaks inside its brackets, and on a
+   narrow card each one takes a full row instead of folding into a column
+   of clipped words */
+.puzzle-actions .ka-btn { white-space: nowrap; }
 
 /* ─── CHAPTER COMPLETE OVERLAY ───────────────────────────────── */
 .chapter-complete {
@@ -914,9 +939,16 @@ body:has(.dlg-container.visible) .chapter-hud { opacity: 0.3; }
 
 /* ─── RESPONSIVE ─────────────────────────────────────────────── */
 @media (max-width: 600px) {
-  .ph-door { width: 240px; }
+  .ph-door, .hotspot.door-hotspot { width: 240px; }
   .puzzle-slot { width: 48px; height: 48px; font-size: 24px; }
   .chapter-hud { max-width: none; }
+  .puzzle-actions .ka-btn { flex: 1 1 auto; }
+
+  /* the engine centres a label on its prop; these two props sit at the very
+     edges of the room, so on a 360px screen the label was cut to "ARNTAFEL"
+     and "ARCHIVTERM" */
+  .ref-warning .prop-label  { left: 0;    transform: none; }
+  .env-terminal .prop-label { left: auto; right: 0; transform: none; }
 
   /* the radial ring gets cramped on a narrow phone — a plain 2×2 grid stays
      large and thumb-friendly instead */
@@ -927,6 +959,7 @@ body:has(.dlg-container.visible) .chapter-hud { opacity: 0.3; }
     grid-template-columns: repeat(2, 1fr);
     gap: var(--sp-sm);
     max-width: 220px;
+    margin: 0 auto var(--sp-md);   /* nothing overhangs a grid */
   }
   .ring-plate { display: none; }
   .puzzle-key,
@@ -940,8 +973,11 @@ body:has(.dlg-container.visible) .chapter-hud { opacity: 0.3; }
        them — without this reset the grid cells drift by half their size */
     inset: auto;
     transform: none;
-    width: 100%;
+    /* a disc, not a 106×64 oval: the cell stays wide for thumb spacing,
+       the key inside it is round like the seal it stands for */
+    width: 64px;
     height: 64px;
+    justify-self: center;
     font-size: 26px;
   }
   .puzzle-key:active::before, .puzzle-key.hit::before { transform: scale(0.92); }
@@ -958,12 +994,16 @@ body:has(.dlg-container.visible) .chapter-hud { opacity: 0.3; }
   .scene-wrapper,
   .ph-door-glow, .ph-door-ring, .ph-door-ring-2, .ph-door-ring-3, .ph-door-symbol,
   .ph-dust, .ph-corridor, .hotspot::before, .placeholder-scene::after,
-  .cc-glitch, .ch0-klang, #hintBtn.nudge,
+  .cc-glitch, .ch0-klang, #hintBtn.nudge, #puzzleHintBtn.nudge,
   .puzzle-display.correct .puzzle-slot, .puzzle-display.wrong .puzzle-slot,
   .hud-objective-text {
     animation: none !important;
     transition-duration: 0.01ms !important;
   }
+  /* both start at opacity 0 and only an animation brings them in — with
+     the animation gone they have to be visible outright, or the whole
+     entrance stays black for anyone with reduced motion on */
+  .scene-wrapper { opacity: 1; }
   .ch0-klang { opacity: 1; }
   /* the unlock state still communicates instantly (transition-duration above
      collapses the fade to near-zero) — no forced permanent visibility */

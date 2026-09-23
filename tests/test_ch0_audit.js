@@ -75,5 +75,64 @@ const press = async (p, sym) => { await p.locator(`.puzzle-key[data-symbol="${sy
     check(bar && bar.fromBottom < 60, `  the return bar sits at the bottom edge, not lifted into the room (${bar && bar.fromBottom|0}px up)`);
     await r2.ctx.close(); }
 
+  console.log('\n[F] reduced motion still shows the room');
+  { const { ctx, p } = await H.open(b, '/chapter0/chapter0.html', H.save({}), { reduced: true }); await p.waitForTimeout(600);
+    const op = await p.evaluate(() => getComputedStyle(document.getElementById('sceneWrapper')).opacity);
+    check(op === '1', `the scene is visible with prefers-reduced-motion (opacity ${op})`);
+    await ctx.close(); }
+
+  console.log('\n[G] desktop modal: nothing overhangs, the note is readable, the nudge renders');
+  { const { ctx, p } = await H.open(b, '/chapter0/chapter0.html', H.save({})); check(await toRing(p), 'the ring opens');
+    const r = await p.evaluate(() => {
+      const q = s => document.querySelector(s).getBoundingClientRect();
+      const top = q('.puzzle-key.ring-top'), bottom = q('.puzzle-key.ring-bottom'), status = q('#puzzleStatus'), actions = q('.puzzle-actions');
+      const lum = c => { const [r, g, b] = c.match(/[\d.]+/g).map(Number).slice(0, 3).map(v => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; }); return .2126 * r + .7152 * g + .0722 * b; };
+      const fg = lum(getComputedStyle(document.getElementById('puzzleNote')).color), bg = lum(getComputedStyle(document.querySelector('.puzzle-card')).backgroundColor);
+      return { topClear: top.top >= status.bottom - 0.5, bottomClear: bottom.bottom <= actions.top + 0.5, contrast: (Math.max(fg, bg) + .05) / (Math.min(fg, bg) + .05) }; });
+    check(r.topClear && r.bottomClear, `  ● clears the status line and ■ clears the buttons (${JSON.stringify(r)})`);
+    check(r.contrast >= 4, `  the in-modal note reads at ${r.contrast.toFixed(2)}:1`);
+    for (let i = 0; i < 3; i++) { for (const s of ['⬡','■','▲','●']) await press(p, s); await p.waitForTimeout(1000); }
+    const nudge = await p.evaluate(() => { const hb = document.getElementById('puzzleHintBtn'); return { cls: hb.classList.contains('nudge'), anim: getComputedStyle(hb).animationName }; });
+    check(nudge.cls && /hintNudge/.test(nudge.anim), `  third failure nudges the modal's own hint button (${JSON.stringify(nudge)})`);
+    await ctx.close(); }
+
+  console.log('\n[H] desktop room: the lamp is below the header, the seal hit box is the seal');
+  { const { ctx, p } = await H.open(b, '/chapter0/chapter0.html', H.save({})); await p.waitForTimeout(3800); await H.drain(p);
+    const r = await p.evaluate(() => { const q = s => document.querySelector(s).getBoundingClientRect();
+      const lamp = q('.env-light'), bar = q('.sys-bar'), door = q('.ph-door'), hot = q('.hotspot.door-hotspot');
+      const same = Math.abs(door.left - hot.left) < 1 && Math.abs(door.top - hot.top) < 1 && Math.abs(door.width - hot.width) < 1 && Math.abs(door.height - hot.height) < 1;
+      return { lampClear: lamp.top >= bar.bottom, same, round: getComputedStyle(document.querySelector('.hotspot.door-hotspot')).borderRadius }; });
+    check(r.lampClear, '  NOTBELEUCHTUNG sits below the fixed header');
+    check(r.same && r.round === '50%', `  the door hotspot is the drawn door, and round (${JSON.stringify(r)})`);
+    await ctx.close(); }
+
+  console.log('\n[I] short desktop window: the seal stays off the floor stencil');
+  { const { ctx, p } = await H.open(b, '/chapter0/chapter0.html', H.save({}), { viewport: { width: 1280, height: 600 } }); await p.waitForTimeout(3800); await H.drain(p);
+    const r = await p.evaluate(() => { const d = document.querySelector('.ph-door').getBoundingClientRect(), f = document.querySelector('.ref-floor').getBoundingClientRect(); return { doorBottom: d.bottom, floorTop: f.top }; });
+    check(r.doorBottom <= r.floorTop + 1, `  door bottom ${r.doorBottom|0} ≤ stencil top ${r.floorTop|0} at 1280×600`);
+    await ctx.close(); }
+
+  console.log('\n[J] phone: boxes fit their art, labels stay on screen, keys are discs, buttons one line each');
+  { const { ctx, p } = await H.open(b, '/chapter0/chapter0.html', H.save({}), { viewport: { width: 360, height: 740 }, mobile: true });
+    await p.waitForTimeout(3800); await H.drain(p);
+    const r = await p.evaluate(() => {
+      const props = [...document.querySelectorAll('.scene-prop.prop-interactive[data-prop]')].map(el => {
+        const vb = el.querySelector('svg').getAttribute('viewBox').split(/[\s,]+/).map(Number); const b = el.getBoundingClientRect();
+        return { k: el.dataset.prop, off: Math.abs(b.height - b.width * vb[3] / vb[2]) }; });
+      const q = s => document.querySelector(s).getBoundingClientRect();
+      const warn = q('.ref-warning .prop-label'), term = q('.env-terminal .prop-label'), door = q('.ph-door'), hot = q('.hotspot.door-hotspot');
+      return { worst: Math.max(...props.map(x => x.off)), n: props.length, warnLeft: warn.left, termRight: term.right,
+        doorSame: Math.abs(door.top - hot.top) < 1 && Math.abs(door.height - hot.height) < 1 && Math.abs(door.left - hot.left) < 1 }; });
+    check(r.n === 8 && r.worst < 2, `  all ${r.n} prop boxes are as tall as their art (worst ${r.worst.toFixed(1)}px off)`);
+    check(r.warnLeft >= 0 && r.termRight <= 360, `  WARNTAFEL starts at ${r.warnLeft|0}px, ARCHIVTERMINAL ends at ${r.termRight|0}px`);
+    check(r.doorSame, '  the door hotspot follows the 240px phone door');
+    check(await toRing(p), '  the ring opens');
+    const m = await p.evaluate(() => { const keys = [...document.querySelectorAll('.puzzle-key')].map(k => k.getBoundingClientRect());
+      const btns = [...document.querySelectorAll('.puzzle-actions .ka-btn')].map(b => ({ h: b.getBoundingClientRect().height, clipped: b.scrollWidth > b.clientWidth + 1 }));
+      return { discs: keys.every(k => Math.abs(k.width - k.height) < 1 && k.width >= 60), btns }; });
+    check(m.discs, '  the four keys are 64px discs');
+    check(m.btns.length === 3 && m.btns.every(b => b.h < 40 && !b.clipped), `  three one-line buttons, none clipped (${JSON.stringify(m.btns)})`);
+    await ctx.close(); }
+
   await b.close(); finish();
 })();
