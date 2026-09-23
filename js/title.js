@@ -416,9 +416,10 @@
       const current = !nav.allDone && i === nav.nextIdx;
       const locked  = !done && !current;
       const node = document.createElement(locked ? 'span' : 'a');
-      node.className = 'sector-node ' + (done ? 'done' : current ? 'current' : 'locked');
-      node.textContent = done ? '✓' : c.n;
-      node.setAttribute('title', `Kapitel ${c.n} — ${c.name}`);
+      const entrance = c.id === 'ch0';
+      node.className = 'sector-node ' + (done ? 'done' : current ? 'current' : 'locked') + (entrance ? ' entrance' : '');
+      node.textContent = entrance ? '⬡' : done ? '✓' : c.n;
+      node.setAttribute('title', entrance ? `Kapitel ${c.n} — ${c.name} (Eingang)` : `Kapitel ${c.n} — ${c.name}`);
       if (!locked) node.href = c.href;
       track.appendChild(node);
     });

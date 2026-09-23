@@ -37,7 +37,8 @@
   /* Text */
   --text-primary:   #b8ccd8;
   --text-secondary: #5a7a8a;
-  --text-dim:       #2a3a4a;
+  --text-dim:       #4d6476;   /* tertiary text: ~3.1:1 on the panels (#2a3a4a was 1.65:1 — labels on
+                                  the puzzle cards, some of them needed to solve, were unreadable) */
   --text-terminal:  #6ec88a;
   --text-error:     #c84444;
 
@@ -202,6 +203,10 @@ body {
 }
 /* Unit names are never broken at their hyphen. */
 .sys-bar .accent-r3mi, .sys-bar .accent-vtgm, .sys-bar .accent-system, .sys-bar .accent-guest { white-space: nowrap; }
+/* the way back to the menu in any page's header (it used to be styled only
+   in Chapter 0, so the access page showed a blue, underlined browser link) */
+.back-link { color: var(--text-secondary); text-decoration: none; transition: color var(--t-fast); }
+.back-link:hover, .back-link:focus-visible { color: var(--accent-system); }
 @media (max-width: 640px) {
   .sys-bar { padding: var(--sp-xs) var(--sp-md); }
   .sys-bar .sys-text { font-size: 9px; }
@@ -538,7 +543,7 @@ body {
 .dlg-advance {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: var(--text-dim);
+  color: var(--text-secondary);   /* the first instruction a new player reads — --text-dim was 1.65:1 */
   text-align: right;
   white-space: nowrap;      /* never a lone ] on its own line */
   transition: opacity var(--t-mid);
@@ -1295,10 +1300,23 @@ body.dlg-up .puzzle-actions { bottom: calc(var(--dlg-h, 170px) + var(--sp-xs)); 
    restate it here for that one modal rather than weakening the phone layout. */
 body.dlg-up #rkModal { padding-bottom: calc(var(--dlg-h, 170px) + var(--sp-md)); }
 
-/* On a phone the docked card starts under the hint bar (fixed, two rows) —
-   start it below the bar's measured bottom edge instead. */
+/* A puzzle card never starts under the hint bar. The bar is fixed at the top
+   right — two rows on a phone — and a tall card (or one docked while a line
+   is up) used to slide its whole header underneath it. The engine publishes
+   the bar's measured bottom edge as --hint-bottom. */
+body:has(.hint-bar:not(.hidden)) .puzzle-modal {
+  padding-top: max(var(--sp-lg), calc(var(--hint-bottom, 0px) + var(--sp-sm)));
+}
 @media (max-width: 600px) {
-  body.dlg-up .puzzle-modal { padding-top: max(var(--sp-lg), calc(var(--hint-bottom, 0px) + var(--sp-sm))); }
+  /* three unit buttons on one row: the bar is two rows, not three */
+  .hint-bar { gap: 6px; }
+  .hint-bar .ka-btn.small { padding: 5px 7px; letter-spacing: .08em; }
+  /* …and a card's scrolling body is capped by the room actually left under
+     the bar, so the card's own buttons stay on screen */
+  body:has(.hint-bar:not(.hidden)) :is(.mod-body, .st-body, .bb-body, .vp-body, .vx-body) {
+    max-height: max(180px, calc(100vh - var(--hint-bottom, 0px) - 300px));
+    max-height: max(180px, calc(100dvh - var(--hint-bottom, 0px) - 300px));
+  }
 }
 
 /* On a revisit the return bar wraps to three rows on a phone and sat on the

@@ -49,14 +49,6 @@ html.gate-blocked body { visibility: hidden; }
   z-index: 1;
 }
 
-/* ─── BACK LINK ──────────────────────────────────────────────── */
-.back-link {
-  color: var(--text-secondary);
-  text-decoration: none;
-  transition: color var(--t-fast);
-}
-.back-link:hover { color: var(--accent-system); }
-
 /* ─── SCENE (drawn in CSS — there is no image behind this) ───── */
 .placeholder-scene {
   position: absolute;
@@ -592,7 +584,7 @@ html.gate-blocked body { visibility: hidden; }
   font-size: 11px;
 }
 .hud-objective-label {
-  color: var(--text-dim);
+  color: var(--text-secondary);
   letter-spacing: 0.2em;
 }
 .hud-objective-text {

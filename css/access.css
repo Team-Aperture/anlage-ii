@@ -120,7 +120,7 @@
 
 .access-sublabel {
   font-size: 10px;
-  color: var(--text-dim);
+  color: var(--text-secondary);   /* --text-dim is 1.65:1 — unreadable at 10px */
 }
 
 /* ─── MESSAGE ────────────────────────────────────────────────── */
@@ -310,7 +310,7 @@
   transition: opacity .6s ease, transform .6s ease;
 }
 .ar-row.visible { opacity: 1; transform: none; }
-.ar-k { font-size: 10px; letter-spacing: .18em; color: var(--text-dim); }
+.ar-k { font-size: 10px; letter-spacing: .18em; color: var(--text-secondary); }
 .ar-v { font-size: 11px; letter-spacing: .18em; color: var(--accent-r3mi); }
 .access-go {
   display: block; width: 100%; opacity: 0; pointer-events: none;

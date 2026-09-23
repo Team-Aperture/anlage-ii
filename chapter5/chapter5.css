@@ -199,8 +199,8 @@ body.log-open .route-bar { opacity:0; pointer-events:none; transition:opacity .2
 .log-body li:last-child { border-bottom:none; }
 .lg-code { display:block; font-size:9px; letter-spacing:.12em; color:var(--accent-tflon); margin-bottom:2px; }
 .lg-text { font-size:12px; color:var(--text-secondary); }
-.lg-empty { font-size:11px; color:var(--text-dim); font-style:italic; }
-.log-foot { padding:var(--sp-xs) var(--sp-md) var(--sp-sm); font-size:8px; letter-spacing:.12em; color:var(--text-dim); }
+.lg-empty { font-size:11px; color:var(--text-secondary); font-style:italic; }
+.log-foot { padding:var(--sp-xs) var(--sp-md) var(--sp-sm); font-size:8px; letter-spacing:.12em; color:var(--text-secondary); }
 
 /* ─── TRAVEL TRANSITION ───────────────────────────────────────── */
 .travel-overlay {
@@ -371,7 +371,10 @@ body.log-open .route-bar { opacity:0; pointer-events:none; transition:opacity .2
 
 /* ─── RESPONSIVE ──────────────────────────────────────────────── */
 @media (max-width: 600px) {
-  .route-bar { left:var(--sp-sm); bottom:var(--sp-sm); max-width:calc(100% - 130px); }
+  /* stacked, so the bar stays ~130px wide: side by side it ran under the
+     unit icons at 360px, and further once T-FLON14's icon joins them */
+  .route-bar { left:var(--sp-sm); bottom:var(--sp-sm); max-width:calc(100% - 130px);
+               flex-direction:column; align-items:flex-start; }
   .route-tag { font-size:8px; padding:4px 7px; }
   .route-log-btn { font-size:8px; padding:5px 8px; }
 
