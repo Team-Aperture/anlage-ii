@@ -39,18 +39,7 @@
 }
 
 /* ─── SYSTEM BAR ─────────────────────────────────────────────── */
-.sys-bar {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--sp-sm) var(--sp-lg);
-  background: rgba(4,8,12,0.9);
-  border-bottom: 1px solid var(--bdr-dim);
-  z-index: 20;
-  backdrop-filter: blur(4px);
-}
+/* styled in global.css — every chapter page carries the same header */
 
 /* ─── BOOT SEQUENCE ──────────────────────────────────────────── */
 .boot-sequence {
@@ -335,8 +324,6 @@ a.sector-node:hover { transform: translateY(-3px); border-color: #fff; color: #f
   .hero-logo-wrap { padding: var(--sp-sm) 0; }
   .hero-light { height: 40px; width: 4px; }
 
-  .sys-bar { padding: var(--sp-xs) var(--sp-md); }
-  .sys-bar .sys-text { font-size: 9px; }
 
   .idle-comment { display: none; }
   .version-tag  { left: 50%; right: auto; transform: translateX(-50%); }

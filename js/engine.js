@@ -620,6 +620,10 @@ const GameEngine = (() => {
         let need = 0;
         document.querySelectorAll('body *').forEach(e => {
           if (e === bar || bar.contains(e) || e.contains(bar)) return;
+          // The dialogue strip is not something to clear: the bar already
+          // steps aside from it (ns-away), and measuring it while it is still
+          // sliding out lifted the bar 165px into the room.
+          if (e.classList.contains('dlg-container')) return;
           const cs = getComputedStyle(e);
           if (cs.position !== 'fixed' || cs.display === 'none' || cs.visibility === 'hidden') return;
           if (parseFloat(cs.opacity) === 0) return;

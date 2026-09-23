@@ -180,6 +180,31 @@ body {
   color: var(--accent-r3mi);
 }
 
+/* ─── SYSTEM BAR ─────────────────────────────────────────────── */
+/* The header every page carries: the chapter name and REAKTIVIERUNG on a
+   chapter page, the facility status on the title. It lives here because it
+   lived in title.css for a while — and no chapter loads title.css, so for
+   that while every chapter's header sat unstyled beneath the fixed scene
+   layer and the reactivation readout was never actually visible in-game.
+   Above the scene (5), below the objective HUD (30) and everything modal. */
+.sys-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-md);
+  padding: var(--sp-sm) var(--sp-lg);
+  background: rgba(4,8,12,0.9);
+  border-bottom: 1px solid var(--bdr-dim);
+  z-index: 20;
+  backdrop-filter: blur(4px);
+}
+@media (max-width: 640px) {
+  .sys-bar { padding: var(--sp-xs) var(--sp-md); }
+  .sys-bar .sys-text { font-size: 9px; }
+}
+
 /* ─── OVERLAY SYSTEM ─────────────────────────────────────────── */
 /* Above every full-screen story layer (completion card 400, cold open and end
    card 600, cine credits 650, stinger 700) and below the mobile warning (9999).

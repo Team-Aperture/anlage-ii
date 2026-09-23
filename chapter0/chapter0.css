@@ -936,6 +936,9 @@ body:has(.dlg-container.visible) .chapter-hud { opacity: 0.3; }
        nearest positioned ancestor, and four full-panel discs stack on top of
        each other so only the last key is tappable. */
     position: relative;
+    /* relative honours top/left/right/bottom, and the radial rules above set
+       them — without this reset the grid cells drift by half their size */
+    inset: auto;
     transform: none;
     width: 100%;
     height: 64px;
