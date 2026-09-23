@@ -347,7 +347,7 @@ const Chapter0 = (() => {
       lines: [
         { speaker: 'SYSTEM', text: 'EXTERNE TESTSIGNATUR // GÜLTIG.' },
         { speaker: 'SYSTEM', text: 'SCHLEUSENRING // MANUELL VERRIEGELT.' },
-        { speaker: 'SYSTEM', text: 'GEOMETRISCHE REFERENZEN AM RING ERKANNT: ● ▲ ■ ⬡' },
+        { speaker: 'SYSTEM', text: 'GEOMETRISCHE REFERENZEN AM RING ERKANNT: ■ ⬡ ● ▲' },
         { speaker: 'SYSTEM', text: 'REFERENZFOLGE // NICHT VERFÜGBAR.' },
       ],
     },
@@ -389,12 +389,13 @@ const Chapter0 = (() => {
         { speaker: 'SYSTEM', text: 'ENERGIEVERSORGUNG: UNZUREICHEND.' },
       ],
       // the room remembers: after the release this fixture is alive
+      reread: [{ speaker: 'SYSTEM', text: 'NOTBELEUCHTUNG // WEITERHIN OFFLINE.' }],
       awakeLines: [
         { speaker: 'SYSTEM', text: 'NOTBELEUCHTUNG // AKTIV.' },
       ],
     },
     {
-      key: 'ivy', label: 'VEGETATION', aria: 'Bewuchs untersuchen',
+      key: 'ivy', label: 'VEGETATION', aria: 'Vegetation untersuchen',
       prop: 'c0_ivy', pos: { x: 22, y: 0, w: 9, h: 26 },
       lines: [
         { speaker: 'SYSTEM', text: 'VEGETATION // UNKONTROLLIERT.' },
@@ -733,7 +734,7 @@ const Chapter0 = (() => {
       ]);
     } else {
       GameEngine.dialogue.load([
-        { speaker: 'SYSTEM', text: 'FORMKENNZAHL = ANZAHL DER MARKIERTEN ECKPUNKTE. DER REFERENZPUNKT ZÄHLT ALS EINE.' },
+        { speaker: 'SYSTEM', text: 'FORMKENNZAHL = ANZAHL DER MARKIERTEN ECKPUNKTE. DER REFERENZPUNKT ZÄHLT ALS EINS.' },
         { speaker: 'SYSTEM', text: 'ORDNUNG: AUFSTEIGEND.' },
       ]);
     }
@@ -776,7 +777,7 @@ const Chapter0 = (() => {
 
     S.sequence.push(btn.dataset.symbol);
     updateDisplay();
-    setStatus(`REFERENZEN: ${S.sequence.length} / ${SEQUENCE_LENGTH}`, '');
+    setStatus(`EINGABE: ${S.sequence.length} / ${SEQUENCE_LENGTH}`, '');
 
     if (S.sequence.length === SEQUENCE_LENGTH) {
       S.inputLocked = true;                     // one validation per sequence
@@ -948,7 +949,9 @@ const Chapter0 = (() => {
     if (!cc) return;
 
     const m = GameEngine.progress.mainProgress();
-    if (prog) prog.textContent = `FORTSCHRITT: ${m.done} / ${m.total} SEKTOREN`;
+    // Sektor 00 is the entrance, not one of the eight — a card that celebrates
+    // an open door should not open with a zero.
+    if (prog) prog.textContent = m.done ? `FORTSCHRITT: ${m.done} / ${m.total} SEKTOREN` : '';
 
     cc.classList.remove('hidden');
     setTimeout(() => document.getElementById('ccEnter')?.focus(), 700);

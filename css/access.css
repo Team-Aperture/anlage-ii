@@ -281,7 +281,18 @@
 /* ─── RESPONSIVE ─────────────────────────────────────────────── */
 @media (max-width: 480px) {
   .access-card { padding: var(--sp-lg) var(--sp-md); }
-  .code-digit  { width: 38px; height: 48px; font-size: 18px; }
+  /* Eight boxes have to fit on ONE line inside the card: at 38px they ran
+     off both edges of the screen, and letting them wrap produced 6 + 2. With
+     the card's side padding at 8px there are 280px: 8 × 30 + 7 × 3 + the
+     separator fits with room to spare, down to 320px. */
+  .access-card { padding-left: var(--sp-sm); padding-right: var(--sp-sm); }
+  .code-input-row { gap: 3px; flex-wrap: nowrap; justify-content: center; max-width: 100%; }
+  .code-digit  { width: 30px; height: 44px; font-size: 17px; flex: 0 0 auto; }
+  .code-input-row > :not(.code-digit) { margin: 0 2px; }
+}
+/* the smallest phones still in use */
+@media (max-width: 340px) {
+  .code-digit { width: 26px; height: 40px; font-size: 15px; }
   .access-actions { flex-direction: column; align-items: stretch; }
   .access-actions .ka-btn { text-align: center; }
 }

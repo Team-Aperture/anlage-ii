@@ -2453,7 +2453,10 @@ const GameEngine = (() => {
     const wake = () => audio.resume();
     document.addEventListener('pointerdown', wake);
     document.addEventListener('keydown', wake);
-    if (state.get('firstPlay')) {
+    // "Erstkontakt — das System erwacht" belongs to the moment the player
+    // actually enters the facility, not to the access page, where it used to
+    // greet them over the code entry before they had typed anything.
+    if (state.get('firstPlay') && !/access\.html$/.test(location.pathname)) {
       state.set('firstPlay', false);
       setTimeout(() => achievements.unlock('first_boot'), 1200);
     }
