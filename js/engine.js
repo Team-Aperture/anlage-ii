@@ -602,7 +602,7 @@ const GameEngine = (() => {
         queued = false;
         const dlg = document.querySelector('.dlg-container');
         const busy = !!(dlg && dlg.classList.contains('visible'))
-                  || !!document.querySelector('.puzzle-modal:not(.hidden), .overlay-panel:not(.hidden), .chapter-complete:not(.hidden)');
+                  || !!document.querySelector('.puzzle-modal:not(.hidden), .overlay-panel:not(.hidden), .chapter-complete:not(.hidden), .choice-overlay.visible');
         if (busy === wasBusy) return;          // only act on the transition
         wasBusy = busy;
         bar.classList.toggle('ns-away', busy);
@@ -1042,6 +1042,16 @@ const GameEngine = (() => {
 
     function load(lines, onComplete) {
       _ensureDOM();
+      // A talk menu still open when a scripted line arrives would outlive it,
+      // and a pick from it would replace this line's continuation — close it.
+      // A story choice is a question the line belongs to; it stays.
+      try {
+        const o = document.getElementById('choiceOverlay');
+        if (o && o.dataset.kind === 'talk' && !o.classList.contains('hidden')) {
+          o.classList.remove('visible');
+          setTimeout(() => { if (!o.classList.contains('visible')) o.classList.add('hidden'); }, 410);
+        }
+      } catch (_) {}
       _queue      = lines;
       _index      = 0;
       _onComplete = onComplete || null;
@@ -1109,29 +1119,52 @@ const GameEngine = (() => {
     // a modal's action row and makes those buttons unclickable while a line is
     // up. So whenever the strip is visible the page publishes its height and
     // open modals reserve exactly that much room underneath.
-    let _spaceObs = null;
+    let _spaceObs = null, _classObs = null;
     function _syncDlgSpace() {
       try {
+        // a puzzle card on a phone has to clear the hint bar, line or no line
+        const hb = document.querySelector('.hint-bar:not(.hidden)');
+        const hr = hb ? hb.getBoundingClientRect() : null;
+        document.documentElement.style.setProperty('--hint-bottom', (hr && hr.height ? Math.ceil(hr.bottom) : 0) + 'px');
         const up = !!(_container && _container.classList.contains('visible'));
         document.body.classList.toggle('dlg-up', up);
         if (!up) return;
         const h = Math.ceil(_container.getBoundingClientRect().height);
         if (h) document.documentElement.style.setProperty('--dlg-h', h + 'px');
-        // a docked modal also has to clear the hint bar on a phone
-        const hb = document.querySelector('.hint-bar:not(.hidden)');
-        const hr = hb ? hb.getBoundingClientRect() : null;
-        document.documentElement.style.setProperty('--hint-bottom', (hr && hr.height ? Math.ceil(hr.bottom) : 0) + 'px');
       } catch (_) {}
     }
     function _watchDlgSize() {
-      if (_spaceObs || !_container) return;
-      try {
-        // The box grows as a line types and as it wraps, so measure it live.
-        _spaceObs = new ResizeObserver(_syncDlgSpace);
-        _spaceObs.observe(_container);
-      } catch (_) { _spaceObs = null; }
+      if (!_spaceObs && _container) {
+        try {
+          // The box grows as a line types and as it wraps, so measure it live.
+          _spaceObs = new ResizeObserver(_syncDlgSpace);
+          _spaceObs.observe(_container);
+        } catch (_) { _spaceObs = null; }
+      }
+      if (_classObs) return;
       try { window.addEventListener('resize', _syncDlgSpace); } catch (_) {}
+      // The hint bar shows and hides by class, usually before any line is up;
+      // one coalesced observer keeps the published measurements current.
+      try {
+        let queued = false;
+        _classObs = new MutationObserver(() => {
+          if (queued) return; queued = true;
+          requestAnimationFrame(() => { queued = false; _syncDlgSpace(); });
+        });
+        _classObs.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['class'] });
+      } catch (_) { _classObs = true; }
     }
+    try { document.addEventListener('DOMContentLoaded', () => _watchDlgSize()); } catch (_) {}
+    // Escape leaves an optional talk menu in any chapter; a story choice stays.
+    try {
+      document.addEventListener('keydown', e => {
+        if (e.key !== 'Escape') return;
+        const o = document.getElementById('choiceOverlay');
+        if (!o || o.dataset.kind !== 'talk' || o.classList.contains('hidden')) return;
+        o.classList.remove('visible');
+        setTimeout(() => { if (!o.classList.contains('visible')) o.classList.add('hidden'); }, 410);
+      });
+    } catch (_) {}
 
     function _reduced() {
       try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) { return false; }
@@ -1986,7 +2019,7 @@ const GameEngine = (() => {
         </div>
 
         <div class="choice-overlay hidden" id="choiceOverlay">
-          <div class="choice-panel">
+          <div class="choice-panel" tabindex="-1">
             <div class="choice-prompt sys-text" id="choicePrompt"></div>
             <div class="choice-buttons" id="choiceButtons"></div>
             <div class="choice-hint sys-text" id="choiceHint"></div>
@@ -2016,7 +2049,10 @@ const GameEngine = (() => {
       while (frag.firstChild) document.body.appendChild(frag.firstChild);
 
       document.querySelectorAll('#robotIcons .robot-icon').forEach(b =>
-        b.addEventListener('click', () => { if (c.onRobot) c.onRobot(b.dataset.who); }));
+        b.addEventListener('click', () => {
+          if (choicesOpen() && !choicesDismissable()) return;   // a story choice is up (keyboard can still reach the icons)
+          if (c.onRobot) c.onRobot(b.dataset.who);
+        }));
       [['hintBtnR3MI','r3mi'], ['hintBtnVTGM','vtgm'], ['hintBtnGuest','guest']].forEach(([id]) => {
         const b = el(id); if (b) b.addEventListener('click', () => useHint(b.dataset.who));
       });
@@ -2064,26 +2100,45 @@ const GameEngine = (() => {
       const prompt = el('choicePrompt'), hint = el('choiceHint');
       prompt.textContent = cfg.prompt || 'WÄHLE EINE ANTWORT:';
       hint.textContent   = cfg.hint   || '';
+      // an optional talk menu gives way to the room; a story choice does not
+      overlay.dataset.kind = cfg.dismissable ? 'talk' : 'story';
       btns.innerHTML     = '';
       cfg.choices.forEach(c => {
         const btn = document.createElement('button');
         btn.className   = 'choice-btn' + (c.seen ? ' seen' : '');
         btn.textContent = c.label;
         btn.addEventListener('click', () => {
+          // a pick over a running line would replace that line's continuation
+          if (dialogueUp()) { try { dialogue.advance(); } catch (_) {} return; }
+          if (btn.dataset.used) return;
+          btn.dataset.used = '1';
           c.seen = true; hideChoices();
           if (c.fn) { c.fn(); return; }
           dialogue.load(c.lines, () => { if (cfg.onAfterChoice) cfg.onAfterChoice(c.key, cfg); });
         });
         btns.appendChild(btn);
       });
+      clearTimeout(_choiceHideTimer);   // a menu re-opened mid-fade must not vanish
       overlay.classList.remove('hidden');
-      requestAnimationFrame(() => overlay.classList.add('visible'));
+      requestAnimationFrame(() => {
+        overlay.classList.add('visible');
+        // the panel, not its first button: Tab reaches the options next and
+        // one Space too many (the strip's own key) picks nothing
+        overlay.querySelector('.choice-panel')?.focus();
+      });
     }
+    let _choiceHideTimer = null;
     function hideChoices() {
       const overlay = el('choiceOverlay');
       overlay.classList.remove('visible');
-      setTimeout(() => overlay.classList.add('hidden'), 410);
+      clearTimeout(_choiceHideTimer);
+      _choiceHideTimer = setTimeout(() => overlay.classList.add('hidden'), 410);
     }
+    function dialogueUp() { const c = document.querySelector('.dlg-container'); return !!(c && c.classList.contains('visible')); }
+    /** True while a choice menu is up (including its short fade-out). */
+    function choicesOpen() { const o = el('choiceOverlay'); return !!(o && !o.classList.contains('hidden')); }
+    /** True when the open menu is an optional conversation, not a story beat. */
+    function choicesDismissable() { return el('choiceOverlay')?.dataset.kind === 'talk'; }
     function allSeen(choices) { return choices.every(c => c.seen); }
 
     // ---- TITLE CARD -------------------------------------------------
@@ -2168,7 +2223,7 @@ const GameEngine = (() => {
     return {
       build, start,
       setScene, clearHotspots, addHotspot, addProp, showRobots, showGuest, setProgress,
-      showChoices, hideChoices, allSeen,
+      showChoices, hideChoices, allSeen, choicesOpen, choicesDismissable,
       withModalDialogue,
       initHints, useHint, updateHintBar, showHintBar,
       complete,

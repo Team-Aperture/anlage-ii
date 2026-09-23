@@ -45,6 +45,8 @@ const Chapter1 = (() => {
     // reactive puzzle chatter (each beat fires at most once per puzzle)
     react: { p1: {}, p2: {} },
     rotations: { p1: 0, p2: 0 },
+    p1Min: 0,               // the fewest clicks this scramble of repair 1 can take
+    els: {},                // hotspot elements, so an examined object can settle
 
     // Set only when the sector is being walked a second time — nothing here
     // may re-run the ending or hand out a completion that already happened.
@@ -336,7 +338,7 @@ const Chapter1 = (() => {
         + '<rect class="prop-cursor" x="23" y="40" width="6" height="5"/>'
         + '<rect class="prop-metal" x="88" y="22" width="8" height="20" rx="4"/>'
         + '<rect class="prop-lite" x="88" y="22" width="3" height="20" rx="1.5"/>'
-        + '<circle class="prop-led" style="fill:var(--bad-red)" cx="50" cy="60" r="3.2"/>'
+        + '<circle class="prop-led" style="fill:var(--c1-lamp, var(--bad-red))" cx="50" cy="60" r="3.2"/>'
         + '<path class="prop-thin" d="M50 112 q10 6 22 4"/>' },
 
       // Inneres Tor: a roller shutter, not a sliding door — five heavy
@@ -362,7 +364,7 @@ const Chapter1 = (() => {
         + '<rect class="prop-screen" x="66" y="37" width="10" height="20"/>'
         + '<rect class="prop-acc-dim" x="68" y="41" width="6" height="3"/>'
         + '<rect class="prop-acc-dim" x="68" y="47" width="6" height="3"/>'
-        + '<circle class="prop-led" style="fill:var(--bad-red)" cx="71" cy="62" r="2.4"/>' },
+        + '<circle class="prop-led" style="fill:var(--c1-lamp, var(--bad-red))" cx="71" cy="62" r="2.4"/>' },
 
       // Wandkratzer: a concrete panel. The long line starts straight,
       // loses its nerve and stops dead in a gouge. Four and a half tally
@@ -602,11 +604,13 @@ const Chapter1 = (() => {
   }
 
   function say(lines, after) {
-    // A menu still open when a scripted line arrives would outlive it, and a
-    // pick from it would then replace that line's continuation — this is how
-    // a talk menu opened in the 600 ms before the *KLONK* beat could strand
-    // the player in a hall with nothing to click. Close it first.
-    if (choicesOpen()) hideChoices();
+    // A talk menu still open when a scripted line arrives would outlive it,
+    // and a pick from it would then replace that line's continuation — this is
+    // how a talk menu opened in the 600 ms before the *KLONK* beat could
+    // strand the player in a hall with nothing to click. Close it first. A
+    // story choice belongs to the line; it stays (and a pick over the line
+    // only advances it).
+    if (choicesOpen() && choicesDismissable()) hideChoices();
     GameEngine.dialogue.load(lines, after);
   }
 
@@ -615,6 +619,14 @@ const Chapter1 = (() => {
     S.clicks[key] = (S.clicks[key] || 0) + 1;
     return S.clicks[key];
   }
+
+  /** Remember a hotspot so it can settle once examined (and stay settled when the room is rebuilt). */
+  function mark(key, el) {
+    if (el && S.clicks[key]) el.classList.add('found');
+    S.els[key] = el;
+    return el;
+  }
+  function settle(key) { S.els[key]?.classList.add('found'); }
 
   /** Pick the entry for click n from a 1-indexed bucket, clamping to the last. */
   function pick(bucket, n) {
@@ -683,19 +695,32 @@ const Chapter1 = (() => {
   // player Act 1, the meeting, the reaction and the first repair again.
   // ═══════════════════════════════════════════════════════════════
   function saveCheckpoint() {
-    try { GameEngine.state.chapter('ch1', { p1Solved: true, talkSeen: S.talkSeen, clicks: S.clicks }); } catch (_) {}
+    try { GameEngine.state.chapter('ch1', { p1Solved: true, p2Solved: !!S.p2Solved, talkSeen: S.talkSeen, clicks: S.clicks }); } catch (_) {}
   }
   function clearCheckpoint() {
     try { GameEngine.state.chapter('ch1', null); } catch (_) {}
   }
+  /** Applies a stored checkpoint to S and returns it, or null when there is none. */
   function restoreCheckpoint() {
     let d = null;
     try { d = GameEngine.state.chapter('ch1'); } catch (_) {}
-    if (!d || typeof d !== 'object' || !d.p1Solved) return false;
+    if (!d || typeof d !== 'object' || !d.p1Solved) return null;
     S.metRobots = S.klonkDone = S.corridorOpen = S.p1Solved = S.sectorAwake = true;
+    S.p2Solved = !!d.p2Solved;
     S.talkSeen = (d.talkSeen && typeof d.talkSeen === 'object') ? d.talkSeen : {};
     S.clicks   = (d.clicks   && typeof d.clicks   === 'object') ? d.clicks   : {};
-    return true;
+    return d;
+  }
+  // The second repair is solved and the chapter saved, but the ending never
+  // finished playing (a reload in those twenty lines): play it, do not send
+  // the player on a Nachsuche of a sector they have not actually left yet.
+  function resumeEnding() {
+    setScene('room-b');
+    setProgress(12);
+    showRobots(true);
+    try { GameEngine.music.play('ch1_ambient'); } catch (_) {}
+    loadNodeHotspots();
+    act3_theyComeAlong();
   }
   function resumeHall() {
     setScene('room-a');
@@ -716,13 +741,15 @@ const Chapter1 = (() => {
   function showTitleCard() {
     const card = document.getElementById('titleCard');
     const revisit = GameEngine.progress.isRevisit('ch1');
-    const resume  = !revisit && restoreCheckpoint();
+    const cp      = restoreCheckpoint();
+    const ending  = !!(revisit && cp && cp.p2Solved);
+    const resume  = !!(!revisit && cp);
     card.classList.remove('fading');
     setTimeout(() => {
       card.classList.add('fading');
       setTimeout(() => {
         card.style.display = 'none';
-        if (revisit) nachsuche(); else if (resume) resumeHall(); else act1_hallEmpty();
+        if (ending) resumeEnding(); else if (revisit) nachsuche(); else if (resume) resumeHall(); else act1_hallEmpty();
       }, 700);
     }, (revisit || resume) ? 900 : 2800);
   }
@@ -788,18 +815,18 @@ const Chapter1 = (() => {
     addProp({ prop:'barrel', x:88, y:64, w:8,  h:15 });
 
     // ── interactive: the evidence trail plus ordinary scenery
-    addHotspot({ prop:'c1_logterminal', anim:'prop-flicker', x:31, y:40, w:13, h:26,
-      label:'TERMINAL', aria:'Wartungsterminal untersuchen', fn:() => examineAct1('log') });
-    addHotspot({ prop:'c1_conduitpanel', anim:'prop-flicker', x:64, y:36, w:12, h:11,
-      label:'LEITUNGSPANEEL', aria:'Leitungspaneel untersuchen', fn:() => examineAct1('repair') });
-    addHotspot({ prop:'c1_tool', x:19, y:78, w:16, h:8,
-      label:'WERKZEUG', aria:'Werkzeug am Boden untersuchen', fn:() => examineAct1('tool') });
-    addHotspot({ prop:'c1_testsign',  x:15, y:52, w:14, h:12,
-      label:'TESTSCHILD', aria:'Testschild untersuchen', fn:() => examineAct1('sign') });
-    addHotspot({ prop:'c1_sealeddoor',  x:80, y:24, w:12, h:38,
-      label:'TÜR', aria:'Verschlossene Tür untersuchen', fn:() => examineAct1('door') });
-    addHotspot({ prop:'c1_floorplates', x:42, y:74, w:20, h:13,
-      label:'BODENPLATTEN', aria:'Bodenplatten untersuchen', fn:() => examineAct1('floor') });
+    mark('a1_log', addHotspot({ prop:'c1_logterminal', anim:'prop-flicker', x:31, y:40, w:13, h:26,
+      label:'TERMINAL', aria:'Wartungsterminal untersuchen', fn:() => examineAct1('log') }));
+    mark('a1_repair', addHotspot({ prop:'c1_conduitpanel', anim:'prop-flicker', x:64, y:36, w:12, h:11,
+      label:'LEITUNGSPANEEL', aria:'Leitungspaneel untersuchen', fn:() => examineAct1('repair') }));
+    mark('a1_tool', addHotspot({ prop:'c1_tool', x:19, y:78, w:16, h:8,
+      label:'WERKZEUG', aria:'Werkzeug am Boden untersuchen', fn:() => examineAct1('tool') }));
+    mark('a1_sign', addHotspot({ prop:'c1_testsign',  x:15, y:52, w:14, h:12,
+      label:'TESTSCHILD', aria:'Testschild untersuchen', fn:() => examineAct1('sign') }));
+    mark('a1_door', addHotspot({ prop:'c1_sealeddoor',  x:80, y:24, w:12, h:38,
+      label:'TÜR', aria:'Verschlossene Tür untersuchen', fn:() => examineAct1('door') }));
+    mark('a1_floor', addHotspot({ prop:'c1_floorplates', x:42, y:74, w:20, h:13,
+      label:'BODENPLATTEN', aria:'Bodenplatten untersuchen', fn:() => examineAct1('floor') }));
 
     if (S.corridorOpen) addCorridorHotspot();
   }
@@ -878,9 +905,10 @@ const Chapter1 = (() => {
 
   function examineAct1(key) {
     // the beat is about to land (klonkDone latched, corridor not yet open):
-    // lines started now would be cut off by *KLONK.* — just wait it out
+    // lines started now would be cut off by *KLONK* — just wait it out
     if (S.klonkDone && !S.corridorOpen) return;
     const n = bump('a1_' + key);
+    settle('a1_' + key);
     S.act1Seen[key] = n;
 
     // Self-heal: if the corridor is supposed to be open but the node is gone
@@ -1129,10 +1157,13 @@ const Chapter1 = (() => {
 
   /** The puzzle arrives as a maintenance problem, not as "PUZZLE ONE". */
   function act3_r3miBreaksIt() {
-    // Scenery only until the beat lands — nothing to click over the pause.
+    // Scenery only until the beat lands — nothing to click over the pause,
+    // not even the units: a menu opened now would only be closed unanswered.
     loadHallHotspots(false);
+    showRobots(false);
 
     setTimeout(() => {
+      showRobots(true);
       playSound('ch1_metal_jump_01.mp3');
       tone({ freq: 140, type:'square', dur: 0.12, vol: 0.13 });
       try { GameEngine.fx.shake('#sceneHotspots'); } catch(_) {}
@@ -1183,17 +1214,18 @@ const Chapter1 = (() => {
       return;
     }
     // ── interactive
-    addHotspot({ prop:'c1_hallterminal', anim:'prop-flicker', x:62, y:44, w:13, h:26,
-      label:'TERMINAL', aria:'Terminal untersuchen', fn:() => clickHall('terminal') });
-    addHotspot({ prop:'c1_innergate',    x:76, y:24, w:12, h:38,
-      label:'INNERES TOR', aria:'Inneres Tor untersuchen', fn:() => clickHall('gate') });
-    addHotspot({ prop:'c1_testsign',     x:10, y:56, w:14, h:12,
-      label:'TESTSCHILD', aria:'Testschild untersuchen', fn:() => clickHall('sign') });
-    addHotspot({ prop:'c1_wallscratch',  x:12, y:38, w:18, h:13,
-      label:'WANDKRATZER', aria:'Kratzer in der Wand untersuchen', fn:() => clickHall('scratch') });
+    const powered = S.p1Solved ? 'c1-powered' : undefined;   // the lamps go green with the room
+    mark('hall_terminal', addHotspot({ prop:'c1_hallterminal', anim:'prop-flicker', x:62, y:44, w:13, h:26, cls: powered,
+      label:'TERMINAL', aria:'Terminal untersuchen', fn:() => clickHall('terminal') }));
+    mark('hall_gate', addHotspot({ prop:'c1_innergate',    x:76, y:24, w:12, h:38, cls: powered,
+      label:'INNERES TOR', aria:'Inneres Tor untersuchen', fn:() => clickHall('gate') }));
+    mark('hall_sign', addHotspot({ prop:'c1_testsign',     x:10, y:56, w:14, h:12,
+      label:'TESTSCHILD', aria:'Testschild untersuchen', fn:() => clickHall('sign') }));
+    mark('hall_scratch', addHotspot({ prop:'c1_wallscratch',  x:12, y:38, w:18, h:13,
+      label:'WANDKRATZER', aria:'Kratzer in der Wand untersuchen', fn:() => clickHall('scratch') }));
     // deliberately pointless — clicking it is its own punchline
-    addHotspot({ prop:'c1_barrel',       x:44, y:64, w:8,  h:15,
-      label:'FASS', aria:'Fass untersuchen', fn:() => clickHall('barrel') });
+    mark('hall_barrel', addHotspot({ prop:'c1_barrel',       x:44, y:64, w:8,  h:15,
+      label:'FASS', aria:'Fass untersuchen', fn:() => clickHall('barrel') }));
   }
 
   const HALL_LINES = {
@@ -1252,6 +1284,7 @@ const Chapter1 = (() => {
 
   function clickHall(key) {
     const n = bump('hall_' + key);
+    settle('hall_' + key);
 
     // The repair itself. The scripted beat normally opens it; the object the
     // lines say needs power always can.
@@ -1340,7 +1373,7 @@ const Chapter1 = (() => {
    */
   function buildGrid(types, baseRot, fixed) {
     return types.map((row, r) => row.map((type, c) => {
-      const isFixed = !!fixed[r][c];
+      const isFixed = !!fixed[r][c] || type === 0;   // a blank square is structure, never a click
       const base    = baseRot[r][c];
       return {
         type,
@@ -1348,6 +1381,27 @@ const Chapter1 = (() => {
         fixed: isFixed,
       };
     }));
+  }
+
+  /**
+   * The fewest clicks a scramble can be solved in: over the tiles the base
+   * solution actually uses, the +1 turns until each tile's openings match its
+   * base orientation as a set. Straights need 0 or 1, corners 2 or 3 — so a
+   * "perfect" solve is 6 clicks in one scramble and 11 in another, and praise
+   * for a clean solve has to know which.
+   */
+  function minRotations(grid, types, baseRot, src) {
+    const base = types.map((row, r) => row.map((type, c) => ({ type, rot: baseRot[r][c] })));
+    const used = bfsReach(base, src[0], src[1]);
+    let n = 0;
+    grid.forEach((row, r) => row.forEach((cell, c) => {
+      if (cell.fixed || !cell.type || !used.has(`${r},${c}`)) return;
+      const want = CONN[cell.type][baseRot[r][c]].slice().sort().join('');
+      for (let k = 0; k < 4; k++) {
+        if (CONN[cell.type][(cell.rot + k) % 4].slice().sort().join('') === want) { n += k; return; }
+      }
+    }));
+    return n;
   }
 
   /** Scramble again if we happened to hand the player a finished grid. */
@@ -1425,6 +1479,7 @@ const Chapter1 = (() => {
 
   function initP1Grid() {
     p1Grid = scramble(P1_TYPES, P1_BASE_ROT, P1_FIXED, p1Done);
+    S.p1Min = minRotations(p1Grid, P1_TYPES, P1_BASE_ROT, P1_SRC);
   }
 
   function renderP1() {
@@ -1455,7 +1510,7 @@ const Chapter1 = (() => {
       status.textContent = 'VERBINDUNG HERGESTELLT.';
       status.className   = 'puzzle-status sys-text ok';
       S.p1Solved = true;
-      const fast = S.rotations.p1 <= 8;
+      const fast = S.rotations.p1 <= S.p1Min + 2;   // a clean solve, whatever this scramble cost
       setTimeout(() => solvePuzzle1(fast), 700);
     } else {
       status.textContent = 'LEITUNG UNTERBROCHEN.';
@@ -1480,9 +1535,8 @@ const Chapter1 = (() => {
 
   function openPuzzle1() {
     S.hints.active = 'p1';
-    S.hints.step   = 0;
+    if (!p1Grid.length) { initP1Grid(); S.hints.step = 0; }   // coming back keeps the grid and the hints used
     updateHintBar();
-    initP1Grid();
     renderP1();
     checkP1();
     document.getElementById('puzzle1Modal').classList.remove('hidden');
@@ -1493,6 +1547,12 @@ const Chapter1 = (() => {
   function resetPuzzle1() {
     if (S.p1Solved) return;
     initP1Grid(); renderP1(); checkP1();
+  }
+
+  /** Back to the room mid-repair: the units, the hall and its beats are reachable again. */
+  function closePuzzle(n) {
+    document.getElementById(`puzzle${n}Modal`)?.classList.add('hidden');
+    document.getElementById('hintBar')?.classList.add('hidden');
   }
 
   function solvePuzzle1(fast) {
@@ -1588,18 +1648,18 @@ const Chapter1 = (() => {
     addProp({ prop:'debris',  x:48, y:82, w:15, h:8  });
     // ── interactive. The two conduits are the units' own signal lines:
     //    R-3MI's runs green, V-TGM's runs red (canonical unit colours).
-    addHotspot({ prop:'c1_nodeconsole', x:39, y:44, w:22, h:23,
-      label:'ZENTRALE KONSOLE', aria:'Zentrale Konsole untersuchen', fn:() => clickNode('console') });
-    addHotspot({ prop:'c1_conduit_red', cls:'prop-red',   x:9,  y:24, w:9, h:46,
-      label:'ROTE LEITUNG', aria:'Rote Leitung untersuchen', fn:() => clickNode('red') });
-    addHotspot({ prop:'c1_conduit_green', cls:'prop-green', x:83, y:24, w:9, h:46,
-      label:'GRÜNE LEITUNG', aria:'Grüne Leitung untersuchen', fn:() => clickNode('green') });
-    addHotspot({ prop:'c1_sectordoor',    x:62, y:12, w:13, h:32,
-      label:'SEKTOR-02-TÜR', aria: S.revisit ? 'Sektor 02 betreten' : 'Tür zu Sektor 02 untersuchen', fn:() => clickNode('door') });
-    addHotspot({ prop:'c1_vent',    x:82, y:74, w:12, h:12,
-      label:'LÜFTUNGSSCHACHT', aria:'Lüftungsschacht untersuchen', fn:() => clickNode('vent') });
-    addHotspot({ prop:'c1_poster',  x:24, y:38, w:12, h:22,
-      label:'ALTES POSTER', aria:'Altes Poster untersuchen', fn:() => clickNode('poster') });
+    mark('node_console', addHotspot({ prop:'c1_nodeconsole', x:39, y:44, w:22, h:23,
+      label:'ZENTRALE KONSOLE', aria:'Zentrale Konsole untersuchen', fn:() => clickNode('console') }));
+    mark('node_red', addHotspot({ prop:'c1_conduit_red', cls:'prop-red',   x:9,  y:24, w:9, h:46,
+      label:'ROTE LEITUNG', aria:'Rote Leitung untersuchen', fn:() => clickNode('red') }));
+    mark('node_green', addHotspot({ prop:'c1_conduit_green', cls:'prop-green', x:83, y:24, w:9, h:46,
+      label:'GRÜNE LEITUNG', aria:'Grüne Leitung untersuchen', fn:() => clickNode('green') }));
+    mark('node_door', addHotspot({ prop:'c1_sectordoor',    x:62, y:12, w:13, h:32,
+      label:'SEKTOR-02-TÜR', aria: S.revisit ? 'Sektor 02 betreten' : 'Tür zu Sektor 02 untersuchen', fn:() => clickNode('door') }));
+    mark('node_vent', addHotspot({ prop:'c1_vent',    x:82, y:74, w:12, h:12,
+      label:'LÜFTUNGSSCHACHT', aria:'Lüftungsschacht untersuchen', fn:() => clickNode('vent') }));
+    mark('node_poster', addHotspot({ prop:'c1_poster',  x:24, y:38, w:12, h:22,
+      label:'ALTES POSTER', aria:'Altes Poster untersuchen', fn:() => clickNode('poster') }));
   }
 
   const NODE_LINES = {
@@ -1661,6 +1721,7 @@ const Chapter1 = (() => {
 
   function clickNode(key) {
     const n = bump('node_' + key);
+    settle('node_' + key);
 
     if (key === 'console' && (S.revisit || S.p2Solved)) {
       say([
@@ -1695,16 +1756,20 @@ const Chapter1 = (() => {
   // ═══════════════════════════════════════════════════════════════
   // REPAIR 2 — two signal paths that must not touch
   // ═══════════════════════════════════════════════════════════════
+  // The middle row carries two T-pieces: with four plain corners the two
+  // paths could never touch, and the rule the room talks about (and its
+  // INTERFERIEREN state, and all three hints) described a conflict that could
+  // not happen. Now 256 of the 4096 states bridge the signals.
   const P2_TYPES = [
     [1, 0, 0, 1],
     [1, 0, 0, 1],
-    [2, 2, 2, 2],
+    [2, 3, 3, 2],
     [0, 1, 1, 0],
   ];
   const P2_BASE_ROT = [
     [0, 0, 0, 0],
     [0, 0, 0, 0],
-    [0, 2, 1, 3],
+    [0, 2, 0, 3],
     [0, 0, 0, 0],
   ];
   const P2_FIXED = [
@@ -1737,12 +1802,13 @@ const Chapter1 = (() => {
     const { a, b } = p2Evaluate(p2Grid);
     renderGrid(gridEl, p2Grid, (tile, r, c) => {
       const key = `${r},${c}`;
-      if      (key === `${P2_SRC_A[0]},${P2_SRC_A[1]}`) tile.classList.add('source-w');
-      else if (key === `${P2_SRC_B[0]},${P2_SRC_B[1]}`) tile.classList.add('source-g2');
-      else if (key === P2_DST_A) tile.classList.add('terminal2r');
-      else if (key === P2_DST_B) tile.classList.add('terminal2g');
-      else if (a.has(key))       tile.classList.add('conn-r');
-      else if (b.has(key))       tile.classList.add('conn-g');
+      const srcA = key === `${P2_SRC_A[0]},${P2_SRC_A[1]}`, srcB = key === `${P2_SRC_B[0]},${P2_SRC_B[1]}`;
+      if (srcA) tile.classList.add('source-w');
+      if (srcB) tile.classList.add('source-g2');
+      if (key === P2_DST_A) tile.classList.add('terminal2r');
+      if (key === P2_DST_B) tile.classList.add('terminal2g');
+      // a terminal lights its own arm too — a finished path must not end in a dark stub
+      if (!srcA && !srcB) { if (a.has(key)) tile.classList.add('conn-r'); else if (b.has(key)) tile.classList.add('conn-g'); }
     }, rotateP2Tile);
   }
 
@@ -1798,9 +1864,8 @@ const Chapter1 = (() => {
 
   function openPuzzle2() {
     S.hints.active = 'p2';
-    S.hints.step   = 0;
+    if (!p2Grid.length) { initP2Grid(); S.hints.step = 0; }
     updateHintBar();
-    initP2Grid();
     renderP2();
     checkP2();
     document.getElementById('puzzle2Modal').classList.remove('hidden');
@@ -1824,7 +1889,7 @@ const Chapter1 = (() => {
     // Persist before any navigation is possible.
     GameEngine.state.markChapterComplete('ch1');
     GameEngine.achievements.unlock('ch1_complete');
-    clearCheckpoint();
+    saveCheckpoint();   // p2Solved: a reload before the door still plays the ending
 
     say([
       { speaker:'SYSTEM', text:'HILFSPROTOKOLL KALIBRIERT. BETREUUNGSEINHEITEN AKTIV.' },
@@ -1897,6 +1962,7 @@ const Chapter1 = (() => {
     // Already persisted at solvePuzzle2; safe to repeat (both are idempotent).
     GameEngine.state.markChapterComplete('ch1');
     GameEngine.achievements.unlock('ch1_complete');
+    clearCheckpoint();
     try { GameEngine.audio.fanfare(); } catch(_) {}
     document.getElementById('chapterComplete').classList.remove('hidden');
     document.getElementById('ccProgress').textContent =
@@ -1972,8 +2038,9 @@ const Chapter1 = (() => {
     const left = Math.max(0, HINT_MAX - S.hints.step);
     document.getElementById('hintCount').textContent = `HINWEISE: ${left} VERFÜGBAR`;
     const done = left <= 0;
-    document.getElementById('hintBtnR3MI').disabled = done;
-    document.getElementById('hintBtnVTGM').disabled = done;
+    // dimmed, not disabled: a fourth press gets the unit's own refusal
+    document.getElementById('hintBtnR3MI').classList.toggle('hint-empty', done);
+    document.getElementById('hintBtnVTGM').classList.toggle('hint-empty', done);
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -1985,6 +2052,10 @@ const Chapter1 = (() => {
     if (!GameEngine.progress.require('ch1')) return;
     registerArt();
     setProgress(0);
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Escape') return;
+      [1, 2].forEach(n => { if (!document.getElementById(`puzzle${n}Modal`).classList.contains('hidden')) closePuzzle(n); });
+    });
     showTitleCard();
   }
 
@@ -1996,6 +2067,7 @@ const Chapter1 = (() => {
     clickRobot,
     useHint,
     resetPuzzle1() { resetPuzzle1(); },
+    closePuzzle(n)  { closePuzzle(n); },
     resetPuzzle2() { resetPuzzle2(); },
   };
 

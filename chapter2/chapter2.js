@@ -83,8 +83,21 @@ const Chapter2 = (() => {
   function guarded(fn) {
     return (...args) => {
       if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch(_) {} return; }
+      // a story choice is a question the room waits for; an optional talk
+      // menu simply closes when the player turns to the room instead
+      if (choicesOpen()) { if (!choicesDismissable()) return; hideChoices(); }
       return fn(...args);
     };
+  }
+
+  /** True while a choice menu is up (including its short fade-out). */
+  function choicesOpen() {
+    const o = document.getElementById('choiceOverlay');
+    return !!(o && !o.classList.contains('hidden'));
+  }
+  /** True when the open menu is an optional conversation, not a story beat. */
+  function choicesDismissable() {
+    return document.getElementById('choiceOverlay')?.dataset.kind === 'talk';
   }
 
   function addHotspot(cfg) {
@@ -157,6 +170,7 @@ const Chapter2 = (() => {
 
     prompt.textContent = cfg.prompt || 'DEINE ANTWORT:';
     hint.textContent   = cfg.hint   || '';
+    overlay.dataset.kind = cfg.dismissable ? 'talk' : 'story';
     btns.innerHTML     = '';
 
     cfg.choices.forEach(c => {
@@ -164,21 +178,33 @@ const Chapter2 = (() => {
       btn.className   = 'choice-btn' + (c.seen ? ' seen' : '');
       btn.textContent = c.label;
       btn.addEventListener('click', () => {
+        // the same guard as every hotspot — a pick over a running line would
+        // replace that line's continuation
+        if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch(_) {} return; }
+        if (btn.dataset.used) return;
+        btn.dataset.used = '1';
         c.seen = true;
         hideChoices();
         say(c.lines || [], () => { if (cfg.onPick) cfg.onPick(c.key); });
-      }, { once: true });
+      });
       btns.appendChild(btn);
     });
 
+    clearTimeout(choiceHideTimer);   // a menu re-opened mid-fade must not vanish
     overlay.classList.remove('hidden');
-    requestAnimationFrame(() => overlay.classList.add('visible'));
+    requestAnimationFrame(() => {
+      overlay.classList.add('visible');
+      // the panel, not its first button: Tab reaches the options next and
+      // one Space too many (the strip's own key) picks nothing
+      overlay.querySelector('.choice-panel')?.focus();
+    });
   }
-
+  let choiceHideTimer = null;
   function hideChoices() {
     const overlay = document.getElementById('choiceOverlay');
     overlay.classList.remove('visible');
-    setTimeout(() => overlay.classList.add('hidden'), 410);
+    clearTimeout(choiceHideTimer);
+    choiceHideTimer = setTimeout(() => overlay.classList.add('hidden'), 410);
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -276,6 +302,10 @@ const Chapter2 = (() => {
     showRobots(true);
     showFroschi(true);
     try { GameEngine.music.play('ch2_ambient'); } catch (_) {}
+    setProgress(S.thawState === PARTIAL ? 18 : 12);   // the first thaw's readout, not the arrival's
+    // the win was latched but its deferred restoration never ran (a reload in
+    // the 900 ms after the last cut): run it now, ending and all
+    if (S.p2Solved) { solvePuzzle2(); return; }
     enterGarden();
     say([
       { speaker:'SYSTEM',   text: S.thawState === PARTIAL
@@ -313,6 +343,9 @@ const Chapter2 = (() => {
   /** The frozen reveal — kept exactly as it was. */
   function act1_froschi() {
     setScene('frozen-pavilion');
+    // latched before the lines, never inside their callback (house rule);
+    // the icon itself still appears with them
+    S.metFroschi = true;
 
     say([
       { speaker:'SYSTEM', text:'Im Pavillon steht etwas Pinkes.' },
@@ -334,7 +367,6 @@ const Chapter2 = (() => {
       { speaker:'V-TGM',    text:'"How long has she been here?"', subtitle:'Wie lange ist sie schon hier?' },
       { speaker:'R-3MI',    text:'„Lange genug, dass sie nicht mehr weiß, wie lange."' },
     ], () => {
-      S.metFroschi = true;
       showFroschi(true);
       act1_sheAsks();
     });
@@ -639,6 +671,7 @@ const Chapter2 = (() => {
       S.bayernPMOFound = true;
       setTimeout(() => { try { GameEngine.achievements.unlock('bayern_pmo'); } catch(_) {} }, 800);
     }
+    saveState();   // what was latched above has to survive a reload
 
     const lines = pick(GARDEN[key] && GARDEN[key][S.thawState], n);
     if (lines) say(lines);
@@ -646,6 +679,7 @@ const Chapter2 = (() => {
 
   /** Puzzle 1 entry. Never hard-blocked — at most one gentle redirect. */
   function useOrgel() {
+    if (modalOpen(1)) return;   // Enter on the still-focused organ beneath the open modal used to reset it
     if (S.p1Solved) {
       const n = bump('orgel');
       const lines = pick(GARDEN.orgel[S.thawState], n);
@@ -656,6 +690,7 @@ const Chapter2 = (() => {
     // First touch: she points at the plants, because the garden teaches.
     if (!S.plantsStudied && !S.orgelNudged) {
       S.orgelNudged = true;
+      saveState();
       bump('orgel');
       say([
         { speaker:'SYSTEM',   text:'Ein komplexes Ventilsystem — Heißwasser, Kaltwasser, Druckregulator.' },
@@ -671,6 +706,7 @@ const Chapter2 = (() => {
 
   /** The well is where Act 3 begins — but only once the garden has thawed. */
   function examineWell() {
+    if (modalOpen(2)) return;
     const n = bump('brunnen');
 
     if (S.thawState === FROZEN) {
@@ -689,6 +725,7 @@ const Chapter2 = (() => {
     // the dialogue so a lost callback can never strand the chapter here.
     if (!S.wellRevealed) {
       S.wellRevealed = true;
+      saveState();
       say([
         { speaker:'SYSTEM',   text:'Das Eis über dem Brunnen ist dünner geworden. Darunter verlaufen eingeritzte Linien — ein quadratisches Raster, fünf mal fünf.' },
         { speaker:'F-RØ5CHI', text:'„…oh."', subtitle:'…oh.' },
@@ -759,6 +796,7 @@ const Chapter2 = (() => {
   function clickRobot(who) {
     if (who === 'froschi' && !S.metFroschi) return;
     if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch(_) {} return; }
+    if (choicesOpen() && !choicesDismissable()) return;   // a story choice is up (keyboard can still reach the icons)
 
     const topics = (TALK[who] || []).filter(t => !t.needsWell || S.wellRevealed);
     const choices = topics.map(t => {
@@ -771,8 +809,8 @@ const Chapter2 = (() => {
                 : who === 'r3mi'    ? 'R-3MI ANSPRECHEN:' : 'V-TGM ANSPRECHEN:';
 
     askOnce({
-      prompt: title, hint: 'OPTIONAL.', choices,
-      onPick: (key) => { if (key !== '__leave') S.talkSeen[who + ':' + key] = true; },
+      prompt: title, hint: 'OPTIONAL.', dismissable: true, choices,
+      onPick: (key) => { if (key !== '__leave') { S.talkSeen[who + ':' + key] = true; saveState(); } },
     });
   }
 
@@ -798,23 +836,39 @@ const Chapter2 = (() => {
   });
   let p1State = P1_INIT();
 
+  /** A modal takes the room: scene and icons go inert, focus moves onto the card. */
+  function showModal(n, open) {
+    document.getElementById(`puzzle${n}Modal`)?.classList.toggle('hidden', !open);
+    document.getElementById('hintBar')?.classList.toggle('hidden', !open);
+    try { document.getElementById('sceneWrapper').inert = !!open; } catch (_) {}
+    if (open) setTimeout(() => document.querySelector(`#puzzle${n}Modal .puzzle-card`)?.focus(), 60);
+  }
+  const modalOpen = n => !document.getElementById(`puzzle${n}Modal`).classList.contains('hidden');
+  /** Back to the garden mid-puzzle: the plaque, the plants and the units are reachable again. */
+  function closePuzzle() {
+    [1, 2].forEach(n => { if (modalOpen(n)) showModal(n, false); });
+    S.hints.active = null;
+  }
+
   function openPuzzle1() {
-    p1State = P1_INIT();
+    // coming back after [ ZURÜCK ] keeps the plants, the dials and the hints used
+    const first = !S.p1Opened;
+    if (first) { S.p1Opened = true; p1State = P1_INIT(); S.hints.step = 0; }
     S.hints.active = 'p1';
-    S.hints.step   = 0;
+    const show = () => {
+      showModal(1, true);
+      updateHintBar();
+      renderP1();
+      if (first) setP1Status('BEREIT.', '');
+    };
+    if (!first) { show(); return; }
 
     say([
       { speaker:'F-RØ5CHI', text:'„So. Jetzd san\'s deine."', subtitle:'So. Jetzt sind sie deine.' },
       { speaker:'R-3MI',    text:'„Also Pflanzen auftauen, ohne Pflanzen zu kochen."' },
       { speaker:'V-TGM',    text:'"Please don\'t cook the plants."', subtitle:'Bitte koch die Pflanzen nicht.' },
       { speaker:'F-RØ5CHI', text:'„Wennst was kaputt machst — ned schlimm. Wir hom Zeit."', subtitle:'Wenn du was kaputt machst — nicht schlimm. Wir haben Zeit.' },
-    ], () => {
-      document.getElementById('puzzle1Modal').classList.remove('hidden');
-      document.getElementById('hintBar').classList.remove('hidden');
-      updateHintBar();
-      renderP1();
-      setP1Status('BEREIT.', '');
-    });
+    ], show);
   }
 
   function renderP1() {
@@ -866,8 +920,10 @@ const Chapter2 = (() => {
     renderP1();
   }
 
+  let lastBloomAt = 0;
   function thawApply() {
     if (S.p1Solved) return;
+    if (Date.now() - lastBloomAt < 400) return;   // a double-tap on [ AUFTAUEN ] must not hit the next plant
     const idx     = p1State.selected;
     const profile = PLANT_PROFILE[idx];
 
@@ -896,6 +952,7 @@ const Chapter2 = (() => {
     }
 
     if (tempDiff <= TOLERANCE && pressDiff <= TOLERANCE) {
+      lastBloomAt = Date.now();
       p1State.plants[idx] = true;
       p1State.ambient = Math.min(3, p1State.ambient + profile.shifts);
       setP1Status(`${profile.name} erblüht! Umgebung erwärmt sich.`, 'ok');
@@ -975,8 +1032,7 @@ const Chapter2 = (() => {
 
   // ─── ACT 2 — FIRST THAW. Control comes back to the player. ─────
   function solvePuzzle1() {
-    document.getElementById('puzzle1Modal').classList.add('hidden');
-    document.getElementById('hintBar').classList.add('hidden');
+    showModal(1, false);
     S.hints.active = null;
 
     // State and control first, narration second. The player must get the
@@ -1018,9 +1074,16 @@ const Chapter2 = (() => {
 
   function openPuzzle2() {
     if (S.p2Solved) return;
-    p2State = { cuts: new Set() };
+    const first = !S.p2Opened;
+    if (first) { S.p2Opened = true; p2State = { cuts: new Set() }; S.hints.step = 0; }
     S.hints.active = 'p2';
-    S.hints.step   = 0;
+    const show = () => {
+      showModal(2, true);
+      updateHintBar();
+      buildFrostGrid();
+      updateFrost();
+    };
+    if (!first) { show(); return; }
 
     say([
       { speaker:'F-RØ5CHI', text:'„De Tafel is a Fünf-mal-Fünf-Feld. In da Mittn da Brunnen — den muassd freihoidn, ganz alloa."', subtitle:'Die Tafel ist ein Fünf-mal-Fünf-Feld. In der Mitte der Brunnen — den musst du freihalten, ganz allein.' },
@@ -1032,13 +1095,7 @@ const Chapter2 = (() => {
       { speaker:'R-3MI',    text:'„Das ist entweder großzügig oder faul."' },
       { speaker:'F-RØ5CHI', text:'„Sag des eam amoi persönlich."', subtitle:'Sag das ihm mal persönlich.' },
       { speaker:'R-3MI',    text:'„Mehrere Lösungen sind großartig."' },
-    ], () => {
-      document.getElementById('puzzle2Modal').classList.remove('hidden');
-      document.getElementById('hintBar').classList.remove('hidden');
-      updateHintBar();
-      buildFrostGrid();
-      updateFrost();
-    });
+    ], show);
   }
 
   function frostNeighbours(r, c) {
@@ -1114,6 +1171,7 @@ const Chapter2 = (() => {
     btn.dataset.edge = edge;
     if (fixed) {
       btn.setAttribute('aria-label', 'Eingeschnitzter Eiskanal — fest, nicht veränderbar');
+      btn.disabled = true;   // out of the tab order, no click tone for nothing
     } else {
       btn.setAttribute('aria-label', 'Eiskanal setzen oder entfernen');
       btn.addEventListener('click', () => toggleCut(edge));
@@ -1188,13 +1246,14 @@ const Chapter2 = (() => {
   // ACT 4 — FULL RESTORATION
   // ═══════════════════════════════════════════════════════════════
   function solvePuzzle2() {
-    document.getElementById('puzzle2Modal').classList.add('hidden');
-    document.getElementById('hintBar').classList.add('hidden');
+    showModal(2, false);
     S.hints.active = null;
 
     // Persist and switch the room before anything narrative runs.
     S.thawState = RESTORED;
     GameEngine.state.markChapterComplete(CHAPTER_ID);
+    // earned with the completion — a reload during the ending must not lose it
+    try { GameEngine.achievements.unlock('ch2_complete'); } catch(_) {}
     clearSavedState();
     GameEngine.state.setFlag('has_eissplitter');
 
@@ -1320,6 +1379,9 @@ const Chapter2 = (() => {
   function useHint(who) {
     const ladder = HINTS[S.hints.active];
     if (!ladder) return;
+    // a second tap while the first hint is still typing used to burn a second
+    // hint — it now advances the line, like every other tap
+    if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch(_) {} return; }
 
     if (S.hints.step >= HINT_MAX) {
       const done = {
@@ -1467,6 +1529,7 @@ const Chapter2 = (() => {
     try { GameEngine.props.register(CH2_ART); } catch (_) {}
     if (!GameEngine.progress.require('ch2')) return;
     setProgress(12);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closePuzzle(); });
     showTitleCard();
   }
 
@@ -1483,6 +1546,7 @@ const Chapter2 = (() => {
     thawApply,
     thawReset,
     frostReset,
+    closePuzzle,
   };
 
 })();

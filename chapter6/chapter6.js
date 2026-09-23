@@ -138,6 +138,10 @@ const Chapter6 = (() => {
   function guarded(fn) {
     return (...a) => {
       if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch (_) {} return; }
+      // a story choice is a question the room waits for; an optional talk
+      // menu simply closes when the player turns to the room instead
+      const CHP = GameEngine.chapter;
+      if (CHP.choicesOpen()) { if (!CHP.choicesDismissable()) return; CHP.hideChoices(); }
       return fn(...a);
     };
   }
@@ -1146,6 +1150,7 @@ const Chapter6 = (() => {
     if (who === 'guest') choices.unshift({ key:'__coach', label:'[ Wie geht man das an? ]', seen:false, lines: coachLines() });
     choices.push({ key:'__leave', label:'[ Nichts. Weiter. ]', seen:false, lines: [] });
     CH.showChoices({
+      dismissable: true,
       prompt: who === 'guest' ? 'ASP-1024 ANSPRECHEN:' : who === 'r3mi' ? 'R-3MI ANSPRECHEN:' : 'V-TGM ANSPRECHEN:',
       hint: 'OPTIONAL.',
       choices,

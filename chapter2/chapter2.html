@@ -68,7 +68,7 @@
 
   <!-- CHOICE UI -->
   <div class="choice-overlay hidden" id="choiceOverlay">
-    <div class="choice-panel">
+    <div class="choice-panel" tabindex="-1">
       <div class="choice-prompt sys-text" id="choicePrompt"></div>
       <div class="choice-buttons" id="choiceButtons"></div>
       <div class="choice-hint sys-text" id="choiceHint"></div>
@@ -93,7 +93,7 @@
        PUZZLE 1 — TAU-SEQUENZ
        ════════════════════════════════════════════════════════════ -->
   <div class="puzzle-modal hidden" id="puzzle1Modal">
-    <div class="puzzle-card thaw-card">
+    <div class="puzzle-card thaw-card" tabindex="-1">
       <div class="puzzle-card-accent thaw-accent"></div>
       <div class="puzzle-header">
         <p class="puzzle-label sys-text">WASSERORGEL // PFLANZSEKTOR</p>
@@ -172,6 +172,7 @@
 
       <div class="puzzle-actions">
         <button class="ka-btn small" onclick="Chapter2.thawReset()">[ ZURÜCKSETZEN ]</button>
+        <button class="ka-btn small" onclick="Chapter2.closePuzzle()">[ ZURÜCK ]</button>
       </div>
     </div>
   </div>
@@ -180,7 +181,7 @@
        PUZZLE 2 — FROSTMUSTER (Layton-style Eis-Tafel)
        ════════════════════════════════════════════════════════════ -->
   <div class="puzzle-modal hidden" id="puzzle2Modal">
-    <div class="puzzle-card frost-card">
+    <div class="puzzle-card frost-card" tabindex="-1">
       <div class="puzzle-card-accent frost-accent"></div>
       <div class="puzzle-header">
         <p class="puzzle-label sys-text">EIS-TAFEL // HANDGESCHNITZT</p>
@@ -195,6 +196,7 @@
 
       <div class="puzzle-actions">
         <button class="ka-btn small" onclick="Chapter2.frostReset()">[ ZURÜCKSETZEN ]</button>
+        <button class="ka-btn small" onclick="Chapter2.closePuzzle()">[ ZURÜCK ]</button>
       </div>
     </div>
   </div>

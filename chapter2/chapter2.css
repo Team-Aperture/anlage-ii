@@ -277,7 +277,7 @@
 .accent-froschi { color: var(--accent-froschi); }
 
 /* ─── CHOICE OVERLAY ──────────────────────────────────────────── */
-.choice-overlay {
+.choice-overlay { pointer-events:none;
   position: fixed; bottom:0; left:0; right:0; z-index:60;
   padding: var(--sp-md);
   transform: translateY(110%);
@@ -285,7 +285,7 @@
 }
 .choice-overlay.visible { transform: translateY(0); }
 
-.choice-panel {
+.choice-panel { pointer-events:auto; outline:none;
   background: var(--bg-panel);
   border: 1px solid var(--bdr-mid); border-bottom: none;
   max-width: 720px; margin: 0 auto; padding: var(--sp-md);
@@ -294,7 +294,7 @@
 .choice-prompt { font-size:10px; letter-spacing:.15em; color:var(--text-secondary); margin-bottom:var(--sp-sm); }
 .choice-buttons { display:flex; flex-direction:column; gap:var(--sp-xs); }
 
-.choice-btn {
+.choice-btn { touch-action:manipulation;
   background: var(--bg-surface); border: 1px solid var(--bdr-mid);
   color: var(--text-primary); font-family:var(--font-body); font-size:14px;
   padding: var(--sp-sm) var(--sp-md); text-align:left; cursor:pointer;

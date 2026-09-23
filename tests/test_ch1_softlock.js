@@ -42,10 +42,9 @@ async function toHallIntro(p) {
   console.log('\n[A] a talk menu opened in the 600 ms before the *KLONK* beat cannot steal the repair');
   { const { ctx, p, errs } = await H.open(b, '/chapter1/chapter1.html', seed());
     await toHallIntro(p);                                                   // the hall intro's last line just closed; the beat is 600 ms out
-    await p.locator('.r3mi-icon').click(); await p.waitForTimeout(60);
-    check(await p.evaluate(() => !document.getElementById('choiceOverlay').classList.contains('hidden')), 'the menu opened in the gap');
+    check(await p.evaluate(() => document.getElementById('robotIcons').classList.contains('hidden')), 'the units step out of the way for the pause (no menu can open in it)');
     await p.waitForTimeout(1200);                                           // the beat lands
-    check(await p.evaluate(() => document.getElementById('choiceOverlay').classList.contains('hidden')), '  the beat closed the stale menu');
+    check(await p.evaluate(() => !document.getElementById('robotIcons').classList.contains('hidden')), '  the units are back with the beat');
     check(await p.locator('#sceneHotspots .prop-interactive').count() >= 5, '  the hall is clickable during the beat');
     await drainAll(p);
     check(await p.locator('#puzzle1Modal:not(.hidden)').count() === 1, '  repair 1 opened after the beat');
@@ -75,7 +74,7 @@ async function toHallIntro(p) {
     await solve(p, 'p2'); await p.waitForTimeout(1000);
     check(await p.locator('#puzzle2Modal:not(.hidden)').count() === 0, '  repair 2 solved');
     check(await p.locator('#sceneHotspots [aria-label="Tür zu Sektor 02 untersuchen"]').count() === 1, '  the ending keeps the room (door still there)');
-    check(await p.evaluate(() => !JSON.parse(localStorage.getItem('ka2_save_v1')).chapterState.ch1), '  checkpoint cleared on completion');
+    check(await p.evaluate(() => JSON.parse(localStorage.getItem('ka2_save_v1')).chapterState.ch1?.p2Solved === true), '  the checkpoint holds the ending until the card shows');
     await drainAll(p);                                                      // ending lines → answer menu
     check(await p.evaluate(() => !document.getElementById('choiceOverlay').classList.contains('hidden')), '  the answer menu is up');
     await p.locator('#sceneHotspots [aria-label="Tür zu Sektor 02 untersuchen"]').click({ force: true }); await p.waitForTimeout(200);
@@ -168,5 +167,52 @@ async function toHallIntro(p) {
     const html = H.fs.readFileSync(H.path.join(H.ROOT, 'chapter1/chapter1.html'), 'utf8');
     check(/REAKTIVIERUNG: 0 %/.test(html), '  the bar starts as "0 %"'); }
 
+  console.log('\n[I] gameplay: leaving a repair and coming back, settled objects, powered lamps, DUALSIGNAL, the ending survives a reload');
+  { const { ctx, p, errs } = await H.open(b, '/chapter1/chapter1.html', seed());
+    await toHallIntro(p); await p.waitForTimeout(1200); await drainAll(p);
+    check(await p.locator('#puzzle1Modal:not(.hidden)').count() === 1, 'repair 1 is open');
+    const sig = () => p.evaluate(() => [...document.querySelectorAll('#puzzle1Grid .pipe-tile')].map(t => [...t.querySelectorAll('.pipe-arm')].map(a => a.className.slice(-1)).join('')).join('|'));
+    await p.locator('#puzzle1Grid .pipe-tile:not(.fixed)').first().click(); await p.waitForTimeout(100);
+    const before = await sig();
+    const cardTop = await p.evaluate(() => document.querySelector('#puzzle1Modal .puzzle-card').getBoundingClientRect().top);
+    await p.locator('#hintBtnR3MI').click(); await p.waitForTimeout(300);
+    const cardTop2 = await p.evaluate(() => document.querySelector('#puzzle1Modal .puzzle-card').getBoundingClientRect().top);
+    check(Math.abs(cardTop - cardTop2) < 1, `  the card does not move when a line appears (${cardTop|0} → ${cardTop2|0})`);
+    await drainAll(p);
+    await p.locator('#puzzle1Modal .ka-btn', { hasText: 'ZURÜCK ]' }).click(); await p.waitForTimeout(150);
+    check(await p.locator('#puzzle1Modal:not(.hidden)').count() === 0 && await p.locator('#hintBar:not(.hidden)').count() === 0, '  [ ZURÜCK ] leaves the repair');
+    await hs(p, 'Kratzer in der Wand untersuchen'); await p.waitForTimeout(150);
+    check(await p.evaluate(() => document.querySelector('[data-prop="c1_wallscratch"]').classList.contains('found')), '  an examined object settles');
+    await drainAll(p);
+    await hs(p, 'Terminal untersuchen'); await drainAll(p);
+    check(await p.locator('#puzzle1Modal:not(.hidden)').count() === 1 && (await sig()) === before, '  the terminal re-opens the same grid, unscrambled');
+    check((await p.locator('#hintCount').innerText()).includes('2 VERFÜGBAR'), '  the hint already used stays used');
+    await p.keyboard.press('Escape'); await p.waitForTimeout(150);
+    check(await p.locator('#puzzle1Modal:not(.hidden)').count() === 0, '  Escape leaves it too');
+    await hs(p, 'Terminal untersuchen'); await drainAll(p);
+    for (let i = 0; i < 2; i++) { await p.locator('#hintBtnVTGM').click(); await drainAll(p); }
+    await p.locator('#hintBtnR3MI').click(); await p.waitForTimeout(200);
+    check(/Mehr darf ich nicht sagen/.test(await H.lastLine(p)), '  a fourth hint press gets the unit\'s refusal');
+    await drainAll(p);
+    await solve(p, 'p1'); await p.waitForTimeout(1000);
+    const lamp = await p.evaluate(() => getComputedStyle(document.querySelector('[data-prop="c1_hallterminal"] .prop-led')).fill);
+    check(/46, 207, 98/.test(lamp), `  the terminal's lamp is green once the hall has power (${lamp})`);
+    await drainAll(p);
+    await hs(p, 'Inneres Tor untersuchen'); await drainAll(p); await drainAll(p);
+    await hs(p, 'Zentrale Konsole untersuchen'); await drainAll(p);
+    const d = await p.evaluate(() => ({ disabled: document.querySelectorAll('#puzzle2Grid .pipe-tile:disabled').length, tees: [...document.querySelectorAll('#puzzle2Grid .pipe-tile')].filter(t => t.querySelectorAll('.pipe-arm').length === 3).length }));
+    check(d.disabled === 10 && d.tees === 2, `  DUALSIGNAL: blanks and ends are inert, two T-pieces can bridge (${JSON.stringify(d)})`);
+    await solve(p, 'p2'); await p.waitForTimeout(400);
+    check(await p.locator('#puzzle2Grid .pipe-tile.terminal2r.conn-r').count() === 1 && await p.locator('#puzzle2Grid .pipe-tile.terminal2g.conn-g').count() === 1, '  both terminals light their own arm');
+    await p.waitForTimeout(800);
+    check(await p.evaluate(() => JSON.parse(localStorage.getItem('ka2_save_v1')).chapterState.ch1?.p2Solved === true), '  the ending is checkpointed');
+    await p.reload({ waitUntil: 'domcontentloaded' }); await p.waitForTimeout(2200); await drainAll(p); await p.waitForTimeout(300);
+    check(/DEINE ANTWORT/.test(await p.locator('#choicePrompt').innerText().catch(() => '')), '  a reload mid-ending resumes the ending, not a Nachsuche');
+    await p.locator('.choice-btn').first().click(); await p.waitForTimeout(150); await drainAll(p);
+    await hs(p, 'Sektor 02 betreten'); await p.waitForTimeout(300);
+    check(await p.locator('#chapterComplete:not(.hidden)').count() === 1 && await p.evaluate(() => !JSON.parse(localStorage.getItem('ka2_save_v1')).chapterState.ch1), '  the card shows and the checkpoint is gone');
+    check(errs.length === 0, '  no page errors'); await ctx.close(); }
+
   await b.close(); finish();
 })();
+

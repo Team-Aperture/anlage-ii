@@ -108,8 +108,21 @@ const Chapter4 = (() => {
   function guarded(fn) {
     return (...args) => {
       if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch(_) {} return; }
+      // a story choice is a question the room waits for; an optional talk
+      // menu simply closes when the player turns to the room instead
+      if (choicesOpen()) { if (!choicesDismissable()) return; hideChoices(); }
       return fn(...args);
     };
+  }
+
+  /** True while a choice menu is up (including its short fade-out). */
+  function choicesOpen() {
+    const o = document.getElementById('choiceOverlay');
+    return !!(o && !o.classList.contains('hidden'));
+  }
+  /** True when the open menu is an optional conversation, not a story beat. */
+  function choicesDismissable() {
+    return document.getElementById('choiceOverlay')?.dataset.kind === 'talk';
   }
 
   function addHotspot(cfg) {
@@ -229,6 +242,7 @@ const Chapter4 = (() => {
 
     prompt.textContent = cfg.prompt || 'DEINE REAKTION:';
     hint.textContent   = cfg.hint   || '';
+    overlay.dataset.kind = cfg.dismissable ? 'talk' : 'story';
     btns.innerHTML     = '';
 
     cfg.choices.forEach(c => {
@@ -236,20 +250,33 @@ const Chapter4 = (() => {
       btn.className   = 'choice-btn' + (c.seen ? ' seen' : '');
       btn.textContent = c.label;
       btn.addEventListener('click', () => {
+        // the same guard as every hotspot — a pick over a running line would
+        // replace that line's continuation
+        if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch(_) {} return; }
+        if (btn.dataset.used) return;
+        btn.dataset.used = '1';
         c.seen = true;
         hideChoices();
         say(c.lines || [], () => { if (cfg.onPick) cfg.onPick(c.key); });
-      }, { once: true });
+      });
       btns.appendChild(btn);
     });
 
+    clearTimeout(choiceHideTimer);   // a menu re-opened mid-fade must not vanish
     overlay.classList.remove('hidden');
-    requestAnimationFrame(() => overlay.classList.add('visible'));
+    requestAnimationFrame(() => {
+      overlay.classList.add('visible');
+      // the panel, not its first button: Tab reaches the options next and
+      // one Space too many (the strip's own key) picks nothing
+      overlay.querySelector('.choice-panel')?.focus();
+    });
   }
+  let choiceHideTimer = null;
   function hideChoices() {
     const overlay = document.getElementById('choiceOverlay');
     overlay.classList.remove('visible');
-    setTimeout(() => overlay.classList.add('hidden'), 410);
+    clearTimeout(choiceHideTimer);
+    choiceHideTimer = setTimeout(() => overlay.classList.add('hidden'), 410);
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -1446,6 +1473,7 @@ const Chapter4 = (() => {
 
   function clickRobot(who) {
     if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch(_) {} return; }
+    if (choicesOpen() && !choicesDismissable()) return;   // a story choice is up (keyboard can still reach the icons)
     if (!S.started) return;
     if (who === 'bradfish' && froschiBeat()) return;
 
@@ -1461,7 +1489,7 @@ const Chapter4 = (() => {
 
     const title = who === 'bradfish' ? 'B-RADF1SH ANSPRECHEN:' : who === 'r3mi' ? 'R-3MI ANSPRECHEN:' : 'V-TGM ANSPRECHEN:';
     askOnce({
-      prompt: title, hint: 'OPTIONAL.', choices,
+      prompt: title, hint: 'OPTIONAL.', dismissable: true, choices,
       onPick: (key) => {
         if (key === '__leave' || key === '__coach') return;
         S.talkSeen[who + ':' + key] = true;

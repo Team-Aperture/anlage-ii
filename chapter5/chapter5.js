@@ -115,6 +115,10 @@ const Chapter5 = (() => {
   function guarded(fn) {
     return (...args) => {
       if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch (_) {} return; }
+      // a story choice is a question the room waits for; an optional talk
+      // menu simply closes when the player turns to the room instead
+      const CHP = GameEngine.chapter;
+      if (CHP.choicesOpen()) { if (!CHP.choicesDismissable()) return; CHP.hideChoices(); }
       return fn(...args);
     };
   }
@@ -1141,6 +1145,7 @@ const Chapter5 = (() => {
     choices.push({ key:'__leave', label:'[ Nichts. Weiter. ]', seen:false, lines: [] });
 
     CH.showChoices({
+      dismissable: true,
       prompt: who === 'guest' ? 'T-FLON14 ANSPRECHEN:' : who === 'r3mi' ? 'R-3MI ANSPRECHEN:' : 'V-TGM ANSPRECHEN:',
       hint: 'OPTIONAL.',
       choices,
