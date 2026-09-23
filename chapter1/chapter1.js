@@ -1412,7 +1412,7 @@ const Chapter1 = (() => {
 
     const intro = fast
       ? [
-          { speaker:'R-3MI', text:'„...okay."' },
+          { speaker:'R-3MI', text:'„…okay."' },
           { speaker:'SYSTEM',text:'Kurze Pause.' },
           { speaker:'R-3MI', text:'„Ich wollte das genauso machen."' },
           { speaker:'V-TGM', text:'"No you didn\'t."', subtitle:'Nein, wolltest du nicht.' },

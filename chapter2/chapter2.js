@@ -458,7 +458,7 @@ const Chapter2 = (() => {
           { speaker:'F-RØ5CHI', text:'„Des is d\'Gerhilde. Ned z\'hoaß, ned z\'koid. Hauptsach koa Drama."', subtitle:'Das ist die Gerhilde. Nicht zu heiß, nicht zu kalt. Hauptsache kein Drama.' },
           { speaker:'V-TGM',    text:'"You named the plant Gerhilde."', subtitle:'Du hast die Pflanze Gerhilde genannt.' },
           { speaker:'F-RØ5CHI', text:'„SIE hod si Gerhilde g\'nennt."', subtitle:'SIE hat sich Gerhilde genannt.' },
-          { speaker:'V-TGM',    text:'"...right."', subtitle:'…sicher.' },
+          { speaker:'V-TGM',    text:'"…right."', subtitle:'…sicher.' },
           { speaker:'F-RØ5CHI', text:'„De do kann Kälte ab. Aber ohne Druck bewegt si gar nix."', subtitle:'Die da kann Kälte ab. Aber ohne Druck bewegt sich gar nichts.' },
           { speaker:'F-RØ5CHI', text:'„Und de Kleine mog\'s warm. Aber sachte! Wennst mit vui Druck kummst, is beleidigt."', subtitle:'Und die Kleine mag es warm. Aber sachte! Wenn du mit viel Druck kommst, ist sie beleidigt.' },
           { speaker:'R-3MI',    text:'„Drei Pflanzen, drei Persönlichkeiten. Großartig."' },
@@ -1218,7 +1218,7 @@ const Chapter2 = (() => {
   /** One sincere pause. No jokes for a moment. */
   function act4_quietMoment() {
     say([
-      { speaker:'F-RØ5CHI', text:'„...mei Garten."', subtitle:'…mein Garten.' },
+      { speaker:'F-RØ5CHI', text:'„…mei Garten."', subtitle:'…mein Garten.' },
       { speaker:'SYSTEM',   text:'Sie steht einfach da.' },
       { speaker:'F-RØ5CHI', text:'„Do bist ja wieder."', subtitle:'Da bist du ja wieder.' },
       { speaker:'SYSTEM',   text:'Niemand sagt etwas.' },
