@@ -120,7 +120,7 @@ const Chapter2 = (() => {
 
   function setProgress(pct) {
     const el = document.getElementById('reactProgress');
-    if (el) el.textContent = `REAKTIVIERUNG: ${pct}%`;
+    if (el) el.textContent = `REAKTIVIERUNG: ${pct} %`;
   }
 
   function playSound(src) { try { GameEngine.audio.sfx(src); } catch(_) {} }

@@ -134,5 +134,35 @@ const press = async (p, sym) => { await p.locator(`.puzzle-key[data-symbol="${sy
     check(m.btns.length === 3 && m.btns.every(b => b.h < 40 && !b.clipped), `  three one-line buttons, none clipped (${JSON.stringify(m.btns)})`);
     await ctx.close(); }
 
+  console.log('\n[K] gameplay: focus, cinematic, label, note, hint pointer, settled beacon, toast');
+  { const { ctx, p } = await H.open(b, '/chapter0/chapter0.html', H.save({})); await p.waitForTimeout(3800); await H.drain(p);
+    await p.locator('.ref-warning').click({ force: true }); await p.waitForTimeout(150); await H.drain(p);
+    const beacon = await p.evaluate(() => { const cs = getComputedStyle(document.querySelector('.ref-warning'), '::after'); return { anim: cs.animationName, bg: cs.backgroundColor }; });
+    check(beacon.anim === 'none' && /46, 207, 98/.test(beacon.bg), `  an examined marking's beacon settles green (${JSON.stringify(beacon)})`);
+    check(await toRing(p), '  the ring opens');
+    check(await p.evaluate(() => document.activeElement?.classList.contains('puzzle-card')), '  focus lands on the card, not on a key');
+    for (let i = 0; i < 2; i++) { for (const s of ['⬡','■','▲','●']) await press(p, s); await p.waitForTimeout(1000); }
+    await p.locator('#puzzleHintBtn').click({ force: true }); await p.waitForTimeout(150);
+    const l1 = await H.lastLine(p); await H.drain(p);
+    check(/REFERENZEN: \d \/ 4/.test(l1), `  a guesser with unread markings is pointed at them first ("${l1}")`);
+    await p.locator('#puzzleHintBtn').click({ force: true }); await p.waitForTimeout(150);
+    const l2 = await H.lastLine(p); await H.drain(p);
+    check(/BODENMARKIERUNG NENNT/.test(l2), `  the next request starts the method ladder ("${l2.slice(0, 30)}…")`);
+    for (let i = 0; i < 2; i++) { for (const s of ['⬡','■','▲','●']) await press(p, s); await p.waitForTimeout(1000); }
+    check(/AUFSTEIGEND/.test(await p.locator('#puzzleNote').innerText()), '  the 4th failure keeps the direction reminder');
+    await ctx.close(); }
+  { const { ctx, p } = await H.open(b, '/chapter0/chapter0.html', H.save({})); check(await toRing(p), 'the ring opens (cinematic run)');
+    await p.locator('#puzzleHintBtn').click({ force: true }); await p.waitForTimeout(150);        // a hint line stays up
+    for (const s of ['●','▲','■','⬡']) await press(p, s);
+    let toast = false; const t0 = Date.now(); let inertAt12 = null, inertAt36 = null;
+    while (Date.now() - t0 < 5200) { if (await p.locator('.achievement-toast').count()) toast = true;
+      const el = Date.now() - t0; const inert = await p.evaluate(() => document.getElementById('sceneWrapper').inert === true);
+      if (el > 1200 && inertAt12 === null) inertAt12 = inert; if (el > 3700 && inertAt36 === null) inertAt36 = inert; await p.waitForTimeout(100); }
+    check(toast, '  the "Wieder da" toast appears even though a hint line was up');
+    check(inertAt12 === true && inertAt36 === false, `  the room is inert through the cinematic and free for the release lines (${inertAt12}/${inertAt36})`);
+    check(await p.locator('.dlg-container.visible').count() === 1 && /FREIGEGEBEN/.test(await H.lastLine(p)), '  release lines are on screen, not under a card');
+    check((await p.locator('.door-hotspot .hotspot-label').innerText()) === 'SEKTOR 01', '  the seal\'s visible tag now says SEKTOR 01');
+    await ctx.close(); }
+
   await b.close(); finish();
 })();

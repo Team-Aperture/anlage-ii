@@ -284,6 +284,7 @@ const Chapter0 = (() => {
     inputLocked: false,
     attempts:   0,
     hintStep:   0,
+    pointedMissing: false,   // the one pointer a guesser gets before the method hints
     doorRead:   false,
     failTimer:  null,
     unlocked:   false,
@@ -597,28 +598,7 @@ const Chapter0 = (() => {
     // the engine gives every hotspot a percentage box; the seal's is the
     // drawn door (see chapter0.css), so drop the inline one
     document.querySelector('.hotspot.door-hotspot')?.removeAttribute('style');
-    fitPropBoxes();
     if (S.unlocked) document.querySelector('.env-light')?.classList.add('ch0-lit');
-  }
-
-  // A prop's percentage box is tuned for a wide screen. In a portrait
-  // viewport the same box is far taller than the art it holds (the SVG
-  // letterboxes inside it), so the beacon that says "clickable" floated up
-  // to 60px below the object and most of the hit area was empty wall.
-  // Fit each box to its art: never taller than the drawing, and re-centred
-  // so the object itself stays exactly where the layout put it. The scene
-  // canvas is the whole viewport, so w% of it is w vw.
-  function fitPropBoxes() {
-    document.querySelectorAll('.scene-canvas .scene-prop.prop-interactive[data-prop]').forEach(el => {
-      const art = CH0_ART[el.dataset.prop];
-      const vb  = art ? String(art.vb).trim().split(/[\s,]+/).map(Number) : [];
-      if (vb.length !== 4 || !(vb[2] > 0 && vb[3] > 0)) return;
-      const y = parseFloat(el.style.top), h = parseFloat(el.style.height), w = parseFloat(el.style.width);
-      if (![y, h, w].every(Number.isFinite)) return;
-      const artH = (w * vb[3] / vb[2]).toFixed(3);            // in vw
-      el.style.height = `min(${h}%, ${artH}vw)`;
-      el.style.top    = `calc(${y + h / 2}% - min(${h / 2}%, ${(artH / 2).toFixed(3)}vw))`;
-    });
   }
 
   function examineReference(key) {
@@ -745,6 +725,19 @@ const Chapter0 = (() => {
       return;
     }
 
+    // Two wrong tries open the method hints — but not before the room has
+    // been read: a guesser with markings still unread is pointed at one of
+    // them first, exactly like a player who has not touched the ring yet.
+    if (found < 4 && !S.pointedMissing) {
+      S.pointedMissing = true;
+      const missing = REFERENCE_ORDER.find(k => !S.referencesFound[k]);
+      GameEngine.dialogue.load([
+        { speaker: 'SYSTEM', text: `REFERENZEN: ${found} / 4.` },
+        { speaker: 'SYSTEM', text: `${REFERENCES[missing].label} // NICHT ERFASST.` },
+      ]);
+      return;
+    }
+
     S.hintStep = Math.min(S.hintStep + 1, 3);
     if (S.hintStep === 1) {
       GameEngine.dialogue.load([
@@ -782,7 +775,9 @@ const Chapter0 = (() => {
     modal.classList.remove('hidden');
     setBackgroundInert(true);
     resetPuzzle();
-    setTimeout(() => modal.querySelector('.puzzle-key')?.focus(), 60);
+    // the card, not the first key: a keyboard player's one extra Space after
+    // the ring lines used to enter ⬡ before they had even looked at the modal
+    setTimeout(() => modal.querySelector('.puzzle-card')?.focus(), 60);
   }
 
   function closePuzzle() {
@@ -861,7 +856,8 @@ const Chapter0 = (() => {
       hb?.classList.add('nudge');
       setTimeout(() => hb?.classList.remove('nudge'), 1800);
     }
-    if (S.attempts >= 4) setNote('SCHLEUSENRING // WEITERHIN GEDULDIG.');
+    // the direction reminder stays — the player failing most needs it most
+    if (S.attempts >= 4) setNote('REFERENZFOLGE // AUFSTEIGEND. SCHLEUSENRING // WEITERHIN GEDULDIG.');
 
     clearTimeout(S.failTimer);
     S.failTimer = setTimeout(() => {
@@ -895,8 +891,11 @@ const Chapter0 = (() => {
     cueMechanism();
 
     setTimeout(() => {
+      // a hint line left up would sit over the cinematic, hold the toast back
+      // and be cut off by the release text — the only lines possible here
+      // are callback-less hint lines, so simply close them
+      try { GameEngine.dialogue.hide(); } catch (_) {}
       document.getElementById('puzzleModal')?.classList.add('hidden');
-      setBackgroundInert(false);
       setAwake(true);
       // #sceneCanvas, not #sceneWrapper — the wrapper's own sceneFadeIn rule
       // (chapter0.css, loaded after global.css) would win the cascade over
@@ -912,6 +911,10 @@ const Chapter0 = (() => {
     setTimeout(() => { try { GameEngine.toasts.release(); } catch (_) {} }, 2600);
 
     setTimeout(() => {
+      // the room takes clicks again only now: two quick taps on the seal
+      // during the cinematic used to show the completion card first, with
+      // the release lines playing unseen beneath it
+      setBackgroundInert(false);
       GameEngine.dialogue.load([
         { speaker: 'SYSTEM', text: 'SCHLEUSENRING // FREIGEGEBEN.' },
         { speaker: 'SYSTEM', text: 'REAKTIVIERUNGSPROTOKOLL // AKTIV.' },
@@ -929,6 +932,8 @@ const Chapter0 = (() => {
     // the door's behaviour changes on unlock — its screen-reader label should too
     document.querySelector('.door-hotspot')
       ?.setAttribute('aria-label', on ? 'Sektor 01 betreten' : 'Schleusenring untersuchen');
+    const tag = document.querySelector('.door-hotspot .hotspot-label');
+    if (tag) tag.textContent = on ? 'SEKTOR 01' : 'SCHLEUSENRING';
     const dust = document.getElementById('phDust');
     if (on && dust) {
       dust.classList.remove('falling');

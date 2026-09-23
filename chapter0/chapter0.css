@@ -535,6 +535,10 @@ html.gate-blocked body { visibility: hidden; }
 .scene-prop.env-hotspot.prop-interactive:hover::after,
 .scene-prop.env-hotspot.prop-interactive:focus-visible::after { opacity: 0.9; }
 
+/* an examined optional object stays quiet — the settled marker (global.css)
+   must not make it louder than it was */
+.scene-prop.env-hotspot.found::after { opacity: 0.22; }
+
 /* touch: first tap reveals the label immediately, same as hover/focus */
 @media (hover: none) {
   .scene-prop.prop-interactive .prop-label,
@@ -943,12 +947,6 @@ body:has(.dlg-container.visible) .chapter-hud { opacity: 0.3; }
   .puzzle-slot { width: 48px; height: 48px; font-size: 24px; }
   .chapter-hud { max-width: none; }
   .puzzle-actions .ka-btn { flex: 1 1 auto; }
-
-  /* the engine centres a label on its prop; these two props sit at the very
-     edges of the room, so on a 360px screen the label was cut to "ARNTAFEL"
-     and "ARCHIVTERM" */
-  .ref-warning .prop-label  { left: 0;    transform: none; }
-  .env-terminal .prop-label { left: auto; right: 0; transform: none; }
 
   /* the radial ring gets cramped on a narrow phone — a plain 2×2 grid stays
      large and thumb-friendly instead */

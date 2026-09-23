@@ -78,6 +78,21 @@ async function settled(p, max = 60) {
   }
 }
 
+// Advance exactly n dialogue lines (a click mid-typing only completes the line).
+async function step(p, n = 1) {
+  const len = () => p.evaluate(() => { try { return GameEngine.dialogue.history().length; } catch (_) { return 0; } });
+  const target = (await len()) + n;
+  for (let i = 0; i < n * 8 && (await len()) < target; i++) {
+    if (!(await p.locator('.dlg-container.visible').count())) return false;
+    await p.evaluate(() => document.querySelector('.dlg-container')?.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    await p.waitForTimeout(70);
+  }
+  return true;
+}
+
+// The full text of the line now on screen (the typewriter may still be typing it).
+const lastLine = p => p.evaluate(() => { try { return GameEngine.dialogue.history().slice(-1)[0]?.text || ''; } catch (_) { return ''; } });
+
 function checker(name) {
   let fail = 0;
   const check = (c, m) => { console.log((c ? '  ok   ' : '  FAIL ') + m); if (!c) fail++; };
@@ -85,4 +100,4 @@ function checker(name) {
   return { check, finish };
 }
 
-module.exports = { BASE, ROOT, ALL, SIG, save, done, open, drain, settled, checker, launch: () => chromium.launch(), localSecret, fs, path };
+module.exports = { BASE, ROOT, ALL, SIG, save, done, open, drain, settled, checker, lastLine, step, launch: () => chromium.launch(), localSecret, fs, path };

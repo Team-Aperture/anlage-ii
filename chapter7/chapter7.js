@@ -138,7 +138,7 @@ const Chapter7 = (() => {
   }
   function steadyProgress(pct) {
     const e = el('reactProgress');
-    if (e) e.textContent = `REAKTIVIERUNG: ${pct}%`;
+    if (e) e.textContent = `REAKTIVIERUNG: ${pct} %`;
   }
   /** How loudly the sector is still lying, 0 (stable) … 3 (everything). */
   function liesLevel() { return 3 - anchorsDone(); }

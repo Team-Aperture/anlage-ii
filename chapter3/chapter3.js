@@ -111,7 +111,7 @@ const Chapter3 = (() => {
   function showLux(v)    { document.getElementById('luxIcon').classList.toggle('hidden', !v); }
   function setProgress(pct) {
     const el = document.getElementById('reactProgress');
-    if (el) el.textContent = `REAKTIVIERUNG: ${pct}%`;
+    if (el) el.textContent = `REAKTIVIERUNG: ${pct} %`;
   }
   function playSound(src) { try { GameEngine.audio.sfx(src); } catch(_) {} }
   function tone(o)        { try { GameEngine.audio.tone(o); } catch(_) {} }

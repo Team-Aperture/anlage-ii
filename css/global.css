@@ -931,6 +931,9 @@ button.scene-prop { background: none; border: none; padding: 0; cursor: pointer;
 .prop-interactive:hover, .prop-interactive:focus-visible {
   transform: scale(1.06); filter: drop-shadow(0 0 9px var(--accent-system)); outline: none;
 }
+/* A small object is still a 48px touch target: an invisible pad centred on
+   it grows the hit area, never the drawing. */
+.prop-interactive::before { content: ''; position: absolute; inset: min(0px, calc(50% - 24px)); }
 /* A quiet marker so interactive objects read as clickable without shouting.
    Sits at the object's base; brightens on hover. */
 .prop-interactive::after {
@@ -950,9 +953,11 @@ button.scene-prop { background: none; border: none; padding: 0; cursor: pointer;
   white-space: nowrap; opacity: 0; transition: opacity var(--t-fast); pointer-events: none;
 }
 .prop-interactive:hover .prop-label, .prop-interactive:focus-visible .prop-label { opacity: 1; }
-/* an examined prop settles: green tick-glow instead of the system-blue hover */
+/* an examined prop settles: green tick-glow instead of the system-blue hover,
+   and its beacon stops pulsing — the same "done" language as a plain hotspot */
 .scene-prop.found svg { filter: drop-shadow(0 5px 12px rgba(0,0,0,0.55)) drop-shadow(0 0 7px rgba(46,207,98,0.5)); }
 .scene-prop.found .prop-label { color: var(--accent-r3mi); }
+.scene-prop.found::after { animation: none; background: var(--accent-r3mi); box-shadow: 0 0 8px var(--accent-r3mi); opacity: .5; }
 
 /* prop parts — legacy line-art classes */
 .prop-line     { fill: none; stroke: var(--prop-color); stroke-width: 2.2; stroke-linejoin: round; }
@@ -1289,3 +1294,15 @@ body.dlg-up .puzzle-actions { bottom: calc(var(--dlg-h, 170px) + var(--sp-xs)); 
    so its docked action row sits flush. An ID out-specifies the rule above, so
    restate it here for that one modal rather than weakening the phone layout. */
 body.dlg-up #rkModal { padding-bottom: calc(var(--dlg-h, 170px) + var(--sp-md)); }
+
+/* On a phone the docked card starts under the hint bar (fixed, two rows) —
+   start it below the bar's measured bottom edge instead. */
+@media (max-width: 600px) {
+  body.dlg-up .puzzle-modal { padding-top: max(var(--sp-lg), calc(var(--hint-bottom, 0px) + var(--sp-sm))); }
+}
+
+/* On a revisit the return bar wraps to three rows on a phone and sat on the
+   robot icons; they step above its measured height. */
+@media (max-width: 760px) {
+  body.ns-up .robot-icons { bottom: calc(var(--ns-h, 0px) + 16px + env(safe-area-inset-bottom, 0px)); }
+}

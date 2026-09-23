@@ -142,7 +142,7 @@ const Chapter4 = (() => {
 
   function showRobots(v)   { document.getElementById('robotIcons').classList.toggle('hidden', !v); }
   function showBradfish(v) { document.getElementById('bradfishIcon').classList.toggle('hidden', !v); }
-  function setProgress(pct){ const el = document.getElementById('reactProgress'); if (el) el.textContent = `REAKTIVIERUNG: ${pct}%`; }
+  function setProgress(pct){ const el = document.getElementById('reactProgress'); if (el) el.textContent = `REAKTIVIERUNG: ${pct} %`; }
   function playSound(src)  { try { GameEngine.audio.sfx(src); } catch(_) {} }
   function tone(o)         { try { GameEngine.audio.tone(o); } catch(_) {} }
   function say(lines, after) { GameEngine.dialogue.load(lines, after); }

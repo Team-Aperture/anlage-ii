@@ -86,8 +86,21 @@ const Chapter1 = (() => {
   function guarded(fn) {
     return (...args) => {
       if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch(_) {} return; }
+      // a story choice is a question the room waits for; an optional talk
+      // menu simply closes when the player turns to the room instead
+      if (choicesOpen()) { if (!choicesDismissable()) return; hideChoices(); }
       return fn(...args);
     };
+  }
+
+  /** True while a choice menu is up (including its short fade-out). */
+  function choicesOpen() {
+    const o = document.getElementById('choiceOverlay');
+    return !!(o && !o.classList.contains('hidden'));
+  }
+  /** True when the open menu is an optional conversation, not a story beat. */
+  function choicesDismissable() {
+    return document.getElementById('choiceOverlay')?.dataset.kind === 'talk';
   }
 
   function addHotspot(cfg) {
@@ -585,10 +598,17 @@ const Chapter1 = (() => {
 
   function setProgress(pct) {
     const el = document.getElementById('reactProgress');
-    if (el) el.textContent = `REAKTIVIERUNG: ${pct}%`;
+    if (el) el.textContent = `REAKTIVIERUNG: ${pct} %`;
   }
 
-  function say(lines, after) { GameEngine.dialogue.load(lines, after); }
+  function say(lines, after) {
+    // A menu still open when a scripted line arrives would outlive it, and a
+    // pick from it would then replace that line's continuation — this is how
+    // a talk menu opened in the 600 ms before the *KLONK* beat could strand
+    // the player in a hall with nothing to click. Close it first.
+    if (choicesOpen()) hideChoices();
+    GameEngine.dialogue.load(lines, after);
+  }
 
   /** Count an examine and return how many times this thing has been looked at. */
   function bump(key) {
@@ -618,6 +638,7 @@ const Chapter1 = (() => {
 
     prompt.textContent = cfg.prompt || 'DEINE REAKTION:';
     hint.textContent   = cfg.hint   || '';
+    overlay.dataset.kind = cfg.dismissable ? 'talk' : 'story';
     btns.innerHTML     = '';
 
     cfg.choices.forEach(c => {
@@ -625,21 +646,68 @@ const Chapter1 = (() => {
       btn.className   = 'choice-btn' + (c.seen ? ' seen' : '');
       btn.textContent = c.label;
       btn.addEventListener('click', () => {
+        // the same guard as every hotspot — a pick over a running line would
+        // replace that line's continuation
+        if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch(_) {} return; }
+        if (btn.dataset.used) return;
+        btn.dataset.used = '1';
         c.seen = true;
         hideChoices();
         say(c.lines, () => { if (cfg.onPick) cfg.onPick(c.key); });
-      }, { once: true });
+      });
       btns.appendChild(btn);
     });
 
+    clearTimeout(choiceHideTimer);   // a menu re-opened mid-fade must not vanish
     overlay.classList.remove('hidden');
-    requestAnimationFrame(() => overlay.classList.add('visible'));
+    requestAnimationFrame(() => {
+      overlay.classList.add('visible');
+      // focus the panel, not its first button: Tab reaches the options next,
+      // and one Space too many (the strip's own key) picks nothing
+      overlay.querySelector('.choice-panel')?.focus();
+    });
   }
 
+  let choiceHideTimer = null;
   function hideChoices() {
     const overlay = document.getElementById('choiceOverlay');
     overlay.classList.remove('visible');
-    setTimeout(() => overlay.classList.add('hidden'), 410);
+    clearTimeout(choiceHideTimer);
+    choiceHideTimer = setTimeout(() => overlay.classList.add('hidden'), 410);
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // RESUME
+  // One checkpoint: the hall with power. A reload before it replays the
+  // encounter — that IS the chapter; a reload after it must not cost the
+  // player Act 1, the meeting, the reaction and the first repair again.
+  // ═══════════════════════════════════════════════════════════════
+  function saveCheckpoint() {
+    try { GameEngine.state.chapter('ch1', { p1Solved: true, talkSeen: S.talkSeen, clicks: S.clicks }); } catch (_) {}
+  }
+  function clearCheckpoint() {
+    try { GameEngine.state.chapter('ch1', null); } catch (_) {}
+  }
+  function restoreCheckpoint() {
+    let d = null;
+    try { d = GameEngine.state.chapter('ch1'); } catch (_) {}
+    if (!d || typeof d !== 'object' || !d.p1Solved) return false;
+    S.metRobots = S.klonkDone = S.corridorOpen = S.p1Solved = S.sectorAwake = true;
+    S.talkSeen = (d.talkSeen && typeof d.talkSeen === 'object') ? d.talkSeen : {};
+    S.clicks   = (d.clicks   && typeof d.clicks   === 'object') ? d.clicks   : {};
+    return true;
+  }
+  function resumeHall() {
+    setScene('room-a');
+    setProgress(5);
+    showRobots(true);
+    try { GameEngine.music.play('ch1_ambient'); } catch (_) {}
+    loadHallHotspots();
+    say([
+      { speaker:'SYSTEM', text:'WARTUNGSHALLE. GRUNDVERSORGUNG STEHT. TERMINAL 01 AKTIV.' },
+      { speaker:'R-3MI',  text:'„Da bist du ja wieder. Das Tor wartet. Es hat keine Eile."' },
+      { speaker:'V-TGM',  text:'"It never does."', subtitle:'Das hat es nie.' },
+    ]);
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -648,14 +716,15 @@ const Chapter1 = (() => {
   function showTitleCard() {
     const card = document.getElementById('titleCard');
     const revisit = GameEngine.progress.isRevisit('ch1');
+    const resume  = !revisit && restoreCheckpoint();
     card.classList.remove('fading');
     setTimeout(() => {
       card.classList.add('fading');
       setTimeout(() => {
         card.style.display = 'none';
-        if (revisit) nachsuche(); else act1_hallEmpty();
+        if (revisit) nachsuche(); else if (resume) resumeHall(); else act1_hallEmpty();
       }, 700);
-    }, revisit ? 900 : 2800);
+    }, (revisit || resume) ? 900 : 2800);
   }
 
   // Coming back to a sector that has power again. First contact happened once
@@ -808,6 +877,9 @@ const Chapter1 = (() => {
   const EVIDENCE = ['log', 'repair', 'tool'];
 
   function examineAct1(key) {
+    // the beat is about to land (klonkDone latched, corridor not yet open):
+    // lines started now would be cut off by *KLONK.* — just wait it out
+    if (S.klonkDone && !S.corridorOpen) return;
     const n = bump('a1_' + key);
     S.act1Seen[key] = n;
 
@@ -847,7 +919,7 @@ const Chapter1 = (() => {
       openCorridor();
 
       say([
-        { speaker:'SYSTEM', text:'*KLONK.*' },
+        { speaker:'SYSTEM', text:'*KLONK*' },
         { speaker:'SYSTEM', text:'Metallisches Klackern aus dem Nebenraum. Kurz. Dann nichts mehr.' },
         { speaker:'SYSTEM', text:'Es klang nicht, als wäre etwas heruntergefallen. Es klang, als hätte etwas aufgehört, sich zu bewegen.' },
       ]);
@@ -901,7 +973,7 @@ const Chapter1 = (() => {
         { speaker:'R-3MI', text:'„R-3MI!"' },
         { speaker:'V-TGM', text:'"V-TGM."', subtitle:'V-TGM.' },
         { speaker:'R-3MI', text:'„Siehst du? Sehr effiziente Vorstellung."' },
-        { speaker:'V-TGM', text:'"You screamed through most of it."', subtitle:'Du hast durch den größten Teil davon geschrien.' },
+        { speaker:'V-TGM', text:'"You screamed through most of it."', subtitle:'Du hast die meiste Zeit davon geschrien.' },
       ],
     },
     {
@@ -914,7 +986,7 @@ const Chapter1 = (() => {
       ],
     },
     {
-      key:'hiii', label:'[ ...Hiii? ]',
+      key:'hiii', label:'[ …Hiii? ]',
       lines:[
         { speaker:'R-3MI', text:'„Hiii! :D"' },
         { speaker:'V-TGM', text:'"Oh no. There are two of you now."', subtitle:'Oh nein. Jetzt gibt es zwei von der Sorte.' },
@@ -992,7 +1064,7 @@ const Chapter1 = (() => {
         lines:[
           { speaker:'V-TGM', text:'"I watch. I keep track of what changes."', subtitle:'Ich beobachte. Ich merke mir, was sich verändert.' },
           { speaker:'R-3MI', text:'„Das klingt langweiliger, als es ist."' },
-          { speaker:'V-TGM', text:'"It is exactly as boring as it sounds."', subtitle:'Es ist genau so langweilig, wie es klingt.' },
+          { speaker:'V-TGM', text:'"It is exactly as boring as it sounds."', subtitle:'Es ist genauso langweilig, wie es klingt.' },
         ] },
       { key:'him', label:'[ Ist er immer so? ]',
         lines:[
@@ -1008,6 +1080,8 @@ const Chapter1 = (() => {
     // Same reason as the scene hotspots: talking over a running dialogue
     // would discard the continuation it is holding (see `guarded`).
     if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch(_) {} return; }
+    // a story choice is open (keyboard can still reach the icons): it stays
+    if (choicesOpen() && !choicesDismissable()) return;
     const topics = TALK[who] || [];
     const choices = topics.map(t => {
       const seen = !!S.talkSeen[who + ':' + t.key];
@@ -1027,6 +1101,7 @@ const Chapter1 = (() => {
     askOnce({
       prompt: who === 'r3mi' ? 'R-3MI ANSPRECHEN:' : 'V-TGM ANSPRECHEN:',
       hint:   'OPTIONAL.',
+      dismissable: true,
       choices,
       onPick: (key) => {
         if (key === '__leave') return;
@@ -1054,8 +1129,7 @@ const Chapter1 = (() => {
 
   /** The puzzle arrives as a maintenance problem, not as "PUZZLE ONE". */
   function act3_r3miBreaksIt() {
-    // Scenery only for now — the room shouldn't accept clicks during the
-    // scripted beat, or a stray tap would talk over it.
+    // Scenery only until the beat lands — nothing to click over the pause.
     loadHallHotspots(false);
 
     setTimeout(() => {
@@ -1063,9 +1137,15 @@ const Chapter1 = (() => {
       tone({ freq: 140, type:'square', dur: 0.12, vol: 0.13 });
       try { GameEngine.fx.shake('#sceneHotspots'); } catch(_) {}
 
+      // The room becomes clickable WITH the beat, not after it: every hotspot
+      // is guarded (a tap meanwhile only advances the lines), and the terminal
+      // the lines point at can open the repair itself — so the way into the
+      // first repair never rests on this one continuation surviving.
+      loadHallHotspots();
+
       say([
         { speaker:'SYSTEM', text:'*KLONK*' },
-        { speaker:'SYSTEM', text:'*SPARK*' },
+        { speaker:'SYSTEM', text:'*ZZZT*' },
         { speaker:'V-TGM', text:'"You made it worse."', subtitle:'Du hast es schlimmer gemacht.' },
         { speaker:'R-3MI', text:'„Ich habe den Fehlerbereich präzisiert."' },
         { speaker:'V-TGM', text:'"You broke another pipe."', subtitle:'Du hast noch ein Rohr kaputt gemacht.' },
@@ -1120,7 +1200,7 @@ const Chapter1 = (() => {
     terminal: {
       1: [
         { speaker:'SYSTEM', text:'Der Bildschirm ist schwarz, aber nicht leblos. Eine rote LED blinkt unter dem Rahmen.' },
-        { speaker:'V-TGM',  text:'"It cannot wake without routed power."', subtitle:'Es kann ohne geleitete Energie nicht starten.' },
+        { speaker:'V-TGM',  text:'"It cannot wake without routed power."', subtitle:'Ohne durchgeschaltete Leitung kann es nicht starten.' },
       ],
       2: [
         { speaker:'SYSTEM', text:'Das Terminal läuft jetzt. Es sieht selbstzufrieden aus, soweit ein Terminal das kann.' },
@@ -1154,7 +1234,7 @@ const Chapter1 = (() => {
         { speaker:'R-3MI',  text:'„Sie ist sehr gut darin, traurige Dinge kurz zu sagen."' },
       ],
       2: [
-        { speaker:'SYSTEM', text:'Die Tür bleibt geschlossen.' },
+        { speaker:'SYSTEM', text:'Das Tor bleibt geschlossen.' },
         { speaker:'R-3MI',  text:'„Sie ignoriert uns."' },
       ],
     },
@@ -1164,7 +1244,7 @@ const Chapter1 = (() => {
         { speaker:'R-3MI',  text:'„Warum klickst du überhaupt DA drauf?!"' },
       ],
       2: [
-        { speaker:'V-TGM',  text:'"Let them. It is the most harmless thing in this room."', subtitle:'Lass sie. Es ist das Harmloseste in diesem Raum.' },
+        { speaker:'V-TGM',  text:'"Let them. It is the most harmless thing in this room."', subtitle:'Lass nur. Es ist das Harmloseste in diesem Raum.' },
         { speaker:'R-3MI',  text:'„Das stimmt sogar. Beunruhigenderweise."' },
       ],
     },
@@ -1172,6 +1252,13 @@ const Chapter1 = (() => {
 
   function clickHall(key) {
     const n = bump('hall_' + key);
+
+    // The repair itself. The scripted beat normally opens it; the object the
+    // lines say needs power always can.
+    if (key === 'terminal' && !S.p1Solved && S.metRobots) {
+      say(HALL_LINES.terminal[1], () => openPuzzle1());
+      return;
+    }
 
     // "Powered" variants once the sector has electricity again.
     if (key === 'terminal' && S.p1Solved) {
@@ -1181,7 +1268,9 @@ const Chapter1 = (() => {
     }
     if (key === 'gate' && S.p1Solved) {
       say([
-        { speaker:'SYSTEM', text:'Das innere Tor steht jetzt einen Spalt offen. Dahinter wird die Anlage lauter.' },
+        { speaker:'SYSTEM', text: S.revisit
+            ? 'Das innere Tor steht halb offen. Von drinnen dringt ein tiefes Brummen.'
+            : 'Das innere Tor steht jetzt einen Spalt offen. Durch den Spalt dringt ein tiefes Brummen.' },
         { speaker:'R-3MI',  text:'„Nach dir. Ich war schon dreimal drin."' },
       ], () => act3_toNode());
       return;
@@ -1273,9 +1362,13 @@ const Chapter1 = (() => {
     for (let r = 0; r < grid.length; r++) {
       for (let c = 0; c < grid[r].length; c++) {
         const cell = grid[r][c];
-        const tile = document.createElement('div');
+        // a button, so the repair works by keyboard and screen reader too;
+        // a fixed piece is disabled and stays out of the tab order
+        const tile = document.createElement('button');
+        tile.type = 'button';
         tile.className = 'pipe-tile';
-        if (cell.fixed) tile.classList.add('fixed');
+        tile.setAttribute('aria-label', `Rohrstück Reihe ${r + 1}, Spalte ${c + 1}` + (cell.fixed ? ' (fest)' : ' drehen'));
+        if (cell.fixed) { tile.classList.add('fixed'); tile.disabled = true; }
 
         decorate(tile, r, c);
 
@@ -1351,8 +1444,8 @@ const Chapter1 = (() => {
     if (S.p1Solved) return;
     p1Grid[r][c].rot = (p1Grid[r][c].rot + 1) % 4;
     S.rotations.p1++;
-    spinTile(document.getElementById('puzzle1Grid'), r * 4 + c);
     renderP1();
+    spinTile(document.getElementById('puzzle1Grid'), r * 4 + c);   // after the re-render, or it flags a discarded tile
     checkP1();
   }
 
@@ -1380,7 +1473,7 @@ const Chapter1 = (() => {
     } else if (n === 14 && !S.react.p1.stuck) {
       S.react.p1.stuck = true;
       say([
-        { speaker:'V-TGM', text:'"Ignore him. Look at where the pressure actually has to go."', subtitle:'Ignorier ihn. Schau, wo der Druck tatsächlich hin muss.' },
+        { speaker:'V-TGM', text:'"Ignore him. Look at where the pressure actually has to go."', subtitle:'Ignorier ihn. Schau, wo der Druck tatsächlich hinmuss.' },
       ]);
     }
   }
@@ -1394,6 +1487,7 @@ const Chapter1 = (() => {
     checkP1();
     document.getElementById('puzzle1Modal').classList.remove('hidden');
     document.getElementById('hintBar').classList.remove('hidden');
+    setTimeout(() => document.querySelector('#puzzle1Modal .puzzle-card')?.focus(), 60);
   }
 
   function resetPuzzle1() {
@@ -1409,13 +1503,18 @@ const Chapter1 = (() => {
     try { GameEngine.fx.flash('rgba(46,207,98,0.22)'); } catch(_) {}
     setProgress(5);
     S.sectorAwake = true;
+    // The lit hall is progression, so it is built before the lines play (a
+    // tap on it meanwhile only advances them) — never inside their callback.
+    // §15 — let the room breathe. The player leaves when they want to.
+    loadHallHotspots();
+    saveCheckpoint();
 
     const intro = fast
       ? [
           { speaker:'R-3MI', text:'„…okay."' },
-          { speaker:'SYSTEM',text:'Kurze Pause.' },
+          { speaker:'SYSTEM',text:'Eine kurze Pause.' },
           { speaker:'R-3MI', text:'„Ich wollte das genauso machen."' },
-          { speaker:'V-TGM', text:'"No you didn\'t."', subtitle:'Nein, wolltest du nicht.' },
+          { speaker:'V-TGM', text:'"No, you didn\'t."', subtitle:'Nein, wolltest du nicht.' },
           { speaker:'R-3MI', text:'„Ich hatte dafür eine ganze Erklärung vorbereitet."' },
         ]
       : [
@@ -1433,10 +1532,7 @@ const Chapter1 = (() => {
       { speaker:'V-TGM',  text:'"It is also the smallest number that counts as a group."', subtitle:'Es ist auch die kleinste Zahl, die als Gruppe zählt.' },
       { speaker:'SYSTEM', text:'ZUGANG ZUM WARTUNGSKNOTEN FREIGEGEBEN.' },
       { speaker:'SYSTEM', text:'Das innere Tor entriegelt sich. Es hat keine Eile.' },
-    ], () => {
-      // §15 — let the room breathe. The player leaves when they want to.
-      loadHallHotspots();
-    });
+    ]);
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -1445,9 +1541,15 @@ const Chapter1 = (() => {
   function act3_toNode() {
     setScene('corridor-ab');
     clearHotspots();
+    // The way on is there before the lines: a tap on it meanwhile advances
+    // them, and should their continuation ever be lost it still leads on.
+    addHotspot({ prop:'c1_corridor', x:43, y:22, w:14, h:32,
+      label:'WARTUNGSKNOTEN', aria:'Weiter zum Wartungsknoten', fn:() => scene_node() });
 
     say([
-      { speaker:'SYSTEM', text:'Das innere Tor öffnet sich nur halb. R-3MI schlüpft sofort darunter hindurch.' },
+      { speaker:'SYSTEM', text: S.revisit
+          ? 'Das innere Tor steht halb offen. R-3MI schlüpft sofort darunter hindurch.'
+          : 'Das innere Tor öffnet sich nur halb. R-3MI schlüpft sofort darunter hindurch.' },
       { speaker:'V-TGM', text:'"After you."', subtitle:'Nach dir.' },
       { speaker:'R-3MI', text:'„Nicht nach mir, ich bin schon hier!"' },
       { speaker:'V-TGM', text:'"Obviously."', subtitle:'Offensichtlich.' },
@@ -1457,7 +1559,9 @@ const Chapter1 = (() => {
 
   function scene_node() {
     setScene('room-b');
-    clearHotspots();
+    // the room before its lines — §16 still holds, the units hang back and
+    // a tap meanwhile only reads on
+    loadNodeHotspots();
 
     say([
       { speaker:'SYSTEM', text:'Der Wartungsknoten liegt tiefer in der Anlage. Weniger Grün. Weniger Natur. Dafür mehr Maschine.' },
@@ -1467,7 +1571,7 @@ const Chapter1 = (() => {
       // §16 — they hang back this time. The player gets to look first.
       { speaker:'R-3MI',  text:'„Wir sagen diesmal nichts. Schau dich in Ruhe um."' },
       { speaker:'V-TGM',  text:'"He will last about forty seconds."', subtitle:'Er hält ungefähr vierzig Sekunden durch.' },
-    ], () => loadNodeHotspots());
+    ]);
   }
 
   function loadNodeHotspots() {
@@ -1491,7 +1595,7 @@ const Chapter1 = (() => {
     addHotspot({ prop:'c1_conduit_green', cls:'prop-green', x:83, y:24, w:9, h:46,
       label:'GRÜNE LEITUNG', aria:'Grüne Leitung untersuchen', fn:() => clickNode('green') });
     addHotspot({ prop:'c1_sectordoor',    x:62, y:12, w:13, h:32,
-      label:'SEKTOR-02-TÜR', aria:'Tür zu Sektor 02 untersuchen', fn:() => clickNode('door') });
+      label:'SEKTOR-02-TÜR', aria: S.revisit ? 'Sektor 02 betreten' : 'Tür zu Sektor 02 untersuchen', fn:() => clickNode('door') });
     addHotspot({ prop:'c1_vent',    x:82, y:74, w:12, h:12,
       label:'LÜFTUNGSSCHACHT', aria:'Lüftungsschacht untersuchen', fn:() => clickNode('vent') });
     addHotspot({ prop:'c1_poster',  x:24, y:38, w:12, h:22,
@@ -1558,7 +1662,7 @@ const Chapter1 = (() => {
   function clickNode(key) {
     const n = bump('node_' + key);
 
-    if (key === 'console' && S.revisit) {
+    if (key === 'console' && (S.revisit || S.p2Solved)) {
       say([
         { speaker:'SYSTEM', text:'HILFSPROTOKOLL KALIBRIERT. BEIDE SIGNALWEGE STABIL.' },
         { speaker:'V-TGM',  text:'"Still separate."', subtitle:'Immer noch getrennt.' },
@@ -1571,12 +1675,14 @@ const Chapter1 = (() => {
       return;
     }
     if (key === 'door' && S.revisit) {
+      // an open door leads somewhere — like every other sector's revisit door
+      const href = (() => { try { return GameEngine.progress.href('ch2'); } catch (_) { return '../chapter2/chapter2.html'; } })();
       say([
         { speaker:'SYSTEM', text:'SEKTOR 02 — WARTUNGSGARTEN. HILFSPROTOKOLL KALIBRIERT. DURCHGANG FREI.' },
         { speaker:'R-3MI',  text:'„Die steht jetzt einfach offen. Ich finde das immer noch großartig."' },
         { speaker:'V-TGM',  text:'"It is a door."', subtitle:'Es ist eine Tür.' },
         { speaker:'R-3MI',  text:'„Es ist eine ÜBERZEUGTE Tür."' },
-      ]);
+      ], () => { try { GameEngine.fx.leave(href); } catch (_) { location.href = href; } });
       return;
     }
     if (key === 'door' && S.p2Solved) { finishChapter(); return; }
@@ -1644,8 +1750,8 @@ const Chapter1 = (() => {
     if (S.p2Solved) return;
     p2Grid[r][c].rot = (p2Grid[r][c].rot + 1) % 4;
     S.rotations.p2++;
-    spinTile(document.getElementById('puzzle2Grid'), r * 4 + c);
     renderP2();
+    spinTile(document.getElementById('puzzle2Grid'), r * 4 + c);
     checkP2();
   }
 
@@ -1699,6 +1805,7 @@ const Chapter1 = (() => {
     checkP2();
     document.getElementById('puzzle2Modal').classList.remove('hidden');
     document.getElementById('hintBar').classList.remove('hidden');
+    setTimeout(() => document.querySelector('#puzzle2Modal .puzzle-card')?.focus(), 60);
   }
 
   function resetPuzzle2() {
@@ -1717,13 +1824,14 @@ const Chapter1 = (() => {
     // Persist before any navigation is possible.
     GameEngine.state.markChapterComplete('ch1');
     GameEngine.achievements.unlock('ch1_complete');
+    clearCheckpoint();
 
     say([
       { speaker:'SYSTEM', text:'HILFSPROTOKOLL KALIBRIERT. BETREUUNGSEINHEITEN AKTIV.' },
       { speaker:'SYSTEM', text:'WARTUNGSSEKTOR REAKTIVIERT.' },
       { speaker:'SYSTEM', text:'KALIBRIERUNGSDATEN GESPEICHERT.' },
       { speaker:'R-3MI',  text:'„Ha!"' },
-      { speaker:'V-TGM',  text:'"You did literally none of that."', subtitle:'Du hast daran buchstäblich nichts gemacht.' },
+      { speaker:'V-TGM',  text:'"You did literally none of that."', subtitle:'Du hast davon buchstäblich nichts gemacht.' },
       { speaker:'R-3MI',  text:'„Moralische Unterstützung."' },
       { speaker:'SYSTEM', text:'REAKTIVIERUNG: 12 %' },
       { speaker:'R-3MI',  text:'„Zwölf Prozent! Das ist mehr als zehn."' },
@@ -1738,7 +1846,11 @@ const Chapter1 = (() => {
   // ═══════════════════════════════════════════════════════════════
   function act3_theyComeAlong() {
     setScene('room-b');
-    clearHotspots();
+    // The room stays as it is while the ending plays: the SEKTOR-02-TÜR is
+    // already a valid exit (clickNode('door') with p2Solved finishes the
+    // chapter), so the player is never in a room with nothing to click. Taps
+    // during the lines advance them; the labelled door replaces the room
+    // after the answer, as before.
     playSound('ch1_gate_unlock.mp3');
 
     say([
@@ -1755,12 +1867,12 @@ const Chapter1 = (() => {
         hint:   'WÄHLE EINE.',
         choices: [
           { key:'ofcourse', label:'[ Natürlich. ]', lines:[
-            { speaker:'R-3MI', text:'„Natürlich. Er sagt das, als wäre es offensichtlich."' },
+            { speaker:'R-3MI', text:'„Natürlich. Als wäre das offensichtlich."' },
           ] },
           { key:'know', label:'[ Ich will wissen, was hier passiert ist. ]', lines:[
             { speaker:'V-TGM', text:'"That is a better reason than most."', subtitle:'Das ist ein besserer Grund als die meisten.' },
           ] },
-          { key:'peek', label:'[ Eigentlich wollte ich nur kurz reinschauen... ]', lines:[
+          { key:'peek', label:'[ Eigentlich wollte ich nur kurz reinschauen… ]', lines:[
             { speaker:'R-3MI', text:'„Das sagen sie alle. Und dann stehen sie zwölf Prozent später immer noch hier."' },
           ] },
         ],
@@ -1768,7 +1880,7 @@ const Chapter1 = (() => {
           say([
             { speaker:'V-TGM', text:'"Then we\'re coming with you."', subtitle:'Dann kommen wir mit.' },
             { speaker:'R-3MI', text:'„Ja."' },
-            { speaker:'SYSTEM',text:'Kurze Pause.' },
+            { speaker:'SYSTEM',text:'Eine kurze Pause.' },
             { speaker:'R-3MI', text:'„Du weißt nämlich offensichtlich, wie man Türen öffnet."' },
             { speaker:'V-TGM', text:'"And we very obviously do not."', subtitle:'Und wir offensichtlich nicht.' },
           ], () => {
@@ -1833,6 +1945,9 @@ const Chapter1 = (() => {
   function useHint(who) {
     const set = HINTS[S.hints.active];
     if (!set) return;
+    // a second tap while the first hint is still typing used to burn a second
+    // hint — it now advances the line, like every other tap
+    if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch(_) {} return; }
 
     if (S.hints.step >= HINT_MAX) {
       say([ who === 'r3mi'
