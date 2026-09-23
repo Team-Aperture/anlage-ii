@@ -408,8 +408,11 @@ const GameEngine = (() => {
 
     function pump() {
       if (timer) return;
+      // No immediate step: a chapter unlocks an arrival achievement and starts
+      // its opening line in the same tick, and showing the card right now
+      // would land it on top of that line. By the first tick the strip is
+      // visible and busy() holds the card until the line is done.
       timer = setInterval(step, 350);
-      step();
     }
 
     function step() {
