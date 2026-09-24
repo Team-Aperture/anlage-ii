@@ -65,5 +65,27 @@ const overlaps = (a, c) => !!(a && c) && !(a.r <= c.l || c.r <= a.l || a.b <= c.
     await ctx.close();
   }
 
+  console.log('\n[F] puzzle windows on a narrow phone: on screen, below the hint bar, no clipped labels');
+  { const sv = H.save({ chaptersCompleted: H.done(3) }); sv.chapterState = { ch3: { stage: 3, metLux: true, seen: {}, talkSeen: {}, react: {} } };
+    const { ctx, p } = await H.open(b, '/chapter3/chapter3.html', sv, { viewport: { width: 320, height: 740 }, mobile: true });
+    await p.waitForTimeout(2500); await H.drain(p); await p.waitForTimeout(300);
+    const r = await p.evaluate(() => {
+      const card = document.querySelector('#belModal .puzzle-card').getBoundingClientRect(), bar = document.getElementById('hintBar').getBoundingClientRect();
+      const off = [...document.querySelectorAll('#belModal .control-btn')].filter(b => b.getBoundingClientRect().right > innerWidth + 1).length;
+      const clipped = [...document.querySelectorAll('#belModal .puzzle-actions .ka-btn')].filter(b => b.scrollWidth > b.clientWidth + 1).map(b => b.textContent.trim());
+      return { top: card.top, bar: bar.bottom, off, clipped };
+    });
+    check(r.top >= r.bar - 1, `  Chapter 3's array starts below the hint bar (${r.top | 0} ≥ ${r.bar | 0})`);
+    check(r.off === 0, `  all six colour steppers are on screen (${r.off} off)`);
+    check(r.clipped.length === 0, `  no clipped button labels (${r.clipped.join(', ') || 'none'})`);
+    await ctx.close(); }
+  { const sv = H.save({ chaptersCompleted: H.done(5), ch5_progress: { beat: '14-I', branch: 'haupt', metTflon: true, relay: true, crossing: true, marker: true, sigFound: false, restSeen: true, webGags: 0, gags: {}, log: [] } });
+    const { ctx, p } = await H.open(b, '/chapter5/chapter5.html', sv, { viewport: { width: 320, height: 740 }, mobile: true });
+    await p.waitForTimeout(3000); await H.settled(p); for (let i = 0; i < 4; i++) { await H.drain(p); await p.waitForTimeout(300); }
+    for (let i = 0; i < 6 && !(await p.locator('#stModal:not(.hidden)').count()); i++) { await p.locator('#sceneHotspots [aria-label="Streckenterminal bedienen"]').first().click({ force: true }); await p.waitForTimeout(300); await H.drain(p); }
+    const c = await p.evaluate(() => [...document.querySelectorAll('#stModal .puzzle-actions .ka-btn')].filter(b => b.scrollWidth > b.clientWidth + 1).map(b => b.textContent.trim()));
+    check(await p.locator('#stModal:not(.hidden)').count() === 1 && c.length === 0, `  Chapter 5's terminal: no clipped labels at 320px (${c.join(', ') || 'none'})`);
+    await ctx.close(); }
+
   await b.close(); finish();
 })();

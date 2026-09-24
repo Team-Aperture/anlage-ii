@@ -271,7 +271,7 @@ const Chapter4 = (() => {
       overlay.classList.add('visible');
       // the panel, not its first button: Tab reaches the options next and
       // one Space too many (the strip's own key) picks nothing
-      overlay.querySelector('.choice-panel')?.focus();
+      overlay.querySelector('.choice-panel')?.focus({ preventScroll: true });
     });
   }
   let choiceHideTimer = null;

@@ -169,6 +169,10 @@ const GameEngine = (() => {
       if (d.flags.truth_revealed && !chamberEarned) { delete d.flags.truth_revealed; drop('truth_revealed'); }
       if (d.flags.zieldaten && !done.has('ch8'))    { delete d.flags.zieldaten;      drop('zieldaten'); }
 
+      // ── retired achievements leave quietly ('coordinates' was folded into
+      //    ch8_complete, which unlocks at the same moment) ──
+      d.achievementsUnlocked = d.achievementsUnlocked.filter(a => a !== 'coordinates');
+
       // ── achievements need the thing they are awarded for ──
       d.achievementsUnlocked = d.achievementsUnlocked.filter(a => {
         const m = /^ch(\d)_complete$/.exec(a);
@@ -698,7 +702,6 @@ const GameEngine = (() => {
       { id: 'said_hiii',        icon: '☻', title: 'Hiii.',                desc: 'Am Ende doch noch einmal gegrüßt.' },
       { id: 'will_return',      icon: '↺', title: 'Ich komme zurück',     desc: 'Ein Versprechen, das niemand widerrufen hat.' },
       { id: 'bonus_found',      icon: '?', title: '???',                  desc: '…' },
-      { id: 'coordinates',      icon: '✦', title: 'Zieldaten erhalten',   desc: 'Die Koordinaten sind bereit.' },
     ];
 
     function isUnlocked(id) {
@@ -2138,7 +2141,7 @@ const GameEngine = (() => {
         overlay.classList.add('visible');
         // the panel, not its first button: Tab reaches the options next and
         // one Space too many (the strip's own key) picks nothing
-        overlay.querySelector('.choice-panel')?.focus();
+        overlay.querySelector('.choice-panel')?.focus({ preventScroll: true });
       });
     }
     let _choiceHideTimer = null;

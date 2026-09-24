@@ -1311,12 +1311,24 @@ body:has(.hint-bar:not(.hidden)) .puzzle-modal {
   /* three unit buttons on one row: the bar is two rows, not three */
   .hint-bar { gap: 6px; }
   .hint-bar .ka-btn.small { padding: 5px 7px; letter-spacing: .08em; }
-  /* …and a card's scrolling body is capped by the room actually left under
-     the bar, so the card's own buttons stay on screen */
-  body:has(.hint-bar:not(.hidden)) :is(.mod-body, .st-body, .bb-body, .vp-body, .vx-body) {
-    max-height: max(180px, calc(100vh - var(--hint-bottom, 0px) - 300px));
-    max-height: max(180px, calc(100dvh - var(--hint-bottom, 0px) - 300px));
+
+  /* A puzzle card taller than a phone scrolls with the window, like a page,
+     and its buttons stay pinned to the bottom edge — the primary action is
+     never below the fold (the pattern Chapter 8's board already used). */
+  .puzzle-modal .puzzle-card > .puzzle-actions {
+    position: sticky; bottom: 0; z-index: 3;
+    flex-wrap: wrap; justify-content: center;
+    margin-left: calc(-1 * var(--sp-md)); margin-right: calc(-1 * var(--sp-md));
+    padding: 8px var(--sp-md) 10px; background: var(--bg-panel);
+    box-shadow: 0 -10px 14px -8px rgba(0,0,0,0.95);
   }
+  .puzzle-modal .puzzle-actions .ka-btn { white-space: nowrap; }   /* never a lone "]" on its own line */
+}
+@media (max-width: 420px) {
+  /* 32px of padding on each side of a 328px card left 264px for the puzzle */
+  .puzzle-modal .puzzle-card { padding-left: var(--sp-md); padding-right: var(--sp-md); }
+  /* a primary action's wide tracking clipped "[ TRASSE ZERTIFIZIEREN ]" at 320px */
+  .puzzle-modal .puzzle-actions .ka-btn.primary { padding-left: 12px; padding-right: 12px; letter-spacing: .1em; }
 }
 
 /* On a revisit the return bar wraps to three rows on a phone and sat on the

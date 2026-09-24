@@ -676,7 +676,7 @@ const Chapter1 = (() => {
       overlay.classList.add('visible');
       // focus the panel, not its first button: Tab reaches the options next,
       // and one Space too many (the strip's own key) picks nothing
-      overlay.querySelector('.choice-panel')?.focus();
+      overlay.querySelector('.choice-panel')?.focus({ preventScroll: true });
     });
   }
 
@@ -1541,7 +1541,7 @@ const Chapter1 = (() => {
     checkP1();
     document.getElementById('puzzle1Modal').classList.remove('hidden');
     document.getElementById('hintBar').classList.remove('hidden');
-    setTimeout(() => document.querySelector('#puzzle1Modal .puzzle-card')?.focus(), 60);
+    setTimeout(() => document.querySelector('#puzzle1Modal .puzzle-card')?.focus({ preventScroll: true }), 60);
   }
 
   function resetPuzzle1() {
@@ -1870,7 +1870,7 @@ const Chapter1 = (() => {
     checkP2();
     document.getElementById('puzzle2Modal').classList.remove('hidden');
     document.getElementById('hintBar').classList.remove('hidden');
-    setTimeout(() => document.querySelector('#puzzle2Modal .puzzle-card')?.focus(), 60);
+    setTimeout(() => document.querySelector('#puzzle2Modal .puzzle-card')?.focus({ preventScroll: true }), 60);
   }
 
   function resetPuzzle2() {

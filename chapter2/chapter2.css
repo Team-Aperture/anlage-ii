@@ -325,7 +325,9 @@ button.ka-btn:disabled { opacity:.3; pointer-events:none; }
   position: fixed; inset:0;
   background: rgba(0,0,0,0.88); backdrop-filter:blur(6px);
   z-index:200;
-  display: flex; align-items:center; justify-content:center;
+  /* flex-start + the card's auto margins: centred when it fits, and when it
+     does not, it starts at the top instead of overflowing up under the bar */
+  display: flex; align-items:flex-start; justify-content:center;
   padding: var(--sp-md);
   overflow-y: auto;
 }

@@ -777,7 +777,7 @@ const Chapter0 = (() => {
     resetPuzzle();
     // the card, not the first key: a keyboard player's one extra Space after
     // the ring lines used to enter ⬡ before they had even looked at the modal
-    setTimeout(() => modal.querySelector('.puzzle-card')?.focus(), 60);
+    setTimeout(() => modal.querySelector('.puzzle-card')?.focus({ preventScroll: true }), 60);
   }
 
   function closePuzzle() {

@@ -26,6 +26,12 @@ const hs = async (p, aria) => { await p.locator(`#sceneHotspots [aria-label="${a
     check(!(await saved(p)).achievementsUnlocked.includes('chamber'), '  …and is dropped while the chamber cannot be reached');
     await ctx.close(); }
 
+  { const { ctx, p } = await H.open(b, '/index.html', H.save({ chaptersCompleted: H.ALL, achievementsUnlocked: ['ch8_complete', 'coordinates'] }));
+    await p.waitForTimeout(800);
+    const a = (await saved(p)).achievementsUnlocked;
+    check(!a.includes('coordinates') && a.includes('ch8_complete'), '  the retired "Zieldaten erhalten" is folded into "Rekonstruktion"');
+    await ctx.close(); }
+
   console.log('\n[B] Chapter 6: a reload in the opening still meets ASP-1024; a hint tap over a line spends nothing');
   { const { ctx, p, errs } = await H.open(b, '/chapter6/chapter6.html', H.save({ chaptersCompleted: H.done(6) }));
     await p.waitForTimeout(3600); await H.settled(p); await p.waitForTimeout(300);

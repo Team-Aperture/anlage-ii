@@ -196,7 +196,7 @@ const Chapter2 = (() => {
       overlay.classList.add('visible');
       // the panel, not its first button: Tab reaches the options next and
       // one Space too many (the strip's own key) picks nothing
-      overlay.querySelector('.choice-panel')?.focus();
+      overlay.querySelector('.choice-panel')?.focus({ preventScroll: true });
     });
   }
   let choiceHideTimer = null;
@@ -841,7 +841,7 @@ const Chapter2 = (() => {
     document.getElementById(`puzzle${n}Modal`)?.classList.toggle('hidden', !open);
     document.getElementById('hintBar')?.classList.toggle('hidden', !open);
     try { document.getElementById('sceneWrapper').inert = !!open; } catch (_) {}
-    if (open) setTimeout(() => document.querySelector(`#puzzle${n}Modal .puzzle-card`)?.focus(), 60);
+    if (open) setTimeout(() => document.querySelector(`#puzzle${n}Modal .puzzle-card`)?.focus({ preventScroll: true }), 60);
   }
   const modalOpen = n => !document.getElementById(`puzzle${n}Modal`).classList.contains('hidden');
   /** Back to the garden mid-puzzle: the plaque, the plants and the units are reachable again. */

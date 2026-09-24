@@ -185,7 +185,7 @@ const Chapter3 = (() => {
       overlay.classList.add('visible');
       // the panel, not its first button: Tab reaches the options next and
       // one Space too many (the strip's own key) picks nothing
-      overlay.querySelector('.choice-panel')?.focus();
+      overlay.querySelector('.choice-panel')?.focus({ preventScroll: true });
     });
   }
   let choiceHideTimer = null;
@@ -691,7 +691,7 @@ const Chapter3 = (() => {
     document.getElementById('belModal')?.classList.toggle('hidden', !open);
     document.getElementById('hintBar')?.classList.toggle('hidden', !open);
     try { document.getElementById('sceneWrapper').inert = !!open; } catch (_) {}
-    if (open) setTimeout(() => document.querySelector('#belModal .puzzle-card')?.focus(), 60);
+    if (open) setTimeout(() => document.querySelector('#belModal .puzzle-card')?.focus({ preventScroll: true }), 60);
   }
   /**
    * A stage change or an overexposure whose closing lines lost their

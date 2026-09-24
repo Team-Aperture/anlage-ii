@@ -197,7 +197,7 @@ button.ka-btn:disabled { opacity:.3; pointer-events:none; }
 /* ─── PUZZLE MODAL ────────────────────────────────────────────── */
 .puzzle-modal {
   position: fixed; inset:0; background:rgba(0,0,0,0.88); backdrop-filter:blur(6px);
-  z-index:200; display:flex; align-items:center; justify-content:center; padding:var(--sp-md); overflow-y:auto;
+  z-index:200; display:flex; align-items:flex-start; justify-content:center; padding:var(--sp-md); overflow-y:auto;   /* the card's auto margins centre it safely */
 }
 .puzzle-card { background:var(--bg-panel); border:1px solid var(--bdr-bright); padding:var(--sp-lg); position:relative; max-width:540px; width:100%; margin:auto; }
 .puzzle-card-accent { position:absolute; top:0; left:0; right:0; height:2px; }
@@ -397,7 +397,10 @@ button.ka-btn:disabled { opacity:.3; pointer-events:none; }
 
 /* ─── RESPONSIVE ──────────────────────────────────────────────── */
 @media (max-width: 600px) {
-  .bel-dials { grid-template-columns:repeat(3, 1fr); gap:var(--sp-xs); }
+  /* three steppers side by side ran BLAU off the edge — one row each */
+  .bel-dials { grid-template-columns:1fr; gap:6px; }
+  .bel-dial { flex-direction:row; justify-content:space-between; gap:var(--sp-sm); }
+  .bel-dial > label { min-width:52px; text-align:left; }
   .bel-sw { width:56px; height:56px; }
   .hint-bar { top:38px; flex-wrap:wrap; max-width:calc(100% - 16px); }
   .hint-bar .hint-label { width:100%; }
@@ -427,8 +430,10 @@ button.ka-btn:disabled { opacity:.3; pointer-events:none; }
   /* [ BEOBACHTEN ] is the chapter's main interaction — it must be a
      comfortable thumb target, not a 20px strip. */
   .puzzle-actions { flex-wrap:wrap; gap:var(--sp-xs); }
+  /* two by two: pinned to the bottom edge, four stacked rows covered a
+     quarter of the screen, right where the colour steppers are */
   .puzzle-actions .ka-btn {
-    flex:1 1 auto; min-height:42px; padding:10px 12px;
+    flex:1 1 calc(50% - 4px); min-height:40px; padding:8px 4px; font-size:9px; letter-spacing:.04em;
     display:inline-flex; align-items:center; justify-content:center;
     touch-action:manipulation;
   }

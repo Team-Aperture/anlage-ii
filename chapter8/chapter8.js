@@ -981,7 +981,6 @@ const Chapter8 = (() => {
     try {
       GameEngine.state.setFlag('zieldaten', true);
     } catch (_) {}
-    try { GameEngine.achievements.unlock('coordinates'); } catch (_) {}
     save();
     CH.setScene('archive-full');
     loadRoom();
