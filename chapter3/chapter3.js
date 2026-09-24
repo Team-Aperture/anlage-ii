@@ -45,7 +45,7 @@ const Chapter3 = (() => {
     lit:       false,        // observation network restored
     logsRead:  0,
     sawWestgang: false,      // enables the ending callback
-    hints:     { step: 0, active: null },
+    hints:     { step: 0, active: null, spent: {} },
     react:     {},
 
     // A second walk through the rows: nothing may re-run the ending.
@@ -209,6 +209,7 @@ const Chapter3 = (() => {
         stage: bel ? bel.stage : 0,
         metLux: S.metLux, sigFound: S.sigFound, logsRead: S.logsRead,
         sawWestgang: S.sawWestgang, seen: S.seen, talkSeen: S.talkSeen, react: S.react,
+        hints: S.hints.spent,
       });
     } catch (_) {}
   }
@@ -228,6 +229,7 @@ const Chapter3 = (() => {
     S.seen        = (d.seen && typeof d.seen === 'object') ? d.seen : {};
     S.talkSeen    = (d.talkSeen && typeof d.talkSeen === 'object') ? d.talkSeen : {};
     S.react       = (d.react && typeof d.react === 'object') ? d.react : {};
+    S.hints.spent = readSpent(d.hints);
     const st = d.stage | 0;
     return st >= 1 && st <= 3 ? st : 0;
   }
@@ -723,8 +725,8 @@ const Chapter3 = (() => {
     bel.event        = buildEvent(stage);
     bel.answer       = blankAnswer(stage);
 
-    S.hints.active = 'stage' + stage;
-    S.hints.step   = 0;
+    S.hints.active = 'stage' + stage;   // a new stage is a new ladder; a retry of this one is not
+    S.hints.step   = S.hints.spent[S.hints.active] | 0;
     updateHintBar();
 
     document.getElementById('belStage').textContent =
@@ -1422,6 +1424,17 @@ const Chapter3 = (() => {
     ],
   };
 
+  // A ladder is walked once per chapter run. Leaving a puzzle and coming back,
+  // a retry or a reload never hands spent steps back; a fresh run starts at 0.
+  function readSpent(raw) {
+    const o = {};
+    if (raw && typeof raw === 'object') Object.keys(HINTS).forEach(k => {
+      const n = Math.max(0, Math.min(HINT_MAX, raw[k] | 0));
+      if (n) o[k] = n;
+    });
+    return o;
+  }
+
   function useHint(who) {
     const ladder = HINTS[S.hints.active];
     if (!ladder) return;
@@ -1441,7 +1454,10 @@ const Chapter3 = (() => {
 
     const step = ladder[S.hints.step];
     S.hints.step++;
+    S.hints.spent[S.hints.active] = S.hints.step;
+    saveState();
     updateHintBar();
+    try { GameEngine.dialogue.holdNext(); } catch (_) {}   // the paid-for line is never cut off
     const entry = step[who] || step.vtgm;
     const speaker = who === 'r3mi' ? 'R-3MI' : who === 'vtgm' ? 'V-TGM' : 'L-UX';
     say([{ speaker, text: entry.t, subtitle: entry.s }]);

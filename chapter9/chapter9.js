@@ -31,19 +31,10 @@ const Chapter9 = (() => {
   // the transmission independently names the same place, which is the point —
   // it is the only part of the target that does not come from R-3MI and V-TGM.
   //
-  // The authorisation on file from the first Anlage: the player typed it
-  // themselves to get in here, so the record only reads it back. Stored
-  // shifted so it is not sitting in a second file in the clear.
+  // The authorisation on file from the first Anlage. Part II never asks for
+  // it and never shows it: the record carries the archive's redaction for
+  // everyone. (Returning Part-I players get their moment on the title screen.)
   // ═══════════════════════════════════════════════════════════════
-  const AUTH = ['00690062', '006d006a', '0055005e', '00460045'];
-
-  function unshift(list, j) {
-    const t = list[j] || '';
-    let s = '';
-    for (let p = 0; p < t.length; p += 4) s += String.fromCodePoint(parseInt(t.slice(p, p + 4), 16) ^ (0x51 + j * 11));
-    return s;
-  }
-  function joinTokens(list) { return list.map((_, j) => unshift(list, j)).join(''); }
   // The one set of coordinates, as the player already earned them in Chapter 8.
   function zielData() {
     try {
@@ -194,7 +185,7 @@ const Chapter9 = (() => {
         d.innerHTML = `<span class="co-k sys-text">${k}</span><span class="co-v sys-text">${v}</span>`;
         rows.appendChild(d);
         requestAnimationFrame(() => d.classList.add('visible'));
-        tone({ f: 150 - i * 20, t: 0.06, type: 'sine', g: 0.04 });
+        tone({ freq: 150 - i * 20, dur: 0.06, type: 'sine', vol: 0.04 });
       }, fast ? 200 * i : 1100 * i + 600);
     });
     later(() => {
@@ -337,8 +328,7 @@ const Chapter9 = (() => {
       title:'ABSCHALTVORGANG',
       sub:'ERSTE ANLAGE · ARCHIVKOPIE',
       body: () => {
-        const code = joinTokens(AUTH);
-        const shown = code.replace(/(\d{4})(\d{4})/, '$1 · $2');
+        const shown = '████ · ████';
         return rows([
           ['VORGANG', 'ABSCHALTUNG'],
           ['ANLAGE', 'KA-I'],
@@ -351,7 +341,7 @@ const Chapter9 = (() => {
         ]) + `<p class="rec-note">Randnotiz, mit der Hand: „nicht widerrufen — nie beantragt worden."</p>`;
       },
       lines: [
-        { speaker:'SYSTEM', text:'Eine Akte von dem Tag, an dem die erste Anlage abgeschaltet wurde. Dein Code steht darin. Nicht als Ereignis — als Berechtigung.' },
+        { speaker:'SYSTEM', text:'Eine Akte von dem Tag, an dem die erste Anlage abgeschaltet wurde. Der Abschaltcode steht darin. Nicht als Ereignis — als Berechtigung.' },
         { speaker:'R-3MI',  text:'„Alte Akten. Die heben die hier alles auf. Furchtbar unordentlich, eigentlich."' },
         { speaker:'V-TGM',  text:'"It says the signature is still valid."', subtitle:'Da steht, die Signatur ist weiterhin gültig.' },
         { speaker:'R-3MI',  text:'„Ja. Steht da. Sehr… interessant. Nächste Akte?"' },
@@ -422,7 +412,7 @@ const Chapter9 = (() => {
     el('evSub').textContent   = r.sub;
     el('evBody').innerHTML    = r.body();
     openCard('evModal');
-    tone({ f: 200, t: 0.07, type: 'sine', g: 0.05 });
+    tone({ freq: 200, dur: 0.07, type: 'sine', vol: 0.05 });
     if (first) say(r.lines, () => { if (recordsDone() === 3 && !S.signalDone) nudgeSignal(); });
   }
   function closeRecord() { closeCard('evModal'); }
@@ -609,10 +599,10 @@ const Chapter9 = (() => {
       { speaker:'V-TGM', text:'"The facility remembered you. Your authorisation survived the shutdown."', subtitle:'Die Anlage hat sich an dich erinnert. Deine Berechtigung hat die Abschaltung überlebt.' },
       { speaker:'V-TGM', text:'"Ours did not."', subtitle:'Unsere nicht.' },
       { speaker:'R-3MI', text:'„Also brauchten wir jemanden, den die Anlage noch akzeptiert."' },
-      { speaker:'V-TGM', text:'"The code was never a reactivation code."', subtitle:'Der Code war nie ein Reaktivierungscode.' },
+      { speaker:'V-TGM', text:'"The code only ever shut it down. It could never start it again."', subtitle:'Der Code hat sie nur abgeschaltet. Wieder anfahren konnte er sie nie.' },
       { speaker:'V-TGM', text:'"It was your authorisation."', subtitle:'Er war deine Berechtigung.' },
-      { speaker:'V-TGM', text:'"We did not need your code."', subtitle:'Wir brauchten nicht deinen Code.' },
-      { speaker:'V-TGM', text:'"We needed the person who knew it."', subtitle:'Wir brauchten die Person, die ihn kennt.' },
+      { speaker:'V-TGM', text:'"We did not need the code in the archive."', subtitle:'Wir brauchten nicht den Code im Archiv.' },
+      { speaker:'V-TGM', text:'"We needed the person who used it."', subtitle:'Wir brauchten die Person, die ihn benutzt hat.' },
     ]},
     when: { key:'when', label:'[ Seit wann war das geplant? ]', lines:[
       { speaker:'V-TGM', text:'"Before you returned."', subtitle:'Bevor du zurückgekommen bist.' },
@@ -928,7 +918,7 @@ const Chapter9 = (() => {
   // ═══════════════════════════════════════════════════════════════
   function exitSequence() {
     CH.setScene('vault-open');
-    try { GameEngine.audio.tone({ f: 70, t: 0.5, type: 'sawtooth', g: 0.05 }); } catch (_) {}
+    try { GameEngine.audio.tone({ freq: 70, dur: 0.5, type: 'sawtooth', vol: 0.05 }); } catch (_) {}
     say([
       { speaker:'SYSTEM', text:'Irgendwo hinter der Wand fährt ein schwerer Riegel zurück. Nicht schnell. Nicht dramatisch. Einfach so, als hätte jemand einen Haken gesetzt.' },
       { speaker:'SYSTEM', text:'EXTERNE TESTSIGNATUR: FREIGEGEBEN. AUSGANG: OFFEN.' },
@@ -1084,7 +1074,7 @@ const Chapter9 = (() => {
         if (s.sys) {
           d.className = 'st-sys';
           d.innerHTML = `<span class="st-k sys-text">${s.k}</span><span class="st-v sys-text">${s.v}</span>`;
-          tone({ f: 140, t: 0.05, type: 'sine', g: 0.04 });
+          tone({ freq: 140, dur: 0.05, type: 'sine', vol: 0.04 });
         } else {
           d.className = 'st-line st-' + (s.who === 'R-3MI' ? 'r' : 'v');
           d.innerHTML = `<span class="st-who">${s.who}</span><span class="st-t">${esc(s.t)}</span>`;

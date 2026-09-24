@@ -63,7 +63,7 @@ const Chapter5 = (() => {
     ended:     false,
     seen:      {},          // examine counters for flavour hotspots
     talkSeen:  {},
-    hints:     { active: null, step: 0 },
+    hints:     { active: null, step: 0, spent: {} },
     coach:     0,
 
     // A second walk down the line: the stations are read, not re-solved.
@@ -136,7 +136,7 @@ const Chapter5 = (() => {
         beat: S.beat, branch: S.branch, metTflon: S.metTflon,
         relay: S.relay, crossing: S.crossing, marker: S.marker,
         sigFound: S.sigFound, restSeen: S.restSeen, webGags: S.webGags,
-        gags: S.gags, log: S.log,
+        gags: S.gags, log: S.log, hints: S.hints.spent,
       });
     } catch (_) {}
   }
@@ -164,6 +164,7 @@ const Chapter5 = (() => {
     S.webGags  = +d.webGags || 0;
     S.gags     = (d.gags && typeof d.gags === 'object') ? d.gags : {};
     S.log      = Array.isArray(d.log) ? d.log.filter(e => e && e.code && e.text) : [];
+    S.hints.spent = readSpent(d.hints);
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -746,11 +747,13 @@ const Chapter5 = (() => {
   // ═══════════════════════════════════════════════════════════════
   // 14-G — VERSORGUNG.  Not every red lamp is in your way.
   // ═══════════════════════════════════════════════════════════════
+  // Every pressure line costs the same: the reserve says HOW MANY systems can
+  // run (two), never WHICH - only the schema and the function lines do.
   const SYS_DEF = [
     { role:'extend',  pre:'HYD', name:'HYDRAULIK',      fn:'fährt die Plattform aus.',                need:true,  cost:3, status:'stoerung' },
     { role:'lock',    pre:'VER', name:'VERRIEGELUNG',   fn:'verriegelt die Plattform am Gegenanker.', need:true,  cost:3, status:'stoerung' },
-    { role:'light',   pre:'LFT', name:'LAUFLICHT',      fn:'beleuchtet den Steg.',                    need:false, cost:2, status:'stoerung' },
-    { role:'heat',    pre:'HZG', name:'SCHIENENHEIZUNG',fn:'hält die Laufschiene eisfrei.',           need:false, cost:2, status:'stoerung' },
+    { role:'light',   pre:'LFT', name:'LAUFLICHT',      fn:'beleuchtet den Steg.',                    need:false, cost:3, status:'stoerung' },
+    { role:'heat',    pre:'HZG', name:'SCHIENENHEIZUNG',fn:'hält die Laufschiene eisfrei.',           need:false, cost:3, status:'stoerung' },
     { role:'align',   pre:'STW', name:'STELLWERK',      fn:'richtet den Gegenanker aus.',             need:false, cost:3, status:'fehlt' },
     { role:'monitor', pre:'DRW', name:'DRUCKWÄCHTER',   fn:'überwacht den Leitungsdruck.',            need:false, cost:2, status:'ok' },
   ];
@@ -1242,9 +1245,20 @@ const Chapter5 = (() => {
         g:{ t:'„Welche Verbindung war tatsächlich benutzbar?"' } },
       { r:{ t:'„Und das Ding von der falschen Platte gehört nirgends dazu. Das lassen wir raus."' },
         v:{ t:'"Confirm the sections this unit inspected, and exclude the foreign marking from the route."', s:'Bestätige die Abschnitte, die diese Einheit geprüft hat, und lass die Fremdmarkierung aus der Trasse heraus.' },
-        g:{ t:'„Schau ins Streckenprotokoll und bestätige nur die stabile Trasse."' } },
+        g:{ t:'„Schau ins Streckenprotokoll und bestätige nur, was ihr selbst gelaufen seid."' } },
     ],
   };
+
+  // A ladder is walked once per chapter run. Leaving a puzzle and coming back,
+  // a retry or a reload never hands spent steps back; a fresh run starts at 0.
+  function readSpent(raw) {
+    const o = {};
+    if (raw && typeof raw === 'object') Object.keys(HINTS).forEach(k => {
+      const n = Math.max(0, Math.min(HINT_MAX, raw[k] | 0));
+      if (n) o[k] = n;
+    });
+    return o;
+  }
 
   function useHint(who) {
     // a tap while a line is up advances it — a hint started here would replace
@@ -1261,7 +1275,10 @@ const Chapter5 = (() => {
     }
     const step = ladder[S.hints.step];
     S.hints.step++;
+    S.hints.spent[S.hints.active] = S.hints.step;
+    save();
     updateHintBar();
+    try { GameEngine.dialogue.holdNext(); } catch (_) {}   // the paid-for line is never cut off
     const e = who === 'r3mi' ? step.r : who === 'vtgm' ? step.v : step.g;
     const speaker = who === 'r3mi' ? 'R-3MI' : who === 'vtgm' ? 'V-TGM' : 'T-FLON14';
     say([{ speaker, text: e.t, subtitle: e.s }]);
@@ -1299,8 +1316,18 @@ const Chapter5 = (() => {
     terminal: { label:'14-I // STRECKENENDE',  title:'STRECKENABNAHME', sub:'ABSCHNITTE BESTÄTIGEN' },
   };
 
+  // A station that is already done reports its state instead of reopening a
+  // fresh panel whose right answer would do nothing.
+  const STATION_DONE = {
+    gallery: [{ speaker:'SYSTEM', text:'14-E // SCHALTWAND. FERNRELAIS 14-G: AKTIV.' },
+              { speaker:'SYSTEM', text:'Die Brücke hält. Hier gibt es nichts mehr zu schalten.' }],
+    supply:  [{ speaker:'SYSTEM', text:'14-G // VERSORGUNGSPULT. PLATTFORM AUSGEFAHREN UND VERRIEGELT.' },
+              { speaker:'SYSTEM', text:'Der Druck steht. Hier gibt es nichts mehr zu versorgen.' }],
+    marker:  [{ speaker:'SYSTEM', text:'14-H // MARKIERUNGSWAND. Die fremde Platte ist vermerkt.' }],
+  };
   function openStation(key) {
     if (openModal) closeModal();
+    if ({ gallery: S.relay, supply: S.crossing, marker: S.marker }[key]) { say(STATION_DONE[key]); return; }
     if (!inst[key]) {
       inst[key] = key === 'gallery' ? buildGallery()
                 : key === 'supply'  ? buildSupply()
@@ -1308,7 +1335,7 @@ const Chapter5 = (() => {
     }
     openModal = key;
     S.hints.active = key;
-    S.hints.step = 0;
+    S.hints.step = S.hints.spent[key] | 0;
     updateHintBar();
     CH.showHintBar(true);
 

@@ -60,6 +60,13 @@ const Chapter6 = (() => {
     ce: x => x.filter(isRound).length >= 2,
   };
   const COND_KEYS = Object.keys(CONDS);
+  // Parity of the round symbols stays in the family: it still counts as a
+  // rival when the archive and the diagnostic are checked for ambiguity, and
+  // an experiment already saved on it stays playable. It is never rolled —
+  // "an odd number of round symbols" flips the branch on every change of
+  // symbol kind at every position, so no controlled change isolates it, and it
+  // made the chamber randomly much harder than the other four.
+  const RETIRED_COND = 'cd';
 
   function applyPerm(x, p) { return [x[p[0]], x[p[1]], x[p[2]]]; }
   function evalRule(x, r) {
@@ -91,7 +98,7 @@ const Chapter6 = (() => {
     wildRuns: 0,
     seen: {},
     talkSeen: {},
-    hints: { active:null, step:0 },
+    hints: { active:null, step:0, spent:{} },
     coach: 0,
     excuse: 0,
 
@@ -186,7 +193,7 @@ const Chapter6 = (() => {
     const sigs = cands.map(behaviour);
     const order = shuffle(cands.map((c, i) => i));
     for (const i of order) {
-      if (ruleUsable(cands[i], sigs)) return cands[i];
+      if (cands[i].cond !== RETIRED_COND && ruleUsable(cands[i], sigs)) return cands[i];
     }
     return null;
   }
@@ -259,6 +266,7 @@ const Chapter6 = (() => {
         rule: S.rule, archive: S.archive, tests: S.tests, phase: S.phase,
         metAsp: S.metAsp, predictInput: S.predictInput, finalInputs: S.finalInputs,
         sigFound: S.sigFound, anomalySeen: S.anomalySeen, wildRuns: S.wildRuns,
+        hints: S.hints.spent,
       });
     } catch (_) {}
   }
@@ -278,6 +286,10 @@ const Chapter6 = (() => {
                     && t.inp.every(v => v >= 0 && v < N_SYM) && t.out.every(v => v >= 0 && v < N_SYM);
     if (!d.archive.every(okRow)) return null;
     if (!Array.isArray(d.tests) || !d.tests.every(okRow)) return null;
+    // A saved experiment on the retired condition that nothing has been
+    // recorded against yet starts over; one with runs, a prediction or the
+    // foreign record found is kept exactly as it is.
+    if (r.cond === RETIRED_COND && d.phase !== 2 && !d.tests.length && !d.predictInput && !d.sigFound) return null;
     return d;
   }
 
@@ -392,6 +404,7 @@ const Chapter6 = (() => {
       S.metAsp = true; S.predictInput = d.predictInput || null;
       S.finalInputs = Array.isArray(d.finalInputs) ? d.finalInputs : null;
       S.sigFound = !!d.sigFound; S.anomalySeen = !!d.anomalySeen; S.wildRuns = +d.wildRuns || 0;
+      S.hints.spent = readSpent(d.hints);
       loadRoom();
       say([
         { speaker:'SYSTEM', text:`VERSUCHSREIHE ${SERIES} // PROTOKOLL WIEDERHERGESTELLT.` },
@@ -564,7 +577,7 @@ const Chapter6 = (() => {
     openModal = 'bb';
     bbMode = 'test';
     S.hints.active = 'phase' + S.phase;
-    S.hints.step = 0;
+    S.hints.step = S.hints.spent[S.hints.active] | 0;
     updateHintBar();
     CH.showHintBar(true);
     el('bbModal').classList.remove('hidden');
@@ -778,7 +791,9 @@ const Chapter6 = (() => {
       other = [base[0], base[1], base[0]];
       if (sameSeq(other, base)) other = [base[0], base[0], base[1]];
     } else {
-      const i = [0,1,2].find(k => isRound(base[k]) === isRound(base[0])) ?? 0;
+      // any one position: always changing position 1 made "position 1 is
+      // round" look like an effect of the count
+      const i = randInt(0, 2);
       other[i] = isRound(base[i]) ? randInt(0, 2) : randInt(3, 5);
       if (sameSeq(other, base)) other[0] = (base[0] + 3) % N_SYM;
     }
@@ -865,7 +880,7 @@ const Chapter6 = (() => {
     S.predictInput = null;
     bbMode = 'test';
     S.hints.active = 'phase2';
-    S.hints.step = 0;
+    S.hints.step = S.hints.spent.phase2 | 0;
     updateHintBar();
 
     // a fresh diagnostic that fires the condition — the archive's odd run was
@@ -1211,11 +1226,22 @@ const Chapter6 = (() => {
       { r:{ t:'„Was haben die komischen Läufe gemeinsam? Ich seh nur Dreiecke und Kreise."' },
         v:{ t:'"Sort the runs into two groups: those that follow stage one, and those that do not. Then look at the inputs only."', s:'Teile die Läufe in zwei Gruppen: die, die Stufe eins folgen, und die anderen. Dann schau nur auf die Eingaben.' },
         g:{ t:'„Nicht die Ausgabe. Die Eingabe. Was ist bei denen anders?"' } },
-      { r:{ t:'„Eckig oder rund. Doppelte Zeichen. Welche Stelle. Irgendwas davon schaltet um."' },
+      { r:{ t:'„Eckig oder rund. Doppelte Zeichen. Welche Stelle. Wie viele runde. Irgendwas davon schaltet um."' },
         v:{ t:'"Hold two positions fixed and change only the third. The group a run falls into will flip at some point — that tells you the condition."', s:'Halte zwei Stellen fest und ändere nur die dritte. Irgendwann kippt die Gruppe — das verrät die Bedingung.' },
         g:{ t:'„Halte zwei Stellen gleich. Änder nur die dritte. Dann siehst du, woran es hängt."' } },
     ],
   };
+
+  // A ladder is walked once per chapter run. Leaving a puzzle and coming back,
+  // a retry or a reload never hands spent steps back; a fresh run starts at 0.
+  function readSpent(raw) {
+    const o = {};
+    if (raw && typeof raw === 'object') Object.keys(HINTS).forEach(k => {
+      const n = Math.max(0, Math.min(HINT_MAX, raw[k] | 0));
+      if (n) o[k] = n;
+    });
+    return o;
+  }
 
   function useHint(who) {
     // a tap while a line is up advances it — a hint started here would replace
@@ -1231,7 +1257,10 @@ const Chapter6 = (() => {
     }
     const step = ladder[S.hints.step];
     S.hints.step++;
+    S.hints.spent[S.hints.active || 'phase1'] = S.hints.step;
+    save();
     updateHintBar();
+    try { GameEngine.dialogue.holdNext(); } catch (_) {}   // the paid-for line is never cut off
     const e = who === 'r3mi' ? step.r : who === 'vtgm' ? step.v : step.g;
     const speaker = who === 'r3mi' ? 'R-3MI' : who === 'vtgm' ? 'V-TGM' : 'ASP-1024';
     say([{ speaker, text: e.t, subtitle: e.s }]);

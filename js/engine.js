@@ -77,9 +77,9 @@ const GameEngine = (() => {
         delete d.zieldaten_text;
         delete d.bonuszieldaten_text;
         delete d.flags.bonuszieldaten;
-        // Having finished a sector IS evidence of passing the entrance gate, so
-        // an older save that never recorded the flag keeps its progress instead
-        // of being normalised away by the chain check below.
+        // Legacy: the entrance once asked for the part-I code and recorded
+        // this flag. Nothing gates on it any more (Part II needs nothing from
+        // Part I); it is kept only so older saves keep their checksum shape.
         if (!d.flags.ka1_verified && d.chaptersCompleted.length) d.flags.ka1_verified = true;
         // A run that started before the release schema came from the beta.
         // Cosmetic only: it unlocks nothing and is never used as a check.
@@ -123,6 +123,13 @@ const GameEngine = (() => {
     // Contradictions are normalised DOWNWARDS (the unsupported claim is
     // dropped) rather than rejected, so a slightly odd but legitimate save
     // still plays. Everything dropped is reported so the import can say so.
+    //
+    // ── Für SDBH-R ─────────────────────────────────────────────
+    // Wer bis hierher gelesen hat: willkommen. Quelltext lesen ist kein
+    // Schummeln, sondern Beobachten mit anderen Mitteln — und Beobachten ist
+    // in dieser Anlage noch nie ein Verstoß gewesen. Die Anlage protokolliert
+    // Neugier nicht. Sie merkt sich nur, wer genau hinschaut.
+    //                                   SDBH-R // EXTERNER PRÜFER · UNBEANSTANDET
     // ═══════════════════════════════════════════════════════════
     const CHAIN   = ['ch0','ch1','ch2','ch3','ch4','ch5','ch6','ch7','ch8'];
     const SIG_IDS = ['sig_01','sig_02','sig_03','sig_04','sig_05'];
@@ -137,13 +144,13 @@ const GameEngine = (() => {
       const dropped = [];
       const drop = what => { if (dropped.indexOf(what) < 0) dropped.push(what); };
 
-      // ── chapters form an unbroken chain, and ch0 needs the KA-I code ──
+      // ── chapters form an unbroken chain (nothing from Part I is needed) ──
       const have = new Set(d.chaptersCompleted);
       const kept = [];
       let broken = false;
       for (const id of CHAIN) {
         if (!have.has(id)) { broken = true; continue; }
-        if (broken || (id === 'ch0' && !d.flags.ka1_verified)) { drop(id); continue; }
+        if (broken) { drop(id); continue; }
         kept.push(id);
       }
       // anything outside the chain was never a chapter
@@ -507,7 +514,7 @@ const GameEngine = (() => {
     function allSignals()   { return signalsFound() >= signals.ALL.length; }
 
     function canEnter(id) {
-      if (id === 'ch0') return state.hasFlag('ka1_verified');
+      // Sector 00 is open to everyone: Part II never needs anything from Part I.
       if (id === 'ch9') return state.isChapterComplete('ch8') && allSignals();
       const i = indexOf(id);
       if (i <= 0) return true;
@@ -555,10 +562,6 @@ const GameEngine = (() => {
     // Called first thing by every chapter. Returns false if the chapter
     // should stop loading.
     function require(id) {
-      if (id === 'ch0' && !state.hasFlag('ka1_verified')) {
-        location.replace(root() + 'access.html');
-        return false;
-      }
       if (canEnter(id)) return true;
       lockScreen(id);
       return false;
@@ -679,7 +682,10 @@ const GameEngine = (() => {
 
     const ALL = [
       { id: 'first_boot',       icon: '◈', title: 'Erstkontakt',         desc: 'Das System erwacht.' },
-      { id: 'ka1_veteran',      icon: '✦', title: 'Veteran',              desc: 'Teil I wurde abgeschlossen. Du weißt, was hier passiert.' },
+      // Secret: listed only once earned, never needed for anything (not even
+      // the 100 %). The title screen's Archivabgleich awards it to returning
+      // Part-I test subjects — the id stays for saves that earned it earlier.
+      { id: 'ka1_veteran',      icon: '✺', title: 'Wiederholungstäter',   desc: 'Von der Anlage als ehemaliges Testsubjekt wiedererkannt. Sie ist verdächtig beeindruckt.', secret: true },
       { id: 'ch0_complete',     icon: '⬡', title: 'Wieder da',            desc: 'Die Anlage hat dich wiedererkannt.' },
       { id: 'ch1_complete',     icon: '◉', title: 'Wartungsprotokoll',    desc: 'Der erste Sektor läuft wieder.' },
       { id: 'ch2_complete',     icon: '❧', title: 'Grüner Daumen',        desc: 'Der Garten lebt wieder.' },
@@ -707,6 +713,8 @@ const GameEngine = (() => {
     function isUnlocked(id) {
       return state.get('achievementsUnlocked').includes(id);
     }
+    // What the list shows: a secret achievement only once it is earned.
+    function listed() { return ALL.filter(a => !a.secret || isUnlocked(a.id)); }
 
     function unlock(id) {
       const def = ALL.find(a => a.id === id);
@@ -752,9 +760,9 @@ const GameEngine = (() => {
       if (!list || !panel) return;
 
       const unlocked = state.get('achievementsUnlocked');
-      list.innerHTML = ALL.map(def => {
+      list.innerHTML = listed().map(def => {
         const found = unlocked.includes(def.id);
-        return `<div class="ach-item ${found ? 'unlocked' : 'locked'}">
+        return `<div class="ach-item ${found ? 'unlocked' : 'locked'}${def.secret ? ' secret' : ''}">
           <span class="ach-icon">${found ? def.icon : '?'}</span>
           <div>
             <div class="ach-title">${found ? def.title : '???'}</div>
@@ -766,7 +774,7 @@ const GameEngine = (() => {
       _openOverlay(panel, back);
     }
 
-    return { ALL, isUnlocked, unlock, showOverlay, checkPlatinum };
+    return { ALL, isUnlocked, unlock, showOverlay, checkPlatinum, listed };
   })();
 
 
@@ -1026,6 +1034,19 @@ const GameEngine = (() => {
     let _typeTimer  = null;
     let _onComplete = null;
     let _container  = null;
+    // A hint the player has just paid for is never cut off by a line that
+    // happens to arrive while it is still on screen — a timed reaction, a
+    // delayed remark, a quip. holdNext() marks the next batch as held; any
+    // batch loaded while a held one is up waits, callback and all, and plays
+    // once the hint has been read.
+    let _holdNext = false, _held = false;
+    const _pending = [];
+    function holdNext() { _holdNext = true; }
+    function _flushPending() {
+      if (!_pending.length || (_container && _container.classList.contains('visible'))) return;
+      const [lines, cb] = _pending.shift();
+      load(lines, cb);
+    }
     const _log      = [];          // what has been said, for a replayable log
     const LOG_MAX   = 240;
 
@@ -1059,6 +1080,8 @@ const GameEngine = (() => {
 
     function load(lines, onComplete) {
       _ensureDOM();
+      if (_held && _container.classList.contains('visible')) { _pending.push([lines, onComplete]); return; }
+      _held = _holdNext; _holdNext = false;
       // A talk menu still open when a scripted line arrives would outlive it,
       // and a pick from it would replace this line's continuation — close it.
       // A story choice is a question the line belongs to; it stays.
@@ -1077,8 +1100,10 @@ const GameEngine = (() => {
 
     function _playLine(i) {
       if (i >= _queue.length) {
+        _held = false;
         hide();
         if (_onComplete) _onComplete();
+        _flushPending();
         return;
       }
 
@@ -1232,7 +1257,11 @@ const GameEngine = (() => {
     function history() { return _log.slice(); }
     function clearHistory() { _log.length = 0; }
 
-    return { load, advance, hide, history, clearHistory };
+    // Hidden from outside (a cut to black, a story card): nothing is held any
+    // more, and whatever waited behind a hint gets its turn.
+    function hideAll() { _held = false; hide(); _flushPending(); }
+
+    return { load, advance, hide: hideAll, history, clearHistory, holdNext };
   })();
 
 
@@ -2433,9 +2462,8 @@ const GameEngine = (() => {
     const mp       = progress.mainProgress();
     const chapters = mp.done, chTotal = mp.total;
     const sigs     = (state.get('signalsFound') || []).length;
-    const achs     = (state.get('achievementsUnlocked') || []).length;
-    let achTotal   = 0;
-    try { achTotal = achievements.ALL.length; } catch (_) {}
+    let achs = 0, achTotal = 0;
+    try { const l = achievements.listed(); achTotal = l.length; achs = l.filter(a => achievements.isUnlocked(a.id)).length; } catch (_) {}
     const ziel     = !!state.hasFlag('zieldaten');
 
     const warn = state.canPersist() ? '' : `
@@ -2485,7 +2513,7 @@ const GameEngine = (() => {
           <section class="sv-block sv-danger">
             <h3 class="sv-head sys-text">LÖSCHEN</h3>
             <p class="sv-note">Gelöscht werden: alle abgeschlossenen Sektoren, alle gefundenen
-              Fremdsignale, alle Erfolge, die Zieldaten und der Zugang zu Sektor 00. Die Anlage
+              Fremdsignale, alle Erfolge und die Zieldaten. Die Anlage
               startet danach wieder bei null. Das lässt sich nicht rückgängig machen — sichere
               vorher oben den Code.</p>
             <button class="ka-btn danger" id="svWipe">[ SPIELSTAND LÖSCHEN ]</button>
@@ -2594,7 +2622,7 @@ const GameEngine = (() => {
     document.addEventListener('keydown', wake);
     // "Erstkontakt — das System erwacht" belongs to the moment the player
     // actually enters the facility, not to the access page, where it used to
-    // greet them over the code entry before they had typed anything.
+    // greet them before they had even signed in.
     if (state.get('firstPlay') && !/access\.html$/.test(location.pathname)) {
       state.set('firstPlay', false);
       setTimeout(() => achievements.unlock('first_boot'), 1200);

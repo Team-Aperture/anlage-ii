@@ -1,8 +1,9 @@
 /**
  * ═══════════════════════════════════════════════════════════════
  * KAPITEL 00 — RÜCKKEHR
- * Prologue: manual entrance release, after the archived authorisation from
- * KA-I has already been verified on the access page.
+ * Prologue: manual entrance release, right after the player has signed in
+ * as the external test signature on the access page (nothing from Part I is
+ * needed — Part II is complete on its own).
  *
  * The entrance drive is dead, so the seal has to be operated by hand. The
  * player reads what is left of the old markings around the threshold and
