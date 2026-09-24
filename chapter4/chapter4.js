@@ -741,7 +741,22 @@ const Chapter4 = (() => {
   // one blank output slot, two ruined plates — and the blank never sits
   // next to only readable neighbours, so the strip has to be read as a
   // rule rather than copied from next door.
+  // Both heads step the same amount along the Zeichenkranz. A strip ships
+  // only if every fair way to read "two heads, taking turns" that fits the
+  // five readable plates names the same symbol for the Abnahme.
   // ═══════════════════════════════════════════════════════════════
+  const STRIP_READINGS = (() => {
+    const r = [], P = Array.from({ length: PLATES }, (_, i) => i);
+    for (let e = 0; e < 4; e++) for (let c1 = 0; c1 < 4; c1++)          // each head its own steady step
+      for (let o = 0; o < 4; o++) for (let c2 = 0; c2 < 4; c2++)        // (c1 === c2 is the strip's real rule)
+        r.push(P.map(i => i % 2 ? (o + c2 * (i >> 1)) % 4 : (e + c1 * (i >> 1)) % 4));
+    for (let m = 0; m < 64; m++)  r.push(P.map(i => (m >> 2 * (i % 3)) & 3));   // a motif of three, repeated
+    for (let m = 0; m < 256; m++) r.push(P.map(i => (m >> 2 * (i % 4)) & 3));   // a motif of four, repeated
+    for (let s = 0; s < 4; s++) for (let d = 0; d < 4; d++) for (let g = 0; g < 4; g++)
+      r.push(P.map(i => (s + d * i + g * i * (i - 1) / 2) % 4));                // a jump that grows by g each time
+    return r;
+  })();
+
   function strip(s0, a, b, n) {
     const r = [s0];
     for (let i = 1; i < n; i++) r.push((r[i-1] + (i % 2 === 1 ? a : b)) % 4);
@@ -765,15 +780,14 @@ const Chapter4 = (() => {
       for (let i = 0; i < PLATES; i++) if (!hidden.has(i)) vis.push(i);
 
       const fits = new Set();
-      for (let s = 0; s < 4; s++) for (let x = 0; x < 4; x++) for (let y = 0; y < 4; y++) {
-        const q = strip(s, x, y, PLATES);
-        if (vis.every(i => q[i] === seq[i])) fits.add(q[out]);
-      }
+      for (const q of STRIP_READINGS) if (vis.every(i => q[i] === seq[i])) fits.add(q[out]);
       if (fits.size !== 1) continue;
 
       return { seq, out, dmg, pickSym: null };
     }
-    return null;
+    // ~47 % of tries pass, so 500 misses never happen — but if they did, a
+    // checked strip beats a dead module. Every symbol shifted keeps it clean.
+    return { seq: strip(randInt(0, 3), 1, 2, PLATES), out: 4, dmg: [3, 6], pickSym: null };
   }
 
   function renderPattern() {
@@ -813,7 +827,8 @@ const Chapter4 = (() => {
         `<button class="vs-chip vs-chip-sym${p.pickSym === i ? ' on' : ''}" data-act="pat-sym" data-sym="${i}">
            <span class="vs-chip-glyph">${g}</span><span class="vs-chip-name sys-text">${SYMN[i]}</span>
          </button>`).join('') +
-      `</div>`;
+      `</div>
+      <p class="vs-kranz sys-text">ZEICHENKRANZ: ◆ → ▲ → ■ → ● → ◆</p>`;
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -1670,10 +1685,10 @@ const Chapter4 = (() => {
         v:{ t:'"Five plates are readable. Everything you need is in those five."', s:'Fünf Platten sind lesbar. Alles, was du brauchst, steht in diesen fünf.' } },
       { b:{ t:'„Zwei Platten nebeneinander sagen dir nichts über die übernächste. Warum nicht?"' },
         r:{ t:'„Weil der Sprung nicht jedes Mal gleich groß ist. Glaub ich. Ziemlich sicher. Fast."' },
-        v:{ t:'"The strip does not advance by the same amount every time. Two heads take turns."', s:'Die Strecke rückt nicht jedes Mal gleich weit. Zwei Köpfe wechseln sich ab.' } },
-      { b:{ t:'„Dann nimm nur die Platten, die zum selben Kopf gehören — und lass die anderen weg."' },
-        r:{ t:'„Erst jede zweite Platte anschauen. Dann die andere Hälfte. Zwei kleine Reihen statt einer großen."' },
-        v:{ t:'"Read the strip in steps of two. Each half advances by a constant amount; together they give the missing plate."', s:'Lies die Strecke in Zweierschritten. Jede Hälfte rückt gleichmäßig; zusammen ergeben sie die fehlende Platte.' } },
+        v:{ t:'"From plate to plate, the strip does not advance by the same amount. Two heads take turns."', s:'Von Platte zu Platte rückt die Strecke nicht gleich weit. Zwei Köpfe wechseln sich ab.' } },
+      { b:{ t:'„Jede zweite Platte ist derselbe Kopf. Beide Köpfe rücken jedes Mal gleich weit — der eine wie der andere."' },
+        r:{ t:'„Erst jede zweite Platte, dann die andere Hälfte. Zwei kleine Reihen — und beide springen GENAU gleich weit. Nicht ungefähr. Genau."' },
+        v:{ t:'"Read the strip in steps of two. Both halves advance by the same amount every time — one amount for both, and it may be zero."', s:'Lies die Strecke in Zweierschritten. Beide Hälften rücken jedes Mal gleich weit — ein Betrag für beide, und der darf auch null sein.' } },
     ],
     weight: [
       { b:{ t:'„Wie viele Wägungen brauchst du wirklich?"' },
