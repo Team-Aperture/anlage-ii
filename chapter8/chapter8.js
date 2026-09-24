@@ -647,13 +647,13 @@ const Chapter8 = (() => {
     [B.board[a], B.board[b]] = [B.board[b], B.board[a]];
     [B.rot[a],   B.rot[b]]   = [B.rot[b],   B.rot[a]];
     B.sel = -1;
-    tone({ f: 240, t: 0.05, type: 'square', g: 0.05 });
+    tone({ freq: 240, dur: 0.05, type: 'square', vol: 0.05 });
     afterMove();
   }
   function rotateSel() {
     if (S.solved || !B || B.sel < 0) return;
     B.rot[B.sel] = (B.rot[B.sel] + 1) % 4;
-    tone({ f: 320, t: 0.05, type: 'triangle', g: 0.05 });
+    tone({ freq: 320, dur: 0.05, type: 'triangle', vol: 0.05 });
     afterMove();
   }
   function afterMove() {
@@ -1090,7 +1090,7 @@ const Chapter8 = (() => {
     // report offers appears underneath them
     if (before) card.insertBefore(box, before); else card.appendChild(box);
     requestAnimationFrame(() => box.classList.add('visible'));
-    try { GameEngine.audio.tone({ f: 180, t: 0.09, type: 'sine', g: 0.05 }); } catch (_) {}
+    try { GameEngine.audio.tone({ freq: 180, dur: 0.09, type: 'sine', vol: 0.05 }); } catch (_) {}
 
     if (!complete) {
       const b = document.createElement('button');
@@ -1108,7 +1108,7 @@ const Chapter8 = (() => {
       a.textContent = '[ ??? BETRETEN ]';
       card.appendChild(a);
       requestAnimationFrame(() => a.classList.add('visible'));
-      try { GameEngine.audio.tone({ f: 96, t: 0.14, type: 'sine', g: 0.045 }); } catch (_) {}
+      try { GameEngine.audio.tone({ freq: 96, dur: 0.14, type: 'sine', vol: 0.045 }); } catch (_) {}
     }, reduceMotion() ? 500 : 1900);
   }
 

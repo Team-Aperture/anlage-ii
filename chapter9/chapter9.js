@@ -196,7 +196,7 @@ const Chapter9 = (() => {
         d.innerHTML = `<span class="co-k sys-text">${k}</span><span class="co-v sys-text">${v}</span>`;
         rows.appendChild(d);
         requestAnimationFrame(() => d.classList.add('visible'));
-        tone({ f: 150 - i * 20, t: 0.06, type: 'sine', g: 0.04 });
+        tone({ freq: 150 - i * 20, dur: 0.06, type: 'sine', vol: 0.04 });
       }, fast ? 200 * i : 1100 * i + 600);
     });
     later(() => {
@@ -425,7 +425,7 @@ const Chapter9 = (() => {
     el('evSub').textContent   = r.sub;
     el('evBody').innerHTML    = r.body();
     openCard('evModal');
-    tone({ f: 200, t: 0.07, type: 'sine', g: 0.05 });
+    tone({ freq: 200, dur: 0.07, type: 'sine', vol: 0.05 });
     if (first) say(r.lines, () => { if (recordsDone() === 3 && !S.signalDone) nudgeSignal(); });
   }
   function closeRecord() { closeCard('evModal'); }
@@ -931,7 +931,7 @@ const Chapter9 = (() => {
   // ═══════════════════════════════════════════════════════════════
   function exitSequence() {
     CH.setScene('vault-open');
-    try { GameEngine.audio.tone({ f: 70, t: 0.5, type: 'sawtooth', g: 0.05 }); } catch (_) {}
+    try { GameEngine.audio.tone({ freq: 70, dur: 0.5, type: 'sawtooth', vol: 0.05 }); } catch (_) {}
     say([
       { speaker:'SYSTEM', text:'Irgendwo hinter der Wand fährt ein schwerer Riegel zurück. Nicht schnell. Nicht dramatisch. Einfach so, als hätte jemand einen Haken gesetzt.' },
       { speaker:'SYSTEM', text:'EXTERNE TESTSIGNATUR: FREIGEGEBEN. AUSGANG: OFFEN.' },
@@ -1087,7 +1087,7 @@ const Chapter9 = (() => {
         if (s.sys) {
           d.className = 'st-sys';
           d.innerHTML = `<span class="st-k sys-text">${s.k}</span><span class="st-v sys-text">${s.v}</span>`;
-          tone({ f: 140, t: 0.05, type: 'sine', g: 0.04 });
+          tone({ freq: 140, dur: 0.05, type: 'sine', vol: 0.04 });
         } else {
           d.className = 'st-line st-' + (s.who === 'R-3MI' ? 'r' : 'v');
           d.innerHTML = `<span class="st-who">${s.who}</span><span class="st-t">${esc(s.t)}</span>`;

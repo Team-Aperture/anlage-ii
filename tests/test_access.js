@@ -29,6 +29,18 @@ const typeIn = async (p, code) => { for (let i = 0; i < code.length; i++) { awai
     check(await p.locator('.access-go.visible').count() === 1, '  [ SIGNATUR ERFASSEN ] reveals the reactivation offer');
     await p.locator('#accessGo').click(); await p.waitForTimeout(2600);
     check(/chapter0\/chapter0\.html/.test(p.url()) && await p.locator('.sector-lock').count() === 0, `  the facility starts (${p.url().split('/').slice(-2).join('/')})`);
+    // and Sektor 00 can be finished on that save, which opens Sektor 01
+    await p.waitForTimeout(2000); await H.drain(p);
+    for (let i = 0; i < 25 && !(await p.locator('#puzzleModal:not(.hidden)').count()); i++) {
+      const d = p.locator('.door-hotspot'); if (await d.count()) await d.first().click({ force: true });
+      await p.waitForTimeout(200); await H.drain(p);
+    }
+    for (const sym of ['●', '▲', '■', '⬡']) { await p.locator(`.puzzle-key[data-symbol="${sym}"]`).click({ force: true }); await p.waitForTimeout(80); }
+    await p.waitForTimeout(800);
+    const st = await saved(p);
+    check(st.chaptersCompleted.includes('ch0') && !st.flags.ka1_verified && !st.achievementsUnlocked.includes('ka1_veteran'), '  Sektor 00 is completed without anything from Part I in the save');
+    await p.goto(H.BASE + '/chapter1/chapter1.html', { waitUntil: 'domcontentloaded' }); await p.waitForTimeout(1500);
+    check(/chapter1/.test(p.url()) && !/ZUGANG VERWEIGERT/.test(await p.evaluate(() => document.body.innerText)), '  and Sektor 01 opens');
     check(errs.length === 0, '  no page errors' + (errs.length ? ': ' + errs[0] : '')); await ctx.close(); }
   { const { ctx, p, errs } = await H.open(b, '/chapter0/chapter0.html', FRESH());
     await p.waitForTimeout(2500);
