@@ -98,6 +98,10 @@ const Chapter9 = (() => {
   function guarded(fn) {
     return (...a) => {
       if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch (_) {} return; }
+      // a story choice is a question the room waits for; an optional talk
+      // menu simply closes when the player turns to the room instead
+      const CHP = GameEngine.chapter;
+      if (CHP.choicesOpen()) { if (!CHP.choicesDismissable()) return; CHP.hideChoices(); }
       return fn(...a);
     };
   }
@@ -205,6 +209,7 @@ const Chapter9 = (() => {
   // the room itself, with nothing to click — used again once the evidence
   // stops mattering and only the two of them do
   function dressRoom() {
+    releaseToast();
     CH.clearHotspots();
     CH.addProp({ prop:'c9_stack',  x:0,  y:10, w:9,  h:62 });
     CH.addProp({ prop:'c9_stack',  x:91, y:10, w:9,  h:62 });
@@ -213,6 +218,7 @@ const Chapter9 = (() => {
   }
 
   function loadRoom() {
+    releaseToast();
     dressRoom();
     CH.showRobots(true);
     CH.showGuest(false);
@@ -236,7 +242,16 @@ const Chapter9 = (() => {
   // ═══════════════════════════════════════════════════════════════
   // ACT 1 — arrival
   // ═══════════════════════════════════════════════════════════════
+  // The "Nicht registriert" card is earned on arrival, but it must not land on
+  // top of KAMMER: NICHT REGISTRIERT — the room's first line is the point of
+  // the room. Hold the toast until the room is the player's; a timer stands
+  // in for any path that never hands the room over.
+  let _toastHeld = false;
+  function holdToast()    { if (_toastHeld) return; _toastHeld = true; try { GameEngine.toasts.hold(); } catch (_) {} later(releaseToast, 14000); }
+  function releaseToast() { if (!_toastHeld) return; _toastHeld = false; try { GameEngine.toasts.release(); } catch (_) {} }
+
   function begin() {
+    holdToast();
     try { GameEngine.achievements.unlock('chamber'); } catch (_) {}
     // Only a finished run gets the epilogue. A checkpoint that merely reached
     // act 5 is a player mid-conversation, and sending them to the revisit menu
@@ -246,6 +261,7 @@ const Chapter9 = (() => {
     // leaves nothing to click, because the menus are the only way forward.
     if (S.act >= 5) { resumeTalk(); return; }
     if (S.act === 4) { resumeConfrontation(); return; }
+    if (S.act === 3) { resumeWarning(); return; }
     if (S.act >= 2 && (recordsDone() || S.signalDone)) { midway(); return; }
     CH.setScene('vault-dim');
     CH.showRobots(true);
@@ -256,7 +272,7 @@ const Chapter9 = (() => {
       { speaker:'R-3MI',  text:'„Stimmt."' },
       { speaker:'R-3MI',  text:'„Also rein."' },
       { speaker:'SYSTEM', text:'Tote Terminals an der Wand. Ein Rangierfeld mit Steckbrücken, von Hand beschriftet. Eine Tafel voller Leitwege. Und in der Ecke ein Empfänger, dessen Kontrolllampe noch läuft.' },
-      { speaker:'V-TGM',  text:'"Somebody kept this room. Off the map, but maintained."', subtitle:'Jemand hat diesen Raum gehalten. Nicht im Plan, aber gepflegt.' },
+      { speaker:'V-TGM',  text:'"Somebody kept this room. Off the map, but maintained."', subtitle:'Jemand hat sich um diesen Raum gekümmert. Nicht im Plan, aber gepflegt.' },
       { speaker:'R-3MI',  text:'„Schau dich halt um. Ist ja doch nur… altes Zeug."' },
     ], () => { S.act = 2; save(); loadRoom(); });
   }
@@ -288,6 +304,20 @@ const Chapter9 = (() => {
     say([
       { speaker:'SYSTEM', text:'KAMMER: NICHT REGISTRIERT. Die Konsole läuft noch. Der Empfänger auch.' },
     ], () => { if (S.burstSeen) postMenu(); else guestBurst(); });
+  }
+
+  // Act 3: the five signals were synchronised, but the warning they carry
+  // never finished playing (a reload in that minute of reading). Only its end
+  // moves the chamber on to act 4 — resuming into the plain room left the
+  // receiver replaying the message without its ending, and nothing else could
+  // move the chapter on. Play it again, all the way through.
+  function resumeWarning() {
+    dressRoom();
+    CH.showRobots(true);
+    CH.setScene('vault-lit');
+    say([
+      { speaker:'SYSTEM', text:'KAMMER: NICHT REGISTRIERT. Der Empfänger läuft noch. Die fünf Kanäle stehen übereinander, synchron.' },
+    ].concat(WARNING), afterWarning);
   }
 
   function midway() {
@@ -519,7 +549,9 @@ const Chapter9 = (() => {
     CH.setScene('vault-lit');
     say(WARNING, afterWarning);
   }
-  function replayWarning() { say(WARNING); }
+  // Before the room has answered it (act 3) the warning still leads on; after
+  // that it is just the recording, as often as the player wants to hear it.
+  function replayWarning() { say(WARNING, S.act === 3 ? afterWarning : undefined); }
 
   // §25: no monologue here. The room goes quiet and the player decides.
   function afterWarning() {
@@ -765,7 +797,7 @@ const Chapter9 = (() => {
   // EXTERNAL TRAFFIC — the others find out at the same time you do
   // ═══════════════════════════════════════════════════════════════
   const BURST = [
-    { speaker:'F-RØ5CHI', text:'„Heast— bei mir sperrt si—"' },
+    { speaker:'F-RØ5CHI', text:'„Heast— bei mir sperrt si—"', subtitle:'Hör mal — bei mir sperrt sich—' },
     { speaker:'L-UX',     text:'„Die Kanäle werden umgeleitet. Nicht von—"' },
     { speaker:'ASP-1024', text:'„Das ist kein Test."' },
     { speaker:'FAX-N',    text:'„Das bin diesmal nicht—"' },
@@ -794,7 +826,7 @@ const Chapter9 = (() => {
       { speaker:'R-3MI',  text:'„Praktisch waren sie trotzdem."' },
       { speaker:'V-TGM',  text:'"R-3MI."', subtitle:'R-3MI.' },
       { speaker:'R-3MI',  text:'„…ja. Sorry."' },
-    ], () => { try { GameEngine.achievements.unlock('truth'); } catch (_) {} postMenu(); });
+    ], postMenu);
   }
 
   // After the handover the remaining questions stay open, plus the receiver.
@@ -830,6 +862,10 @@ const Chapter9 = (() => {
       }
     } catch (_) {}
     try { GameEngine.achievements.unlock('bonus_found'); } catch (_) {}
+    // "Bis zum Ende zugehört" — earned here, with the flag it depends on. It
+    // used to sit in the continuation after the burst, which a resume skips
+    // (the burst is not replayed), so a reload during the questions lost it.
+    try { GameEngine.achievements.unlock('truth'); } catch (_) {}
     save();
     say([
       { speaker:'SYSTEM', text:'FREMDSIGNAL: RESTDATEN ERKANNT. EXTERNE REFERENZ: VERFÜGBAR.' },
@@ -841,7 +877,7 @@ const Chapter9 = (() => {
       { speaker:'SYSTEM', text:'ABGLEICH MIT DEN REKONSTRUIERTEN ZIELDATEN LÄUFT…' },
       { speaker:'SYSTEM', text:'ÜBEREINSTIMMUNG: VOLLSTÄNDIG.' },
       { speaker:'R-3MI',  text:'„…dieselbe Stelle."' },
-      { speaker:'V-TGM',  text:'"Then it was never ours to give."', subtitle:'Dann war sie nie unsere, um sie zu vergeben.' },
+      { speaker:'V-TGM',  text:'"Then it was never ours to give."', subtitle:'Dann hatten wir sie nie zu vergeben.' },
       { speaker:'R-3MI',  text:'„Nein. Sie war vorher da. Und sie bleibt da."' },
       { speaker:'SYSTEM', text:'Der einzige Teil des Ziels, der nicht aus dieser Anlage stammt, sagt dasselbe wie sie.' },
       { speaker:'SYSTEM', text:'ZIELDATEN EXTERN BESTÄTIGT. QUELLE: AUSSERHALB DER ANLAGE.' },
@@ -1090,6 +1126,7 @@ const Chapter9 = (() => {
   }
 
   function revisitMenu() {
+    releaseToast();
     CH.showChoices({
       prompt: 'DIESE KAMMER:',
       hint: 'DIE ZIELDATEN BLEIBEN VERFÜGBAR',

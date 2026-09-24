@@ -7,8 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Barlow:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/global.css?v=20260829b">
-  <link rel="stylesheet" href="chapter1.css?v=20260829b">
+  <link rel="stylesheet" href="../css/global.css?v=20260923">
+  <link rel="stylesheet" href="chapter1.css?v=20260923">
 </head>
 <body class="chapter-page">
 
@@ -16,7 +16,7 @@
 
   <header class="sys-bar">
     <span class="sys-text">KAPITEL 01 // <span class="accent-system">WARTUNGSSEKTOR</span></span>
-    <span class="sys-text" id="reactProgress">REAKTIVIERUNG: 0%</span>
+    <span class="sys-text" id="reactProgress">REAKTIVIERUNG: 0 %</span>
   </header>
 
   <!-- TITLE CARD -->
@@ -59,7 +59,7 @@
 
   <!-- CHOICE UI -->
   <div class="choice-overlay hidden" id="choiceOverlay">
-    <div class="choice-panel">
+    <div class="choice-panel" tabindex="-1">
       <div class="choice-prompt sys-text" id="choicePrompt"></div>
       <div class="choice-buttons" id="choiceButtons"></div>
       <div class="choice-hint sys-text" id="choiceHint"></div>
@@ -79,7 +79,7 @@
 
   <!-- PUZZLE 1 -->
   <div class="puzzle-modal hidden" id="puzzle1Modal">
-    <div class="puzzle-card">
+    <div class="puzzle-card" tabindex="-1">
       <div class="puzzle-card-accent p1-accent"></div>
       <div class="puzzle-header">
         <p class="puzzle-label sys-text">LEITUNG 03-B // NOTREPARATUR</p>
@@ -90,13 +90,14 @@
       <div class="puzzle-status sys-text" id="puzzle1Status">LEITUNG UNTERBROCHEN.</div>
       <div class="puzzle-actions">
         <button class="ka-btn small" onclick="Chapter1.resetPuzzle1()">[ ZURÜCKSETZEN ]</button>
+        <button class="ka-btn small" onclick="Chapter1.closePuzzle(1)">[ ZURÜCK ]</button>
       </div>
     </div>
   </div>
 
   <!-- PUZZLE 2 -->
   <div class="puzzle-modal hidden" id="puzzle2Modal">
-    <div class="puzzle-card">
+    <div class="puzzle-card" tabindex="-1">
       <div class="puzzle-card-accent p2-accent"></div>
       <div class="puzzle-header">
         <p class="puzzle-label sys-text">HILFSPROTOKOLL-KALIBRIERUNG</p>
@@ -107,6 +108,7 @@
       <div class="puzzle-status sys-text" id="puzzle2Status">SIGNALE INAKTIV.</div>
       <div class="puzzle-actions">
         <button class="ka-btn small" onclick="Chapter1.resetPuzzle2()">[ ZURÜCKSETZEN ]</button>
+        <button class="ka-btn small" onclick="Chapter1.closePuzzle(2)">[ ZURÜCK ]</button>
       </div>
     </div>
   </div>
@@ -123,8 +125,8 @@
     </div>
   </div>
 
-  <script src="../js/engine.js?v=20260829b"></script>
-  <script src="../js/mobile-warning.js?v=20260829b"></script>
-  <script src="chapter1.js?v=20260829b"></script>
+  <script src="../js/engine.js?v=20260923"></script>
+  <script src="../js/mobile-warning.js?v=20260923"></script>
+  <script src="chapter1.js?v=20260923"></script>
 </body>
 </html>

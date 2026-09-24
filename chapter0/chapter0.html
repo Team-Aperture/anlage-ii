@@ -7,8 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Barlow:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../css/global.css?v=20260829b">
-  <link rel="stylesheet" href="chapter0.css?v=20260829b">
+  <link rel="stylesheet" href="../css/global.css?v=20260923">
+  <link rel="stylesheet" href="chapter0.css?v=20260923">
   <script>
     /* Authorisation gate. Runs before the scene paints so an unverified visitor
        never sees the entrance. Reads the save directly because the engine has
@@ -102,7 +102,7 @@
        ════════════════════════════════════════════════════════════ -->
   <div class="puzzle-modal hidden" id="puzzleModal" role="dialog" aria-modal="true"
        aria-labelledby="puzzleTitle" aria-describedby="puzzleSublabel">
-    <div class="puzzle-card">
+    <div class="puzzle-card" tabindex="-1">
 
       <div class="puzzle-header">
         <div class="puzzle-label sys-text">SCHLEUSENRING // SEKTOR 7C</div>
@@ -123,13 +123,14 @@
       <!-- the physical ring: glyphs sit where they sit on the door itself -->
       <div class="ring-input" id="ringInput">
         <div class="ring-plate" aria-hidden="true"></div>
-        <button class="puzzle-key ring-left"   data-symbol="⬡" aria-label="Referenz Hexagon auswählen">⬡</button>
+        <button class="puzzle-key ring-left"   data-symbol="⬡" aria-label="Referenz Sechseck auswählen">⬡</button>
         <button class="puzzle-key ring-top"    data-symbol="●" aria-label="Referenz Punkt auswählen">●</button>
         <button class="puzzle-key ring-right"  data-symbol="▲" aria-label="Referenz Dreieck auswählen">▲</button>
         <button class="puzzle-key ring-bottom" data-symbol="■" aria-label="Referenz Viereck auswählen">■</button>
       </div>
 
       <div class="puzzle-actions">
+        <button class="ka-btn small" id="puzzleHintBtn">[ HINWEIS ]</button>
         <button class="ka-btn small" id="puzzleResetBtn">[ ZURÜCKSETZEN ]</button>
         <button class="ka-btn small" id="puzzleCloseBtn">[ ABBRECHEN ]</button>
       </div>
@@ -160,9 +161,9 @@
   </div>
 
   <!-- ── SCRIPTS ─────────────────────────────────────────────── -->
-  <script src="../js/engine.js?v=20260829b"></script>
-  <script src="../js/mobile-warning.js?v=20260829b"></script>
-  <script src="chapter0.js?v=20260829b"></script>
+  <script src="../js/engine.js?v=20260923"></script>
+  <script src="../js/mobile-warning.js?v=20260923"></script>
+  <script src="chapter0.js?v=20260923"></script>
 
 </body>
 </html>

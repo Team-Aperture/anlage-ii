@@ -108,8 +108,21 @@ const Chapter4 = (() => {
   function guarded(fn) {
     return (...args) => {
       if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch(_) {} return; }
+      // a story choice is a question the room waits for; an optional talk
+      // menu simply closes when the player turns to the room instead
+      if (choicesOpen()) { if (!choicesDismissable()) return; hideChoices(); }
       return fn(...args);
     };
+  }
+
+  /** True while a choice menu is up (including its short fade-out). */
+  function choicesOpen() {
+    const o = document.getElementById('choiceOverlay');
+    return !!(o && !o.classList.contains('hidden'));
+  }
+  /** True when the open menu is an optional conversation, not a story beat. */
+  function choicesDismissable() {
+    return document.getElementById('choiceOverlay')?.dataset.kind === 'talk';
   }
 
   function addHotspot(cfg) {
@@ -142,7 +155,7 @@ const Chapter4 = (() => {
 
   function showRobots(v)   { document.getElementById('robotIcons').classList.toggle('hidden', !v); }
   function showBradfish(v) { document.getElementById('bradfishIcon').classList.toggle('hidden', !v); }
-  function setProgress(pct){ const el = document.getElementById('reactProgress'); if (el) el.textContent = `REAKTIVIERUNG: ${pct}%`; }
+  function setProgress(pct){ const el = document.getElementById('reactProgress'); if (el) el.textContent = `REAKTIVIERUNG: ${pct} %`; }
   function playSound(src)  { try { GameEngine.audio.sfx(src); } catch(_) {} }
   function tone(o)         { try { GameEngine.audio.tone(o); } catch(_) {} }
   function say(lines, after) { GameEngine.dialogue.load(lines, after); }
@@ -214,7 +227,10 @@ const Chapter4 = (() => {
     // A module that claims to be solved but kept no reference value would
     // leave the central lock unsolvable — treat it as unsolved instead.
     ORDER.forEach(k => { if (S.modules[k].solved && S.modules[k].output == null) S.modules[k].solved = false; });
-    return solvedCount() > 0;
+    // saveState() only ever runs once the room is live, so a record proves the
+    // introductions happened — a reload must not replay 29 lines of arrival
+    // over a room that already shows the module that was opened
+    return true;
   }
   function esc(s) { return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
@@ -229,6 +245,7 @@ const Chapter4 = (() => {
 
     prompt.textContent = cfg.prompt || 'DEINE REAKTION:';
     hint.textContent   = cfg.hint   || '';
+    overlay.dataset.kind = cfg.dismissable ? 'talk' : 'story';
     btns.innerHTML     = '';
 
     cfg.choices.forEach(c => {
@@ -236,20 +253,33 @@ const Chapter4 = (() => {
       btn.className   = 'choice-btn' + (c.seen ? ' seen' : '');
       btn.textContent = c.label;
       btn.addEventListener('click', () => {
+        // the same guard as every hotspot — a pick over a running line would
+        // replace that line's continuation
+        if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch(_) {} return; }
+        if (btn.dataset.used) return;
+        btn.dataset.used = '1';
         c.seen = true;
         hideChoices();
         say(c.lines || [], () => { if (cfg.onPick) cfg.onPick(c.key); });
-      }, { once: true });
+      });
       btns.appendChild(btn);
     });
 
+    clearTimeout(choiceHideTimer);   // a menu re-opened mid-fade must not vanish
     overlay.classList.remove('hidden');
-    requestAnimationFrame(() => overlay.classList.add('visible'));
+    requestAnimationFrame(() => {
+      overlay.classList.add('visible');
+      // the panel, not its first button: Tab reaches the options next and
+      // one Space too many (the strip's own key) picks nothing
+      overlay.querySelector('.choice-panel')?.focus({ preventScroll: true });
+    });
   }
+  let choiceHideTimer = null;
   function hideChoices() {
     const overlay = document.getElementById('choiceOverlay');
     overlay.classList.remove('visible');
-    setTimeout(() => overlay.classList.add('hidden'), 410);
+    clearTimeout(choiceHideTimer);
+    choiceHideTimer = setTimeout(() => overlay.classList.add('hidden'), 410);
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -415,9 +445,21 @@ const Chapter4 = (() => {
     // Once the lock is open the way on is an object in the room, so the
     // ending stays reachable whatever happened to the dialogue.
     if (S.finalSolved) {
+      // on a Nachsuche the door simply leads on — the ending and its card
+      // belong to the first walk-through
       addHotspot({ prop:'door', x:44, y:62, w:13, h:32,
-        label:'SEKTOR 05', aria:'Sektor 05 betreten', fn:finishChapter });
+        label:'SEKTOR 05', aria:'Sektor 05 betreten', fn: () => S.revisit ? onward('ch5') : finishChapter() });
     }
+  }
+
+  function onward(id) {
+    const href = (() => {
+      try { return GameEngine.progress.href(id); } catch (_) {
+        const n = id.replace('ch', '');
+        return `../chapter${n}/chapter${n}.html`;
+      }
+    })();
+    try { GameEngine.fx.leave(href); } catch (_) { location.href = href; }
   }
 
   function lockLabel() {
@@ -583,6 +625,7 @@ const Chapter4 = (() => {
 
   function closeModal() {
     clearTimers();
+    if (inst.timing) inst.timing.firing = -1;   // a STEUERLAUF cut short must not stay lit
     openModal = null;
     el('modModal').classList.add('hidden');
     el('hintBar').classList.add('hidden');
@@ -616,6 +659,7 @@ const Chapter4 = (() => {
     el('modLabel').textContent = `TEILSYSTEM ${ROMAN[ORDER.indexOf(key)]} — ${MOD[key].sub}`;
     el('modTitle').textContent = MOD[key].name;
     el('modSub').textContent   = `LIEFERT: ${MOD[key].out}`;
+    setStatus('', '');   // the last module's status (a green "solved", a running check) is not this one's
     render();
     if (m.opened === 1) introLines(key);
   }
@@ -631,7 +675,7 @@ const Chapter4 = (() => {
       `<div class="vs-done">
          <p class="vs-done-mark sys-text">TEILSYSTEM STEHT</p>
          <p class="vs-done-out sys-text">${MOD[key].out}</p>
-         <p class="vs-done-val">${esc(outputText(key))}</p>
+         ${S.modules[key].output == null ? '' : `<p class="vs-done-val">${esc(outputText(key))}</p>`}
        </div>`;
     setStatus('DER WERT IST IM ZENTRALVERSCHLUSS HINTERLEGT.', 'ok');
     el('modActions').innerHTML = `<button class="ka-btn small" data-act="close">[ ZURÜCK ]</button>`;
@@ -802,7 +846,7 @@ const Chapter4 = (() => {
          </button>`).join('') +
       `</div>
       <div class="vs-inline">
-        <button class="ka-btn small" data-act="w-run"${w.sel.length === 2 && w.left > 0 ? '' : ' disabled'}>[ WIEGEN ]</button>
+        <button class="ka-btn small" data-act="w-run"${w.sel.length === 2 && w.left > 0 && w.sel.slice().sort().join() !== w.last ? '' : ' disabled'}>[ WIEGEN ]</button>
         <button class="ka-btn small" data-act="w-clear">[ WAAGE LEEREN ]</button>
       </div>
       <ol class="vs-log">` +
@@ -1008,6 +1052,7 @@ const Chapter4 = (() => {
     el('modLabel').textContent = 'ZENTRALVERSCHLUSS';
     el('modTitle').textContent = 'ZENTRALABGLEICH';
     el('modSub').textContent   = 'ALLE TEILSYSTEME STABIL';
+    setStatus('', '');
     render();
 
     if (!S.seen.finalIntro) {
@@ -1169,6 +1214,9 @@ const Chapter4 = (() => {
     const w = inst.weight;
     if (w.sel.length !== 2 || w.left <= 0) return;
     const [x, y] = w.sel;
+    // a double tap weighed the same pair twice and spent a run of five on it
+    if (w.sel.slice().sort().join() === w.last) return;
+    w.last = w.sel.slice().sort().join();
     w.left--;
     const heavier = w.rankOf[x] < w.rankOf[y] ? x : y;
     const lighter = heavier === x ? y : x;
@@ -1178,7 +1226,7 @@ const Chapter4 = (() => {
     tone({ freq: 190, type:'triangle', dur: 0.16, vol: 0.07 });
     setStatus(w.left > 0
       ? `LAUF ABGESCHLOSSEN. ${w.left} ÜBRIG.`
-      : 'DIE WAAGE MUSS SICH SETZEN. DAS PROTOKOLL BLEIBT.', w.left > 0 ? '' : 'warn');
+      : 'DIE WAAGE MUSS SICH SETZEN. EINE GEPRÜFTE RANGFOLGE TARIERT SIE NEU.', w.left > 0 ? '' : 'warn');
     render();
   }
 
@@ -1191,6 +1239,7 @@ const Chapter4 = (() => {
       // taking anything away.
       w.left = WEIGH_MAX;
       w.sel  = [];
+      w.last = null;
       w.tilt = 0;
       wrong('weight', 'DIE WAAGE WIDERSPRICHT. SIE HAT SICH NEU EINGEPENDELT — LÄUFE WIEDER FREI.');
       return;
@@ -1313,6 +1362,8 @@ const Chapter4 = (() => {
     // Persist before anything narrative runs.
     S.finalSolved = true;
     try { GameEngine.state.markChapterComplete(CHAPTER_ID); } catch(_) {}
+    // earned with the completion — a reload during the ending must not lose it
+    try { GameEngine.achievements.unlock('ch4_complete'); } catch(_) {}
     clearSavedState();
 
     closeModal();
@@ -1351,6 +1402,8 @@ const Chapter4 = (() => {
       { speaker:'R-3MI',  text:'„Von ihm schon."' },
       { speaker:'B-RADF1SH', text:'„Mhm."' },
     ] },
+    // it says OPTIONAL, so there is a way past it without saying anything
+    { key:'go', label:'[ WEITER ]', lines:[] },
   ];
 
   function finalResponse() {
@@ -1435,7 +1488,7 @@ const Chapter4 = (() => {
     vtgm: [
       { key:'read', label:'[ Wie liest du das hier? ]', lines:[
         { speaker:'V-TGM', text:'"Four subsystems. Four values. The lock is a sentence with four blanks."', subtitle:'Vier Teilsysteme. Vier Werte. Das Schloss ist ein Satz mit vier Lücken.' },
-        { speaker:'V-TGM', text:'"Fill them in any order you like."', subtitle:'Füll sie in beliebiger Reihenfolge.' },
+        { speaker:'V-TGM', text:'"Fill them in any order you like."', subtitle:'Füll sie in beliebiger Reihenfolge aus.' },
       ] },
       { key:'him', label:'[ Und was hältst du von ihm? ]', lines:[
         { speaker:'V-TGM', text:'"He has been repairing this for a long time. Nobody asked him to."', subtitle:'Er repariert das hier seit Langem. Niemand hat ihn darum gebeten.' },
@@ -1446,6 +1499,7 @@ const Chapter4 = (() => {
 
   function clickRobot(who) {
     if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch(_) {} return; }
+    if (choicesOpen() && !choicesDismissable()) return;   // a story choice is up (keyboard can still reach the icons)
     if (!S.started) return;
     if (who === 'bradfish' && froschiBeat()) return;
 
@@ -1461,7 +1515,7 @@ const Chapter4 = (() => {
 
     const title = who === 'bradfish' ? 'B-RADF1SH ANSPRECHEN:' : who === 'r3mi' ? 'R-3MI ANSPRECHEN:' : 'V-TGM ANSPRECHEN:';
     askOnce({
-      prompt: title, hint: 'OPTIONAL.', choices,
+      prompt: title, hint: 'OPTIONAL.', dismissable: true, choices,
       onPick: (key) => {
         if (key === '__leave' || key === '__coach') return;
         S.talkSeen[who + ':' + key] = true;
@@ -1508,7 +1562,7 @@ const Chapter4 = (() => {
     stuck: [
       [ { speaker:'B-RADF1SH', text:'„Welche Annahme hast du noch gar nicht überprüft?"' } ],
       [ { speaker:'B-RADF1SH', text:'„Wenn nichts passt, prüf zuerst die Annahme. Nicht gleich die Rechnung."' } ],
-      [ { speaker:'B-RADF1SH', text:'„Was weißt du hier sicher? Fang bei dem an und schreib den Rest ab."' } ],
+      [ { speaker:'B-RADF1SH', text:'„Was weißt du hier sicher? Fang bei dem an und arbeite dich von da aus vor."' } ],
       [ { speaker:'B-RADF1SH', text:'„Welche Information brauchst du für diesen Schritt wirklich?"' },
         { speaker:'SYSTEM', text:'Pause.' },
         { speaker:'B-RADF1SH', text:'„Und welche kannst du weglassen?"' } ],
@@ -1625,6 +1679,9 @@ const Chapter4 = (() => {
   function useHint(who) {
     const ladder = HINTS[S.hints.active];
     if (!ladder) return;
+    // a tap while a line is up advances it — starting a hint would replace the
+    // line's continuation, and a double tap would spend two hints
+    if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch(_) {} return; }
 
     if (S.hints.step >= HINT_MAX) {
       const done = {

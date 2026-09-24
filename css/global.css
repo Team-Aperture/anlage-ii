@@ -37,7 +37,8 @@
   /* Text */
   --text-primary:   #b8ccd8;
   --text-secondary: #5a7a8a;
-  --text-dim:       #2a3a4a;
+  --text-dim:       #4d6476;   /* tertiary text: ~3.1:1 on the panels (#2a3a4a was 1.65:1 — labels on
+                                  the puzzle cards, some of them needed to solve, were unreadable) */
   --text-terminal:  #6ec88a;
   --text-error:     #c84444;
 
@@ -178,6 +179,42 @@ body {
 .ka-btn.danger {
   border-color: var(--accent-r3mi);
   color: var(--accent-r3mi);
+}
+
+/* ─── SYSTEM BAR ─────────────────────────────────────────────── */
+/* The header every page carries: the chapter name and REAKTIVIERUNG on a
+   chapter page, the facility status on the title. It lives here because it
+   lived in title.css for a while — and no chapter loads title.css, so for
+   that while every chapter's header sat unstyled beneath the fixed scene
+   layer and the reactivation readout was never actually visible in-game.
+   Above the scene (5), below the objective HUD (30) and everything modal. */
+.sys-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--sp-md);
+  padding: var(--sp-sm) var(--sp-lg);
+  background: rgba(4,8,12,0.9);
+  border-bottom: 1px solid var(--bdr-dim);
+  z-index: 20;
+  backdrop-filter: blur(4px);
+}
+/* Unit names are never broken at their hyphen. */
+.sys-bar .accent-r3mi, .sys-bar .accent-vtgm, .sys-bar .accent-system, .sys-bar .accent-guest { white-space: nowrap; }
+/* the way back to the menu in any page's header (it used to be styled only
+   in Chapter 0, so the access page showed a blue, underlined browser link) */
+.back-link { color: var(--text-secondary); text-decoration: none; transition: color var(--t-fast); }
+.back-link:hover, .back-link:focus-visible { color: var(--accent-system); }
+@media (max-width: 640px) {
+  .sys-bar { padding: var(--sp-xs) var(--sp-md); }
+  .sys-bar .sys-text { font-size: 9px; }
+}
+/* On a phone the two readouts do not fit side by side; stacked, each keeps
+   its own line instead of wrapping mid-word (R- / 3MI). */
+@media (max-width: 480px) {
+  .sys-bar { flex-direction: column; align-items: flex-start; gap: 2px; }
 }
 
 /* ─── OVERLAY SYSTEM ─────────────────────────────────────────── */
@@ -506,10 +543,18 @@ body {
 .dlg-advance {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: var(--text-dim);
+  color: var(--text-secondary);   /* the first instruction a new player reads — --text-dim was 1.65:1 */
   text-align: right;
+  white-space: nowrap;      /* never a lone ] on its own line */
   transition: opacity var(--t-mid);
   animation: blinkAdv 1.2s step-end infinite;
+}
+/* A phone has no space bar and nobody clicks it: say "tippen", and say it
+   short enough to fit beside the portrait at 360px. */
+.dlg-advance .adv-coarse { display: none; }
+@media (pointer: coarse), (max-width: 480px) {
+  .dlg-advance .adv-fine   { display: none; }
+  .dlg-advance .adv-coarse { display: inline; }
 }
 
 @keyframes blinkAdv {
@@ -891,6 +936,9 @@ button.scene-prop { background: none; border: none; padding: 0; cursor: pointer;
 .prop-interactive:hover, .prop-interactive:focus-visible {
   transform: scale(1.06); filter: drop-shadow(0 0 9px var(--accent-system)); outline: none;
 }
+/* A small object is still a 48px touch target: an invisible pad centred on
+   it grows the hit area, never the drawing. */
+.prop-interactive::before { content: ''; position: absolute; inset: min(0px, calc(50% - 24px)); }
 /* A quiet marker so interactive objects read as clickable without shouting.
    Sits at the object's base; brightens on hover. */
 .prop-interactive::after {
@@ -910,9 +958,11 @@ button.scene-prop { background: none; border: none; padding: 0; cursor: pointer;
   white-space: nowrap; opacity: 0; transition: opacity var(--t-fast); pointer-events: none;
 }
 .prop-interactive:hover .prop-label, .prop-interactive:focus-visible .prop-label { opacity: 1; }
-/* an examined prop settles: green tick-glow instead of the system-blue hover */
+/* an examined prop settles: green tick-glow instead of the system-blue hover,
+   and its beacon stops pulsing — the same "done" language as a plain hotspot */
 .scene-prop.found svg { filter: drop-shadow(0 5px 12px rgba(0,0,0,0.55)) drop-shadow(0 0 7px rgba(46,207,98,0.5)); }
 .scene-prop.found .prop-label { color: var(--accent-r3mi); }
+.scene-prop.found::after { animation: none; background: var(--accent-r3mi); box-shadow: 0 0 8px var(--accent-r3mi); opacity: .5; }
 
 /* prop parts — legacy line-art classes */
 .prop-line     { fill: none; stroke: var(--prop-color); stroke-width: 2.2; stroke-linejoin: round; }
@@ -1249,3 +1299,40 @@ body.dlg-up .puzzle-actions { bottom: calc(var(--dlg-h, 170px) + var(--sp-xs)); 
    so its docked action row sits flush. An ID out-specifies the rule above, so
    restate it here for that one modal rather than weakening the phone layout. */
 body.dlg-up #rkModal { padding-bottom: calc(var(--dlg-h, 170px) + var(--sp-md)); }
+
+/* A puzzle card never starts under the hint bar. The bar is fixed at the top
+   right — two rows on a phone — and a tall card (or one docked while a line
+   is up) used to slide its whole header underneath it. The engine publishes
+   the bar's measured bottom edge as --hint-bottom. */
+body:has(.hint-bar:not(.hidden)) .puzzle-modal {
+  padding-top: max(var(--sp-lg), calc(var(--hint-bottom, 0px) + var(--sp-sm)));
+}
+@media (max-width: 600px) {
+  /* three unit buttons on one row: the bar is two rows, not three */
+  .hint-bar { gap: 6px; }
+  .hint-bar .ka-btn.small { padding: 5px 7px; letter-spacing: .08em; }
+
+  /* A puzzle card taller than a phone scrolls with the window, like a page,
+     and its buttons stay pinned to the bottom edge — the primary action is
+     never below the fold (the pattern Chapter 8's board already used). */
+  .puzzle-modal .puzzle-card > .puzzle-actions {
+    position: sticky; bottom: 0; z-index: 3;
+    flex-wrap: wrap; justify-content: center;
+    margin-left: calc(-1 * var(--sp-md)); margin-right: calc(-1 * var(--sp-md));
+    padding: 8px var(--sp-md) 10px; background: var(--bg-panel);
+    box-shadow: 0 -10px 14px -8px rgba(0,0,0,0.95);
+  }
+  .puzzle-modal .puzzle-actions .ka-btn { white-space: nowrap; }   /* never a lone "]" on its own line */
+}
+@media (max-width: 420px) {
+  /* 32px of padding on each side of a 328px card left 264px for the puzzle */
+  .puzzle-modal .puzzle-card { padding-left: var(--sp-md); padding-right: var(--sp-md); }
+  /* a primary action's wide tracking clipped "[ TRASSE ZERTIFIZIEREN ]" at 320px */
+  .puzzle-modal .puzzle-actions .ka-btn.primary { padding-left: 12px; padding-right: 12px; letter-spacing: .1em; }
+}
+
+/* On a revisit the return bar wraps to three rows on a phone and sat on the
+   robot icons; they step above its measured height. */
+@media (max-width: 760px) {
+  body.ns-up .robot-icons { bottom: calc(var(--ns-h, 0px) + 16px + env(safe-area-inset-bottom, 0px)); }
+}

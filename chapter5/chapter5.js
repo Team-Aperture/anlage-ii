@@ -115,6 +115,10 @@ const Chapter5 = (() => {
   function guarded(fn) {
     return (...args) => {
       if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch (_) {} return; }
+      // a story choice is a question the room waits for; an optional talk
+      // menu simply closes when the player turns to the room instead
+      const CHP = GameEngine.chapter;
+      if (CHP.choicesOpen()) { if (!CHP.choicesDismissable()) return; CHP.hideChoices(); }
       return fn(...args);
     };
   }
@@ -694,7 +698,7 @@ const Chapter5 = (() => {
     say([
       { speaker:'SYSTEM', text:'Der Wartungslift setzt sich in Bewegung. Er ist langsam, ehrlich und sehr laut.' },
       { speaker:'SYSTEM', text:'Die Wand zieht an euch vorbei: Ebene um Ebene, Rohr um Rohr, Nische um Nische. Das Echo wird tiefer, je weiter ihr kommt.' },
-      { speaker:'SYSTEM', text:'Auf halber Strecke öffnet sich die Schachtwand zu einer Halle, die keiner von euch je erwähnt bekommen hat. Lichter, oben und unten, weit auseinander. Die Anlage ist erheblich größer als die Räume, die ihr kennt.' },
+      { speaker:'SYSTEM', text:'Auf halber Strecke öffnet sich die Schachtwand zu einer Halle, von der euch nie jemand erzählt hat. Lichter, oben und unten, weit auseinander. Die Anlage ist erheblich größer als die Räume, die ihr kennt.' },
       { speaker:'R-3MI',  text:'„Du hast vor fünf Minuten auch »noch ein Stück« gesagt."' },
       { speaker:'T-FLON14', text:'„Stimmt."' },
       { speaker:'SYSTEM', text:'Der Lift kommt auf der Sohle zum Stehen.' },
@@ -1028,7 +1032,6 @@ const Chapter5 = (() => {
     markD: {
       1: [
         { speaker:'SYSTEM', text:'Eine Routenplatte, wie sie hier überall hängen: doppelter Rand, vier Schrauben, Stationscode, Pfeil. Unten rechts eine kleine Kerbe aus der Fertigung.' },
-        { speaker:'T-FLON14', text:'' },
         { speaker:'R-3MI',  text:'„Eine Platte. Faszinierend."' },
       ],
       2: [ { speaker:'SYSTEM', text:'Dieselbe Bauform wie am Eingang. Die Anlage war in solchen Dingen sehr konsequent.' } ],
@@ -1141,6 +1144,7 @@ const Chapter5 = (() => {
     choices.push({ key:'__leave', label:'[ Nichts. Weiter. ]', seen:false, lines: [] });
 
     CH.showChoices({
+      dismissable: true,
       prompt: who === 'guest' ? 'T-FLON14 ANSPRECHEN:' : who === 'r3mi' ? 'R-3MI ANSPRECHEN:' : 'V-TGM ANSPRECHEN:',
       hint: 'OPTIONAL.',
       choices,
@@ -1200,7 +1204,7 @@ const Chapter5 = (() => {
       { r:{ t:'„Da sind vier Bündel und nur eins geht dahin, wo wir hinwollen. Glaube ich. Steht aber dran."' },
         v:{ t:'"Not all of these keys belong to the same conduit set."', s:'Nicht alle Tasten gehören zum selben Leitungssatz.' },
         g:{ t:'„Schau, wohin die Bündel laufen. Eins davon geht voraus."' } },
-      { r:{ t:'„Eins bis fünf. Und die Vier… ich meine, irgendeine Nummer fehlt an der Wand."' },
+      { r:{ t:'„Eins bis fünf. Und die… Moment. Irgendeine Nummer fehlt an der Wand."' },
         v:{ t:'"Which marking follows the same conduits forward — and is any section of it missing?"', s:'Welche Markierung folgt denselben Leitungen nach vorn — und fehlt davon ein Abschnitt?' },
         g:{ t:'„Zählt die Abschnitte durch. Wenn einer fehlt, steht der Ersatz an der Wand geschrieben."' } },
       { r:{ t:'„Also: alle vom richtigen Bündel, plus den einen komischen Ersatzschalter. Dann Hebel."' },
@@ -1243,6 +1247,9 @@ const Chapter5 = (() => {
   };
 
   function useHint(who) {
+    // a tap while a line is up advances it — a hint started here would replace
+    // the line's continuation, and a double tap would spend two hints
+    if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch (_) {} return; }
     const ladder = HINTS[S.hints.active];
     if (!ladder) { say(coachLines()); return; }
     if (S.hints.step >= HINT_MAX) {
@@ -1580,6 +1587,8 @@ const Chapter5 = (() => {
     if (S.ended) return;
     // Persist before any narration runs.
     try { GameEngine.state.markChapterComplete(CHAPTER_ID); } catch (_) {}
+    // earned with the completion — a reload during the ending must not lose it
+    try { GameEngine.achievements.unlock('ch5_complete'); } catch (_) {}
     inst.terminal = null;
     closeModal();
     logAdd('14-I // STRECKENENDE', 'TRASSE 14-D → 14-I ABGENOMMEN.');

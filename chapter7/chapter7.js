@@ -97,6 +97,10 @@ const Chapter7 = (() => {
   function guarded(fn) {
     return (...a) => {
       if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch (_) {} return; }
+      // a story choice is a question the room waits for; an optional talk
+      // menu simply closes when the player turns to the room instead
+      const CHP = GameEngine.chapter;
+      if (CHP.choicesOpen()) { if (!CHP.choicesDismissable()) return; CHP.hideChoices(); }
       return fn(...a);
     };
   }
@@ -138,7 +142,7 @@ const Chapter7 = (() => {
   }
   function steadyProgress(pct) {
     const e = el('reactProgress');
-    if (e) e.textContent = `REAKTIVIERUNG: ${pct}%`;
+    if (e) e.textContent = `REAKTIVIERUNG: ${pct} %`;
   }
   /** How loudly the sector is still lying, 0 (stable) … 3 (everything). */
   function liesLevel() { return 3 - anchorsDone(); }
@@ -225,6 +229,10 @@ const Chapter7 = (() => {
       S.bsodSeen = !!d.bsodSeen; S.integritySeen = !!d.integritySeen;
       S.sigFound = !!d.sigFound; S.luxSeen = !!d.luxSeen;
       loadRoom();
+      // The third anchor stood, but the crash and the integrity report never
+      // played (a reload in the lines between). They are the sector's turn,
+      // and Chapter 9 leans on that report — play them now, not never.
+      if (anchorsDone() === 3 && !S.integritySeen) { S.act = 5; save(); crashSequence(); return; }
       say([
         { speaker:'SYSTEM', text:'SEKTOR 07 // DARSTELLUNGSEBENE WIRD NEU GELADEN.' },
         { speaker:'FAX-N',  text:'„Ah. Wieder da."' },
@@ -870,6 +878,8 @@ const Chapter7 = (() => {
     if (S.solved) return;
     S.solved = true;
     try { GameEngine.state.markChapterComplete(CHAPTER_ID); } catch (_) {}
+    // earned with the completion — a reload during the ending must not lose it
+    try { GameEngine.achievements.unlock('ch7_complete'); } catch (_) {}
     P.exits = null;
     save();
     closeModal();
@@ -1111,6 +1121,7 @@ const Chapter7 = (() => {
     if (who === 'guest') choices.unshift({ key:'__coach', label:'[ Wie geht man das an? ]', seen:false, lines: coachLines() });
     choices.push({ key:'__leave', label:'[ Nichts. Weiter. ]', seen:false, lines: [] });
     CH.showChoices({
+      dismissable: true,
       prompt: who === 'guest' ? 'FAX-N ANSPRECHEN:' : who === 'r3mi' ? 'R-3MI ANSPRECHEN:' : 'V-TGM ANSPRECHEN:',
       hint: 'OPTIONAL.',
       choices,
@@ -1191,6 +1202,9 @@ const Chapter7 = (() => {
   };
 
   function useHint(who) {
+    // a tap while a line is up advances it — a hint started here would replace
+    // the line's continuation, and a double tap would spend two hints
+    if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch (_) {} return; }
     const ladder = HINTS[S.hints.active];
     if (!ladder) { say(coachLines()); return; }
     if (S.hints.step >= HINT_MAX) {

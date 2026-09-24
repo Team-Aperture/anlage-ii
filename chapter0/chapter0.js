@@ -284,7 +284,9 @@ const Chapter0 = (() => {
     inputLocked: false,
     attempts:   0,
     hintStep:   0,
+    pointedMissing: false,   // the one pointer a guesser gets before the method hints
     doorRead:   false,
+    failTimer:  null,
     unlocked:   false,
     introDone:  false,
 
@@ -342,11 +344,12 @@ const Chapter0 = (() => {
     ring: {
       label:   'SCHLEUSENRING',
       aria:    'Schleusenring untersuchen',
-      pos:     { x: 37.5, y: 26, w: 24, h: 44 },
+      // no pos: the seal's hit box is the drawn door itself (chapter0.css
+      // .hotspot.door-hotspot), on every screen size
       lines: [
         { speaker: 'SYSTEM', text: 'EXTERNE TESTSIGNATUR // GÜLTIG.' },
         { speaker: 'SYSTEM', text: 'SCHLEUSENRING // MANUELL VERRIEGELT.' },
-        { speaker: 'SYSTEM', text: 'GEOMETRISCHE REFERENZEN AM RING ERKANNT: ● ▲ ■ ⬡' },
+        { speaker: 'SYSTEM', text: 'GEOMETRISCHE REFERENZEN AM RING ERKANNT: ■ ⬡ ● ▲' },
         { speaker: 'SYSTEM', text: 'REFERENZFOLGE // NICHT VERFÜGBAR.' },
       ],
     },
@@ -373,7 +376,7 @@ const Chapter0 = (() => {
     },
     {
       key: 'dust', label: 'STAUBSCHICHT', aria: 'Staubschicht am Boden untersuchen',
-      prop: 'c0_dust', pos: { x: 20, y: 85, w: 15, h: 8 },
+      prop: 'c0_dust', pos: { x: 22, y: 74, w: 15, h: 8 },
       lines: [
         { speaker: 'SYSTEM', text: 'STAUBSCHICHT // UNGESTÖRT.' },
         { speaker: 'SYSTEM', text: 'KEINE FRISCHEN SPUREN.' },
@@ -382,18 +385,19 @@ const Chapter0 = (() => {
     },
     {
       key: 'light', label: 'NOTBELEUCHTUNG', aria: 'Notbeleuchtung untersuchen',
-      prop: 'c0_lamp', pos: { x: 44, y: 1, w: 11, h: 7 },
+      prop: 'c0_lamp', pos: { x: 44, y: 6, w: 11, h: 7 },   /* y:6 — clear of the fixed header */
       lines: [
         { speaker: 'SYSTEM', text: 'NOTBELEUCHTUNG // OFFLINE.' },
         { speaker: 'SYSTEM', text: 'ENERGIEVERSORGUNG: UNZUREICHEND.' },
       ],
       // the room remembers: after the release this fixture is alive
+      reread: [{ speaker: 'SYSTEM', text: 'NOTBELEUCHTUNG // WEITERHIN OFFLINE.' }],
       awakeLines: [
         { speaker: 'SYSTEM', text: 'NOTBELEUCHTUNG // AKTIV.' },
       ],
     },
     {
-      key: 'ivy', label: 'VEGETATION', aria: 'Bewuchs untersuchen',
+      key: 'ivy', label: 'VEGETATION', aria: 'Vegetation untersuchen',
       prop: 'c0_ivy', pos: { x: 22, y: 0, w: 9, h: 26 },
       lines: [
         { speaker: 'SYSTEM', text: 'VEGETATION // UNKONTROLLIERT.' },
@@ -465,6 +469,11 @@ const Chapter0 = (() => {
   }
 
   function startFirstVisit() {
+    // The room is ready before the opening speaks: a tap on a marking during
+    // the six lines simply advances them. Nothing here rides on the callback.
+    S.introDone = true;
+    loadHotspots();
+    updateProgress();
     GameEngine.dialogue.load([
       { speaker: 'SYSTEM', text: 'REAKTIVIERUNGSPROTOKOLL // INITIALISIERT.' },
       { speaker: 'SYSTEM', text: 'EINGANGSSEKTOR 7C.' },
@@ -472,17 +481,17 @@ const Chapter0 = (() => {
       { speaker: 'SYSTEM', text: 'SCHLEUSENANTRIEB // KEINE ANTWORT.' },
       { speaker: 'SYSTEM', text: 'MOBILE EINHEITEN // KEINE ANTWORT.' },
       { speaker: 'SYSTEM', text: 'MANUELLE FREIGABE ERFORDERLICH.' },
-    ], () => {
-      S.introDone = true;
-      loadHotspots();
-      updateProgress();
-    });
+    ]);
   }
 
   /** Revisit after the seal is already open: no re-lock, no repeated prologue. */
   function startReturning() {
     S.unlocked = true;
     setAwake(true);
+    // Solving the ring is what finishes this chapter (see onSolve). A save that
+    // recorded the solve but lost the completion — an interrupted write — must
+    // not send the player round Chapter 1's lock screen forever.
+    if (!S.revisit) { try { GameEngine.state.markChapterComplete(CHAPTER_ID); } catch (_) {} }
     if (S.revisit) {
       // Nothing left to aim at and nothing left to hint: the objective HUD
       // would only sit under the Nachsuche bar repeating a solved task.
@@ -504,8 +513,35 @@ const Chapter0 = (() => {
     });
   }
 
+  // The engine keeps exactly ONE dialogue completion callback. Any handler
+  // that starts a new line while one is running would replace it — and the
+  // opening, the ring lines and the release sequence all carry their next
+  // step in that callback. So while a line is visible, a tap advances it.
+  function dialogueBusy() {
+    const c = document.querySelector('.dlg-container');
+    return !!(c && c.classList.contains('visible'));
+  }
+  function guarded(fn) {
+    return (...a) => {
+      if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch (_) {} return; }
+      return fn(...a);
+    };
+  }
+
+  // (12) The keys should look locked whenever input is locked.
+  function setKeysLocked(on) {
+    document.querySelectorAll('.puzzle-key').forEach(k => k.classList.toggle('locked', !!on));
+  }
+  // (9) While the ring modal is open nothing behind it may take focus.
+  function setBackgroundInert(on) {
+    ['#sceneWrapper', '.chapter-hud', '.sys-bar'].forEach(sel => {
+      const el = document.querySelector(sel); if (el) el.inert = !!on;
+    });
+  }
+
   function wireControls() {
-    document.getElementById('hintBtn')?.addEventListener('click', showHint);
+    document.getElementById('hintBtn')?.addEventListener('click', guarded(showHint));
+    document.getElementById('puzzleHintBtn')?.addEventListener('click', guarded(showHint));
     document.getElementById('puzzleResetBtn')?.addEventListener('click', resetPuzzle);
     document.getElementById('puzzleCloseBtn')?.addEventListener('click', closePuzzle);
 
@@ -534,17 +570,16 @@ const Chapter0 = (() => {
         aria:      ref.aria,
         prop:      ref.prop,
         className: 'req-hotspot ref-' + key,
-        onClick:   () => examineReference(key),
+        onClick:   guarded(() => examineReference(key)),
       });
     });
 
     // the seal itself
     hs.push({
-      ...REFERENCES.ring.pos,
       label:     REFERENCES.ring.label,
       aria:      S.unlocked ? 'Sektor 01 betreten' : 'Schleusenring untersuchen',
       className: 'door-hotspot ref-ring',
-      onClick:   clickDoor,
+      onClick:   guarded(clickDoor),
     });
 
     // optional atmosphere — quieter markers, no pulse
@@ -555,11 +590,14 @@ const Chapter0 = (() => {
         aria:      env.aria,
         prop:      env.prop,
         className: 'env-hotspot env-' + env.key,
-        onClick:   () => examineEnvironment(env),
+        onClick:   guarded(() => examineEnvironment(env)),
       });
     });
 
     GameEngine.scene.load({ hotspots: hs });
+    // the engine gives every hotspot a percentage box; the seal's is the
+    // drawn door (see chapter0.css), so drop the inline one
+    document.querySelector('.hotspot.door-hotspot')?.removeAttribute('style');
     if (S.unlocked) document.querySelector('.env-light')?.classList.add('ch0-lit');
   }
 
@@ -687,6 +725,19 @@ const Chapter0 = (() => {
       return;
     }
 
+    // Two wrong tries open the method hints — but not before the room has
+    // been read: a guesser with markings still unread is pointed at one of
+    // them first, exactly like a player who has not touched the ring yet.
+    if (found < 4 && !S.pointedMissing) {
+      S.pointedMissing = true;
+      const missing = REFERENCE_ORDER.find(k => !S.referencesFound[k]);
+      GameEngine.dialogue.load([
+        { speaker: 'SYSTEM', text: `REFERENZEN: ${found} / 4.` },
+        { speaker: 'SYSTEM', text: `${REFERENCES[missing].label} // NICHT ERFASST.` },
+      ]);
+      return;
+    }
+
     S.hintStep = Math.min(S.hintStep + 1, 3);
     if (S.hintStep === 1) {
       GameEngine.dialogue.load([
@@ -700,7 +751,7 @@ const Chapter0 = (() => {
       ]);
     } else {
       GameEngine.dialogue.load([
-        { speaker: 'SYSTEM', text: 'FORMKENNZAHL = ANZAHL DER MARKIERTEN ECKPUNKTE. DER REFERENZPUNKT ZÄHLT ALS EINE.' },
+        { speaker: 'SYSTEM', text: 'FORMKENNZAHL = ANZAHL DER MARKIERTEN ECKPUNKTE. DER REFERENZPUNKT ZÄHLT ALS EINS.' },
         { speaker: 'SYSTEM', text: 'ORDNUNG: AUFSTEIGEND.' },
       ]);
     }
@@ -718,14 +769,22 @@ const Chapter0 = (() => {
     if (S.unlocked) { showChapterComplete(); return; }
     const modal = document.getElementById('puzzleModal');
     if (!modal) return;
+    // Re-entry — a double tap on the seal, or the ring lines finishing while
+    // the modal is already up — must not wipe marks the player has entered.
+    if (isPuzzleOpen()) return;
     modal.classList.remove('hidden');
+    setBackgroundInert(true);
     resetPuzzle();
-    setTimeout(() => modal.querySelector('.puzzle-key')?.focus(), 60);
+    // the card, not the first key: a keyboard player's one extra Space after
+    // the ring lines used to enter ⬡ before they had even looked at the modal
+    setTimeout(() => modal.querySelector('.puzzle-card')?.focus({ preventScroll: true }), 60);
   }
 
   function closePuzzle() {
     if (S.unlocked) return;                     // never close mid-release
+    clearTimeout(S.failTimer); S.failTimer = null;
     document.getElementById('puzzleModal')?.classList.add('hidden');
+    setBackgroundInert(false);
     document.querySelector('.door-hotspot')?.focus();
   }
 
@@ -737,18 +796,21 @@ const Chapter0 = (() => {
 
     S.sequence.push(btn.dataset.symbol);
     updateDisplay();
-    setStatus(`REFERENZEN: ${S.sequence.length} / ${SEQUENCE_LENGTH}`, '');
+    setStatus(`EINGABE: ${S.sequence.length} / ${SEQUENCE_LENGTH}`, '');
 
     if (S.sequence.length === SEQUENCE_LENGTH) {
       S.inputLocked = true;                     // one validation per sequence
+      setKeysLocked(true);
       GameEngine.puzzle.submit(S.sequence.join(''));
     }
   }
 
   function resetPuzzle() {
     if (S.unlocked) return;
+    clearTimeout(S.failTimer); S.failTimer = null;   // a wipe scheduled by a failure must not land on fresh input
     S.sequence = [];
     S.inputLocked = false;
+    setKeysLocked(false);
     const display = document.getElementById('puzzleDisplay');
     display?.classList.remove('correct', 'wrong');
     updateDisplay();
@@ -789,17 +851,22 @@ const Chapter0 = (() => {
     // The mechanism stays neutral. It just doesn't move.
     if (S.attempts === 2) setNote('REFERENZFOLGE // AUFSTEIGEND.');
     if (S.attempts === 3) {
-      const hb = document.getElementById('hintBtn');
+      // the HUD's button sits under the modal backdrop; the modal has its own
+      const hb = document.getElementById('puzzleHintBtn') || document.getElementById('hintBtn');
       hb?.classList.add('nudge');
       setTimeout(() => hb?.classList.remove('nudge'), 1800);
     }
-    if (S.attempts >= 4) setNote('SCHLEUSENRING // WEITERHIN GEDULDIG.');
+    // the direction reminder stays — the player failing most needs it most
+    if (S.attempts >= 4) setNote('REFERENZFOLGE // AUFSTEIGEND. SCHLEUSENRING // WEITERHIN GEDULDIG.');
 
-    setTimeout(() => {
+    clearTimeout(S.failTimer);
+    S.failTimer = setTimeout(() => {
+      S.failTimer = null;
       display?.classList.remove('wrong');
       setStatus('MECHANIK ZURÜCKGESETZT.', '');
       S.sequence = [];
       S.inputLocked = false;
+      setKeysLocked(false);
       updateDisplay();
       setTimeout(() => { if (!S.sequence.length && !S.unlocked) setStatus('BEREIT.', ''); }, 700);
     }, 780);
@@ -813,6 +880,10 @@ const Chapter0 = (() => {
     // chapter still counts as finished.
     GameEngine.state.setFlag(DOOR_FLAG);
     GameEngine.state.markChapterComplete(CHAPTER_ID);
+    // The achievement is earned now, not in 2.6 s; the toast queue holds the
+    // card back so it still lands in the quiet moment rather than over the
+    // door text.
+    try { GameEngine.toasts.hold(); GameEngine.achievements.unlock('ch0_complete'); } catch (_) {}
 
     document.getElementById('puzzleDisplay')?.classList.add('correct');
     setNote('');
@@ -820,6 +891,10 @@ const Chapter0 = (() => {
     cueMechanism();
 
     setTimeout(() => {
+      // a hint line left up would sit over the cinematic, hold the toast back
+      // and be cut off by the release text — the only lines possible here
+      // are callback-less hint lines, so simply close them
+      try { GameEngine.dialogue.hide(); } catch (_) {}
       document.getElementById('puzzleModal')?.classList.add('hidden');
       setAwake(true);
       // #sceneCanvas, not #sceneWrapper — the wrapper's own sceneFadeIn rule
@@ -833,9 +908,13 @@ const Chapter0 = (() => {
     setTimeout(() => { cueKlang(); klangCaption(); }, 1900);
 
     // the toast lands in the quiet, not over the door text
-    setTimeout(() => GameEngine.achievements.unlock('ch0_complete'), 2600);
+    setTimeout(() => { try { GameEngine.toasts.release(); } catch (_) {} }, 2600);
 
     setTimeout(() => {
+      // the room takes clicks again only now: two quick taps on the seal
+      // during the cinematic used to show the completion card first, with
+      // the release lines playing unseen beneath it
+      setBackgroundInert(false);
       GameEngine.dialogue.load([
         { speaker: 'SYSTEM', text: 'SCHLEUSENRING // FREIGEGEBEN.' },
         { speaker: 'SYSTEM', text: 'REAKTIVIERUNGSPROTOKOLL // AKTIV.' },
@@ -853,6 +932,8 @@ const Chapter0 = (() => {
     // the door's behaviour changes on unlock — its screen-reader label should too
     document.querySelector('.door-hotspot')
       ?.setAttribute('aria-label', on ? 'Sektor 01 betreten' : 'Schleusenring untersuchen');
+    const tag = document.querySelector('.door-hotspot .hotspot-label');
+    if (tag) tag.textContent = on ? 'SEKTOR 01' : 'SCHLEUSENRING';
     const dust = document.getElementById('phDust');
     if (on && dust) {
       dust.classList.remove('falling');
@@ -897,7 +978,9 @@ const Chapter0 = (() => {
     if (!cc) return;
 
     const m = GameEngine.progress.mainProgress();
-    if (prog) prog.textContent = `FORTSCHRITT: ${m.done} / ${m.total} SEKTOREN`;
+    // Sektor 00 is the entrance, not one of the eight — a card that celebrates
+    // an open door should not open with a zero.
+    if (prog) prog.textContent = m.done ? `FORTSCHRITT: ${m.done} / ${m.total} SEKTOREN` : '';
 
     cc.classList.remove('hidden');
     setTimeout(() => document.getElementById('ccEnter')?.focus(), 700);

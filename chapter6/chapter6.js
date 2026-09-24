@@ -138,6 +138,10 @@ const Chapter6 = (() => {
   function guarded(fn) {
     return (...a) => {
       if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch (_) {} return; }
+      // a story choice is a question the room waits for; an optional talk
+      // menu simply closes when the player turns to the room instead
+      const CHP = GameEngine.chapter;
+      if (CHP.choicesOpen()) { if (!CHP.choicesDismissable()) return; CHP.hideChoices(); }
       return fn(...a);
     };
   }
@@ -382,7 +386,10 @@ const Chapter6 = (() => {
     if (d) {
       S.rule = d.rule; S.archive = d.archive; S.tests = d.tests;
       S.phase = (d.phase === 2 ? 2 : 1);
-      S.metAsp = !!d.metAsp; S.predictInput = d.predictInput || null;
+      // A checkpoint is only written once the experiment is running, with ASP
+      // at the desk from the first line; a reload before the "Moin" exchange
+      // must not leave the unit (and its coaching) un-met for the whole run.
+      S.metAsp = true; S.predictInput = d.predictInput || null;
       S.finalInputs = Array.isArray(d.finalInputs) ? d.finalInputs : null;
       S.sigFound = !!d.sigFound; S.anomalySeen = !!d.anomalySeen; S.wildRuns = +d.wildRuns || 0;
       loadRoom();
@@ -813,9 +820,16 @@ const Chapter6 = (() => {
     renderBB();
   }
 
+  // A wrong commit draws a fresh input at once, so the second tap of a double
+  // tap was judged against numbers the player had not even seen yet.
+  let lastFailAt = 0;
+  const justFailed = () => Date.now() - lastFailAt < 700;
+
   function commitPredict() {
+    if (justFailed()) return;
     const want = evalRule(S.predictInput, S.rule);
     if (!sameSeq(predictOut, want)) {
+      lastFailAt = Date.now();
       setStatus('bbStatus', 'MODELL NICHT BESTÄTIGT.', 'error');
       tone({ freq: 120, type:'sawtooth', dur: 0.2, vol: 0.07 });
       drawPredictInput();               // a fresh input, so guessing gains nothing
@@ -924,8 +938,10 @@ const Chapter6 = (() => {
   }
 
   function commitFinal() {
+    if (justFailed()) return;
     const ok = S.finalInputs.every((inp, k) => sameSeq(finalOut[k], evalRule(inp, S.rule)));
     if (!ok) {
+      lastFailAt = Date.now();
       setStatus('bbStatus', 'MODELL NICHT BESTÄTIGT.', 'error');
       tone({ freq: 120, type:'sawtooth', dur: 0.2, vol: 0.07 });
       drawFinal();
@@ -941,6 +957,8 @@ const Chapter6 = (() => {
     // Persist before any narration runs.
     S.solved = true;
     try { GameEngine.state.markChapterComplete(CHAPTER_ID); } catch (_) {}
+    // earned with the completion — a reload during the ending must not lose it
+    try { GameEngine.achievements.unlock('ch6_complete'); } catch (_) {}
     save();
     closeModal();
     CH.setProgress(82);
@@ -1076,7 +1094,7 @@ const Chapter6 = (() => {
       { speaker:'V-TGM',  text:'"Delete it."', subtitle:'Lösch ihn.' },
       { speaker:'R-3MI',  text:'„Warum so schnell?"' },
       { speaker:'SYSTEM', text:'V-TGM antwortet nicht. Der Datensatz gibt ein Fragment aus.' },
-      { speaker:'V-TGM',  text:'"…they are listening. both. from the start. when they guide you…"', subtitle:'…sie hören zu. beide. seit anfang an. Wenn sie dich führen.' },
+      { speaker:'V-TGM',  text:'"…they are listening. both. from the start. when they guide you…"', subtitle:'…sie hören zu. Beide. Seit Anfang an. Wenn sie dich führen…' },
       { speaker:'SYSTEM', text:'Stille in der Kammer.' },
       { speaker:'R-3MI',  text:'„Wessen Test war das?"' },
       { speaker:'ASP-1024', text:'„Gute Frage."' },
@@ -1146,6 +1164,7 @@ const Chapter6 = (() => {
     if (who === 'guest') choices.unshift({ key:'__coach', label:'[ Wie geht man das an? ]', seen:false, lines: coachLines() });
     choices.push({ key:'__leave', label:'[ Nichts. Weiter. ]', seen:false, lines: [] });
     CH.showChoices({
+      dismissable: true,
       prompt: who === 'guest' ? 'ASP-1024 ANSPRECHEN:' : who === 'r3mi' ? 'R-3MI ANSPRECHEN:' : 'V-TGM ANSPRECHEN:',
       hint: 'OPTIONAL.',
       choices,
@@ -1199,6 +1218,9 @@ const Chapter6 = (() => {
   };
 
   function useHint(who) {
+    // a tap while a line is up advances it — a hint started here would replace
+    // the line's continuation, and a double tap would spend two hints
+    if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch (_) {} return; }
     const ladder = HINTS[S.hints.active] || HINTS.phase1;
     if (S.hints.step >= HINT_MAX) {
       if (who === 'guest') { say(coachLines()); return; }

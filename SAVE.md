@@ -44,11 +44,18 @@ wie sein eigener Inhalt das hergibt. Geprüft wird:
 * **Die versteckte Kammer.** `truth_revealed` verlangt Sektor 08 **und** alle
   fünf Fremdsignale. Ein einzelnes Boolean schaltet sie nie frei.
 * **Erfolge.** `chN_complete` verlangt `chN`, `signal_all` verlangt fünf
-  Signale, die Kammer-Erfolge verlangen `truth_revealed`.
+  Signale, `chamber` verlangt, dass die Kammer erreichbar ist (Sektor 08 und
+  alle fünf Signale), die übrigen Kammer-Erfolge verlangen `truth_revealed`.
 
 Widersprüche werden **nach unten normalisiert**, nicht abgelehnt: der nicht
 belegte Anspruch fällt weg, der Rest bleibt spielbar. Der Import sagt danach,
 was übernommen wurde und was nicht.
+
+Umgekehrt gilt auch: **was belegt ist, fehlt nicht.** Ein abgeschlossener
+Sektor trägt seinen `chN_complete`-Erfolg, gefundene Signale tragen
+`signal_first` bzw. `signal_all`. Kapitel speichern ihren Abschluss, bevor
+ihr Ende abgespielt ist — wer mittendrin neu lädt, bekam den Erfolg früher nie.
+Das wird beim Laden stillschweigend nachgetragen, ohne Einblendung.
 
 Zusätzlich trägt jeder exportierte Code eine **Prüfsumme**. Stimmt sie nicht,
 wird der Spielstand trotzdem eingespielt, aber als „nach dem Export verändert"

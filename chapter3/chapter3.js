@@ -75,8 +75,21 @@ const Chapter3 = (() => {
   function guarded(fn) {
     return (...args) => {
       if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch(_) {} return; }
+      // a story choice is a question the room waits for; an optional talk
+      // menu simply closes when the player turns to the room instead
+      if (choicesOpen()) { if (!choicesDismissable()) return; hideChoices(); }
       return fn(...args);
     };
+  }
+
+  /** True while a choice menu is up (including its short fade-out). */
+  function choicesOpen() {
+    const o = document.getElementById('choiceOverlay');
+    return !!(o && !o.classList.contains('hidden'));
+  }
+  /** True when the open menu is an optional conversation, not a story beat. */
+  function choicesDismissable() {
+    return document.getElementById('choiceOverlay')?.dataset.kind === 'talk';
   }
 
   function addHotspot(cfg) {
@@ -111,7 +124,7 @@ const Chapter3 = (() => {
   function showLux(v)    { document.getElementById('luxIcon').classList.toggle('hidden', !v); }
   function setProgress(pct) {
     const el = document.getElementById('reactProgress');
-    if (el) el.textContent = `REAKTIVIERUNG: ${pct}%`;
+    if (el) el.textContent = `REAKTIVIERUNG: ${pct} %`;
   }
   function playSound(src) { try { GameEngine.audio.sfx(src); } catch(_) {} }
   function tone(o)        { try { GameEngine.audio.tone(o); } catch(_) {} }
@@ -146,6 +159,7 @@ const Chapter3 = (() => {
 
     prompt.textContent = cfg.prompt || 'DEINE REAKTION:';
     hint.textContent   = cfg.hint   || '';
+    overlay.dataset.kind = cfg.dismissable ? 'talk' : 'story';
     btns.innerHTML     = '';
 
     cfg.choices.forEach(c => {
@@ -153,20 +167,33 @@ const Chapter3 = (() => {
       btn.className   = 'choice-btn' + (c.seen ? ' seen' : '');
       btn.textContent = c.label;
       btn.addEventListener('click', () => {
+        // the same guard as every hotspot — a pick over a running line would
+        // replace that line's continuation
+        if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch(_) {} return; }
+        if (btn.dataset.used) return;
+        btn.dataset.used = '1';
         c.seen = true;
         hideChoices();
         say(c.lines || [], () => { if (cfg.onPick) cfg.onPick(c.key); });
-      }, { once: true });
+      });
       btns.appendChild(btn);
     });
 
+    clearTimeout(choiceHideTimer);   // a menu re-opened mid-fade must not vanish
     overlay.classList.remove('hidden');
-    requestAnimationFrame(() => overlay.classList.add('visible'));
+    requestAnimationFrame(() => {
+      overlay.classList.add('visible');
+      // the panel, not its first button: Tab reaches the options next and
+      // one Space too many (the strip's own key) picks nothing
+      overlay.querySelector('.choice-panel')?.focus({ preventScroll: true });
+    });
   }
+  let choiceHideTimer = null;
   function hideChoices() {
     const overlay = document.getElementById('choiceOverlay');
     overlay.classList.remove('visible');
-    setTimeout(() => overlay.classList.add('hidden'), 410);
+    clearTimeout(choiceHideTimer);
+    choiceHideTimer = setTimeout(() => overlay.classList.add('hidden'), 410);
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -237,8 +264,7 @@ const Chapter3 = (() => {
     // callback must never cost the level that was already reached.
     if (stage) {
       bel = { stage: 0, reserve: RESERVE_MAX, busy: false, observedOnce: false, answer: null, event: null, wrong: 0 };
-      document.getElementById('belModal').classList.remove('hidden');
-      document.getElementById('hintBar').classList.remove('hidden');
+      showBel(true);
       startStage(stage);
     }
     say([
@@ -453,7 +479,7 @@ const Chapter3 = (() => {
       { speaker:'SYSTEM', text:'HÄSSLICH. ZWECKMÄSSIG. ZU LAUT.' },
       { speaker:'SYSTEM', text:'ABER UM 17 UHR STEHT DAS LICHT GENAU RICHTIG.' },
       { speaker:'L-UX',   text:'„Das ist kein Protokoll mehr, oder?"' },
-      { speaker:'V-TGM',  text:'"It stopped being one around entry sixty."', subtitle:'Das hat es ungefähr ab Eintrag sechzig aufgehört.' },
+      { speaker:'V-TGM',  text:'"It stopped being one around entry sixty."', subtitle:'Ungefähr ab Eintrag sechzig nicht mehr.' },
     ],
   ];
 
@@ -532,7 +558,7 @@ const Chapter3 = (() => {
     say([
       { speaker:'SYSTEM', text:'Eine einzelne Linse flackert anders als die anderen. Nicht zufällig. Ein Rhythmus.' },
       { speaker:'SYSTEM', text:'Dahinter, schwach eingebrannt, ein Textfragment.' },
-      { speaker:'V-TGM',  text:'"…not everything that helps wants to save. two units are listening in…"', subtitle:'…nicht alles, was hilft, will retten. zwei Einheiten hören mit.' },
+      { speaker:'V-TGM',  text:'"…not everything that helps wants to save. two units are listening in…"', subtitle:'…nicht alles, was hilft, will retten. Zwei Einheiten hören mit…' },
       { speaker:'SYSTEM', text:'Kurze Stille.' },
       { speaker:'L-UX',   text:'„Das ist neu."' },
       { speaker:'R-3MI',  text:'„Neu?"' },
@@ -591,6 +617,7 @@ const Chapter3 = (() => {
   function clickRobot(who) {
     if (who === 'lux' && !S.metLux) return;
     if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch(_) {} return; }
+    if (choicesOpen() && !choicesDismissable()) return;   // a story choice is up (keyboard can still reach the icons)
 
     const topics = TALK[who] || [];
     const choices = topics.map(t => {
@@ -601,7 +628,7 @@ const Chapter3 = (() => {
 
     const title = who === 'lux' ? 'L-UX ANSPRECHEN:' : who === 'r3mi' ? 'R-3MI ANSPRECHEN:' : 'V-TGM ANSPRECHEN:';
     askOnce({
-      prompt: title, hint: 'OPTIONAL.', choices,
+      prompt: title, hint: 'OPTIONAL.', dismissable: true, choices,
       onPick: (key) => {
         if (key === '__leave') return;
         S.talkSeen[who + ':' + key] = true;
@@ -638,8 +665,9 @@ const Chapter3 = (() => {
       return;
     }
     if (S.solved) { finishChapter(); return; }
-    if (bel) {                           // already open — just re-focus it
-      document.getElementById('belModal').classList.remove('hidden');
+    if (bel) {                           // left with [ ZURÜCK ] — pick up where it stood
+      showBel(true);
+      healPending();
       return;
     }
     bel = { stage: 0, reserve: RESERVE_MAX, busy: false, observedOnce: false, answer: null, event: null, wrong: 0 };
@@ -653,14 +681,39 @@ const Chapter3 = (() => {
       { speaker:'L-UX',  text:'„Dann bist du langsam. Das kostet nichts."' },
       { speaker:'L-UX',  text:'„Nochmal hinschauen kostet."' },
     ], () => {
-      document.getElementById('belModal').classList.remove('hidden');
-      document.getElementById('hintBar').classList.remove('hidden');
+      showBel(true);
       startStage(1);
     });
   }
 
+  /** The array takes the room: scene inert, hint bar up, focus on the card. */
+  function showBel(open) {
+    document.getElementById('belModal')?.classList.toggle('hidden', !open);
+    document.getElementById('hintBar')?.classList.toggle('hidden', !open);
+    try { document.getElementById('sceneWrapper').inert = !!open; } catch (_) {}
+    if (open) setTimeout(() => document.querySelector('#belModal .puzzle-card')?.focus({ preventScroll: true }), 60);
+  }
+  /**
+   * A stage change or an overexposure whose closing lines lost their
+   * continuation leaves the array busy with nothing left to un-busy it. The
+   * stage it was heading for is latched in bel.pending, so any control of the
+   * array simply starts it. Returns true when it did.
+   */
+  function healPending() {
+    if (!bel || !bel.pending || !bel.busy || dialogueBusy()) return false;
+    startStage(bel.pending);
+    return true;
+  }
+  /** Back to the room mid-array. Not while a recording or a stage change is running. */
+  function closeBel() {
+    if (healPending()) return;
+    if (!bel || bel.busy || S.solved) return;
+    showBel(false);
+  }
+
   function startStage(stage) {
     clearBelTimers();
+    bel.pending      = 0;
     bel.stage        = stage;
     bel.reserve      = RESERVE_MAX;
     bel.busy         = false;
@@ -820,6 +873,7 @@ const Chapter3 = (() => {
 
   // ─── Observation playback ───────────────────────────────────────
   function observe() {
+    if (healPending()) return;
     if (!bel || bel.busy || S.solved) return;
 
     if (bel.observedOnce) {
@@ -1096,6 +1150,7 @@ const Chapter3 = (() => {
 
   // ─── Commit ─────────────────────────────────────────────────────
   function submit() {
+    if (healPending()) return;
     if (!bel || bel.busy || S.solved) return;
     if (!bel.observedOnce) {
       setBelStatus('NOCH KEINE AUFNAHME. ZUERST BEOBACHTEN.', 'warn');
@@ -1154,6 +1209,11 @@ const Chapter3 = (() => {
         : [ { speaker:'SYSTEM',text:'BLENDEN-EBENE 2 KALIBRIERT.' },
             { speaker:'V-TGM', text:'"Now the spectrum."', subtitle:'Jetzt das Spektrum.' },
             { speaker:'L-UX',  text:'„Farbe ist selten nur Farbe."' } ];
+      // Latched before the lines (house rule): a reload during them resumes
+      // on the next stage, and a lost continuation heals on re-open.
+      bel.stage = stage + 1;
+      bel.pending = stage + 1;
+      saveState();
       say(lines, () => startStage(stage + 1));
     } else {
       solveBelichtung();
@@ -1172,6 +1232,7 @@ const Chapter3 = (() => {
 
     const firstFail = !S.react.failedOnce;
     S.react.failedOnce = true;
+    bel.pending = bel.stage;   // same stage, fresh event — also if the lines below lose their continuation
 
     say([
       { speaker:'SYSTEM', text:'AUFNAHME ÜBERBELICHTET. BEOBACHTUNG UNBRAUCHBAR.' },
@@ -1212,6 +1273,7 @@ const Chapter3 = (() => {
   }
 
   function belReset() {
+    if (healPending()) return;
     if (!bel || bel.busy || S.solved) return;
     bel.answer = blankAnswer(bel.stage);
     renderAnswer();
@@ -1250,12 +1312,13 @@ const Chapter3 = (() => {
     S.solved = true;
     S.lit    = true;
 
-    // Persist before anything narrative runs.
+    // Persist before anything narrative runs — the achievement too, or a
+    // reload during the ending loses it for good.
     GameEngine.state.markChapterComplete(CHAPTER_ID);
+    try { GameEngine.achievements.unlock('ch3_complete'); } catch(_) {}
     clearSavedState();
 
-    document.getElementById('belModal').classList.add('hidden');
-    document.getElementById('hintBar').classList.add('hidden');
+    showBel(false);
     bel = null;
 
     setScene('obs-lit');
@@ -1362,6 +1425,9 @@ const Chapter3 = (() => {
   function useHint(who) {
     const ladder = HINTS[S.hints.active];
     if (!ladder) return;
+    // A tap while a line is up advances it. Starting a hint here replaced the
+    // line's continuation — the stage change after a solve — and froze the array.
+    if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch(_) {} return; }
 
     if (S.hints.step >= HINT_MAX) {
       const done = {
@@ -1485,6 +1551,8 @@ const Chapter3 = (() => {
     document.getElementById('belObserveBtn')?.addEventListener('click', () => observe());
     document.getElementById('belSubmitBtn')?.addEventListener('click', () => submit());
     document.getElementById('belResetBtn')?.addEventListener('click', () => belReset());
+    document.getElementById('belBackBtn')?.addEventListener('click', () => closeBel());
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeBel(); });
 
     showTitleCard();
   }

@@ -416,9 +416,10 @@
       const current = !nav.allDone && i === nav.nextIdx;
       const locked  = !done && !current;
       const node = document.createElement(locked ? 'span' : 'a');
-      node.className = 'sector-node ' + (done ? 'done' : current ? 'current' : 'locked');
-      node.textContent = done ? '✓' : c.n;
-      node.setAttribute('title', `Kapitel ${c.n} — ${c.name}`);
+      const entrance = c.id === 'ch0';
+      node.className = 'sector-node ' + (done ? 'done' : current ? 'current' : 'locked') + (entrance ? ' entrance' : '');
+      node.textContent = entrance ? '⬡' : done ? '✓' : c.n;
+      node.setAttribute('title', entrance ? `Kapitel ${c.n} — ${c.name} (Eingang)` : `Kapitel ${c.n} — ${c.name}`);
       if (!locked) node.href = c.href;
       track.appendChild(node);
     });
@@ -438,9 +439,8 @@
   }
 
   // ─── ZIELDATEN ───────────────────────────────────────────────
-  // Once a chapter has reconstructed a set of coordinates, the terminal keeps
-  // them to hand — nobody should have to replay anything to read them back.
-  // Two separate sets, always labelled, never merged.
+  // Once Chapter 8 has reconstructed the coordinates, the terminal keeps them
+  // to hand — nobody should have to replay anything to read them back.
   function initZieldaten() {
     const host = document.getElementById('sectorMap');
     if (!host || typeof GameEngine === 'undefined') return;
@@ -495,7 +495,6 @@
     });
   }
 
-  // ─── CHAPTER PROGRESS INDICATOR ──────────────────────────────
   // ─── PROGRESS INDICATOR ──────────────────────────────────────
   // Three separate readings, never blended into one percentage: how many
   // sectors are behind the player, how much of the facility is actually

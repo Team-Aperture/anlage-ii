@@ -138,6 +138,10 @@ const Chapter8 = (() => {
   function guarded(fn) {
     return (...a) => {
       if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch (_) {} return; }
+      // a story choice is a question the room waits for; an optional talk
+      // menu simply closes when the player turns to the room instead
+      const CHP = GameEngine.chapter;
+      if (CHP.choicesOpen()) { if (!CHP.choicesDismissable()) return; CHP.hideChoices(); }
       return fn(...a);
     };
   }
@@ -793,7 +797,7 @@ const Chapter8 = (() => {
   const SCENE_LINES = {
     shelf: [
       [ { speaker:'SYSTEM', text:'Regale, die weiter nach oben gehen, als das Licht reicht. Jede Schachtel beschriftet, viele davon aufgerissen. Auf dem Boden liegen sortierte Häufchen: Kanten links, Flächen rechts, „unklar" in der Mitte.' },
-        { speaker:'AGN-H3R', text:'„Das Meiste hier ist beschädigt. Wasser, Frost, dreißig Jahre ohne Strom. Ich mache aus Resten wieder Akten. Manchmal dauert eine Akte ein Jahr."' } ],
+        { speaker:'AGN-H3R', text:'„Das Meiste hier ist beschädigt. Wasser, Frost, fast acht Jahre ohne Strom. Ich mache aus Resten wieder Akten. Manchmal dauert eine Akte ein Jahr."' } ],
       [ { speaker:'R-3MI', text:'„Wie viele Akten habt ihr hier?"' },
         { speaker:'AGN-H3R', text:'„Zu viele."' },
         { speaker:'R-3MI', text:'„Endlich eine präzise Antwort."' },
@@ -904,7 +908,7 @@ const Chapter8 = (() => {
     vtgm: [
       [ { speaker:'V-TGM', text:'"The sector tags eliminate three positions on their own. Start there, not with the pictures."', subtitle:'Die Sektorangaben streichen von allein drei Positionen. Fang damit an, nicht mit den Bildern.' } ],
       [ { speaker:'V-TGM', text:'"Every level holds one of each checksum. That is not decoration, it is a constraint."', subtitle:'Jede Ebene enthält jede Prüfsumme einmal. Das ist keine Deko, das ist eine Bedingung.' } ],
-      [ { speaker:'V-TGM', text:'"You have done observation, decomposition, continuity, comparison and verification. This is all five at once."', subtitle:'Du hattest Beobachtung, Zerlegung, Kontinuität, Vergleich und Prüfung. Das hier ist alles fünf gleichzeitig.' } ],
+      [ { speaker:'V-TGM', text:'"You have done observation, decomposition, continuity, comparison and verification. This is all five at once."', subtitle:'Du hattest Beobachtung, Zerlegung, Kontinuität, Vergleich und Prüfung. Hier brauchst du alle fünf gleichzeitig.' } ],
       [ { speaker:'V-TGM', text:'"He is not testing you. He genuinely cannot finish this alone."', subtitle:'Er prüft dich nicht. Er kommt hier allein wirklich nicht weiter.' } ],
     ],
     guest: [
@@ -942,6 +946,11 @@ const Chapter8 = (() => {
   function solveBoard() {
     if (S.solved) return;
     S.solved = true;                 // latched before anything async runs
+    // The sector is finished the moment the board holds — not twenty seconds
+    // later at the end of the finale. Completion also commits the calibration
+    // fragment and the coordinates flag, so a reload in between can no longer
+    // hand back a re-scrambled board or an empty coordinate readout.
+    try { GameEngine.state.markChapterComplete(CHAPTER_ID); } catch (_) {}
     // Nothing pops up over the lock-in, the reconstruction or the coordinates.
     try { GameEngine.toasts.hold(); } catch (_) {}
     B.sel = -1;
@@ -967,11 +976,11 @@ const Chapter8 = (() => {
     closeBoard();
     el('rkModal')?.classList.remove('done');
     S.act = 4;
-    S.ziel = reconstructZiel(kalOrder());
+    S.ziel = (P && B) ? reconstructZiel(kalOrder()) : '';
+    if (!S.ziel) { try { S.ziel = GameEngine.state.zieldaten(); } catch (_) {} }
     try {
       GameEngine.state.setFlag('zieldaten', true);
     } catch (_) {}
-    try { GameEngine.achievements.unlock('coordinates'); } catch (_) {}
     save();
     CH.setScene('archive-full');
     loadRoom();
@@ -1167,6 +1176,9 @@ const Chapter8 = (() => {
   ];
 
   function useHint(who) {
+    // a tap while a line is up advances it — a hint started here would replace
+    // the line's continuation, and a double tap would spend two hints
+    if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch (_) {} return; }
     if (!P) return;
     if (S.solved) { say([{ speaker:'AGN-H3R', text:'„Fertig ist fertig."' }]); return; }
     if (S.hints.step >= HINT_MAX) {
@@ -1380,6 +1392,15 @@ const Chapter8 = (() => {
   // ARRIVAL
   // ═══════════════════════════════════════════════════════════════
   function begin() {
+    // the board held, but the finale was cut off by a reload: play it now
+    if (S.replayFinale) {
+      S.replayFinale = false;
+      CH.setScene('archive-work');
+      CH.showRobots(true);
+      CH.showGuest(true);
+      finale();
+      return;
+    }
     if (S.solved) { returning(); return; }
     if (S.presorted) { midway(); return; }
     CH.setScene('archive-work');
@@ -1449,7 +1470,18 @@ const Chapter8 = (() => {
     if (!GameEngine.progress.require('ch8')) return;
     const done = GameEngine.state.isChapterComplete(CHAPTER_ID);
     const cp = loadCheckpoint();
-    if (done) {
+    if (cp && cp.d.solved) {
+      // The board held, but the ending never finished playing (a reload in the
+      // twenty seconds between the lock-in and the card). Never re-scramble a
+      // solved board: finish the sector and play the ending from here. A save
+      // from before the completion was latched at the solve gets it now.
+      try { GameEngine.state.markChapterComplete(CHAPTER_ID); } catch (_) {}
+      S.solved = true; S.presorted = true; S.act = 3; S.replayFinale = true;
+      S.refused = !!cp.d.refused;
+      S.hintsUsed = Math.max(0, cp.d.hintsUsed | 0);
+      P = cp.inst;
+      B = null;   // the finale reads the canonical coordinates, never a board state
+    } else if (done) {
       S.solved = true; S.presorted = true; S.act = 4; S.ended = true;
       try { S.ziel = GameEngine.state.zieldaten(); } catch (_) {}
       clearSave();

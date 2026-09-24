@@ -17,7 +17,7 @@ const GameEngine = (() => {
   'use strict';
 
   const SAVE_KEY = 'ka2_save_v1';
-  const VERSION  = '1.1.0';   // what the game calls itself; NOT the save schema
+  const VERSION  = '1.0.0-pre';   // what the game calls itself; NOT the save schema
 
   // ═══════════════════════════════════════════════════════════════
   // STATE MANAGER
@@ -128,7 +128,10 @@ const GameEngine = (() => {
     const SIG_IDS = ['sig_01','sig_02','sig_03','sig_04','sig_05'];
     const SIG_CH  = { sig_01:3, sig_02:4, sig_03:5, sig_04:6, sig_05:7 };
     // Achievements that can only exist once the hidden chamber has been seen.
-    const TRUTH_ACH = ['bonus_found','chamber','truth','said_hiii','will_return','ch9_complete'];
+    // 'chamber' is not here: it is earned by entering the chamber, which only
+    // needs the chamber to be reachable (checked below) — tying it to the truth
+    // flag stripped it on every load and re-toasted it on every re-entry.
+    const TRUTH_ACH = ['bonus_found','truth','said_hiii','will_return','ch9_complete'];
 
     function normalise(d) {
       const dropped = [];
@@ -166,6 +169,10 @@ const GameEngine = (() => {
       if (d.flags.truth_revealed && !chamberEarned) { delete d.flags.truth_revealed; drop('truth_revealed'); }
       if (d.flags.zieldaten && !done.has('ch8'))    { delete d.flags.zieldaten;      drop('zieldaten'); }
 
+      // ── retired achievements leave quietly ('coordinates' was folded into
+      //    ch8_complete, which unlocks at the same moment) ──
+      d.achievementsUnlocked = d.achievementsUnlocked.filter(a => a !== 'coordinates');
+
       // ── achievements need the thing they are awarded for ──
       d.achievementsUnlocked = d.achievementsUnlocked.filter(a => {
         const m = /^ch(\d)_complete$/.exec(a);
@@ -173,8 +180,19 @@ const GameEngine = (() => {
         if (a === 'signal_first' && sigs < 1)                       { drop(a); return false; }
         if (a === 'signal_all'   && sigs < SIG_IDS.length)          { drop(a); return false; }
         if (TRUTH_ACH.indexOf(a) >= 0 && !d.flags.truth_revealed)   { drop(a); return false; }
+        if (a === 'chamber' && !chamberEarned)                      { drop(a); return false; }
         return true;
       });
+      // ── …and the other way round: a finished chapter carries its chapter
+      // achievement. Chapters save their completion before their ending plays,
+      // so a reload (or a menu visit) in the middle of an ending used to lose
+      // the achievement for good. Repaired silently on every load and import.
+      for (let n = 0; n <= 8; n++) {
+        const a = 'ch' + n + '_complete';
+        if (done.has('ch' + n) && d.achievementsUnlocked.indexOf(a) < 0) d.achievementsUnlocked.push(a);
+      }
+      if (sigs >= 1 && d.achievementsUnlocked.indexOf('signal_first') < 0) d.achievementsUnlocked.push('signal_first');
+      if (sigs >= SIG_IDS.length && d.achievementsUnlocked.indexOf('signal_all') < 0) d.achievementsUnlocked.push('signal_all');
 
       return { data: d, dropped };
     }
@@ -408,8 +426,11 @@ const GameEngine = (() => {
 
     function pump() {
       if (timer) return;
+      // No immediate step: a chapter unlocks an arrival achievement and starts
+      // its opening line in the same tick, and showing the card right now
+      // would land it on top of that line. By the first tick the strip is
+      // visible and busy() holds the card until the line is done.
       timer = setInterval(step, 350);
-      step();
     }
 
     function step() {
@@ -579,6 +600,12 @@ const GameEngine = (() => {
       bar.querySelector('#nsSignals').addEventListener('click', () => {
         try { signals.showOverlay(); } catch (_) {}
       });
+      // on a phone the bar wraps to three rows and lands on the robot icons;
+      // publish its height so they can step above it (global.css)
+      document.body.classList.add('ns-up');
+      const pub = () => { try { document.documentElement.style.setProperty('--ns-h', Math.ceil(bar.getBoundingClientRect().height) + 'px'); } catch (_) {} };
+      pub();
+      try { new ResizeObserver(pub).observe(bar); } catch (_) {}
       liftClear(bar);
       window.addEventListener('resize', () => liftClear(bar));
       watchBusy(bar);
@@ -593,7 +620,7 @@ const GameEngine = (() => {
         queued = false;
         const dlg = document.querySelector('.dlg-container');
         const busy = !!(dlg && dlg.classList.contains('visible'))
-                  || !!document.querySelector('.puzzle-modal:not(.hidden), .overlay-panel:not(.hidden), .chapter-complete:not(.hidden)');
+                  || !!document.querySelector('.puzzle-modal:not(.hidden), .overlay-panel:not(.hidden), .chapter-complete:not(.hidden), .choice-overlay.visible');
         if (busy === wasBusy) return;          // only act on the transition
         wasBusy = busy;
         bar.classList.toggle('ns-away', busy);
@@ -620,6 +647,10 @@ const GameEngine = (() => {
         let need = 0;
         document.querySelectorAll('body *').forEach(e => {
           if (e === bar || bar.contains(e) || e.contains(bar)) return;
+          // The dialogue strip is not something to clear: the bar already
+          // steps aside from it (ns-away), and measuring it while it is still
+          // sliding out lifted the bar 165px into the room.
+          if (e.classList.contains('dlg-container')) return;
           const cs = getComputedStyle(e);
           if (cs.position !== 'fixed' || cs.display === 'none' || cs.visibility === 'hidden') return;
           if (parseFloat(cs.opacity) === 0) return;
@@ -658,7 +689,7 @@ const GameEngine = (() => {
       { id: 'ch6_complete',     icon: '◫', title: 'Saubere Methode',      desc: 'Die Blackbox wurde verstanden, ohne geöffnet zu werden.' },
       { id: 'ch7_complete',     icon: '▣', title: 'Echtheitsprüfung',     desc: 'Nicht geglaubt. Überprüft.' },
       { id: 'ch8_complete',     icon: '◍', title: 'Rekonstruktion',       desc: 'Die Zieldaten wurden wiederhergestellt.' },
-      { id: 'ch9_complete',     icon: '✦', title: 'Die ganze Wahrheit',   desc: 'Jeder Sektor, jede Frequenz, und der Raum, den es nicht gibt.' },
+      { id: 'ch9_complete',     icon: '✦', title: 'Die ganze Wahrheit',   desc: 'Jeder Sektor, jede Frequenz und der Raum, den es nicht gibt.' },
       { id: 'signal_first',     icon: '◈', title: 'Frequenz',             desc: 'Erste Signalnische entdeckt.' },
       { id: 'signal_all',       icon: '▲', title: 'Die Übertragung',      desc: 'Alle Signalnischen gefunden.' },
       { id: 'italian_brainrot', icon: '🐪', title: 'Frigo Camelo',        desc: 'F–R–I–G–O. Du weißt, was du getan hast.' },
@@ -670,8 +701,7 @@ const GameEngine = (() => {
       { id: 'truth',            icon: '⌖', title: 'Die Wahrheit',         desc: 'Bis zum Ende zugehört.' },
       { id: 'said_hiii',        icon: '☻', title: 'Hiii.',                desc: 'Am Ende doch noch einmal gegrüßt.' },
       { id: 'will_return',      icon: '↺', title: 'Ich komme zurück',     desc: 'Ein Versprechen, das niemand widerrufen hat.' },
-      { id: 'bonus_found',      icon: '?', title: '???',                  desc: '...' },
-      { id: 'coordinates',      icon: '✦', title: 'Zieldaten erhalten',   desc: 'Die Koordinaten sind bereit.' },
+      { id: 'bonus_found',      icon: '?', title: '???',                  desc: '…' },
     ];
 
     function isUnlocked(id) {
@@ -1012,7 +1042,7 @@ const GameEngine = (() => {
             <div class="dlg-speaker" id="dlgSpeaker"></div>
             <div class="dlg-text"    id="dlgText"></div>
             <div class="dlg-sub"     id="dlgSub"></div>
-            <div class="dlg-advance" id="dlgAdvance">[ WEITER — KLICKEN ODER LEERTASTE ]</div>
+            <div class="dlg-advance" id="dlgAdvance"><span class="adv-fine">[ WEITER — KLICKEN ODER LEERTASTE ]</span><span class="adv-coarse">[ WEITER — TIPPEN ]</span></div>
           </div>
         </div>
       `;
@@ -1029,6 +1059,16 @@ const GameEngine = (() => {
 
     function load(lines, onComplete) {
       _ensureDOM();
+      // A talk menu still open when a scripted line arrives would outlive it,
+      // and a pick from it would replace this line's continuation — close it.
+      // A story choice is a question the line belongs to; it stays.
+      try {
+        const o = document.getElementById('choiceOverlay');
+        if (o && o.dataset.kind === 'talk' && !o.classList.contains('hidden')) {
+          o.classList.remove('visible');
+          setTimeout(() => { if (!o.classList.contains('visible')) o.classList.add('hidden'); }, 410);
+        }
+      } catch (_) {}
       _queue      = lines;
       _index      = 0;
       _onComplete = onComplete || null;
@@ -1059,7 +1099,10 @@ const GameEngine = (() => {
       spkEl.textContent  = line.speaker;
       spkEl.style.color  = colorVal;
       textEl.textContent = '';
-      subEl.textContent  = line.subtitle || '';
+      // a one-word English line ("V-TGM.", "Manchmal.") subtitled with the
+      // same word read as a rendering glitch — keep the data, drop the echo
+      const bare = String(line.text || '').replace(/^["„“]+|["“”]+$/g, '').trim();
+      subEl.textContent  = (line.subtitle && String(line.subtitle).trim() !== bare) ? line.subtitle : '';
       advEl.style.opacity = '0';
 
       // Portrait: a CG image if the line provides one, else an animated face.
@@ -1093,9 +1136,13 @@ const GameEngine = (() => {
     // a modal's action row and makes those buttons unclickable while a line is
     // up. So whenever the strip is visible the page publishes its height and
     // open modals reserve exactly that much room underneath.
-    let _spaceObs = null;
+    let _spaceObs = null, _classObs = null;
     function _syncDlgSpace() {
       try {
+        // a puzzle card on a phone has to clear the hint bar, line or no line
+        const hb = document.querySelector('.hint-bar:not(.hidden)');
+        const hr = hb ? hb.getBoundingClientRect() : null;
+        document.documentElement.style.setProperty('--hint-bottom', (hr && hr.height ? Math.ceil(hr.bottom) : 0) + 'px');
         const up = !!(_container && _container.classList.contains('visible'));
         document.body.classList.toggle('dlg-up', up);
         if (!up) return;
@@ -1104,14 +1151,37 @@ const GameEngine = (() => {
       } catch (_) {}
     }
     function _watchDlgSize() {
-      if (_spaceObs || !_container) return;
-      try {
-        // The box grows as a line types and as it wraps, so measure it live.
-        _spaceObs = new ResizeObserver(_syncDlgSpace);
-        _spaceObs.observe(_container);
-      } catch (_) { _spaceObs = null; }
+      if (!_spaceObs && _container) {
+        try {
+          // The box grows as a line types and as it wraps, so measure it live.
+          _spaceObs = new ResizeObserver(_syncDlgSpace);
+          _spaceObs.observe(_container);
+        } catch (_) { _spaceObs = null; }
+      }
+      if (_classObs) return;
       try { window.addEventListener('resize', _syncDlgSpace); } catch (_) {}
+      // The hint bar shows and hides by class, usually before any line is up;
+      // one coalesced observer keeps the published measurements current.
+      try {
+        let queued = false;
+        _classObs = new MutationObserver(() => {
+          if (queued) return; queued = true;
+          requestAnimationFrame(() => { queued = false; _syncDlgSpace(); });
+        });
+        _classObs.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['class'] });
+      } catch (_) { _classObs = true; }
     }
+    try { document.addEventListener('DOMContentLoaded', () => _watchDlgSize()); } catch (_) {}
+    // Escape leaves an optional talk menu in any chapter; a story choice stays.
+    try {
+      document.addEventListener('keydown', e => {
+        if (e.key !== 'Escape') return;
+        const o = document.getElementById('choiceOverlay');
+        if (!o || o.dataset.kind !== 'talk' || o.classList.contains('hidden')) return;
+        o.classList.remove('visible');
+        setTimeout(() => { if (!o.classList.contains('visible')) o.classList.add('hidden'); }, 410);
+      });
+    } catch (_) {}
 
     function _reduced() {
       try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) { return false; }
@@ -1198,6 +1268,7 @@ const GameEngine = (() => {
         lbl.className = 'hotspot-label';
         lbl.textContent = cfg.label;
         el.appendChild(lbl);
+        requestAnimationFrame(() => props.clampLabel(lbl));
       }
       el.addEventListener('click', cfg.onClick);
 
@@ -1549,14 +1620,60 @@ const GameEngine = (() => {
       const interactive = typeof cfg.onClick === 'function';
       const e = document.createElement(interactive ? 'button' : 'div');
       e.className = 'scene-prop' + (interactive ? ' prop-interactive' : '') + (cfg.anim ? ' ' + cfg.anim : '') + (cfg.cls ? ' ' + cfg.cls : '');
-      e.style.cssText = `left:${cfg.x}%;top:${cfg.y}%;width:${cfg.w || 12}%;height:${cfg.h || 16}%;`;
+      e.dataset.prop = type;
+      const x = +cfg.x || 0, y = +cfg.y || 0, w = +(cfg.w || 12), h = +(cfg.h || 16);
+      e.style.cssText = `left:${x}%;top:${y}%;width:${w}%;height:${h}%;`;
+      fit(e, type, x, y, w, h);
       e.innerHTML = '<span class="prop-shadow" aria-hidden="true"></span>' + svg(type);
       if (cfg.label) {
         const l = document.createElement('span');
         l.className = 'prop-label'; l.textContent = cfg.label; e.appendChild(l);
+        requestAnimationFrame(() => clampLabel(l));   // appended by then, in every chapter
       }
       if (interactive) { e.setAttribute('aria-label', cfg.aria || cfg.label || type); e.addEventListener('click', cfg.onClick); }
       return e;
+    }
+
+    /**
+     * A label is centred on its object. At the edge of a phone screen that
+     * put its first or last letters off-screen ("ARNTAFEL", "ARCHIVTERM") —
+     * pin it to that edge of the object instead. Re-run on resize.
+     */
+    function clampLabel(l) {
+      try {
+        l.style.left = ''; l.style.right = ''; l.style.transform = '';
+        const r = l.getBoundingClientRect(), vw = document.documentElement.clientWidth;
+        if (!r.width || !vw) return;
+        if (r.left < 4)           { l.style.left = '0';    l.style.right = 'auto'; l.style.transform = 'none'; }
+        else if (r.right > vw - 4) { l.style.left = 'auto'; l.style.right = '0';    l.style.transform = 'none'; }
+      } catch (_) {}
+    }
+    try {
+      window.addEventListener('resize', () => document.querySelectorAll('.prop-label, .hotspot-label').forEach(clampLabel));
+    } catch (_) {}
+
+    /**
+     * A box is placed in percent of the room and tuned for one screen shape.
+     * On another shape the SVG letterboxes inside it and the box ends up far
+     * taller (portrait phone) or wider than the drawing — so the beacon that
+     * says "clickable" floated up to 60px below an object and most of its hit
+     * area was empty wall. Shrink the box to the art on that axis and
+     * re-centre it: the art stays exactly where the layout put it, while the
+     * hit area, beacon, label and shadow now sit on the object. Every chapter's
+     * room is the whole viewport, so a percent of it is a vw / vh. Browsers
+     * without min() simply keep the plain percentages set above.
+     */
+    function fit(e, type, x, y, w, h) {
+      const m  = /viewBox="([^"]+)"/.exec(svg(type));
+      const vb = m ? m[1].trim().split(/[\s,]+/).map(Number) : [];
+      if (vb.length !== 4 || !(vb[2] > 0 && vb[3] > 0)) return;
+      const f = n => +n.toFixed(3);
+      const artH = w * vb[3] / vb[2];   // in vw — the art's height when the box's width binds
+      const artW = h * vb[2] / vb[3];   // in vh — the art's width when the box's height binds
+      e.style.height = `min(${h}%, ${f(artH)}vw)`;
+      e.style.top    = `calc(${f(y + h / 2)}% - min(${f(h / 2)}%, ${f(artH / 2)}vw))`;
+      e.style.width  = `min(${w}%, ${f(artW)}vh)`;
+      e.style.left   = `calc(${f(x + w / 2)}% - min(${f(w / 2)}%, ${f(artW / 2)}vh))`;
     }
 
     /**
@@ -1576,7 +1693,7 @@ const GameEngine = (() => {
       });
     }
 
-    return { svg, el, register, types: () => Object.keys(SVG) };
+    return { svg, el, register, clampLabel, types: () => Object.keys(SVG) };
   })();
 
 
@@ -1879,7 +1996,7 @@ const GameEngine = (() => {
 
         <header class="sys-bar">
           <span class="sys-text">KAPITEL ${c.num} // <span class="accent-system">${c.sector}</span></span>
-          <span class="sys-text" id="reactProgress">REAKTIVIERUNG: ${reactPct}%</span>
+          <span class="sys-text" id="reactProgress">REAKTIVIERUNG: ${reactPct} %</span>
         </header>
 
         <div class="ch-title-card" id="titleCard">
@@ -1919,7 +2036,7 @@ const GameEngine = (() => {
         </div>
 
         <div class="choice-overlay hidden" id="choiceOverlay">
-          <div class="choice-panel">
+          <div class="choice-panel" tabindex="-1">
             <div class="choice-prompt sys-text" id="choicePrompt"></div>
             <div class="choice-buttons" id="choiceButtons"></div>
             <div class="choice-hint sys-text" id="choiceHint"></div>
@@ -1949,7 +2066,10 @@ const GameEngine = (() => {
       while (frag.firstChild) document.body.appendChild(frag.firstChild);
 
       document.querySelectorAll('#robotIcons .robot-icon').forEach(b =>
-        b.addEventListener('click', () => { if (c.onRobot) c.onRobot(b.dataset.who); }));
+        b.addEventListener('click', () => {
+          if (choicesOpen() && !choicesDismissable()) return;   // a story choice is up (keyboard can still reach the icons)
+          if (c.onRobot) c.onRobot(b.dataset.who);
+        }));
       [['hintBtnR3MI','r3mi'], ['hintBtnVTGM','vtgm'], ['hintBtnGuest','guest']].forEach(([id]) => {
         const b = el(id); if (b) b.addEventListener('click', () => useHint(b.dataset.who));
       });
@@ -1989,7 +2109,7 @@ const GameEngine = (() => {
     }
     function showRobots(v) { el('robotIcons')?.classList.toggle('hidden', !v); }
     function showGuest(v)  { el('guestIcon')?.classList.toggle('hidden', !v); }
-    function setProgress(pct) { const e = el('reactProgress'); if (e) e.textContent = `REAKTIVIERUNG: ${pct}%`; }
+    function setProgress(pct) { const e = el('reactProgress'); if (e) e.textContent = `REAKTIVIERUNG: ${pct} %`; }
 
     // ---- CHOICES ----------------------------------------------------
     function showChoices(cfg) {
@@ -1997,26 +2117,45 @@ const GameEngine = (() => {
       const prompt = el('choicePrompt'), hint = el('choiceHint');
       prompt.textContent = cfg.prompt || 'WÄHLE EINE ANTWORT:';
       hint.textContent   = cfg.hint   || '';
+      // an optional talk menu gives way to the room; a story choice does not
+      overlay.dataset.kind = cfg.dismissable ? 'talk' : 'story';
       btns.innerHTML     = '';
       cfg.choices.forEach(c => {
         const btn = document.createElement('button');
         btn.className   = 'choice-btn' + (c.seen ? ' seen' : '');
         btn.textContent = c.label;
         btn.addEventListener('click', () => {
+          // a pick over a running line would replace that line's continuation
+          if (dialogueUp()) { try { dialogue.advance(); } catch (_) {} return; }
+          if (btn.dataset.used) return;
+          btn.dataset.used = '1';
           c.seen = true; hideChoices();
           if (c.fn) { c.fn(); return; }
           dialogue.load(c.lines, () => { if (cfg.onAfterChoice) cfg.onAfterChoice(c.key, cfg); });
         });
         btns.appendChild(btn);
       });
+      clearTimeout(_choiceHideTimer);   // a menu re-opened mid-fade must not vanish
       overlay.classList.remove('hidden');
-      requestAnimationFrame(() => overlay.classList.add('visible'));
+      requestAnimationFrame(() => {
+        overlay.classList.add('visible');
+        // the panel, not its first button: Tab reaches the options next and
+        // one Space too many (the strip's own key) picks nothing
+        overlay.querySelector('.choice-panel')?.focus({ preventScroll: true });
+      });
     }
+    let _choiceHideTimer = null;
     function hideChoices() {
       const overlay = el('choiceOverlay');
       overlay.classList.remove('visible');
-      setTimeout(() => overlay.classList.add('hidden'), 410);
+      clearTimeout(_choiceHideTimer);
+      _choiceHideTimer = setTimeout(() => overlay.classList.add('hidden'), 410);
     }
+    function dialogueUp() { const c = document.querySelector('.dlg-container'); return !!(c && c.classList.contains('visible')); }
+    /** True while a choice menu is up (including its short fade-out). */
+    function choicesOpen() { const o = el('choiceOverlay'); return !!(o && !o.classList.contains('hidden')); }
+    /** True when the open menu is an optional conversation, not a story beat. */
+    function choicesDismissable() { return el('choiceOverlay')?.dataset.kind === 'talk'; }
     function allSeen(choices) { return choices.every(c => c.seen); }
 
     // ---- TITLE CARD -------------------------------------------------
@@ -2061,6 +2200,10 @@ const GameEngine = (() => {
     }
     function useHint(who) {
       if (!_hints) return;
+      // A tap while a line is up advances it. Starting a hint here would
+      // replace the running line's one continuation (a stage change, an
+      // ending), and a double tap would spend two hints for one read.
+      if (dialogueUp()) { try { dialogue.advance(); } catch (_) {} return; }
       const name = _hints.names[who] || who;
       const done = () => { if (_hints.onClose) _hints.onClose(); };
       if (_hints.onOpen) _hints.onOpen();
@@ -2101,7 +2244,7 @@ const GameEngine = (() => {
     return {
       build, start,
       setScene, clearHotspots, addHotspot, addProp, showRobots, showGuest, setProgress,
-      showChoices, hideChoices, allSeen,
+      showChoices, hideChoices, allSeen, choicesOpen, choicesDismissable,
       withModalDialogue,
       initHints, useHint, updateHintBar, showHintBar,
       complete,
@@ -2449,7 +2592,10 @@ const GameEngine = (() => {
     const wake = () => audio.resume();
     document.addEventListener('pointerdown', wake);
     document.addEventListener('keydown', wake);
-    if (state.get('firstPlay')) {
+    // "Erstkontakt — das System erwacht" belongs to the moment the player
+    // actually enters the facility, not to the access page, where it used to
+    // greet them over the code entry before they had typed anything.
+    if (state.get('firstPlay') && !/access\.html$/.test(location.pathname)) {
       state.set('firstPlay', false);
       setTimeout(() => achievements.unlock('first_boot'), 1200);
     }

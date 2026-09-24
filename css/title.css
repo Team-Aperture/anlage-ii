@@ -39,18 +39,7 @@
 }
 
 /* ─── SYSTEM BAR ─────────────────────────────────────────────── */
-.sys-bar {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--sp-sm) var(--sp-lg);
-  background: rgba(4,8,12,0.9);
-  border-bottom: 1px solid var(--bdr-dim);
-  z-index: 20;
-  backdrop-filter: blur(4px);
-}
+/* styled in global.css — every chapter page carries the same header */
 
 /* ─── BOOT SEQUENCE ──────────────────────────────────────────── */
 .boot-sequence {
@@ -173,8 +162,11 @@ a.sector-node:hover { transform: translateY(-3px); border-color: #fff; color: #f
 .sector-node.current { border-color: var(--accent-system); color: #fff; box-shadow: 0 0 12px var(--accent-system); animation: nodePulse 1.8s ease-in-out infinite; }
 .sector-node.locked  { opacity: 0.4; }
 .sector-node.bonus   { border-color: #b13a3a; color: #ff6b6b; box-shadow: 0 0 10px rgba(177,58,58,0.5); animation: nodePulse 1.4s ease-in-out infinite; }
+/* the entrance is not one of the eight sectors: round, the seal's glyph, and a
+   little apart — so "4 / 8 SEKTOREN" never sits over five ticks */
+.sector-node.entrance { border-radius: 50%; margin-right: 8px; font-size: 13px; }
 @keyframes nodePulse { 0%,100%{box-shadow:0 0 8px var(--accent-system)} 50%{box-shadow:0 0 16px var(--accent-system)} }
-.sector-caption { text-align: center; font-size: 10px; letter-spacing: .15em; color: var(--text-dim); margin-top: 10px; }
+.sector-caption { text-align: center; font-size: 10px; letter-spacing: .15em; color: var(--text-secondary); margin-top: 10px; }
 @media (max-width: 420px) {
   .sector-node { width: 26px; height: 26px; font-size: 10px; }
   .sector-track { gap: 7px; }
@@ -335,8 +327,6 @@ a.sector-node:hover { transform: translateY(-3px); border-color: #fff; color: #f
   .hero-logo-wrap { padding: var(--sp-sm) 0; }
   .hero-light { height: 40px; width: 4px; }
 
-  .sys-bar { padding: var(--sp-xs) var(--sp-md); }
-  .sys-bar .sys-text { font-size: 9px; }
 
   .idle-comment { display: none; }
   .version-tag  { left: 50%; right: auto; transform: translateX(-50%); }
