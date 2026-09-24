@@ -826,7 +826,8 @@ const Chapter4 = (() => {
     const order = shuffle([0, 1, 2, 3]);        // heaviest first
     const rankOf = [];
     order.forEach((ring, i) => { rankOf[ring] = i; });
-    return { rankOf, left: WEIGH_MAX, log: [], sel: [], tilt: 0, rank: [null,null,null,null] };
+    // known: every pair weighed so far → the heavier ring of the two
+    return { rankOf, left: WEIGH_MAX, log: [], known: {}, sel: [], tilt: 0, rank: [null,null,null,null] };
   }
 
   function renderWeight() {
@@ -846,7 +847,7 @@ const Chapter4 = (() => {
          </button>`).join('') +
       `</div>
       <div class="vs-inline">
-        <button class="ka-btn small" data-act="w-run"${w.sel.length === 2 && w.left > 0 && w.sel.slice().sort().join() !== w.last ? '' : ' disabled'}>[ WIEGEN ]</button>
+        <button class="ka-btn small" data-act="w-run"${w.sel.length === 2 && (w.left > 0 || weighedBefore(w)) ? '' : ' disabled'}>[ WIEGEN ]</button>
         <button class="ka-btn small" data-act="w-clear">[ WAAGE LEEREN ]</button>
       </div>
       <ol class="vs-log">` +
@@ -1210,23 +1211,68 @@ const Chapter4 = (() => {
     solveModule('pattern', p.seq[p.out]);
   }
 
+  // ── What the log already knows ──────────────────────────────────
+  // Four rings have 24 possible orders; the log rules some of them out.
+  // Five weighings always suffice with a good strategy (that is the
+  // minimum for four), but a player can spend runs on pairs the log already
+  // decides and end up at 0 / 5 with two orders still open. The balance
+  // never makes them guess: it tracks what is still open.
+  const pairKey = (x, y) => [x, y].sort().join();
+  const PERMS4 = (() => { const out = []; const go = (a, rest) => { if (!rest.length) { out.push(a); return; }
+    rest.forEach((v, i) => go(a.concat(v), rest.filter((_, j) => j !== i))); }; go([], [0,1,2,3]); return out; })();
+  /** every order (heaviest first) that agrees with every weighing so far */
+  function ordersLeft(w) {
+    return PERMS4.filter(o => Object.entries(w.known).every(([k, heavier]) => {
+      const [a, b] = k.split(',').map(Number), lighter = heavier === a ? b : a;
+      return o.indexOf(heavier) < o.indexOf(lighter);
+    }));
+  }
+  /** does the log already decide which of x, y is heavier (directly or by chain)? */
+  function decided(w, x, y) {
+    const left = ordersLeft(w);
+    return left.every(o => o.indexOf(x) < o.indexOf(y)) || left.every(o => o.indexOf(y) < o.indexOf(x));
+  }
+  const weighedBefore = w => w.sel.length === 2 && w.known[pairKey(w.sel[0], w.sel[1])] !== undefined;
+
   function runBalance() {
     const w = inst.weight;
-    if (w.sel.length !== 2 || w.left <= 0) return;
+    if (w.sel.length !== 2) return;
     const [x, y] = w.sel;
-    // a double tap weighed the same pair twice and spent a run of five on it
-    if (w.sel.slice().sort().join() === w.last) return;
-    w.last = w.sel.slice().sort().join();
+    const k = pairKey(x, y);
+
+    // The same pair again reads the log back — it costs nothing, and it is
+    // also why a double tap can no longer spend two runs on one question.
+    if (w.known[k] !== undefined) {
+      w.tilt = w.known[k] === x ? -1 : 1;
+      setStatus('SCHON GEWOGEN — STEHT IM PROTOKOLL. KOSTET KEINEN LAUF.', '');
+      render();
+      return;
+    }
+    if (w.left <= 0) return;
+
+    const wasDecided = decided(w, x, y);
     w.left--;
     const heavier = w.rankOf[x] < w.rankOf[y] ? x : y;
     const lighter = heavier === x ? y : x;
+    w.known[k] = heavier;
     w.tilt = heavier === x ? -1 : 1;
     w.log.push(`WÄGUNG ${w.log.length + 1} — ${ROMAN[heavier]} senkt sich gegen ${ROMAN[lighter]}.`);
     playSound('ch4_balance.mp3');
     tone({ freq: 190, type:'triangle', dur: 0.16, vol: 0.07 });
-    setStatus(w.left > 0
-      ? `LAUF ABGESCHLOSSEN. ${w.left} ÜBRIG.`
-      : 'DIE WAAGE MUSS SICH SETZEN. EINE GEPRÜFTE RANGFOLGE TARIERT SIE NEU.', w.left > 0 ? '' : 'warn');
+
+    const open = ordersLeft(w).length;
+    if (open === 1 && !wasDecided) {
+      setStatus('LAUF ABGESCHLOSSEN. DAS PROTOKOLL LEGT DIE RANGFOLGE JETZT FEST.', 'ok');
+    } else if (open > 1 && w.left <= 0) {
+      // Out of runs with the order still open: the beam settles and gives
+      // exactly one more run, as often as needed. Never a forced guess.
+      w.left = 1;
+      setStatus('DIE WAAGE SETZT SICH. DAS PROTOKOLL REICHT NOCH NICHT — EIN WEITERER LAUF FREI.', 'warn');
+    } else if (wasDecided) {
+      setStatus(`LAUF ABGESCHLOSSEN. DAS ERGEBNIS STAND SCHON IM PROTOKOLL. ${w.left} ÜBRIG.`, 'warn');
+    } else {
+      setStatus(`LAUF ABGESCHLOSSEN. ${w.left} ÜBRIG.`, '');
+    }
     render();
   }
 
@@ -1239,7 +1285,6 @@ const Chapter4 = (() => {
       // taking anything away.
       w.left = WEIGH_MAX;
       w.sel  = [];
-      w.last = null;
       w.tilt = 0;
       wrong('weight', 'DIE WAAGE WIDERSPRICHT. SIE HAT SICH NEU EINGEPENDELT — LÄUFE WIEDER FREI.');
       return;
@@ -1633,7 +1678,7 @@ const Chapter4 = (() => {
     weight: [
       { b:{ t:'„Wie viele Wägungen brauchst du wirklich?"' },
         r:{ t:'„Vier Gewichte, fünf Läufe. Das ist… knapp."' },
-        v:{ t:'"Four counterweights, all different. Five runs is enough — but not if you spend one twice."', s:'Vier Gegengewichte, alle verschieden. Fünf Läufe reichen — aber nicht, wenn du einen doppelt ausgibst.' } },
+        v:{ t:'"Four counterweights, all different. Five runs is enough — but not if you spend one on something you already know."', s:'Vier Gegengewichte, alle verschieden. Fünf Läufe reichen — aber nicht, wenn du einen für etwas ausgibst, das du schon weißt.' } },
       { b:{ t:'„Wenn I schwerer ist als II und II schwerer als III — musst du I und III noch wiegen?"' },
         r:{ t:'„Nein! …oder? Nein."' },
         v:{ t:'"Weight order carries over. Any comparison you can derive is one you should not spend."', s:'Die Gewichtsordnung überträgt sich. Jeden Vergleich, den du herleiten kannst, solltest du nicht ausgeben.' } },
