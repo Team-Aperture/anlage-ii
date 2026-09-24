@@ -1260,6 +1260,7 @@ const Chapter6 = (() => {
     S.hints.spent[S.hints.active || 'phase1'] = S.hints.step;
     save();
     updateHintBar();
+    try { GameEngine.dialogue.holdNext(); } catch (_) {}   // the paid-for line is never cut off
     const e = who === 'r3mi' ? step.r : who === 'vtgm' ? step.v : step.g;
     const speaker = who === 'r3mi' ? 'R-3MI' : who === 'vtgm' ? 'V-TGM' : 'ASP-1024';
     say([{ speaker, text: e.t, subtitle: e.s }]);

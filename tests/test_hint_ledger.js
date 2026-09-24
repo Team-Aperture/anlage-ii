@@ -277,5 +277,50 @@ const ch4 = hints => { const sv = H.save({ chaptersCompleted: H.done(4) });
     check(!(await saved(p)).chapterState.ch1, '  no ch1 checkpoint was created (a reload still replays Act 1)');
     check(errs.length === 0, '  no page errors'); await ctx.close(); }
 
+  console.log('\n[6] a paid-for hint is never cut off: a line that arrives meanwhile waits, callback and all');
+  { const { ctx, p, errs } = await H.open(b, '/chapter4/chapter4.html', ch4({}));
+    await p.waitForTimeout(2200); await all(p);
+    await hs4(p, 'Kolbensteuerung untersuchen'); await all(p);
+    // a wrong order starts the STEUERLAUF; a hint taken during it used to be replaced by the excuse line
+    for (let k = 0; k < 4; k++) await p.locator(`#modModal [data-act="t-slot"][data-slot="${k}"][data-ring="${3 - k}"]`).first().click().catch(() => {});
+    await p.locator('#modModal [data-act="t-check"]').first().click().catch(() => {}); await p.waitForTimeout(250);
+    await p.locator('#hintBtnR3MI').click({ force: true }); await p.waitForTimeout(1800);
+    const on = await p.evaluate(() => document.getElementById('dlgSpeaker')?.textContent + '|' + document.getElementById('dlgText')?.textContent);
+    check(/^R-3MI\|„Ich fang/.test(on), `  the hint is still the line on screen 1.8 s later (${on.slice(0, 40)}…)`);
+    await all(p, 400);
+    const h = await p.evaluate(() => GameEngine.dialogue.history().map(l => l.speaker + ': ' + l.text));
+    const iHint = h.findIndex(t => /Ich fang immer bei der ersten an/.test(t));
+    check(iHint >= 0 && h.length > iHint + 1, `  and whatever waited behind it played afterwards (${h.length - iHint - 1} line(s))`);
+    check(errs.length === 0, '  no page errors'); await ctx.close(); }
+  { const { ctx, p, errs } = await H.open(b, '/chapter4/chapter4.html', ch4({}));
+    await p.waitForTimeout(2200); await all(p);
+    const r = await p.evaluate(async () => {
+      const D = GameEngine.dialogue, wait = ms => new Promise(r => setTimeout(r, ms));
+      let cb = 0;
+      D.holdNext(); D.load([{ speaker: 'V-TGM', text: '"HELD."', subtitle: 'GEHALTEN.' }]);
+      D.load([{ speaker: 'SYSTEM', text: 'SPÄTER.' }], () => { cb = 1; });
+      await wait(300);
+      const first = document.getElementById('dlgText').textContent;
+      D.advance(); D.advance(); await wait(300);                       // finish typing, then leave the held line
+      const second = document.getElementById('dlgText').textContent;
+      D.advance(); D.advance(); await wait(200);
+      return { first, second, cb };
+    });
+    check(/HELD/.test(r.first) && /SPÄTER/.test(r.second) && r.cb === 1, `  engine: a held line stays, the late batch plays next and its callback runs (${JSON.stringify(r)})`);
+    check(errs.length === 0, '  no page errors'); await ctx.close(); }
+
+  console.log('\n[7] Ch2: Escape during a puzzle\'s intro lines does not leave its hint buttons dead');
+  { const base = { thawState: 0, metFroschi: true, plantsStudied: true, orgelNudged: true, wellRevealed: false, p1Solved: false, p2Solved: false, bayernPMOFound: false, seen: {}, talkSeen: {}, react: { p1: {}, p2: {} }, p1Fails: 0 };
+    const sv = H.save({ chaptersCompleted: ['ch0', 'ch1'] }); sv.chapterState = { ch2: base };
+    const { ctx, p, errs } = await H.open(b, '/chapter2/chapter2.html', sv);
+    await p.waitForTimeout(2200); await all(p);
+    await p.locator('#sceneHotspots [aria-label="Wasserorgel bedienen"]').first().click({ force: true }); await p.waitForTimeout(300);
+    await p.keyboard.press('Escape'); await p.waitForTimeout(100); await all(p);
+    const n0 = await p.evaluate(() => GameEngine.dialogue.history().length);
+    await p.locator('#hintBtnR3MI').click(); await p.waitForTimeout(300);
+    const n1 = await p.evaluate(() => GameEngine.dialogue.history().length);
+    check(await p.locator('#puzzle1Modal:not(.hidden)').count() === 1 && n1 > n0 && await left(p) === 3, `  the organ opens and its first hint plays (${await left(p)} left)`);
+    check(errs.length === 0, '  no page errors'); await ctx.close(); }
+
   await b.close(); finish();
 })().catch(e => { console.error(e); process.exit(1); });

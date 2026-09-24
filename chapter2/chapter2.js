@@ -848,8 +848,11 @@ const Chapter2 = (() => {
   const modalOpen = n => !document.getElementById(`puzzle${n}Modal`).classList.contains('hidden');
   /** Back to the garden mid-puzzle: the plaque, the plants and the units are reachable again. */
   function closePuzzle() {
-    [1, 2].forEach(n => { if (modalOpen(n)) showModal(n, false); });
-    S.hints.active = null;
+    // Escape during a puzzle's intro lines closes nothing — and must not take
+    // the hint ladder away from the puzzle those lines are about to open
+    const open = [1, 2].filter(n => modalOpen(n));
+    open.forEach(n => showModal(n, false));
+    if (open.length) S.hints.active = null;
   }
 
   function openPuzzle1() {
@@ -1457,6 +1460,7 @@ const Chapter2 = (() => {
     S.hints.spent[S.hints.active] = S.hints.step;
     saveState();
     updateHintBar();
+    try { GameEngine.dialogue.holdNext(); } catch (_) {}   // the paid-for line is never cut off
 
     const entry   = step[who] || step.vtgm;
     const speaker = who === 'r3mi' ? 'R-3MI' : who === 'vtgm' ? 'V-TGM' : 'F-RØ5CHI';

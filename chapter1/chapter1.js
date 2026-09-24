@@ -2041,6 +2041,7 @@ const Chapter1 = (() => {
     S.hints.spent[S.hints.active] = S.hints.step;
     if (S.p1Solved) saveCheckpoint();   // the only checkpoint is the lit hall
     updateHintBar();
+    try { GameEngine.dialogue.holdNext(); } catch (_) {}   // the paid-for line is never cut off
 
     if (who === 'r3mi') {
       say([{ speaker:'R-3MI', text: set.r3mi[idx] }]);

@@ -1216,6 +1216,7 @@ const Chapter8 = (() => {
     if (S.hints.step >= HINT_MAX) {
       if (who === 'guest') {
         S.hintsUsed++;
+        try { GameEngine.dialogue.holdNext(); } catch (_) {}
         say([{ speaker:'AGN-H3R', text: conflictLine() }]);
         return;
       }
@@ -1228,6 +1229,7 @@ const Chapter8 = (() => {
     S.hints.step++; S.hintsUsed++;
     save();
     updateHintBar();
+    try { GameEngine.dialogue.holdNext(); } catch (_) {}   // the paid-for line is never cut off
 
     if (step === 0) {
       say([ who === 'r3mi'

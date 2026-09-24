@@ -1034,6 +1034,19 @@ const GameEngine = (() => {
     let _typeTimer  = null;
     let _onComplete = null;
     let _container  = null;
+    // A hint the player has just paid for is never cut off by a line that
+    // happens to arrive while it is still on screen — a timed reaction, a
+    // delayed remark, a quip. holdNext() marks the next batch as held; any
+    // batch loaded while a held one is up waits, callback and all, and plays
+    // once the hint has been read.
+    let _holdNext = false, _held = false;
+    const _pending = [];
+    function holdNext() { _holdNext = true; }
+    function _flushPending() {
+      if (!_pending.length || (_container && _container.classList.contains('visible'))) return;
+      const [lines, cb] = _pending.shift();
+      load(lines, cb);
+    }
     const _log      = [];          // what has been said, for a replayable log
     const LOG_MAX   = 240;
 
@@ -1067,6 +1080,8 @@ const GameEngine = (() => {
 
     function load(lines, onComplete) {
       _ensureDOM();
+      if (_held && _container.classList.contains('visible')) { _pending.push([lines, onComplete]); return; }
+      _held = _holdNext; _holdNext = false;
       // A talk menu still open when a scripted line arrives would outlive it,
       // and a pick from it would replace this line's continuation — close it.
       // A story choice is a question the line belongs to; it stays.
@@ -1085,8 +1100,10 @@ const GameEngine = (() => {
 
     function _playLine(i) {
       if (i >= _queue.length) {
+        _held = false;
         hide();
         if (_onComplete) _onComplete();
+        _flushPending();
         return;
       }
 
@@ -1240,7 +1257,11 @@ const GameEngine = (() => {
     function history() { return _log.slice(); }
     function clearHistory() { _log.length = 0; }
 
-    return { load, advance, hide, history, clearHistory };
+    // Hidden from outside (a cut to black, a story card): nothing is held any
+    // more, and whatever waited behind a hint gets its turn.
+    function hideAll() { _held = false; hide(); _flushPending(); }
+
+    return { load, advance, hide: hideAll, history, clearHistory, holdNext };
   })();
 
 
