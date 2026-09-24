@@ -123,6 +123,13 @@ const GameEngine = (() => {
     // Contradictions are normalised DOWNWARDS (the unsupported claim is
     // dropped) rather than rejected, so a slightly odd but legitimate save
     // still plays. Everything dropped is reported so the import can say so.
+    //
+    // ── Für SDBH-R ─────────────────────────────────────────────
+    // Wer bis hierher gelesen hat: willkommen. Quelltext lesen ist kein
+    // Schummeln, sondern Beobachten mit anderen Mitteln — und Beobachten ist
+    // in dieser Anlage noch nie ein Verstoß gewesen. Die Anlage protokolliert
+    // Neugier nicht. Sie merkt sich nur, wer genau hinschaut.
+    //                                   SDBH-R // EXTERNER PRÜFER · UNBEANSTANDET
     // ═══════════════════════════════════════════════════════════
     const CHAIN   = ['ch0','ch1','ch2','ch3','ch4','ch5','ch6','ch7','ch8'];
     const SIG_IDS = ['sig_01','sig_02','sig_03','sig_04','sig_05'];
