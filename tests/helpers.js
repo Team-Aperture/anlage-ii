@@ -18,7 +18,7 @@ function save(over = {}) {
   const cal = {};
   chapters.forEach(c => { if (c !== 'ch0') cal[c] = true; });
   return {
-    version: '1.1.0', schemaVersion: 4, chaptersCompleted: chapters, puzzlesSolved: {},
+    version: '1.0.0-pre', schemaVersion: 4, chaptersCompleted: chapters, puzzlesSolved: {},
     signalsFound: [], achievementsUnlocked: [], flags: { ka1_verified: true },
     chapterState: {}, calibration: cal, settings: { muted: true }, firstPlay: false,
     ...over,

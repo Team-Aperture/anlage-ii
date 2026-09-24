@@ -17,7 +17,7 @@ const GameEngine = (() => {
   'use strict';
 
   const SAVE_KEY = 'ka2_save_v1';
-  const VERSION  = '1.1.0';   // what the game calls itself; NOT the save schema
+  const VERSION  = '1.0.0-pre';   // what the game calls itself; NOT the save schema
 
   // ═══════════════════════════════════════════════════════════════
   // STATE MANAGER

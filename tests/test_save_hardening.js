@@ -6,7 +6,7 @@ const read = p => p.evaluate(() => JSON.parse(localStorage.getItem('ka2_save_v1'
 (async () => {
   const b = await H.launch();
   console.log('\n[A] a forged "everything done" save is normalised');
-  { const forged = { version:'1.1.0', schemaVersion:4, chaptersCompleted:['ch0','ch8'], puzzlesSolved:{}, signalsFound:[],
+  { const forged = { version:'1.0.0-pre', schemaVersion:4, chaptersCompleted:['ch0','ch8'], puzzlesSolved:{}, signalsFound:[],
       achievementsUnlocked:['ch8_complete','signal_all','bonus_found','truth'], flags:{ ka1_verified:true, truth_revealed:true, zieldaten:true },
       chapterState:{}, calibration:{}, settings:{}, firstPlay:false };
     const { ctx, p, errs } = await boot(b, forged); const st = await read(p);
