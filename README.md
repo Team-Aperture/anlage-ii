@@ -5,8 +5,10 @@ and JavaScript — no build step, no framework, no backend. It runs from any
 static host, GitHub Pages included, and stores nothing anywhere but the
 player's own browser.
 
-A sequel: the player is the same test subject who shut the first Anlage down,
-and the eight digits they carry over are what gets them back in.
+A sequel that stands on its own: the player is the test subject who shut the
+first Anlage down, and the facility lets them back in on that signature alone.
+Part I is optional background — its eight digits only earn a party on the
+title screen (`js/archiv.js`).
 
 ---
 

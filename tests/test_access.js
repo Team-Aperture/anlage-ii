@@ -50,8 +50,7 @@ const typeIn = async (p, code) => { for (let i = 0; i < code.length; i++) { awai
     const c9 = H.fs.readFileSync(H.path.join(H.ROOT, 'chapter9/chapter9.js'), 'utf8');
     const eng = H.fs.readFileSync(H.path.join(H.ROOT, 'js/engine.js'), 'utf8');
     check(!/ka1_verified|ka1_veteran/.test(src), '  no chapter 0–8 reads anything from Part I');
-    const uses9 = c9.match(/ka1_\w+/g) || [], auth = c9.slice(c9.indexOf('auth: {'), c9.indexOf('movement: {'));
-    check(!/ka1_verified/.test(c9) && uses9.length === 1 && /ka1_veteran/.test(auth), '  chapter 9 only uses it to decide whether an archive record shows the eight digits or a redaction');
+    check(!/ka1_/.test(c9) && !/joinTokens|const AUTH\s*=/.test(c9), '  chapter 9 reads nothing from Part I and holds no copy of the code');
     check(!/hasFlag\('ka1_verified'\)/.test(eng) && !/ka1_verified\)\s*\)\s*\{\s*drop/.test(eng), '  the engine gates nothing on it'); }
 
   console.log('\n[B] the Archivabgleich: faint, optional, and wrong codes are harmless');
@@ -117,7 +116,7 @@ const typeIn = async (p, code) => { for (let i = 0; i < code.length; i++) { awai
       check(hits.length === 0, `  the code is in no shipped file (${hits.join(', ') || 'none'})`); }
   }
 
-  console.log('\n[E] Chapter 9\'s archive record shows the old digits only to a recognised veteran');
+  console.log('\n[E] Chapter 9\'s archive record is redacted for everyone, veterans included');
   for (const vet of [false, true]) {
     const cp = { act: 2, records: {}, signalDone: false, facedFirst: null, asked: {}, consoleSeen: false, burstSeen: false, optional: {} };
     const { ctx, p, errs } = await H.open(b, '/chapter9/chapter9.html', H.save({ chaptersCompleted: H.ALL, signalsFound: H.SIG, achievementsUnlocked: vet ? ['ka1_veteran'] : [], ch9_progress: cp }));
@@ -126,8 +125,7 @@ const typeIn = async (p, code) => { for (let i = 0; i < code.length; i++) { awai
       await p.locator('#sceneHotspots [aria-label="Autorisierungsakte"]').first().click({ force: true }).catch(() => {}); await p.waitForTimeout(400); await H.drain(p);
     }
     const body = await p.locator('#evBody').innerText().catch(() => '');
-    if (!vet) check(/████ · ████/.test(body) && !/\d{4} · \d{4}/.test(body), '  a player who never presented it sees the redaction');
-    else check(/\d{4} · \d{4}/.test(body) && (!CODE || body.replace(/\D/g, '').includes(CODE)), '  a recognised veteran sees the digits they already know');
+    check(/████ · ████/.test(body) && !/\d{4} · \d{4}/.test(body) && (!CODE || !body.replace(/\D/g, '').includes(CODE)), `  ${vet ? 'a recognised veteran' : 'a fresh player'} sees the redaction`);
     check(errs.length === 0, '  no page errors'); await ctx.close();
   }
 

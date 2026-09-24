@@ -415,6 +415,8 @@ a.sector-node:hover { transform: translateY(-3px); border-color: #fff; color: #f
 }
 .archiv-slot:hover, .archiv-slot:focus-visible { opacity: 1; color: var(--accent-system); outline: none; text-shadow: 0 0 6px var(--accent-system); }
 .archiv-slot.known { color: var(--accent-warn); opacity: .8; }
+/* a finger-sized target on touch screens; it still looks like eight faint dots */
+@media (pointer: coarse) { .archiv-slot { padding: 12px 8px; margin: -8px 0; } }
 
 .archiv-card { max-width: 460px; }
 .archiv-card .overlay-title { overflow-wrap: anywhere; }

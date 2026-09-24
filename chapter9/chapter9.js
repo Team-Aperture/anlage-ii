@@ -32,20 +32,9 @@ const Chapter9 = (() => {
   // it is the only part of the target that does not come from R-3MI and V-TGM.
   //
   // The authorisation on file from the first Anlage. Part II never asks for
-  // it, so the record shows the digits only to a returning Part-I player whom
-  // the title screen's Archivabgleich has already recognised (they know them
-  // anyway); everyone else sees the archive's redaction. Stored shifted so it
-  // is not sitting in a second file in the clear.
+  // it and never shows it: the record carries the archive's redaction for
+  // everyone. (Returning Part-I players get their moment on the title screen.)
   // ═══════════════════════════════════════════════════════════════
-  const AUTH = ['00690062', '006d006a', '0055005e', '00460045'];
-
-  function unshift(list, j) {
-    const t = list[j] || '';
-    let s = '';
-    for (let p = 0; p < t.length; p += 4) s += String.fromCodePoint(parseInt(t.slice(p, p + 4), 16) ^ (0x51 + j * 11));
-    return s;
-  }
-  function joinTokens(list) { return list.map((_, j) => unshift(list, j)).join(''); }
   // The one set of coordinates, as the player already earned them in Chapter 8.
   function zielData() {
     try {
@@ -339,9 +328,7 @@ const Chapter9 = (() => {
       title:'ABSCHALTVORGANG',
       sub:'ERSTE ANLAGE · ARCHIVKOPIE',
       body: () => {
-        let vet = false;
-        try { vet = GameEngine.achievements.isUnlocked('ka1_veteran'); } catch (_) {}
-        const shown = vet ? joinTokens(AUTH).replace(/(\d{4})(\d{4})/, '$1 · $2') : '████ · ████';
+        const shown = '████ · ████';
         return rows([
           ['VORGANG', 'ABSCHALTUNG'],
           ['ANLAGE', 'KA-I'],
@@ -615,7 +602,7 @@ const Chapter9 = (() => {
       { speaker:'V-TGM', text:'"The code was never a reactivation code."', subtitle:'Der Code war nie ein Reaktivierungscode.' },
       { speaker:'V-TGM', text:'"It was your authorisation."', subtitle:'Er war deine Berechtigung.' },
       { speaker:'V-TGM', text:'"We did not need your code."', subtitle:'Wir brauchten nicht deinen Code.' },
-      { speaker:'V-TGM', text:'"We needed the person who knew it."', subtitle:'Wir brauchten die Person, die ihn kennt.' },
+      { speaker:'V-TGM', text:'"We needed the person who used it."', subtitle:'Wir brauchten die Person, die ihn benutzt hat.' },
     ]},
     when: { key:'when', label:'[ Seit wann war das geplant? ]', lines:[
       { speaker:'V-TGM', text:'"Before you returned."', subtitle:'Bevor du zurückgekommen bist.' },

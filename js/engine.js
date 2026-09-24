@@ -2492,7 +2492,7 @@ const GameEngine = (() => {
           <section class="sv-block sv-danger">
             <h3 class="sv-head sys-text">LÖSCHEN</h3>
             <p class="sv-note">Gelöscht werden: alle abgeschlossenen Sektoren, alle gefundenen
-              Fremdsignale, alle Erfolge, die Zieldaten und der Zugang zu Sektor 00. Die Anlage
+              Fremdsignale, alle Erfolge und die Zieldaten. Die Anlage
               startet danach wieder bei null. Das lässt sich nicht rückgängig machen — sichere
               vorher oben den Code.</p>
             <button class="ka-btn danger" id="svWipe">[ SPIELSTAND LÖSCHEN ]</button>
@@ -2601,7 +2601,7 @@ const GameEngine = (() => {
     document.addEventListener('keydown', wake);
     // "Erstkontakt — das System erwacht" belongs to the moment the player
     // actually enters the facility, not to the access page, where it used to
-    // greet them over the code entry before they had typed anything.
+    // greet them before they had even signed in.
     if (state.get('firstPlay') && !/access\.html$/.test(location.pathname)) {
       state.set('firstPlay', false);
       setTimeout(() => achievements.unlock('first_boot'), 1200);

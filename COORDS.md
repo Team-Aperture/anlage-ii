@@ -82,11 +82,10 @@ kann ein ehemaliges Testsubjekt ihn eingeben und bekommt eine Feier plus den
 geheimen Erfolg „Wiederholungstäter" — ohne jede Auswirkung aufs Spiel. Dort
 liegt er nur als gesalzener SHA-256-Wert vor.
 
-In `chapter9/chapter9.js` steht `const AUTH = [ … ]` — derselbe Code,
-verschoben gespeichert. Die Autorisierungsakte in Kapitel 9 zeigt die Ziffern
-nur Spielern, die der Archivabgleich schon erkannt hat (sie kennen sie
-ohnehin); alle anderen sehen `████ · ████`. Muss **nicht** ersetzt werden —
-es sei denn, der Code in `js/archiv.js` ändert sich.
+Kapitel 9 zeigt in der Autorisierungsakte für alle Spieler `████ · ████`.
+Der Code steht in keiner ausgelieferten Datei; das Titelterminal kennt nur
+seinen gesalzenen SHA-256-Wert (`js/archiv.js`). Ändert sich der Code, wird nur
+`AUTH_DIGEST` dort neu berechnet.
 
 ## Wo die Zieldaten auftauchen
 
@@ -96,8 +95,9 @@ es sei denn, der Code in `js/archiv.js` ändert sich.
   spielen muss, um die Koordinaten nachzulesen.
 * **Abschlusskarte in Kapitel 9** — mit `[ KOORDINATEN KOPIEREN ]`, und beim
   erneuten Betreten der Kammer über `[ ZIELDATEN ]`. Derselbe Wert.
-* **Spielstand** — als `zieldaten_text` im `localStorage`. Das passiert erst
-  nach dem Lösen; im ausgelieferten Code steht der Wert nicht.
+* **Spielstand** — nie als Klartext: die Zieldaten werden bei Bedarf aus den
+  Kalibrierungsfragmenten eines Laufs rekonstruiert, der Kapitel 8 wirklich
+  gelöst hat (`GameEngine.state.zieldaten()`).
 
 `[ SPIELSTAND ]` im Hauptmenü zeigt an, ob die Zieldaten vorhanden sind, und
 löscht sie auf Wunsch wieder.
