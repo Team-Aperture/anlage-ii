@@ -1205,7 +1205,7 @@ const Chapter5 = (() => {
       { r:{ t:'„Da sind vier Bündel und nur eins geht dahin, wo wir hinwollen. Glaube ich. Steht aber dran."' },
         v:{ t:'"Not all of these keys belong to the same conduit set."', s:'Nicht alle Tasten gehören zum selben Leitungssatz.' },
         g:{ t:'„Schau, wohin die Bündel laufen. Eins davon geht voraus."' } },
-      { r:{ t:'„Eins bis fünf. Und die Vier… ich meine, irgendeine Nummer fehlt an der Wand."' },
+      { r:{ t:'„Eins bis fünf. Und die… Moment. Irgendeine Nummer fehlt an der Wand."' },
         v:{ t:'"Which marking follows the same conduits forward — and is any section of it missing?"', s:'Welche Markierung folgt denselben Leitungen nach vorn — und fehlt davon ein Abschnitt?' },
         g:{ t:'„Zählt die Abschnitte durch. Wenn einer fehlt, steht der Ersatz an der Wand geschrieben."' } },
       { r:{ t:'„Also: alle vom richtigen Bündel, plus den einen komischen Ersatzschalter. Dann Hebel."' },

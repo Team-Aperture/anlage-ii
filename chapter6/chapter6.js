@@ -820,9 +820,16 @@ const Chapter6 = (() => {
     renderBB();
   }
 
+  // A wrong commit draws a fresh input at once, so the second tap of a double
+  // tap was judged against numbers the player had not even seen yet.
+  let lastFailAt = 0;
+  const justFailed = () => Date.now() - lastFailAt < 700;
+
   function commitPredict() {
+    if (justFailed()) return;
     const want = evalRule(S.predictInput, S.rule);
     if (!sameSeq(predictOut, want)) {
+      lastFailAt = Date.now();
       setStatus('bbStatus', 'MODELL NICHT BESTÄTIGT.', 'error');
       tone({ freq: 120, type:'sawtooth', dur: 0.2, vol: 0.07 });
       drawPredictInput();               // a fresh input, so guessing gains nothing
@@ -931,8 +938,10 @@ const Chapter6 = (() => {
   }
 
   function commitFinal() {
+    if (justFailed()) return;
     const ok = S.finalInputs.every((inp, k) => sameSeq(finalOut[k], evalRule(inp, S.rule)));
     if (!ok) {
+      lastFailAt = Date.now();
       setStatus('bbStatus', 'MODELL NICHT BESTÄTIGT.', 'error');
       tone({ freq: 120, type:'sawtooth', dur: 0.2, vol: 0.07 });
       drawFinal();
