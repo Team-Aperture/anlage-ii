@@ -1060,9 +1060,11 @@ const Chapter2 = (() => {
   // ═══════════════════════════════════════════════════════════════
   // PUZZLE 2 — FROSTMUSTER
   // 5×5 ice tablet. The centre well must end up alone; the other 24
-  // cells must fall into six connected groups of four. Many layouts
-  // satisfy that — the check validates the rule, never one answer.
-  // A few channels are frozen in from the start (his carved lines).
+  // cells must fall into six connected groups of four. 672 groupings do
+  // that; his six carved channels leave nine, and the ice (18 channels,
+  // the carved ones included) leaves exactly one: four squares and two
+  // L pieces, every channel used. The check still validates the rules,
+  // never a stored answer.
   // ═══════════════════════════════════════════════════════════════
   const WELL           = '2,2';
   const FROST_PALETTE  = 6;
@@ -1090,11 +1092,11 @@ const Chapter2 = (() => {
       { speaker:'F-RØ5CHI', text:'„Drumherum schneidst sechs Bereiche, jeder genau vier Felder. Klick zwischn zwoa Felder, dann setzt a Eiskanal."', subtitle:'Drumherum schneidest du sechs Bereiche, jeder genau vier Felder. Klick zwischen zwei Felder, dann setzt du einen Eiskanal.' },
       { speaker:'F-RØ5CHI', text:'„Und schau: a poar Kanäl san scho ins Eis g\'frorn — de pinkn. De hod er selber eina g\'schnitzt. De bleibn."', subtitle:'Und schau: ein paar Kanäle sind schon ins Eis gefroren — die pinken. Die hat er selber hineingeschnitzt. Die bleiben.' },
       { speaker:'SYSTEM',   text:'Die pinken Linien sind nicht ganz gerade. Jemand hat sie mit der Hand gezogen. In einer Ecke: zwei eingeritzte Buchstaben.' },
-      { speaker:'F-RØ5CHI', text:'„Oba pass auf: so vui Eis hob i nimmer. Mehr ois achtzehn Kanäl mog de Tafel ned."', subtitle:'Aber pass auf: so viel Eis hab ich nicht mehr. Mehr als achtzehn Kanäle mag die Tafel nicht.' },
-      { speaker:'F-RØ5CHI', text:'„Er hod gsagt, des Rätsl hod mehrere Lösungen."', subtitle:'Er hat gesagt, das Rätsel hat mehrere Lösungen.' },
-      { speaker:'R-3MI',    text:'„Das ist entweder großzügig oder faul."' },
+      { speaker:'F-RØ5CHI', text:'„Oba pass auf: so vui Eis hob i nimmer. Achtzehn Kanäl, de pinkn scho mitzählt — koan oanzign mehr."', subtitle:'Aber pass auf: so viel Eis hab ich nicht mehr. Achtzehn Kanäle, die pinken schon mitgezählt — keinen einzigen mehr.' },
+      { speaker:'F-RØ5CHI', text:'„Er hod gsagt, aufteiln ko ma\'s auf vui Artn. Aber bloß oane kummt mitm Eis aus."', subtitle:'Er hat gesagt, aufteilen kann man es auf viele Arten. Aber nur eine kommt mit dem Eis aus.' },
+      { speaker:'R-3MI',    text:'„Das ist entweder genial oder geizig."' },
       { speaker:'F-RØ5CHI', text:'„Sag des eam amoi persönlich."', subtitle:'Sag ihm das mal persönlich.' },
-      { speaker:'R-3MI',    text:'„Mehrere Lösungen sind großartig."' },
+      { speaker:'R-3MI',    text:'„Genial. Eindeutig genial."' },
     ], show);
   }
 
@@ -1185,12 +1187,54 @@ const Chapter2 = (() => {
       p2State.cuts.delete(edge);
     } else {
       if (p2State.cuts.size + FROST_FIXED.size >= FROST_MAX_CUTS) {
-        setP2Status(`KEIN EIS MEHR — HÖCHSTENS ${FROST_MAX_CUTS} KANÄLE. ENTFERNE ZUERST EINEN.`, 'error');
+        frostOutOfIce(edge);
         return;
       }
       p2State.cuts.add(edge);
     }
     updateFrost();
+  }
+
+  /** Every channel a finished layout cannot do without: each border between
+   *  two groups (the well's four included) plus the carved ones. */
+  function frostIceNeeded(comps) {
+    const id = {};
+    comps.forEach((comp, i) => comp.forEach(k => { id[k] = i; }));
+    const need = new Set(FROST_FIXED);
+    for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) {
+      if (c < 4 && id[`${r},${c}`] !== id[`${r},${c + 1}`]) need.add(`h,${r},${c}`);
+      if (r < 4 && id[`${r},${c}`] !== id[`${r + 1},${c}`]) need.add(`v,${r},${c}`);
+    }
+    return need.size;
+  }
+
+  // Out of ice. If this very channel would have closed a valid layout, the
+  // grouping is not what is wrong — say so, so the budget reads as the rule
+  // it is and not as the board refusing a correct answer.
+  function frostOutOfIce(edge) {
+    p2State.cuts.add(edge);
+    const { win, comps } = frostStatus();
+    p2State.cuts.delete(edge);
+    const need = win ? frostIceNeeded(comps) : 0;
+    const over = need > FROST_MAX_CUTS;
+    setP2Status(
+      over ? `SO WÄREN ALLE BEREICHE FERTIG — MIT ${need} KANÄLEN. DAS EIS REICHT NUR FÜR ${FROST_MAX_CUTS}.`
+    : win  ? 'SO WÄREN ALLE BEREICHE FERTIG — ABER EIN KANAL TRENNT NICHTS.'
+           : `KEIN EIS MEHR. DIE RICHTIGE AUFTEILUNG KOMMT MIT GENAU ${FROST_MAX_CUTS} KANÄLEN AUS.`,
+      'error');
+    reactP2Ice(over);
+  }
+
+  /** F-RØ5CHI names the budget the first time it bites. Latched before the line. */
+  function reactP2Ice(over) {
+    const R = S.react.p2 || (S.react.p2 = {});
+    const key = over ? 'over' : 'empty';
+    if (R[key] || dialogueBusy()) return;   // never talk over a hint that is still on screen
+    R[key] = true;
+    saveState();
+    say([over
+      ? { speaker:'F-RØ5CHI', text:'„De Gruppn passn scho. Bloß so vui Eis hob i ned — er hod\'s sparsamer gmoant."', subtitle:'Die Gruppen passen schon. Nur so viel Eis hab ich nicht — er hat es sparsamer gemeint.' }
+      : { speaker:'F-RØ5CHI', text:'„Aus is mitm Eis. Er hod\'s so baut, dass\'s grod aufgeht — koa Kanal z\'vui."', subtitle:'Aus ist es mit dem Eis. Er hat es so gebaut, dass es genau aufgeht — kein Kanal zu viel.' }]);
   }
 
   function updateFrost() {
@@ -1359,14 +1403,14 @@ const Chapter2 = (() => {
         vtgm:    { t:'"The well belongs to no group. Cut it free on all four sides."', s:'Der Brunnen gehört zu keiner Gruppe. Schneide ihn auf allen vier Seiten frei.' },
       },
       {
-        froschi: { t:'„Vierazwanzg Felder bleibn übrig. Und sechs Gruppen soin\'s wern."', s:'Vierundzwanzig Felder bleiben übrig. Und sechs Gruppen sollen es werden.' },
-        r3mi:    { t:'„24 Felder. Sechs Gruppen. Ich würde rechnen, aber V-TGM schaut schon streng."' },
-        vtgm:    { t:'"Twenty-four cells into six groups. The size of each group follows from that."', s:'Vierundzwanzig Felder in sechs Gruppen. Die Größe jeder Gruppe folgt daraus.' },
+        froschi: { t:'„Achtzehn Kanäl, de pinkn mitzählt. Mehr Eis hob i ned — und de richtige Aufteilung braucht a jeds Stückerl davo."', s:'Achtzehn Kanäle, die pinken mitgezählt. Mehr Eis hab ich nicht — und die richtige Aufteilung braucht jedes Stückchen davon.' },
+        r3mi:    { t:'„Achtzehn Kanäle, die pinken schon mitgerechnet. Das ist kein Richtwert, das ist alles Eis, das es gibt. Die Lösung braucht jeden einzelnen."' },
+        vtgm:    { t:'"Eighteen channels, the pink ones included. That is not a limit to stay under. The solution uses every one."', s:'Achtzehn Kanäle, die pinken eingeschlossen. Das ist keine Grenze, unter der man bleibt. Die Lösung braucht jeden einzelnen.' },
       },
       {
-        froschi: { t:'„Denk an Tetris-Stückerl. Immer vier Felder, die zammhänga."', s:'Denk an Tetris-Stückchen. Immer vier Felder, die zusammenhängen.' },
-        r3mi:    { t:'„Vierer-Klumpen, die sich berühren. Wie Tetris, nur ohne Zeitdruck und ohne Musik."' },
-        vtgm:    { t:'"Start where the board gives you the fewest possibilities."', s:'Fang dort an, wo das Feld dir die wenigsten Möglichkeiten lässt.' },
+        froschi: { t:'„A Quadratl, zwoa mal zwoa, hängt innen vierfach zamm — jede andere Form bloß dreifach. Jeds Quadratl spart da an Kanal."', s:'Ein Quadrat, zwei mal zwei, hängt innen vierfach zusammen — jede andere Form nur dreifach. Jedes Quadrat spart dir einen Kanal.' },
+        r3mi:    { t:'„Buchhaltung: Ein Zwei-mal-zwei-Quadrat hat innen vier Nähte, jede andere Vierer-Form nur drei. Jede Naht innen ist ein Kanal, den du nicht schneiden musst."' },
+        vtgm:    { t:'"A two-by-two square has four inner seams, every other shape only three. Each square saves one channel."', s:'Ein Zwei-mal-zwei-Quadrat hat innen vier Nähte, jede andere Form nur drei. Jedes Quadrat spart einen Kanal.' },
       },
       {
         froschi: { t:'„De pinkn Linien san scho do — de zoagn da, wo zwoa Gruppn auseinandergehn. Bau drumrum."', s:'Die pinken Linien sind schon da — die zeigen dir, wo zwei Gruppen auseinandergehen. Bau drumherum.' },
