@@ -40,7 +40,7 @@ const Chapter1 = (() => {
 
     // hint budget: a single 3-step ladder per puzzle. Whichever unit you
     // ask voices the *next* step, so the choice is personality, not quantity.
-    hints: { step: 0, max: 3, active: null },
+    hints: { step: 0, max: 3, active: null, spent: {} },
 
     // reactive puzzle chatter (each beat fires at most once per puzzle)
     react: { p1: {}, p2: {} },
@@ -695,7 +695,7 @@ const Chapter1 = (() => {
   // player Act 1, the meeting, the reaction and the first repair again.
   // ═══════════════════════════════════════════════════════════════
   function saveCheckpoint() {
-    try { GameEngine.state.chapter('ch1', { p1Solved: true, p2Solved: !!S.p2Solved, talkSeen: S.talkSeen, clicks: S.clicks }); } catch (_) {}
+    try { GameEngine.state.chapter('ch1', { p1Solved: true, p2Solved: !!S.p2Solved, talkSeen: S.talkSeen, clicks: S.clicks, hints: S.hints.spent }); } catch (_) {}
   }
   function clearCheckpoint() {
     try { GameEngine.state.chapter('ch1', null); } catch (_) {}
@@ -709,6 +709,7 @@ const Chapter1 = (() => {
     S.p2Solved = !!d.p2Solved;
     S.talkSeen = (d.talkSeen && typeof d.talkSeen === 'object') ? d.talkSeen : {};
     S.clicks   = (d.clicks   && typeof d.clicks   === 'object') ? d.clicks   : {};
+    S.hints.spent = readSpent(d.hints);
     return d;
   }
   // The second repair is solved and the chapter saved, but the ending never
@@ -1535,7 +1536,8 @@ const Chapter1 = (() => {
 
   function openPuzzle1() {
     S.hints.active = 'p1';
-    if (!p1Grid.length) { initP1Grid(); S.hints.step = 0; }   // coming back keeps the grid and the hints used
+    if (!p1Grid.length) initP1Grid();   // coming back keeps the grid…
+    S.hints.step = S.hints.spent.p1 | 0;  // …and the hints used
     updateHintBar();
     renderP1();
     checkP1();
@@ -1864,7 +1866,8 @@ const Chapter1 = (() => {
 
   function openPuzzle2() {
     S.hints.active = 'p2';
-    if (!p2Grid.length) { initP2Grid(); S.hints.step = 0; }
+    if (!p2Grid.length) initP2Grid();
+    S.hints.step = S.hints.spent.p2 | 0;
     updateHintBar();
     renderP2();
     checkP2();
@@ -2008,6 +2011,17 @@ const Chapter1 = (() => {
     },
   };
 
+  // A ladder is walked once per chapter run. Leaving a puzzle and coming back,
+  // a retry or a reload never hands spent steps back; a fresh run starts at 0.
+  function readSpent(raw) {
+    const o = {};
+    if (raw && typeof raw === 'object') Object.keys(HINTS).forEach(k => {
+      const n = Math.max(0, Math.min(HINT_MAX, raw[k] | 0));
+      if (n) o[k] = n;
+    });
+    return o;
+  }
+
   function useHint(who) {
     const set = HINTS[S.hints.active];
     if (!set) return;
@@ -2024,6 +2038,8 @@ const Chapter1 = (() => {
 
     const idx = S.hints.step;
     S.hints.step++;
+    S.hints.spent[S.hints.active] = S.hints.step;
+    if (S.p1Solved) saveCheckpoint();   // the only checkpoint is the lit hall
     updateHintBar();
 
     if (who === 'r3mi') {

@@ -91,7 +91,7 @@ const Chapter6 = (() => {
     wildRuns: 0,
     seen: {},
     talkSeen: {},
-    hints: { active:null, step:0 },
+    hints: { active:null, step:0, spent:{} },
     coach: 0,
     excuse: 0,
 
@@ -259,6 +259,7 @@ const Chapter6 = (() => {
         rule: S.rule, archive: S.archive, tests: S.tests, phase: S.phase,
         metAsp: S.metAsp, predictInput: S.predictInput, finalInputs: S.finalInputs,
         sigFound: S.sigFound, anomalySeen: S.anomalySeen, wildRuns: S.wildRuns,
+        hints: S.hints.spent,
       });
     } catch (_) {}
   }
@@ -392,6 +393,7 @@ const Chapter6 = (() => {
       S.metAsp = true; S.predictInput = d.predictInput || null;
       S.finalInputs = Array.isArray(d.finalInputs) ? d.finalInputs : null;
       S.sigFound = !!d.sigFound; S.anomalySeen = !!d.anomalySeen; S.wildRuns = +d.wildRuns || 0;
+      S.hints.spent = readSpent(d.hints);
       loadRoom();
       say([
         { speaker:'SYSTEM', text:`VERSUCHSREIHE ${SERIES} // PROTOKOLL WIEDERHERGESTELLT.` },
@@ -564,7 +566,7 @@ const Chapter6 = (() => {
     openModal = 'bb';
     bbMode = 'test';
     S.hints.active = 'phase' + S.phase;
-    S.hints.step = 0;
+    S.hints.step = S.hints.spent[S.hints.active] | 0;
     updateHintBar();
     CH.showHintBar(true);
     el('bbModal').classList.remove('hidden');
@@ -865,7 +867,7 @@ const Chapter6 = (() => {
     S.predictInput = null;
     bbMode = 'test';
     S.hints.active = 'phase2';
-    S.hints.step = 0;
+    S.hints.step = S.hints.spent.phase2 | 0;
     updateHintBar();
 
     // a fresh diagnostic that fires the condition — the archive's odd run was
@@ -1217,6 +1219,17 @@ const Chapter6 = (() => {
     ],
   };
 
+  // A ladder is walked once per chapter run. Leaving a puzzle and coming back,
+  // a retry or a reload never hands spent steps back; a fresh run starts at 0.
+  function readSpent(raw) {
+    const o = {};
+    if (raw && typeof raw === 'object') Object.keys(HINTS).forEach(k => {
+      const n = Math.max(0, Math.min(HINT_MAX, raw[k] | 0));
+      if (n) o[k] = n;
+    });
+    return o;
+  }
+
   function useHint(who) {
     // a tap while a line is up advances it — a hint started here would replace
     // the line's continuation, and a double tap would spend two hints
@@ -1231,6 +1244,8 @@ const Chapter6 = (() => {
     }
     const step = ladder[S.hints.step];
     S.hints.step++;
+    S.hints.spent[S.hints.active || 'phase1'] = S.hints.step;
+    save();
     updateHintBar();
     const e = who === 'r3mi' ? step.r : who === 'vtgm' ? step.v : step.g;
     const speaker = who === 'r3mi' ? 'R-3MI' : who === 'vtgm' ? 'V-TGM' : 'ASP-1024';

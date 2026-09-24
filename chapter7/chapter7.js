@@ -52,7 +52,7 @@ const Chapter7 = (() => {
     ended:    false,
     seen:     {},
     talkSeen: {},
-    hints:    { active:null, step:0 },
+    hints:    { active:null, step:0, spent:{} },
     coach:    0,
     excuse:   0,
     wrongFinal: 0,
@@ -114,7 +114,7 @@ const Chapter7 = (() => {
       GameEngine.state.set(SAVE_KEY, {
         act: S.act, fakeCompleteSeen: S.fakeCompleteSeen, metFaxn: S.metFaxn,
         anchors: S.anchors, bsodSeen: S.bsodSeen, integritySeen: S.integritySeen,
-        sigFound: S.sigFound, luxSeen: S.luxSeen,
+        sigFound: S.sigFound, luxSeen: S.luxSeen, hints: S.hints.spent,
       });
     } catch (_) {}
   }
@@ -228,6 +228,7 @@ const Chapter7 = (() => {
       S.anchors = { labels:!!d.anchors.labels, displays:!!d.anchors.displays, actions:!!d.anchors.actions };
       S.bsodSeen = !!d.bsodSeen; S.integritySeen = !!d.integritySeen;
       S.sigFound = !!d.sigFound; S.luxSeen = !!d.luxSeen;
+      S.hints.spent = readSpent(d.hints);
       loadRoom();
       // The third anchor stood, but the crash and the integrity report never
       // played (a reload in the lines between). They are the sector's turn,
@@ -549,7 +550,7 @@ const Chapter7 = (() => {
     }
     openModal = key;
     S.hints.active = key;
-    S.hints.step = 0;
+    S.hints.step = S.hints.spent[key] | 0;
     updateHintBar();
     CH.showHintBar(true);
     el('vxLabel').textContent = META[key].label;
@@ -1201,6 +1202,17 @@ const Chapter7 = (() => {
     ],
   };
 
+  // A ladder is walked once per chapter run. Leaving a puzzle and coming back,
+  // a retry or a reload never hands spent steps back; a fresh run starts at 0.
+  function readSpent(raw) {
+    const o = {};
+    if (raw && typeof raw === 'object') Object.keys(HINTS).forEach(k => {
+      const n = Math.max(0, Math.min(HINT_MAX, raw[k] | 0));
+      if (n) o[k] = n;
+    });
+    return o;
+  }
+
   function useHint(who) {
     // a tap while a line is up advances it — a hint started here would replace
     // the line's continuation, and a double tap would spend two hints
@@ -1216,6 +1228,8 @@ const Chapter7 = (() => {
     }
     const step = ladder[S.hints.step];
     S.hints.step++;
+    S.hints.spent[S.hints.active] = S.hints.step;
+    save();
     updateHintBar();
     const e = who === 'r3mi' ? step.r : who === 'vtgm' ? step.v : step.g;
     const speaker = who === 'r3mi' ? 'R-3MI' : who === 'vtgm' ? 'V-TGM' : 'FAX-N';

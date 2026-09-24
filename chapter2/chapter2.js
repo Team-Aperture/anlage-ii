@@ -40,7 +40,7 @@ const Chapter2 = (() => {
     p1Solved:       false,
     p2Solved:       false,
     bayernPMOFound: false,
-    hints:  { step: 0, active: null },
+    hints:  { step: 0, active: null, spent: {} },
     react:  { p1: {}, p2: {} },
     p1Fails: 0,
 
@@ -219,6 +219,7 @@ const Chapter2 = (() => {
         orgelNudged: S.orgelNudged, wellRevealed: S.wellRevealed,
         p1Solved: S.p1Solved, p2Solved: S.p2Solved, bayernPMOFound: S.bayernPMOFound,
         seen: S.seen, talkSeen: S.talkSeen, react: S.react, p1Fails: S.p1Fails,
+        hints: S.hints.spent,
       });
     } catch (_) {}
   }
@@ -242,6 +243,7 @@ const Chapter2 = (() => {
     S.talkSeen       = (d.talkSeen && typeof d.talkSeen === 'object') ? d.talkSeen : {};
     S.react          = (d.react && typeof d.react === 'object') ? d.react : { p1:{}, p2:{} };
     S.p1Fails        = d.p1Fails | 0;
+    S.hints.spent    = readSpent(d.hints);
     // The first half of the thaw is what moves the garden on; keep the two in
     // step so a half-written record cannot show a thawed garden that is not.
     if (S.thawState === FROZEN && S.p1Solved) S.thawState = PARTIAL;
@@ -853,8 +855,9 @@ const Chapter2 = (() => {
   function openPuzzle1() {
     // coming back after [ ZURÜCK ] keeps the plants, the dials and the hints used
     const first = !S.p1Opened;
-    if (first) { S.p1Opened = true; p1State = P1_INIT(); S.hints.step = 0; }
+    if (first) { S.p1Opened = true; p1State = P1_INIT(); }
     S.hints.active = 'p1';
+    S.hints.step   = S.hints.spent.p1 | 0;
     const show = () => {
       showModal(1, true);
       updateHintBar();
@@ -1077,8 +1080,9 @@ const Chapter2 = (() => {
   function openPuzzle2() {
     if (S.p2Solved) return;
     const first = !S.p2Opened;
-    if (first) { S.p2Opened = true; p2State = { cuts: new Set() }; S.hints.step = 0; }
+    if (first) { S.p2Opened = true; p2State = { cuts: new Set() }; }
     S.hints.active = 'p2';
+    S.hints.step   = S.hints.spent.p2 | 0;
     const show = () => {
       showModal(2, true);
       updateHintBar();
@@ -1420,6 +1424,17 @@ const Chapter2 = (() => {
     ],
   };
 
+  // A ladder is walked once per chapter run. Leaving a puzzle and coming back,
+  // a retry or a reload never hands spent steps back; a fresh run starts at 0.
+  function readSpent(raw) {
+    const o = {};
+    if (raw && typeof raw === 'object') Object.keys(HINTS).forEach(k => {
+      const n = Math.max(0, Math.min(HINT_MAX, raw[k] | 0));
+      if (n) o[k] = n;
+    });
+    return o;
+  }
+
   function useHint(who) {
     const ladder = HINTS[S.hints.active];
     if (!ladder) return;
@@ -1439,6 +1454,8 @@ const Chapter2 = (() => {
 
     const step = ladder[S.hints.step];
     S.hints.step++;
+    S.hints.spent[S.hints.active] = S.hints.step;
+    saveState();
     updateHintBar();
 
     const entry   = step[who] || step.vtgm;

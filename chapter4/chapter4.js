@@ -70,7 +70,7 @@ const Chapter4 = (() => {
     seen:        {},             // hotspot examine counts
     talkSeen:    {},
     coaching:    { pool:{}, lastModule:null, switches:0 },
-    hints:       { step:0, active:null, used:0 },
+    hints:       { step:0, active:null, used:0, spent:{} },
     praise:      0,
     excuse:      0,
   };
@@ -197,6 +197,7 @@ const Chapter4 = (() => {
         seen: S.seen,
         talkSeen: S.talkSeen,
         praise: S.praise,
+        hints: S.hints.spent,
       });
     } catch (_) {}
   }
@@ -224,6 +225,7 @@ const Chapter4 = (() => {
     S.seen             = (d.seen && typeof d.seen === 'object') ? d.seen : {};
     S.talkSeen         = (d.talkSeen && typeof d.talkSeen === 'object') ? d.talkSeen : {};
     S.praise           = d.praise | 0;
+    S.hints.spent      = readSpent(d.hints);
     // A module that claims to be solved but kept no reference value would
     // leave the central lock unsolvable — treat it as unsolved instead.
     ORDER.forEach(k => { if (S.modules[k].solved && S.modules[k].output == null) S.modules[k].solved = false; });
@@ -651,7 +653,7 @@ const Chapter4 = (() => {
 
     openModal = key;
     S.hints.active = key;
-    S.hints.step   = 0;
+    S.hints.step   = S.hints.spent[key] | 0;
     updateHintBar();
 
     el('modModal').classList.remove('hidden');
@@ -1060,7 +1062,7 @@ const Chapter4 = (() => {
 
     openModal = 'final';
     S.hints.active = 'final';
-    S.hints.step   = 0;
+    S.hints.step   = S.hints.spent.final | 0;
     updateHintBar();
 
     el('modModal').classList.remove('hidden');
@@ -1736,6 +1738,17 @@ const Chapter4 = (() => {
     ],
   };
 
+  // A ladder is walked once per chapter run. Leaving a puzzle and coming back,
+  // a retry or a reload never hands spent steps back; a fresh run starts at 0.
+  function readSpent(raw) {
+    const o = {};
+    if (raw && typeof raw === 'object') Object.keys(HINTS).forEach(k => {
+      const n = Math.max(0, Math.min(HINT_MAX, raw[k] | 0));
+      if (n) o[k] = n;
+    });
+    return o;
+  }
+
   function useHint(who) {
     const ladder = HINTS[S.hints.active];
     if (!ladder) return;
@@ -1757,6 +1770,8 @@ const Chapter4 = (() => {
     const step = ladder[S.hints.step];
     S.hints.step++;
     S.hints.used++;
+    S.hints.spent[S.hints.active] = S.hints.step;
+    saveState();
     updateHintBar();
     const entry = who === 'r3mi' ? step.r : who === 'vtgm' ? step.v : step.b;
     const speaker = who === 'r3mi' ? 'R-3MI' : who === 'vtgm' ? 'V-TGM' : 'B-RADF1SH';
