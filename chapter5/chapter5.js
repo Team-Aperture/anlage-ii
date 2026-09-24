@@ -1315,8 +1315,18 @@ const Chapter5 = (() => {
     terminal: { label:'14-I // STRECKENENDE',  title:'STRECKENABNAHME', sub:'ABSCHNITTE BESTÄTIGEN' },
   };
 
+  // A station that is already done reports its state instead of reopening a
+  // fresh panel whose right answer would do nothing.
+  const STATION_DONE = {
+    gallery: [{ speaker:'SYSTEM', text:'14-E // SCHALTWAND. FERNRELAIS 14-G: AKTIV.' },
+              { speaker:'SYSTEM', text:'Die Brücke hält. Hier gibt es nichts mehr zu schalten.' }],
+    supply:  [{ speaker:'SYSTEM', text:'14-G // VERSORGUNGSPULT. PLATTFORM AUSGEFAHREN UND VERRIEGELT.' },
+              { speaker:'SYSTEM', text:'Der Druck steht. Hier gibt es nichts mehr zu versorgen.' }],
+    marker:  [{ speaker:'SYSTEM', text:'14-H // MARKIERUNGSWAND. Die fremde Platte ist vermerkt.' }],
+  };
   function openStation(key) {
     if (openModal) closeModal();
+    if ({ gallery: S.relay, supply: S.crossing, marker: S.marker }[key]) { say(STATION_DONE[key]); return; }
     if (!inst[key]) {
       inst[key] = key === 'gallery' ? buildGallery()
                 : key === 'supply'  ? buildSupply()

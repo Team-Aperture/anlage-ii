@@ -32,6 +32,12 @@ const cp = { beat: '14-G', branch: 'haupt', metTflon: true, relay: true, crossin
     for (const id of right) { await p.locator(`[data-act="vg-sup"][data-id="${id}"]`).click(); await p.waitForTimeout(80); }
     await p.locator('[data-act="vg-commit"]').click(); await p.waitForTimeout(400); await H.drain(p); await p.waitForTimeout(300);
     check((await saved(p)).crossing === true, '  the two systems the schema names release the platform');
+    // coming back to the solved panel reports its state instead of a dead fresh puzzle
+    for (let i = 0; i < 4; i++) { await H.drain(p); await p.waitForTimeout(250); }
+    await p.locator('#sceneHotspots [aria-label="Versorgungspult bedienen"]').first().click({ force: true }).catch(() => {}); await p.waitForTimeout(400);
+    const hist = await p.evaluate(() => GameEngine.dialogue.history().map(l => l.text).join(' | '));
+    check(await p.locator('#stModal:not(.hidden)').count() === 0 && /PLATTFORM AUSGEFAHREN UND VERRIEGELT/.test(hist), '  the solved panel says so instead of reopening');
+    await H.drain(p);
     check(errs.length === 0, '  no page errors' + (errs.length ? ': ' + errs[0] : '')); await ctx.close();
   }
   await b.close(); finish();
