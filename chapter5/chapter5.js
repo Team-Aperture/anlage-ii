@@ -747,11 +747,13 @@ const Chapter5 = (() => {
   // ═══════════════════════════════════════════════════════════════
   // 14-G — VERSORGUNG.  Not every red lamp is in your way.
   // ═══════════════════════════════════════════════════════════════
+  // Every pressure line costs the same: the reserve says HOW MANY systems can
+  // run (two), never WHICH - only the schema and the function lines do.
   const SYS_DEF = [
     { role:'extend',  pre:'HYD', name:'HYDRAULIK',      fn:'fährt die Plattform aus.',                need:true,  cost:3, status:'stoerung' },
     { role:'lock',    pre:'VER', name:'VERRIEGELUNG',   fn:'verriegelt die Plattform am Gegenanker.', need:true,  cost:3, status:'stoerung' },
-    { role:'light',   pre:'LFT', name:'LAUFLICHT',      fn:'beleuchtet den Steg.',                    need:false, cost:2, status:'stoerung' },
-    { role:'heat',    pre:'HZG', name:'SCHIENENHEIZUNG',fn:'hält die Laufschiene eisfrei.',           need:false, cost:2, status:'stoerung' },
+    { role:'light',   pre:'LFT', name:'LAUFLICHT',      fn:'beleuchtet den Steg.',                    need:false, cost:3, status:'stoerung' },
+    { role:'heat',    pre:'HZG', name:'SCHIENENHEIZUNG',fn:'hält die Laufschiene eisfrei.',           need:false, cost:3, status:'stoerung' },
     { role:'align',   pre:'STW', name:'STELLWERK',      fn:'richtet den Gegenanker aus.',             need:false, cost:3, status:'fehlt' },
     { role:'monitor', pre:'DRW', name:'DRUCKWÄCHTER',   fn:'überwacht den Leitungsdruck.',            need:false, cost:2, status:'ok' },
   ];
@@ -1243,7 +1245,7 @@ const Chapter5 = (() => {
         g:{ t:'„Welche Verbindung war tatsächlich benutzbar?"' } },
       { r:{ t:'„Und das Ding von der falschen Platte gehört nirgends dazu. Das lassen wir raus."' },
         v:{ t:'"Confirm the sections this unit inspected, and exclude the foreign marking from the route."', s:'Bestätige die Abschnitte, die diese Einheit geprüft hat, und lass die Fremdmarkierung aus der Trasse heraus.' },
-        g:{ t:'„Schau ins Streckenprotokoll und bestätige nur die stabile Trasse."' } },
+        g:{ t:'„Schau ins Streckenprotokoll und bestätige nur, was ihr selbst gelaufen seid."' } },
     ],
   };
 
