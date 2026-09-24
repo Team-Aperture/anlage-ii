@@ -797,7 +797,7 @@ const Chapter8 = (() => {
   const SCENE_LINES = {
     shelf: [
       [ { speaker:'SYSTEM', text:'Regale, die weiter nach oben gehen, als das Licht reicht. Jede Schachtel beschriftet, viele davon aufgerissen. Auf dem Boden liegen sortierte Häufchen: Kanten links, Flächen rechts, „unklar" in der Mitte.' },
-        { speaker:'AGN-H3R', text:'„Das Meiste hier ist beschädigt. Wasser, Frost, dreißig Jahre ohne Strom. Ich mache aus Resten wieder Akten. Manchmal dauert eine Akte ein Jahr."' } ],
+        { speaker:'AGN-H3R', text:'„Das Meiste hier ist beschädigt. Wasser, Frost, fast acht Jahre ohne Strom. Ich mache aus Resten wieder Akten. Manchmal dauert eine Akte ein Jahr."' } ],
       [ { speaker:'R-3MI', text:'„Wie viele Akten habt ihr hier?"' },
         { speaker:'AGN-H3R', text:'„Zu viele."' },
         { speaker:'R-3MI', text:'„Endlich eine präzise Antwort."' },

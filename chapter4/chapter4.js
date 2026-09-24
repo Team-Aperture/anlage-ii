@@ -1562,7 +1562,7 @@ const Chapter4 = (() => {
     stuck: [
       [ { speaker:'B-RADF1SH', text:'„Welche Annahme hast du noch gar nicht überprüft?"' } ],
       [ { speaker:'B-RADF1SH', text:'„Wenn nichts passt, prüf zuerst die Annahme. Nicht gleich die Rechnung."' } ],
-      [ { speaker:'B-RADF1SH', text:'„Was weißt du hier sicher? Fang bei dem an und schreib den Rest ab."' } ],
+      [ { speaker:'B-RADF1SH', text:'„Was weißt du hier sicher? Fang bei dem an und arbeite dich von da aus vor."' } ],
       [ { speaker:'B-RADF1SH', text:'„Welche Information brauchst du für diesen Schritt wirklich?"' },
         { speaker:'SYSTEM', text:'Pause.' },
         { speaker:'B-RADF1SH', text:'„Und welche kannst du weglassen?"' } ],

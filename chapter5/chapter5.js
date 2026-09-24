@@ -698,7 +698,7 @@ const Chapter5 = (() => {
     say([
       { speaker:'SYSTEM', text:'Der Wartungslift setzt sich in Bewegung. Er ist langsam, ehrlich und sehr laut.' },
       { speaker:'SYSTEM', text:'Die Wand zieht an euch vorbei: Ebene um Ebene, Rohr um Rohr, Nische um Nische. Das Echo wird tiefer, je weiter ihr kommt.' },
-      { speaker:'SYSTEM', text:'Auf halber Strecke öffnet sich die Schachtwand zu einer Halle, die keiner von euch je erwähnt bekommen hat. Lichter, oben und unten, weit auseinander. Die Anlage ist erheblich größer als die Räume, die ihr kennt.' },
+      { speaker:'SYSTEM', text:'Auf halber Strecke öffnet sich die Schachtwand zu einer Halle, von der euch nie jemand erzählt hat. Lichter, oben und unten, weit auseinander. Die Anlage ist erheblich größer als die Räume, die ihr kennt.' },
       { speaker:'R-3MI',  text:'„Du hast vor fünf Minuten auch »noch ein Stück« gesagt."' },
       { speaker:'T-FLON14', text:'„Stimmt."' },
       { speaker:'SYSTEM', text:'Der Lift kommt auf der Sohle zum Stehen.' },
@@ -1032,7 +1032,6 @@ const Chapter5 = (() => {
     markD: {
       1: [
         { speaker:'SYSTEM', text:'Eine Routenplatte, wie sie hier überall hängen: doppelter Rand, vier Schrauben, Stationscode, Pfeil. Unten rechts eine kleine Kerbe aus der Fertigung.' },
-        { speaker:'T-FLON14', text:'' },
         { speaker:'R-3MI',  text:'„Eine Platte. Faszinierend."' },
       ],
       2: [ { speaker:'SYSTEM', text:'Dieselbe Bauform wie am Eingang. Die Anlage war in solchen Dingen sehr konsequent.' } ],

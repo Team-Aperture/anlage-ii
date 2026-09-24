@@ -685,7 +685,7 @@ const GameEngine = (() => {
       { id: 'ch6_complete',     icon: '◫', title: 'Saubere Methode',      desc: 'Die Blackbox wurde verstanden, ohne geöffnet zu werden.' },
       { id: 'ch7_complete',     icon: '▣', title: 'Echtheitsprüfung',     desc: 'Nicht geglaubt. Überprüft.' },
       { id: 'ch8_complete',     icon: '◍', title: 'Rekonstruktion',       desc: 'Die Zieldaten wurden wiederhergestellt.' },
-      { id: 'ch9_complete',     icon: '✦', title: 'Die ganze Wahrheit',   desc: 'Jeder Sektor, jede Frequenz, und der Raum, den es nicht gibt.' },
+      { id: 'ch9_complete',     icon: '✦', title: 'Die ganze Wahrheit',   desc: 'Jeder Sektor, jede Frequenz und der Raum, den es nicht gibt.' },
       { id: 'signal_first',     icon: '◈', title: 'Frequenz',             desc: 'Erste Signalnische entdeckt.' },
       { id: 'signal_all',       icon: '▲', title: 'Die Übertragung',      desc: 'Alle Signalnischen gefunden.' },
       { id: 'italian_brainrot', icon: '🐪', title: 'Frigo Camelo',        desc: 'F–R–I–G–O. Du weißt, was du getan hast.' },

@@ -413,7 +413,7 @@ const Chapter2 = (() => {
       { speaker:'V-TGM',    text:'"She talks to the plants."', subtitle:'Sie spricht mit den Pflanzen.' },
       { speaker:'F-RØ5CHI', text:'„Und de hörn wenigstens zua."', subtitle:'Und die hören wenigstens zu.' },
       { speaker:'F-RØ5CHI', text:'„Schau, mei Garten…"', subtitle:'Schau, mein Garten…' },
-      { speaker:'F-RØ5CHI', text:'„…hod offnsichdlich in Arsch g\'frorn."', subtitle:'…hat offensichtlich den Arsch eingefroren.' },
+      { speaker:'F-RØ5CHI', text:'„…hod offnsichdlich in Arsch g\'frorn."', subtitle:'…hat sich offensichtlich den Arsch abgefroren.' },
       { speaker:'R-3MI',    text:'„F-RØ5CHI!"' },
       { speaker:'F-RØ5CHI', text:'„Wos? Es is wahr."', subtitle:'Was? Es ist wahr.' },
       { speaker:'V-TGM',    text:'"She is correct."', subtitle:'Sie hat recht.' },
@@ -1093,7 +1093,7 @@ const Chapter2 = (() => {
       { speaker:'F-RØ5CHI', text:'„Oba pass auf: so vui Eis hob i nimmer. Mehr ois achtzehn Kanäl mog de Tafel ned."', subtitle:'Aber pass auf: so viel Eis hab ich nicht mehr. Mehr als achtzehn Kanäle mag die Tafel nicht.' },
       { speaker:'F-RØ5CHI', text:'„Er hod gsagt, des Rätsl hod mehrere Lösungen."', subtitle:'Er hat gesagt, das Rätsel hat mehrere Lösungen.' },
       { speaker:'R-3MI',    text:'„Das ist entweder großzügig oder faul."' },
-      { speaker:'F-RØ5CHI', text:'„Sag des eam amoi persönlich."', subtitle:'Sag das ihm mal persönlich.' },
+      { speaker:'F-RØ5CHI', text:'„Sag des eam amoi persönlich."', subtitle:'Sag ihm das mal persönlich.' },
       { speaker:'R-3MI',    text:'„Mehrere Lösungen sind großartig."' },
     ], show);
   }
@@ -1303,7 +1303,7 @@ const Chapter2 = (() => {
       { speaker:'R-3MI',    text:'„Warum gibst du uns einen Eissplitter?"' },
       { speaker:'F-RØ5CHI', text:'„Weil i kann."', subtitle:'Weil ich kann.' },
       { speaker:'V-TGM',    text:'"That is the best answer she has given."', subtitle:'Das ist die beste Antwort, die sie gegeben hat.' },
-      { speaker:'F-RØ5CHI', text:'„Pfiat eich, ihr Drei. Kemmts wieder, gell?"', subtitle:'Pfiat euch, ihr drei. Kommt wieder, gell?' },
+      { speaker:'F-RØ5CHI', text:'„Pfiat eich, ihr Drei. Kemmts wieder, gell?"', subtitle:'Macht’s gut, ihr drei. Kommt wieder, ja?' },
       { speaker:'SYSTEM',   text:'SEKTOR 03 — BEOBACHTUNGSSEKTOR — FREIGEGEBEN.' },
       { speaker:'R-3MI',    text:'„L-UX wird sich freuen."' },
       { speaker:'V-TGM',    text:'"If he holds still long enough for us to find him."', subtitle:'Wenn er lange genug stillhält, damit wir ihn finden.' },
