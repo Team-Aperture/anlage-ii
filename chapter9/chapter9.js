@@ -31,9 +31,11 @@ const Chapter9 = (() => {
   // the transmission independently names the same place, which is the point —
   // it is the only part of the target that does not come from R-3MI and V-TGM.
   //
-  // The authorisation on file from the first Anlage: the player typed it
-  // themselves to get in here, so the record only reads it back. Stored
-  // shifted so it is not sitting in a second file in the clear.
+  // The authorisation on file from the first Anlage. Part II never asks for
+  // it, so the record shows the digits only to a returning Part-I player whom
+  // the title screen's Archivabgleich has already recognised (they know them
+  // anyway); everyone else sees the archive's redaction. Stored shifted so it
+  // is not sitting in a second file in the clear.
   // ═══════════════════════════════════════════════════════════════
   const AUTH = ['00690062', '006d006a', '0055005e', '00460045'];
 
@@ -337,8 +339,9 @@ const Chapter9 = (() => {
       title:'ABSCHALTVORGANG',
       sub:'ERSTE ANLAGE · ARCHIVKOPIE',
       body: () => {
-        const code = joinTokens(AUTH);
-        const shown = code.replace(/(\d{4})(\d{4})/, '$1 · $2');
+        let vet = false;
+        try { vet = GameEngine.achievements.isUnlocked('ka1_veteran'); } catch (_) {}
+        const shown = vet ? joinTokens(AUTH).replace(/(\d{4})(\d{4})/, '$1 · $2') : '████ · ████';
         return rows([
           ['VORGANG', 'ABSCHALTUNG'],
           ['ANLAGE', 'KA-I'],
@@ -351,7 +354,7 @@ const Chapter9 = (() => {
         ]) + `<p class="rec-note">Randnotiz, mit der Hand: „nicht widerrufen — nie beantragt worden."</p>`;
       },
       lines: [
-        { speaker:'SYSTEM', text:'Eine Akte von dem Tag, an dem die erste Anlage abgeschaltet wurde. Dein Code steht darin. Nicht als Ereignis — als Berechtigung.' },
+        { speaker:'SYSTEM', text:'Eine Akte von dem Tag, an dem die erste Anlage abgeschaltet wurde. Der Abschaltcode steht darin. Nicht als Ereignis — als Berechtigung.' },
         { speaker:'R-3MI',  text:'„Alte Akten. Die heben die hier alles auf. Furchtbar unordentlich, eigentlich."' },
         { speaker:'V-TGM',  text:'"It says the signature is still valid."', subtitle:'Da steht, die Signatur ist weiterhin gültig.' },
         { speaker:'R-3MI',  text:'„Ja. Steht da. Sehr… interessant. Nächste Akte?"' },

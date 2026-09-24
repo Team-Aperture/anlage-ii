@@ -25,7 +25,7 @@ const { check, finish } = H.checker('hotfix01');
     check(errs.length === 0, '  no page errors'); await ctx.close();
   }
   console.log('\n[C] a genuine revisit still gets the epilogue, and copy reports on itself');
-  { const { ctx, p, errs } = await H.open(b, '/chapter9/chapter9.html', H.save({ chaptersCompleted: H.ALL, signalsFound: H.SIG, flags:{ ka1_verified:true, truth_revealed:true, zieldaten:true } }));
+  { const { ctx, p, errs } = await H.open(b, '/chapter9/chapter9.html', H.save({ chaptersCompleted: H.ALL, signalsFound: H.SIG, flags:{ truth_revealed:true, zieldaten:true } }));
     await p.waitForTimeout(3000); await H.settled(p); await H.drain(p); await p.waitForTimeout(600); await H.drain(p);
     check(/DIESE KAMMER/.test(await p.evaluate(() => document.getElementById('choicePrompt')?.textContent || '')), 'finished run lands on the revisit menu');
     await p.locator('.choice-btn', { hasText: 'ZIELDATEN' }).first().click({ force: true }); await p.waitForTimeout(500);

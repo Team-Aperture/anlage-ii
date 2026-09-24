@@ -9,24 +9,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Barlow:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/global.css?v=20260923">
   <link rel="stylesheet" href="chapter0.css?v=20260923">
-  <script>
-    /* Authorisation gate. Runs before the scene paints so an unverified visitor
-       never sees the entrance. Reads the save directly because the engine has
-       not loaded yet; Chapter0.init() re-checks through GameEngine.state.
-       A missing or corrupted save must fail closed (redirect), not open. */
-    (function () {
-      var verified = false;
-      try {
-        var raw  = localStorage.getItem('ka2_save_v1');
-        var data = raw ? JSON.parse(raw) : null;
-        verified = !!(data && data.flags && data.flags.ka1_verified);
-      } catch (_) { verified = false; }
-      if (!verified) {
-        document.documentElement.className = 'gate-blocked';
-        location.replace('../access.html');
-      }
-    })();
-  </script>
 </head>
 <body class="chapter-page">
 

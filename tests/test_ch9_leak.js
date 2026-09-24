@@ -22,11 +22,11 @@ async function look(b, sv) {
     check(!/Wahrheit|Kammer|registriert|Hiii|zurück/i.test(ach), '  locked achievements name nothing');
     check(r.errs.length === 0, '  no page errors'); await r.ctx.close(); }
   console.log('\n[B] finished, signals incomplete');
-  { const r = await look(b, H.save({ chaptersCompleted: H.ALL, signalsFound: ['sig_01','sig_02'], flags: { ka1_verified: true, zieldaten: true } }));
+  { const r = await look(b, H.save({ chaptersCompleted: H.ALL, signalsFound: ['sig_01','sig_02'], flags: { zieldaten: true } }));
     check(/FORTSCHRITT: 8 \/ 8 SEKTOREN/.test(r.txt), 'reads as complete');
     check(!BAD.test(r.txt) && !r.nodes.includes('?'), '  and still no ninth'); await r.ctx.close(); }
   console.log('\n[C] legitimately unlocked');
-  { const r = await look(b, H.save({ chaptersCompleted: H.ALL, signalsFound: H.SIG, flags: { ka1_verified: true, zieldaten: true } }));
+  { const r = await look(b, H.save({ chaptersCompleted: H.ALL, signalsFound: H.SIG, flags: { zieldaten: true } }));
     check(r.nodes.includes('?'), `the cross-reference appears once earned (${r.nodes.join(',')})`);
     check(/FORTSCHRITT: 8 \/ 8 SEKTOREN/.test(r.txt), '  sector count stays at eight'); await r.ctx.close(); }
   console.log('\n[D] completion cards');

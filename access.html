@@ -48,41 +48,24 @@
       <div class="access-header">
         <p class="access-label sys-text">DIE KALIBRIERUNGSANLAGE II</p>
         <h1 class="access-title">ZUGRIFFSPRÜFUNG</h1>
-        <p class="access-sublabel sys-text">VERIFIZIERUNG ERFORDERLICH</p>
+        <p class="access-sublabel sys-text">EXTERNE TESTSIGNATUR ERFORDERLICH</p>
       </div>
 
-      <!-- Explanation -->
+      <!-- Explanation. Nothing from Part I is needed here: the player IS the
+           signature the facility is waiting for. -->
       <div class="access-message">
         <p>
           Diese Anlage wurde nach dem ersten Kalibrierungsdurchlauf
-          abgeschaltet und versiegelt. Sie antwortet nur noch auf eine
-          Autorisierung, die sie bereits kennt.
+          abgeschaltet und versiegelt. Ihr Abschaltcode liegt noch im Archiv.
+          Zur Reaktivierung fehlt ihr nur eine externe Testsignatur.
         </p>
         <p class="access-instruction">
-          Bitte den achtstelligen Abschaltcode aus
-          <em>Die Kalibrierungsanlage I</em> eingeben.
+          Die Testsignatur bist du.
         </p>
-      </div>
-
-      <!-- 8-digit input -->
-      <div class="code-input-wrap">
-        <p id="codeHint" class="visually-hidden">Achtstelliger Abschaltcode aus der ersten Anlage</p>
-        <div class="code-input-row" id="codeRow" role="group" aria-labelledby="codeHint">
-          <input type="text" class="code-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" autofocus aria-label="Stelle 1">
-          <input type="text" class="code-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" aria-label="Stelle 2">
-          <input type="text" class="code-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" aria-label="Stelle 3">
-          <input type="text" class="code-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" aria-label="Stelle 4">
-          <span class="code-divider">·</span>
-          <input type="text" class="code-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" aria-label="Stelle 5">
-          <input type="text" class="code-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" aria-label="Stelle 6">
-          <input type="text" class="code-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" aria-label="Stelle 7">
-          <input type="text" class="code-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" aria-label="Stelle 8">
-        </div>
-
         <p class="access-status sys-text" id="accessStatus">BEREIT.</p>
       </div>
 
-      <!-- What the archive has on file for those eight digits. -->
+      <!-- What the archive records once the player signs in. -->
       <div class="access-reveal hidden" id="accessReveal" aria-live="polite">
         <div class="ar-rows" id="accessRows"></div>
         <button class="ka-btn primary access-go" id="accessGo">[ REAKTIVIERUNG EINLEITEN ]</button>
@@ -90,20 +73,20 @@
 
       <!-- Actions -->
       <div class="access-actions">
-        <button class="ka-btn primary" id="verifyBtn">[ VERIFIZIEREN ]</button>
+        <button class="ka-btn primary" id="verifyBtn">[ SIGNATUR ERFASSEN ]</button>
         <a class="ka-btn small" href="index.html">[ ABBRECHEN ]</a>
       </div>
 
     </section>
 
-    <!-- Help link for new players -->
+    <!-- For anyone wondering whether Part I is required: it is not. -->
     <details class="access-help">
-      <summary class="sys-text">DU HAST TEIL I NICHT GESPIELT?</summary>
+      <summary class="sys-text">TEIL I NICHT GESPIELT?</summary>
       <div class="access-help-content">
         <p>
-          Dieses Spiel ist ein Sequel und setzt die Geschichte aus
-          <em>Die Kalibrierungsanlage</em> fort. Der Verifizierungscode
-          erscheint am Ende des ersten Teils.
+          Kein Problem. Teil II ist vollständig ohne Teil I spielbar —
+          alles, was du brauchst, findest du hier. Wer die Vorgeschichte aus
+          <em>Die Kalibrierungsanlage</em> trotzdem kennenlernen möchte:
         </p>
         <p>
           <a href="https://team-aperture.github.io/kalibrierungsanlage/" id="ka1Game" class="access-link" target="_blank" rel="noopener">
@@ -114,6 +97,10 @@
           <a href="https://www.geocaching.com/geocache/GCBPAMN" id="ka1Listing" class="access-link" target="_blank" rel="noopener">
             → Das Listing zu Teil I
           </a>
+        </p>
+        <p>
+          Und wer Teil I bis zum Ende durchgestanden hat: Die Anlage vergisst
+          nichts. Das Hauptmenü auch nicht.
         </p>
       </div>
     </details>

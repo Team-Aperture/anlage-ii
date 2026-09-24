@@ -76,12 +76,17 @@ anderes Etikett.
 
 ## Der Zugangscode aus Teil I
 
-In `chapter9/chapter9.js` steht `const AUTH = [ … ]` — das ist der
-achtstellige Verifizierungscode aus der ersten Anlage, den die
-Autorisierungsakte in Kapitel 9 zurückliest. Der Spieler kennt ihn bereits
-(er hat ihn selbst eingegeben, um überhaupt anzufangen); er liegt nur deshalb
-verschoben vor, damit er nicht beiläufig im Quelltext steht. Der muss **nicht**
-ersetzt werden — es sei denn, der Zugangscode in `js/access.js` ändert sich.
+Teil II verlangt ihn nirgends. Er ist nur noch ein optionales Osterei: im
+Titelterminal (`js/archiv.js`, acht blasse Felder neben der Versionsangabe)
+kann ein ehemaliges Testsubjekt ihn eingeben und bekommt eine Feier plus den
+geheimen Erfolg „Wiederholungstäter" — ohne jede Auswirkung aufs Spiel. Dort
+liegt er nur als gesalzener SHA-256-Wert vor.
+
+In `chapter9/chapter9.js` steht `const AUTH = [ … ]` — derselbe Code,
+verschoben gespeichert. Die Autorisierungsakte in Kapitel 9 zeigt die Ziffern
+nur Spielern, die der Archivabgleich schon erkannt hat (sie kennen sie
+ohnehin); alle anderen sehen `████ · ████`. Muss **nicht** ersetzt werden —
+es sei denn, der Code in `js/archiv.js` ändert sich.
 
 ## Wo die Zieldaten auftauchen
 
@@ -101,7 +106,7 @@ löscht sie auf Wunsch wieder.
 
 - [ ] `MAIN` in `js/engine.js` enthält die echten Fragmente.
 - [x] `KA1_LISTING_URL` und `KA1_GAME_URL` in `js/access.js` zeigen auf die
-      erste Anlage.
+      erste Anlage (nur als optionaler Hintergrund verlinkt).
 - [ ] Kapitel 8 einmal komplett durchgespielt, Zeichenkette stimmt.
 - [ ] Kapitel 9 einmal durchgespielt — dieselbe Zeichenkette, Etikett
       `EXTERN BESTÄTIGT`.
