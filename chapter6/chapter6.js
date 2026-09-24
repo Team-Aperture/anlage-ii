@@ -60,6 +60,13 @@ const Chapter6 = (() => {
     ce: x => x.filter(isRound).length >= 2,
   };
   const COND_KEYS = Object.keys(CONDS);
+  // Parity of the round symbols stays in the family: it still counts as a
+  // rival when the archive and the diagnostic are checked for ambiguity, and
+  // an experiment already saved on it stays playable. It is never rolled —
+  // "an odd number of round symbols" flips the branch on every change of
+  // symbol kind at every position, so no controlled change isolates it, and it
+  // made the chamber randomly much harder than the other four.
+  const RETIRED_COND = 'cd';
 
   function applyPerm(x, p) { return [x[p[0]], x[p[1]], x[p[2]]]; }
   function evalRule(x, r) {
@@ -186,7 +193,7 @@ const Chapter6 = (() => {
     const sigs = cands.map(behaviour);
     const order = shuffle(cands.map((c, i) => i));
     for (const i of order) {
-      if (ruleUsable(cands[i], sigs)) return cands[i];
+      if (cands[i].cond !== RETIRED_COND && ruleUsable(cands[i], sigs)) return cands[i];
     }
     return null;
   }
@@ -279,6 +286,10 @@ const Chapter6 = (() => {
                     && t.inp.every(v => v >= 0 && v < N_SYM) && t.out.every(v => v >= 0 && v < N_SYM);
     if (!d.archive.every(okRow)) return null;
     if (!Array.isArray(d.tests) || !d.tests.every(okRow)) return null;
+    // A saved experiment on the retired condition that nothing has been
+    // recorded against yet starts over; one with runs, a prediction or the
+    // foreign record found is kept exactly as it is.
+    if (r.cond === RETIRED_COND && d.phase !== 2 && !d.tests.length && !d.predictInput && !d.sigFound) return null;
     return d;
   }
 
@@ -780,7 +791,9 @@ const Chapter6 = (() => {
       other = [base[0], base[1], base[0]];
       if (sameSeq(other, base)) other = [base[0], base[0], base[1]];
     } else {
-      const i = [0,1,2].find(k => isRound(base[k]) === isRound(base[0])) ?? 0;
+      // any one position: always changing position 1 made "position 1 is
+      // round" look like an effect of the count
+      const i = randInt(0, 2);
       other[i] = isRound(base[i]) ? randInt(0, 2) : randInt(3, 5);
       if (sameSeq(other, base)) other[0] = (base[0] + 3) % N_SYM;
     }
@@ -1213,7 +1226,7 @@ const Chapter6 = (() => {
       { r:{ t:'„Was haben die komischen Läufe gemeinsam? Ich seh nur Dreiecke und Kreise."' },
         v:{ t:'"Sort the runs into two groups: those that follow stage one, and those that do not. Then look at the inputs only."', s:'Teile die Läufe in zwei Gruppen: die, die Stufe eins folgen, und die anderen. Dann schau nur auf die Eingaben.' },
         g:{ t:'„Nicht die Ausgabe. Die Eingabe. Was ist bei denen anders?"' } },
-      { r:{ t:'„Eckig oder rund. Doppelte Zeichen. Welche Stelle. Irgendwas davon schaltet um."' },
+      { r:{ t:'„Eckig oder rund. Doppelte Zeichen. Welche Stelle. Wie viele runde. Irgendwas davon schaltet um."' },
         v:{ t:'"Hold two positions fixed and change only the third. The group a run falls into will flip at some point — that tells you the condition."', s:'Halte zwei Stellen fest und ändere nur die dritte. Irgendwann kippt die Gruppe — das verrät die Bedingung.' },
         g:{ t:'„Halte zwei Stellen gleich. Änder nur die dritte. Dann siehst du, woran es hängt."' } },
     ],
