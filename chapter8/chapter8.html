@@ -31,9 +31,9 @@
         <p class="puzzle-sub sys-text">GRUPPE WÄHLEN · ZWEITE GRUPPE TAUSCHT · [ DREHEN ] DREHT</p>
       </div>
 
-      <div class="rk-coh" aria-live="polite">
-        <span class="rk-coh-label sys-text">ARCHIVKOHÄRENZ</span>
-        <span class="rk-coh-value instabil" id="rkCoh">INSTABIL</span>
+      <div class="rk-coh" id="rkCohBox" aria-live="polite">
+        <span class="rk-coh-label sys-text" id="rkCohLabel">ARCHIVKOHÄRENZ</span>
+        <span class="rk-coh-value offen" id="rkCoh">UNGEPRÜFT</span>
         <span class="rk-coh-note" id="rkCohNote"></span>
       </div>
 
@@ -44,8 +44,9 @@
 
       <div class="puzzle-actions rk-actions" id="rkActions">
         <button class="ka-btn primary" data-act="rotate"  id="rkRotate"  disabled>[ DREHEN ]</button>
+        <button class="ka-btn small"   data-act="check"   id="rkCheck">[ PRÜFEN ]</button>
         <button class="ka-btn small"   data-act="inspect" id="rkInspect" disabled>[ ANSEHEN ]</button>
-        <button class="ka-btn small"   data-act="notes">[ ARCHIVNOTIZEN ]</button>
+        <button class="ka-btn small"   data-act="notes" aria-label="Archivnotizen">[ <span class="rk-wide">ARCHIV</span>NOTIZEN ]</button>
         <button class="ka-btn small"   data-act="close">[ ZURÜCK ]</button>
       </div>
     </div>
