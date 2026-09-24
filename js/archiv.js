@@ -98,7 +98,7 @@
   // Before Chapter 1 the title never names the crew (they have not been met).
   const metRobots = () => { try { return (E().state.get('chaptersCompleted') || []).includes('ch1'); } catch (_) { return false; } };
 
-  let panel = null, slot = null, digits = [], statusEl = null, busy = false, wrongs = 0;
+  let panel = null, slot = null, digits = [], statusEl = null, busy = false, wrongs = 0, missTimer = null;
 
   // ─── the eight faint slots ─────────────────────────────────
   function buildSlot() {
@@ -127,8 +127,8 @@
         <h2 class="overlay-title">ARCHIVABGLEICH</h2>
         <p class="overlay-subtitle sys-text">OPTIONAL // FÜR EHEMALIGE TESTSUBJEKTE</p>
         <div class="overlay-content archiv-content">
-          <p class="archiv-text">Im Archiv liegt ein Abschaltcode, zu dem nie jemand zurückgekommen ist.
-            Wer die erste Anlage bis zum Ende durchgestanden hat, kennt ihn.</p>
+          <p class="archiv-text">Im Archiv liegt der Abschaltcode der ersten Anlage.
+            Wer sie bis zum Ende durchgestanden hat, kennt ihn.</p>
           <p class="archiv-small sys-text">FÜR DEN SPIELVERLAUF OHNE BEDEUTUNG. FÜR DIE ANLAGE: NICHT.</p>
           <div class="archiv-row" role="group" aria-label="Achtstelliger Abschaltcode aus Teil I">
             ${[0, 1, 2, 3].map(box).join('')}<span class="archiv-divider" aria-hidden="true">·</span>${[4, 5, 6, 7].map(box).join('')}
@@ -146,12 +146,18 @@
     panel.querySelector('#archivCheck').addEventListener('click', check);
     panel.querySelector('#archivClose').addEventListener('click', close);
     panel.addEventListener('click', ev => { if (ev.target === panel) close(); });
+    // Escape is handled here rather than by the generic overlay handler, so
+    // the keyboard lands back on the slot
+    panel.addEventListener('keydown', ev => { if (ev.key === 'Escape') { ev.preventDefault(); ev.stopPropagation(); close(); } });
     wireDigits();
   }
 
   function open() {
     if (!panel) buildPanel();
-    if (busy || layer) return;
+    if (layer) return;
+    // a wrong code still being shown when the panel was closed is simply over
+    if (missTimer) { clearTimeout(missTimer); missTimer = null; busy = false; }
+    if (busy) return;
     digits.forEach(d => { d.value = ''; d.classList.remove('wrong', 'correct'); d.readOnly = false; });
     setStatus('BEREIT.', '');
     panel.classList.remove('hidden');
@@ -225,10 +231,11 @@
     digits.forEach(d => d.classList.add('wrong'));
     setStatus(msg, 'error');
     tone({ freq: 220, type: 'triangle', dur: 0.12, vol: 0.08, glideTo: 180 });
-    setTimeout(() => {
+    missTimer = setTimeout(() => {
+      missTimer = null;
       busy = false;
       digits.forEach(d => { d.classList.remove('wrong'); d.value = ''; });
-      try { digits[0].focus(); } catch (_) {}
+      if (!panel.classList.contains('hidden')) { try { digits[0].focus(); } catch (_) {} }
     }, 1400);
   }
 
@@ -237,11 +244,16 @@
     setStatus('TREFFER.', 'success');
     tone({ freq: 880, type: 'sine', dur: 0.12, vol: 0.12 });
     const first = !veteran();
+    // Latched now, before any of the show (house rule): a reload in the middle
+    // of the party keeps it. The toast is held back until the burst.
+    try { E().toasts.hold(); toastHeld = true; } catch (_) {}
+    try { E().achievements.unlock(ACH); } catch (_) {}
     setTimeout(() => { close(); busy = false; party(first); }, reduced ? 200 : 650);
   }
 
   // ─── the party ─────────────────────────────────────────────
-  let layer = null;
+  let layer = null, toastHeld = false;
+  function releaseToast() { if (toastHeld) { toastHeld = false; try { E().toasts.release(); } catch (_) {} } }
   function party(first) {
     if (layer) return;
     const timers = [];
@@ -321,8 +333,9 @@
       if (sysStatus) { sysStatus.textContent = first ? 'BEGEISTERT' : 'SCHON WIEDER BEGEISTERT'; sysStatus.className = 'blink vet-status-joy'; }
       confetti(first ? 150 : 60);
       fanfare(first);
-      // The one thing it awards: a secret achievement, not part of the 100 %.
-      try { E().achievements.unlock(ACH); } catch (_) {}
+      // The one thing it awards — a secret achievement, not part of the 100 %
+      // — was saved at the match; its toast lands now.
+      releaseToast();
       slot?.classList.add('known');
     });
 
@@ -343,7 +356,7 @@
     // The show can be left at any moment; the achievement is kept either way.
     function end() {
       timers.forEach(clearTimeout);
-      try { E().achievements.unlock(ACH); } catch (_) {}
+      releaseToast();
       slot?.classList.add('known');
       if (sysStatus && oldStatus) { sysStatus.textContent = oldStatus[0]; sysStatus.className = oldStatus[1]; }
       document.removeEventListener('keydown', onKey);
@@ -353,7 +366,11 @@
       setTimeout(() => l.remove(), 400);
       try { slot?.focus(); } catch (_) {}
     }
-    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); end(); } }
+    function onKey(e) {
+      if (e.key === 'Escape') { e.preventDefault(); end(); return; }
+      // the party is modal for the keyboard: Tab stays on its one button
+      if (e.key === 'Tab') { e.preventDefault(); try { done.focus(); } catch (_) {} }
+    }
     done.addEventListener('click', end);
     document.addEventListener('keydown', onKey);
     setTimeout(() => { try { done.focus({ preventScroll: true }); } catch (_) {} }, 80);

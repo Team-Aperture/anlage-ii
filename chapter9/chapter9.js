@@ -599,9 +599,9 @@ const Chapter9 = (() => {
       { speaker:'V-TGM', text:'"The facility remembered you. Your authorisation survived the shutdown."', subtitle:'Die Anlage hat sich an dich erinnert. Deine Berechtigung hat die Abschaltung überlebt.' },
       { speaker:'V-TGM', text:'"Ours did not."', subtitle:'Unsere nicht.' },
       { speaker:'R-3MI', text:'„Also brauchten wir jemanden, den die Anlage noch akzeptiert."' },
-      { speaker:'V-TGM', text:'"The code was never a reactivation code."', subtitle:'Der Code war nie ein Reaktivierungscode.' },
+      { speaker:'V-TGM', text:'"The code only ever shut it down. It could never start it again."', subtitle:'Der Code hat sie nur abgeschaltet. Wieder anfahren konnte er sie nie.' },
       { speaker:'V-TGM', text:'"It was your authorisation."', subtitle:'Er war deine Berechtigung.' },
-      { speaker:'V-TGM', text:'"We did not need your code."', subtitle:'Wir brauchten nicht deinen Code.' },
+      { speaker:'V-TGM', text:'"We did not need the code in the archive."', subtitle:'Wir brauchten nicht den Code im Archiv.' },
       { speaker:'V-TGM', text:'"We needed the person who used it."', subtitle:'Wir brauchten die Person, die ihn benutzt hat.' },
     ]},
     when: { key:'when', label:'[ Seit wann war das geplant? ]', lines:[

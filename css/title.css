@@ -406,6 +406,15 @@ a.sector-node:hover { transform: translateY(-3px); border-color: #fff; color: #f
    Eight faint slots beside the version tag. Part-I veterans typed their
    shutdown code into exactly this 4·4 shape. */
 .version-tag { display: flex; align-items: center; gap: 10px; }
+/* the tag is a label: it never swallows a tap meant for what sits above it */
+.version-tag { pointer-events: none; }
+.archiv-slot { pointer-events: auto; }
+/* one line on phones, so the slot never makes the fixed tag grow over the
+   Zieldaten box and its [ KOPIEREN ] */
+@media (max-width: 768px) {
+  .version-tag { white-space: nowrap; gap: 6px; }
+  .version-tag .sys-text { font-size: 9px; letter-spacing: .08em; }
+}
 .archiv-slot {
   background: none; border: 0; padding: 4px 2px; cursor: pointer;
   font-family: var(--font-mono, 'Share Tech Mono', monospace);

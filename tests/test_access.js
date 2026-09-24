@@ -87,6 +87,7 @@ const typeIn = async (p, code) => { for (let i = 0; i < code.length; i++) { awai
       await typeIn(p, CODE);
       await p.waitForSelector('.vet-party', { timeout: 4000 }).catch(() => {});
       check(await p.locator('.vet-party').count() === 1, `  ${label}: the facility throws a party`);
+      check((await saved(p)).achievementsUnlocked.includes('ka1_veteran'), '  the achievement is saved the moment the code matches (a reload mid-party keeps it)');
       await p.waitForTimeout(5500);
       check(await p.locator('.vet-bit').count() > 20, '  with confetti');
       const st = await saved(p);

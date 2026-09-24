@@ -282,7 +282,7 @@
     try { vet = GameEngine.achievements.isUnlocked('ka1_veteran'); } catch (_) {}
     return vet
       ? ['SYSTEM', 'Ehemaliges Testsubjekt anwesend. Sympathiewert: erhöht. Vorteile: keine.']
-      : ['SYSTEM', 'Archiv: ein Abschaltcode, acht Stellen. Rückkehr des Testsubjekts: nicht verzeichnet.'];
+      : ['SYSTEM', 'Abgleich mit dem Archiv der ersten Anlage: ausstehend. Acht Stellen.'];
   }
 
   let idleQueue = [];
@@ -299,10 +299,12 @@
     if (overlayOpen()) { idleTimer = setTimeout(showIdleComment, 6000); return; }
     if (!idleQueue.length) {
       const pool = (IDLE[stateOf().stage] || IDLE.PRE_CH1).slice();
-      pool.push(archiveLine());
+      pool.push('ARCHIV');                 // resolved when shown, so it is never stale
       idleQueue = pool.sort(() => Math.random() - 0.5);
     }
-    const [who, text] = idleQueue.shift();
+    let next = idleQueue.shift();
+    if (next === 'ARCHIV') next = archiveLine();
+    const [who, text] = next;
     idleEl.querySelector('.idle-comment-speaker').textContent = who;
     idleEl.dataset.who = who;
     idleEl.querySelector('.idle-comment-text').textContent = text;
