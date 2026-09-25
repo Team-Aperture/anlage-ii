@@ -1905,7 +1905,9 @@ const GameEngine = (() => {
     };
 
     let cur = null, curId = null, pending = null;
-    const VOL = 0.42;
+    // Music sits under the interface blips and the character voices (those run
+    // through the Web-Audio master at 0.5). One number to tune the soundtrack.
+    const VOL = 0.2;
 
     function _vol(a, v){ try { a.volume = Math.max(0, Math.min(1, v)); } catch(_){} }
     function _fade(a, to, ms, done){
@@ -2587,6 +2589,13 @@ const GameEngine = (() => {
     panel.querySelector('.save-content').scrollTop = 0;
   }
 
+  // A browser keeps a page silent until the player does something; the first
+  // key press or touch counts as much as a click. Space/Enter through the
+  // opening lines used to leave a chapter's track blocked for good.
+  ['keydown', 'pointerdown'].forEach(ev => document.addEventListener(ev, () => {
+    audio.resume();
+    try { music._retry(); } catch (_) {}
+  }, { passive: true }));
   document.addEventListener('click', e => {
     audio.resume();
     try { music._retry(); } catch (_) {}
