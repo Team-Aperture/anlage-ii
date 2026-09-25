@@ -145,6 +145,14 @@ const GameEngine = (() => {
       const drop = what => { if (dropped.indexOf(what) < 0) dropped.push(what); };
 
       // ── chapters form an unbroken chain (nothing from Part I is needed) ──
+      // The previous build (still live while this one is tested) drops ch0
+      // from any save without the legacy ka1_verified flag, and keeps the
+      // rest. A finished Sektor 01 is proof of the entrance, so ch0 comes
+      // back instead of the whole chain being dropped behind it; and every
+      // save with progress carries the flag, so the old build leaves it be.
+      // Neither gates anything here.
+      if (d.chaptersCompleted.indexOf('ch1') >= 0 && d.chaptersCompleted.indexOf('ch0') < 0) d.chaptersCompleted.unshift('ch0');
+      if (d.chaptersCompleted.length) d.flags.ka1_verified = true;
       const have = new Set(d.chaptersCompleted);
       const kept = [];
       let broken = false;
