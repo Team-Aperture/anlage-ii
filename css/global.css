@@ -1290,10 +1290,15 @@ body.dlg-up .puzzle-modal {
 }
 body.dlg-up .puzzle-modal > * { margin-top: 0; margin-bottom: auto; }
 
-/* Chapter 8's board docks its action row to the bottom of the modal on a phone
-   (position: sticky), which puts it right under the strip. Lift any docked
-   action row by the same measured height. No effect on a static row. */
-body.dlg-up .puzzle-actions { bottom: calc(var(--dlg-h, 170px) + var(--sp-xs)); }
+/* Docked action rows (position: sticky at the bottom of a puzzle card — on
+   phones, and Chapter 8's board on short windows) would sit right under the
+   strip. Lifting them above it put the row across the middle of the puzzle on
+   short screens (Chapter 8's board at 900x700, every docked row at 320x568).
+   While a line is up the row simply rejoins the flow instead: the reserved
+   padding above lets it be scrolled clear of the strip, and the puzzle itself
+   stays visible. It docks again as soon as the line is gone. */
+body.dlg-up .puzzle-modal .puzzle-actions,
+body.dlg-up #rkActions { position: static; box-shadow: none; }
 
 /* Chapter 8's phone layout zeroes the modal's bottom padding with an ID rule
    so its docked action row sits flush. An ID out-specifies the rule above, so
