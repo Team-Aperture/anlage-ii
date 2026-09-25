@@ -2,7 +2,10 @@
    KALIBRIERUNGSANLAGE II — ACCESS / VERIFICATION PAGE
    ═══════════════════════════════════════════════════════════════ */
 
-.access-page { overflow: hidden; }
+/* Only sideways is clipped. A body with overflow:hidden hands it to the
+   viewport, and then a phone (or a short window) could not scroll to the
+   opened "TEIL I NICHT GESPIELT?" text below the card. */
+.access-page { overflow-x: hidden; }
 
 /* ─── LAYOUT ─────────────────────────────────────────────────── */
 .access-main {
