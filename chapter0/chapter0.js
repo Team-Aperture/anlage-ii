@@ -362,6 +362,7 @@ const Chapter0 = (() => {
   // OPTIONAL ENVIRONMENT
   // Curiosity, not clues. Nothing here is needed to open the door.
   // ═══════════════════════════════════════════════════════════════
+  const CYCLE = (() => { try { return GameEngine.state.cycle(); } catch (_) { return 1; } })();   // NG+: which calibration cycle this is
   const ENVIRONMENT = [
     {
       key: 'terminal', label: 'ARCHIVTERMINAL', aria: 'Archivterminal untersuchen',
@@ -372,6 +373,8 @@ const Chapter0 = (() => {
         { speaker: 'SYSTEM', text: 'AUSFÜHRENDE AUTORISIERUNG: EXTERNE TESTSIGNATUR.' },
         { speaker: 'SYSTEM', text: 'TESTSIGNATUR // WIEDERERKANNT.' },
         { speaker: 'SYSTEM', text: 'WILLKOMMEN ZURÜCK.' },
+        // a later calibration cycle (NG+) — atmosphere only
+        ...(CYCLE > 1 ? [{ speaker: 'SYSTEM', text: `DURCHLAUF ${String(CYCLE).padStart(2, '0')}. DIE ANLAGE HAT DICH NICHT VERGESSEN.` }] : []),
       ],
       reread: [{ speaker: 'SYSTEM', text: 'ARCHIVTERMINAL // RESTDATEN UNVERÄNDERT.' }],
     },

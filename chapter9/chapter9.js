@@ -565,7 +565,10 @@ const Chapter9 = (() => {
     S.facedFirst = who;
     save();
     el('faceBar')?.classList.add('hidden');
-    const open = who === 'r3mi'
+    let cyc = 1; try { cyc = GameEngine.state.cycle(); } catch (_) {}
+    // a later calibration cycle (NG+) — one quiet line, nothing changes
+    const again = cyc > 1 ? [{ speaker:'SYSTEM', text:'Diesmal wirkt keiner der beiden überrascht.' }] : [];
+    const open = again.concat(who === 'r3mi'
       ? [
           { speaker:'SYSTEM', text:'Du drehst dich zu R-3MI.' },
           { speaker:'TESTPERSON', text:'„Was habt ihr getan?"' },
@@ -581,7 +584,7 @@ const Chapter9 = (() => {
           { speaker:'V-TGM', text:'"We should explain."', subtitle:'Wir sollten das erklären.' },
           { speaker:'R-3MI', text:'„Müssen wir das jetzt wirklich—"' },
           { speaker:'V-TGM', text:'"Yes."', subtitle:'Ja.' },
-        ];
+        ]);
     say(open, askMenu);
   }
 
@@ -909,6 +912,8 @@ const Chapter9 = (() => {
     const f = FINAL[key];
     S.finalPick = key;
     save();
+    // which ending this cycle chose; a new cycle (NG+) keeps the record
+    try { GameEngine.state.setFlag('ch9_ending', key); } catch (_) {}
     if (f.ach) { try { GameEngine.achievements.unlock(f.ach); } catch (_) {} }
     say(f.lines, exitSequence);
   }

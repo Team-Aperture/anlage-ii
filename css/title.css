@@ -524,3 +524,11 @@ body.vet-shake .title-main, body.vet-shake .sys-bar { animation: vetShake .5s ea
   .vet-party.burst .vet-welcome, .vet-party.burst .vet-card, body.vet-shake .title-main, body.vet-shake .sys-bar, .archiv-digit.wrong { animation: none; }
   .vet-row, .vet-line, .vet-party { transition: none; }
 }
+
+/* ─── NG+: NEUER DURCHLAUF ───────────────────────────────────── */
+.ncy-card { max-width: 480px; }
+.ncy-content { display: flex; flex-direction: column; gap: var(--sp-sm); }
+.ncy-content p { font-size: 14px; line-height: 1.6; color: var(--text-secondary); margin: 0; }
+.ncy-small { font-size: 11px !important; letter-spacing: .12em; }
+.ncy-actions { display: flex; gap: var(--sp-sm); justify-content: center; flex-wrap: wrap; margin-top: var(--sp-md); }
+@media (max-width: 420px) { .ncy-card .overlay-title { font-size: 20px; letter-spacing: .12em; } }

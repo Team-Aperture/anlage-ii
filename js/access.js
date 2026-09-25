@@ -59,7 +59,8 @@
   const REVEAL = [
     ['ABSCHALTCODE', 'IM ARCHIV'],
     ['LETZTE VERWENDUNG', 'SYSTEMABSCHALTUNG'],
-    ['EXTERNE TESTSIGNATUR', 'ERFASST'],
+    // a later calibration cycle (NG+): the facility has seen this signature before
+    ['EXTERNE TESTSIGNATUR', (() => { try { return GameEngine.state.cycle(); } catch (_) { return 1; } })() > 1 ? 'WIEDERERKANNT' : 'ERFASST'],
     ['ARCHIVSTATUS', 'ENTSIEGELT'],
     ['REAKTIVIERUNGSPROTOKOLL', 'VERFÜGBAR'],
   ];
