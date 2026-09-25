@@ -14,7 +14,7 @@ Kein Server, kein Konto, kein Tracking.
 | `chaptersCompleted` | `ch0`…`ch8`. `ch9` steht hier **nie** drin |
 | `signalsFound` | `sig_01`…`sig_05` |
 | `achievementsUnlocked` | Erfolgs-IDs |
-| `flags` | u. a. `zieldaten`, `truth_revealed` (`ka1_verified` ist ein Altbestand ohne Wirkung) |
+| `flags` | u. a. `ka1_verified`, `zieldaten`, `truth_revealed` |
 | `calibration` | ein Kalibrierungsfragment pro abgeschlossenem Sektor |
 | `chapterState` | Wiederaufnahmepunkte einzelner Kapitel |
 | `settings` | Spielereinstellungen (Ton) |
@@ -36,7 +36,7 @@ Deshalb gilt beim Laden **und** beim Import: ein Spielstand ist nur so weit,
 wie sein eigener Inhalt das hergibt. Geprüft wird:
 
 * **Kapitelkette.** `ch_n` zählt nur, wenn alle vorherigen Sektoren ebenfalls
-  abgeschlossen sind. Aus Teil I wird nichts verlangt.
+  abgeschlossen sind. `ch0` zählt nur mit `ka1_verified`.
 * **Fremdsignale.** Ein Signal zählt nur, wenn der Sektor davor abgeschlossen
   ist — man kann es sonst nicht gehört haben.
 * **Kalibrierung.** Zu jedem abgeschlossenen Sektor gehört ein Fragment;

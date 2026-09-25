@@ -19,15 +19,14 @@ function save(over = {}) {
   chapters.forEach(c => { if (c !== 'ch0') cal[c] = true; });
   return {
     version: '1.0.0-pre', schemaVersion: 4, chaptersCompleted: chapters, puzzlesSolved: {},
-    signalsFound: [], achievementsUnlocked: [], flags: {},   // nothing from Part I, ever
+    signalsFound: [], achievementsUnlocked: [], flags: { ka1_verified: true },
     chapterState: {}, calibration: cal, settings: { muted: true }, firstPlay: false,
     ...over,
   };
 }
 const done = n => ALL.slice(0, n);   // ch0..ch(n-1)
 
-// The only secret the suites need: the KA-I code, for the optional veteran
-// Easter egg on the title screen. Never committed.
+// The only secret the suites need: the KA-I access code. Never committed.
 function localSecret(key) {
   if (process.env[key]) return process.env[key];
   try { return JSON.parse(fs.readFileSync(path.join(__dirname, '.local.json'), 'utf8'))[key]; }

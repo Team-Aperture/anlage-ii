@@ -7,8 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Barlow:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/global.css?v=20260924">
-  <link rel="stylesheet" href="css/access.css?v=20260924"></head>
+  <link rel="stylesheet" href="css/global.css?v=20260923">
+  <link rel="stylesheet" href="css/access.css?v=20260923"></head>
 <body class="access-page">
 
   <!-- ── ATMOSPHERIC LAYERS ──────────────────────────────────── -->
@@ -48,24 +48,41 @@
       <div class="access-header">
         <p class="access-label sys-text">DIE KALIBRIERUNGSANLAGE II</p>
         <h1 class="access-title">ZUGRIFFSPRÜFUNG</h1>
-        <p class="access-sublabel sys-text">EXTERNE TESTSIGNATUR ERFORDERLICH</p>
+        <p class="access-sublabel sys-text">VERIFIZIERUNG ERFORDERLICH</p>
       </div>
 
-      <!-- Explanation. Nothing from Part I is needed here: the player IS the
-           signature the facility is waiting for. -->
+      <!-- Explanation -->
       <div class="access-message">
         <p>
           Diese Anlage wurde nach dem ersten Kalibrierungsdurchlauf
-          abgeschaltet und versiegelt. Ihr Abschaltcode liegt noch im Archiv.
-          Zur Reaktivierung fehlt ihr nur eine externe Testsignatur.
+          abgeschaltet und versiegelt. Sie antwortet nur noch auf eine
+          Autorisierung, die sie bereits kennt.
         </p>
         <p class="access-instruction">
-          Die Testsignatur bist du.
+          Bitte den achtstelligen Abschaltcode aus
+          <em>Die Kalibrierungsanlage I</em> eingeben.
         </p>
+      </div>
+
+      <!-- 8-digit input -->
+      <div class="code-input-wrap">
+        <p id="codeHint" class="visually-hidden">Achtstelliger Abschaltcode aus der ersten Anlage</p>
+        <div class="code-input-row" id="codeRow" role="group" aria-labelledby="codeHint">
+          <input type="text" class="code-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" autofocus aria-label="Stelle 1">
+          <input type="text" class="code-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" aria-label="Stelle 2">
+          <input type="text" class="code-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" aria-label="Stelle 3">
+          <input type="text" class="code-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" aria-label="Stelle 4">
+          <span class="code-divider">·</span>
+          <input type="text" class="code-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" aria-label="Stelle 5">
+          <input type="text" class="code-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" aria-label="Stelle 6">
+          <input type="text" class="code-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" aria-label="Stelle 7">
+          <input type="text" class="code-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off" aria-label="Stelle 8">
+        </div>
+
         <p class="access-status sys-text" id="accessStatus">BEREIT.</p>
       </div>
 
-      <!-- What the archive records once the player signs in. -->
+      <!-- What the archive has on file for those eight digits. -->
       <div class="access-reveal hidden" id="accessReveal" aria-live="polite">
         <div class="ar-rows" id="accessRows"></div>
         <button class="ka-btn primary access-go" id="accessGo">[ REAKTIVIERUNG EINLEITEN ]</button>
@@ -73,20 +90,20 @@
 
       <!-- Actions -->
       <div class="access-actions">
-        <button class="ka-btn primary" id="verifyBtn">[ SIGNATUR ERFASSEN ]</button>
+        <button class="ka-btn primary" id="verifyBtn">[ VERIFIZIEREN ]</button>
         <a class="ka-btn small" href="index.html">[ ABBRECHEN ]</a>
       </div>
 
     </section>
 
-    <!-- For anyone wondering whether Part I is required: it is not. -->
+    <!-- Help link for new players -->
     <details class="access-help">
-      <summary class="sys-text">TEIL I NICHT GESPIELT?</summary>
+      <summary class="sys-text">DU HAST TEIL I NICHT GESPIELT?</summary>
       <div class="access-help-content">
         <p>
-          Kein Problem. Teil II ist vollständig ohne Teil I spielbar —
-          alles, was du brauchst, findest du hier. Wer die Vorgeschichte aus
-          <em>Die Kalibrierungsanlage</em> trotzdem kennenlernen möchte:
+          Dieses Spiel ist ein Sequel und setzt die Geschichte aus
+          <em>Die Kalibrierungsanlage</em> fort. Der Verifizierungscode
+          erscheint am Ende des ersten Teils.
         </p>
         <p>
           <a href="https://team-aperture.github.io/kalibrierungsanlage/" id="ka1Game" class="access-link" target="_blank" rel="noopener">
@@ -98,19 +115,15 @@
             → Das Listing zu Teil I
           </a>
         </p>
-        <p>
-          Und wer Teil I bis zum Ende durchgestanden hat: Die Anlage vergisst
-          nichts. Das Hauptmenü auch nicht.
-        </p>
       </div>
     </details>
 
   </main>
 
   <!-- ── SCRIPTS ─────────────────────────────────────────────── -->
-  <script src="js/engine.js?v=20260924"></script>
-  <script src="js/mobile-warning.js?v=20260924"></script>
-  <script src="js/access.js?v=20260924"></script>
+  <script src="js/engine.js?v=20260923"></script>
+  <script src="js/mobile-warning.js?v=20260923"></script>
+  <script src="js/access.js?v=20260923"></script>
 
 </body>
 </html>

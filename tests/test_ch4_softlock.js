@@ -31,25 +31,20 @@ const saved = p => p.evaluate(() => JSON.parse(localStorage.getItem('ka2_save_v1
     check(/ZENTRALVERSCHLUSS: 0 \/ 4/.test(first), `  first line after the reload: "${first.slice(0, 50)}…"`);
     check(errs.length === 0, '  no page errors'); await ctx.close(); }
 
-  console.log('\n[B] the balance: a repeat is free, the log is tracked, and nobody is ever made to guess');
+  console.log('\n[B] the balance: a double tap weighs once; at 0 / 5 the status names the way on');
   { const { ctx, p, errs } = await H.open(b, '/chapter4/chapter4.html', seed(MODS()));
     await p.waitForTimeout(2000); await H.drain(p);
     await hs(p, 'Prüfwaage untersuchen'); await H.drain(p);
-    const runs = async () => +(/(\d) \/ 5/.exec(await p.locator('#modModal .vs-note').first().innerText()) || [0, -1])[1];
-    const lines = () => p.locator('#modModal .vs-log li:not(.vs-log-empty)').count();
     await act(p, '[data-act="w-sel"][data-ring="0"]'); await act(p, '[data-act="w-sel"][data-ring="1"]');
     await p.locator('#modModal [data-act="w-run"]').dblclick(); await p.waitForTimeout(200);
-    check((await lines()) === 1 && (await runs()) === 4, `  a double tap weighs once (${await lines()} line, ${await runs()} / 5 left)`);
-    check(/SCHON GEWOGEN/.test(await status(p)), `  the second press reads the log back for free ("${await status(p)}")`);
-    let fixed = false, stuckAt0 = false;
-    for (const [x, y] of [[0, 2], [0, 3], [1, 2], [1, 3], [2, 3]]) {
+    const log = await p.locator('#modModal .vs-log li:not(.vs-log-empty)').count();
+    check(log === 1 && /4 \/ 5/.test(await p.locator('#modModal .vs-note').first().innerText()), `  one weighing, four runs left (${log} log line(s))`);
+    check(await p.locator('#modModal [data-act="w-run"]').isDisabled(), '  [ WIEGEN ] is off while the same pair is still selected');
+    for (const [x, y] of [[0, 2], [0, 3], [1, 2], [1, 3]]) {
       await act(p, '[data-act="w-clear"]'); await act(p, `[data-act="w-sel"][data-ring="${x}"]`); await act(p, `[data-act="w-sel"][data-ring="${y}"]`);
-      if (await p.locator('#modModal [data-act="w-run"]').isDisabled()) { if (!fixed) stuckAt0 = true; continue; }   // off only once the ranking is fixed
       await act(p, '[data-act="w-run"]');
-      if (/LEGT DIE RANGFOLGE JETZT FEST/.test(await status(p))) fixed = true;
     }
-    check(!stuckAt0, '  [ WIEGEN ] was never dead while the order was still open');
-    check(fixed, '  the log announced once it fixed the ranking');
+    check(/TARIERT SIE NEU/.test(await status(p)), `  exhausted status names the way on ("${await status(p)}")`);
     check(errs.length === 0, '  no page errors'); await ctx.close(); }
 
   console.log('\n[C] a module never opens under another module\'s status; a cut-short STEUERLAUF does not stay lit');

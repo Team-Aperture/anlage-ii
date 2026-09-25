@@ -20,7 +20,7 @@ const stubEngine = { chapter: {}, state: { get: () => null, set: noop, setFlag: 
   achievements: { unlock: noop }, signals: { ALL: [], isFound: () => false }, dialogue: { load: noop, advance: noop }, audio: {}, fx: {}, props: { register: noop }, progress: { require: () => true }, calibration };
 const stubDoc = { getElementById: () => null, querySelector: () => null, querySelectorAll: () => [], createElement: () => ({ style: {}, classList: { add: noop, remove: noop } }), addEventListener: noop };
 const M = new Function('GameEngine', 'document', 'window', src + `
-  return { generate, enumerate, holds, noteText, N, isSolved, violations, traceErrors, kalOrder, reconstructZiel, coherence, brokenNotes,
+  return { generate, enumerate, holds, noteText, N, isSolved, violations, traceErrors, kalOrder, reconstructZiel,
            setInstance: (p, b) => { P = p; B = b; } };`)(stubEngine, stubDoc, { matchMedia: () => ({ matches: false }), addEventListener: noop });
 
 let fail = 0; const ok = m => console.log('  ok   ' + m), bad = m => { console.log('  FAIL ' + m); fail++; };
@@ -50,28 +50,4 @@ console.log('\n[2] coordinates');
 const viaBoard = M.reconstructZiel([0,1,2,3,4,5,6,7]), viaDefault = calibration.reconstructMain();
 viaBoard === viaDefault ? ok(`deriving without a board gives the same string: ${viaDefault}`) : bad(`derived (${viaDefault}) ≠ board (${viaBoard})`);
 M.reconstructZiel([1,0,2,3,4,5,6,7]) !== viaBoard ? ok('a wrong reading order does not produce the target data') : bad('order does not matter');
-console.log('\n[3] the ARCHIVKOHÄRENZ readout answers in phases, never in amounts');
-{ const K = 150; let amountLeak = 0, notOne = 0, structLeak = 0, spread = {};
-  for (let t = 0; t < K; t++) {
-    const inst = M.generate();
-    const all = M.enumerate(inst.frags, [], 1e6).sols;            // every filing the three filing rules allow
-    let spur = 0;
-    for (const board of all) {
-      M.setInstance(inst, { board, rot: board.map(() => 0), sel: -1 });
-      const nb = M.brokenNotes().length, key = M.coherence().key;
-      (spread[nb] = spread[nb] || new Set()).add(key);
-      if (key !== (nb ? 'steigend' : 'spur')) amountLeak++;
-      if (key === 'spur') spur++;
-    }
-    if (spur !== 1) notOne++;
-    // a broken filing rule reads INSTABIL however many notes happen to hold
-    const b = inst.sol.slice(); [b[0], b[1]] = [b[1], b[0]];      // time stamps now fall in level 1
-    M.setInstance(inst, { board: b, rot: b.map(() => 0), sel: -1 });
-    if (M.coherence().key !== 'instabil') structLeak++;
-  }
-  amountLeak ? bad(`${amountLeak} filing(s) where the readout depends on how many notes are broken`) : ok('1 broken note and 7 broken notes read the same (STEIGEND)');
-  notOne ? bad(`${notOne} instance(s) where KONSISTENT marks more or less than the one solution`) : ok('among rule-abiding filings KONSISTENT marks exactly the solution — the readout is yes/no');
-  structLeak ? bad(`${structLeak} instance(s) where a broken filing rule did not read INSTABIL`) : ok('a broken filing rule reads INSTABIL');
-  console.log('       readout by broken-note count:', Object.keys(spread).sort().map(k => k + '→' + [...spread[k]].join('/')).join('  '));
-}
 console.log(`\n${fail ? fail + ' FINDING(S)' : 'AUDIT CLEAN'}`); process.exit(fail ? 1 : 0);

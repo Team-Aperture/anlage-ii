@@ -5,7 +5,7 @@ const fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..'); const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 let fail = 0; const ok = m => console.log('  ok   ' + m), bad = m => { console.log('  FAIL ' + m); fail++; }; const check = (c, m) => c ? ok(m) : bad(m);
 const chapters = [0,1,2,3,4,5,6,7,8,9]; const src = {}, html = {}; chapters.forEach(n => { src[n] = read(`chapter${n}/chapter${n}.js`); html[n] = read(`chapter${n}/chapter${n}.html`); });
-const engine = read('js/engine.js'), title = read('js/title.js'), access = read('js/access.js'), archiv = read('js/archiv.js');
+const engine = read('js/engine.js'), title = read('js/title.js'), access = read('js/access.js');
 const spoken = chapters.map(n => [...src[n].matchAll(/(?:text|subtitle|label|prompt|hint):\s*'([^']*)'/g)].map(m => m[1]).join('\n')).join('\n');
 
 console.log('\n[1] gates');
@@ -19,7 +19,7 @@ check(vals.every((v, i) => i === 0 || v > vals[i - 1]) && vals[7] === 100, `PCT 
 check(/MAIN_SECTORS = \['ch1'/.test(engine) && !/\/ 9 KAPITEL|\/9 KAPITEL/.test(engine + title + chapters.map(n => src[n] + html[n]).join('')), 'visible progression counts eight sectors, never nine');
 
 console.log('\n[3] coordinates');
-const shipped = chapters.map(n => src[n] + html[n]).join('\n') + engine + title + access + archiv;
+const shipped = chapters.map(n => src[n] + html[n]).join('\n') + engine + title + access;
 check(!/N\s*\d{1,3}\s*°\s*\d/.test(shipped.replace(/N 00° 00\.000 · E 000° 00\.000/g, '')), 'no coordinate-shaped literal beyond the placeholder');
 check(/const MAIN = \[/.test(engine) && !/const BONUS = \[/.test(engine) && !/reconstructBonus/.test(engine), 'exactly one fragment table in the calibration module');
 check(!shipped.split('\n').some(l => /zieldaten_text|bonuszieldaten/i.test(l) && !/delete\s/.test(l)), 'coordinates are never a plaintext field');

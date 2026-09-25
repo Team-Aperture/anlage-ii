@@ -16,7 +16,7 @@
  * reference anchor per layer:
  *
  *   BESCHRIFTUNG   the labels lie; the hardware does not
- *   ANZEIGE        the schematic and two lamp tags lie; the cable routes do not
+ *   ANZEIGE        the schematic lies; the cable routes do not
  *   RÜCKMELDUNG    the system misnames your actions; the latches move
  *                  honestly
  *   ECHTHEITSPRÜFUNG   system and guest each point somewhere; only the
@@ -52,7 +52,7 @@ const Chapter7 = (() => {
     ended:    false,
     seen:     {},
     talkSeen: {},
-    hints:    { active:null, step:0, spent:{} },
+    hints:    { active:null, step:0 },
     coach:    0,
     excuse:   0,
     wrongFinal: 0,
@@ -114,7 +114,7 @@ const Chapter7 = (() => {
       GameEngine.state.set(SAVE_KEY, {
         act: S.act, fakeCompleteSeen: S.fakeCompleteSeen, metFaxn: S.metFaxn,
         anchors: S.anchors, bsodSeen: S.bsodSeen, integritySeen: S.integritySeen,
-        sigFound: S.sigFound, luxSeen: S.luxSeen, hints: S.hints.spent,
+        sigFound: S.sigFound, luxSeen: S.luxSeen,
       });
     } catch (_) {}
   }
@@ -228,7 +228,6 @@ const Chapter7 = (() => {
       S.anchors = { labels:!!d.anchors.labels, displays:!!d.anchors.displays, actions:!!d.anchors.actions };
       S.bsodSeen = !!d.bsodSeen; S.integritySeen = !!d.integritySeen;
       S.sigFound = !!d.sigFound; S.luxSeen = !!d.luxSeen;
-      S.hints.spent = readSpent(d.hints);
       loadRoom();
       // The third anchor stood, but the crash and the integrity report never
       // played (a reload in the lines between). They are the sector's turn,
@@ -390,24 +389,14 @@ const Chapter7 = (() => {
   // ═══════════════════════════════════════════════════════════════
   function buildWires() {
     const real = shuffle([0, 1, 2, 3]);            // real[switch] = terminal fed
-    // Two routes are readable behind the panel. The two terminals that must be
-    // powered are the ones neither readable cable reaches — so the answer
-    // follows from the one rule on the panel: each switch feeds exactly one.
-    const visible = shuffle([0, 1, 2, 3]).slice(0, 2);
-    const hidden  = [0, 1, 2, 3].filter(s => !visible.includes(s));
-    const want = hidden.map(s => real[s]).sort();   // terminals that must be powered
-    // The screen lies where it matters: believing it never powers that pair.
     let fake = shuffle([0, 1, 2, 3]);
     let guard = 0;
-    while (guard++ < 60 && want.every(t => hidden.includes(fake.indexOf(t)))) fake = shuffle([0, 1, 2, 3]);
-    // Two tags on the terminal strip are swapped: a terminal a readable cable
-    // reaches, and one that must be powered. Every lamp lights honestly — the
-    // tag above it is a label, and flipping that readable cable's switch shows
-    // the tag up. lamp[slot] = the terminal whose lamp sits under tag T(slot+1).
-    const a = real[pick(visible)], b = pick(want);
-    const lamp = [0, 1, 2, 3];
-    lamp[a] = b; lamp[b] = a;
-    return { real, fake, visible, want, lamp, on: [false, false, false, false], tries: 0, lampTrust: false };
+    while (guard++ < 60 && real.every((v, i) => v === fake[i])) fake = shuffle([0, 1, 2, 3]);
+    // Two routes are readable behind the panel; the rest follows from the fact
+    // that each switch feeds exactly one terminal.
+    const visible = shuffle([0, 1, 2, 3]).slice(0, 2);
+    const want = shuffle([0, 1, 2, 3]).slice(0, 2).sort();   // terminals that must be powered
+    return { real, fake, visible, want, on: [false, false, false, false], tries: 0 };
   }
 
   function renderWires() {
@@ -437,7 +426,7 @@ const Chapter7 = (() => {
       `</div>
       <div class="vx-terms">` +
       [0,1,2,3].map(t => {
-        const live = w.on.some((on, s) => on && w.real[s] === w.lamp[t]);
+        const live = w.on.some((on, s) => on && w.real[s] === t);
         return `<div class="vx-term${live ? ' live' : ''}">
             <span class="vx-term-id sys-text">${T(t)}</span>
             <span class="vx-lamp"></span>
@@ -560,7 +549,7 @@ const Chapter7 = (() => {
     }
     openModal = key;
     S.hints.active = key;
-    S.hints.step = S.hints.spent[key] | 0;
+    S.hints.step = 0;
     updateHintBar();
     CH.showHintBar(true);
     el('vxLabel').textContent = META[key].label;
@@ -677,14 +666,6 @@ const Chapter7 = (() => {
   }
 
   // ── Anchor 2 ─────────────────────────────────────────────────
-  // Said once, the first time the lit tags read exactly like the request and
-  // the release still refuses: the moment the panel could look broken.
-  const LAMP_TRUST = [
-    { speaker:'R-3MI', text:'„Aber die Lampen leuchten doch! Genau bei den zweien!"' },
-    { speaker:'FAX-N', text:'„Leuchten tun sie ehrlich."' },
-    { speaker:'FAX-N', text:'„Was dransteht, ist ein Schild."' },
-  ];
-
   function commitWires() {
     const w = P.wires;
     const live = [0,1,2,3].filter(t => w.on.some((on, s) => on && w.real[s] === t));
@@ -693,13 +674,6 @@ const Chapter7 = (() => {
     w.tries++;
     setStatus('FREIGABE VERWEIGERT — STROM LIEGT FALSCH AN.', 'error');
     tone({ freq: 120, type:'sawtooth', dur: 0.2, vol: 0.06 });
-    // the lit tags read exactly like the request: the tags were believed
-    const tags = [0,1,2,3].filter(t => live.includes(w.lamp[t]));
-    if (!w.lampTrust && tags.length === w.want.length && w.want.every(t => tags.includes(t))) {
-      w.lampTrust = true;
-      say(LAMP_TRUST);
-      return;
-    }
     if (w.tries % 2 === 1) sayMiss();
   }
 
@@ -1197,11 +1171,11 @@ const Chapter7 = (() => {
         v:{ t:'"The schematic is a drawing. The routes behind the cover are the circuit."', s:'Das Schaltbild ist eine Zeichnung. Die Führungen hinter der Blende sind der Stromkreis.' },
         g:{ t:'„Was der Bildschirm sagt, kann falsch sein. Was die Maschine tut, nicht."' } },
       { r:{ t:'„Zwei Kabel sieht man nicht. Aber es gibt nur vier Klemmen und jede kriegt genau einen Schalter…"' },
-        v:{ t:'"The mapping is one-to-one. Neither visible route ends at a requested terminal. Which switches does that leave?"', s:'Die Zuordnung ist eineindeutig. Keine sichtbare Führung endet an einer geforderten Klemme. Welche Schalter bleiben dann übrig?' },
+        v:{ t:'"The mapping is one-to-one. Two visible routes remove two candidates from the other two."', s:'Die Zuordnung ist eineindeutig. Zwei sichtbare Führungen streichen zwei Kandidaten für die übrigen beiden.' },
         g:{ t:'„Jeder Schalter genau eine Klemme. Was übrig bleibt, bleibt übrig."' } },
-      { r:{ t:'„Und wenn an einer Lampe was anderes steht als am Kabel: Das Kabel hat recht. Das Schildchen klebt da bloß."' },
-        v:{ t:'"Switch on the two switches whose routes are hidden; leave the visible two off. Where a lamp tag disagrees with a visible cable, the cable is right."', s:'Leg die zwei Schalter mit verdeckter Führung ein, lass die zwei sichtbaren aus. Wo ein Lampenschild einem sichtbaren Kabel widerspricht, hat das Kabel recht.' },
-        g:{ t:'„Die Lampen brennen ehrlich. Die Schildchen dran hab nicht ich geklebt."' } },
+      { r:{ t:'„Und dann nur die Schalter an, die zu den zwei geforderten Klemmen gehen. Die anderen aus lassen."' },
+        v:{ t:'"Power exactly the requested terminals along the real routes — every other terminal must stay dead."', s:'Bestrome genau die geforderten Klemmen über die echten Führungen — jede andere Klemme muss tot bleiben.' },
+        g:{ t:'„Nur die geforderten Klemmen. Eine zu viel ist auch falsch."' } },
     ],
     latches: [
       { r:{ t:'„Die Meldezeile stimmt nie. Ich hab dreimal denselben Schalter gedrückt und drei verschiedene Meldungen gekriegt."' },
@@ -1227,17 +1201,6 @@ const Chapter7 = (() => {
     ],
   };
 
-  // A ladder is walked once per chapter run. Leaving a puzzle and coming back,
-  // a retry or a reload never hands spent steps back; a fresh run starts at 0.
-  function readSpent(raw) {
-    const o = {};
-    if (raw && typeof raw === 'object') Object.keys(HINTS).forEach(k => {
-      const n = Math.max(0, Math.min(HINT_MAX, raw[k] | 0));
-      if (n) o[k] = n;
-    });
-    return o;
-  }
-
   function useHint(who) {
     // a tap while a line is up advances it — a hint started here would replace
     // the line's continuation, and a double tap would spend two hints
@@ -1253,10 +1216,7 @@ const Chapter7 = (() => {
     }
     const step = ladder[S.hints.step];
     S.hints.step++;
-    S.hints.spent[S.hints.active] = S.hints.step;
-    save();
     updateHintBar();
-    try { GameEngine.dialogue.holdNext(); } catch (_) {}   // the paid-for line is never cut off
     const e = who === 'r3mi' ? step.r : who === 'vtgm' ? step.v : step.g;
     const speaker = who === 'r3mi' ? 'R-3MI' : who === 'vtgm' ? 'V-TGM' : 'FAX-N';
     say([{ speaker, text: e.t, subtitle: e.s }]);

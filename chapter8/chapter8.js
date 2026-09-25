@@ -108,10 +108,6 @@ const Chapter8 = (() => {
   let B = null;   // { board, rot, sel }
 
   let openSheet = null;
-  // The last [ PRÜFEN ] reading and the filing it was taken on. Not saved: a
-  // reload shows the table unchecked, never a reading from another session.
-  let lastCheck = null;   // { c: KOHAERENZ entry, sig: 'fid,fid,…' }
-  const boardSig = () => B ? B.board.join(',') : '';
   let timers = [];
   function clearTimers() { timers.forEach(clearTimeout); timers = []; }
   function later(fn, ms) { const t = setTimeout(fn, ms); timers.push(t); return t; }
@@ -450,9 +446,8 @@ const Chapter8 = (() => {
 
   // ═══════════════════════════════════════════════════════════════
   // BOARD EVALUATION
-  // Nothing here reports an exact count of correct fragments, and the
-  // readout is taken only on [ PRÜFEN ]: it says which rule set is broken,
-  // never how badly, so a single move can never be scored.
+  // Nothing here reports an exact count of correct fragments — the readout
+  // stays qualitative so the board cannot be hill-climbed.
   // ═══════════════════════════════════════════════════════════════
   function fragAt(s) { return P.frags[B.board[s]]; }
 
@@ -483,18 +478,15 @@ const Chapter8 = (() => {
   }
   function isSolved() { return violations().total === 0 && traceErrors() === 0; }
 
-  // The readout answers in phases, never in amounts, and only on [ PRÜFEN ]:
-  // does the filing order hold (readable off the tags anyway), do the notes
-  // hold (yes or no — never how many), then the trace (visible anyway). No
-  // reading can say whether one move brought the board closer.
   const KOHAERENZ = [
-    { key:'instabil', label:'INSTABIL',   note:'Die Ablageordnung ist verletzt — Prüfsumme, Zeitmarke, Kern.' },
-    { key:'steigend', label:'STEIGEND',   note:'Die Ablageordnung hält. Nicht jede Archivnotiz stimmt.' },
+    { key:'instabil', label:'INSTABIL',   note:'Die Ablage widerspricht sich an mehreren Stellen.' },
+    { key:'steigend', label:'STEIGEND',   note:'Fast. Es bleiben Widersprüche.' },
     { key:'spur',     label:'KONSISTENT', note:'Die Ablage stimmt. Die Kalibrierungsspur ist noch unterbrochen.' },
   ];
   function coherence() {
-    if (structuralIssues() > 0)   return KOHAERENZ[0];
-    if (brokenNotes().length > 0) return KOHAERENZ[1];
+    const v = violations().total;
+    if (v >= 3) return KOHAERENZ[0];
+    if (v >= 1) return KOHAERENZ[1];
     return KOHAERENZ[2];
   }
 
@@ -635,47 +627,16 @@ const Chapter8 = (() => {
            + kal + `</button>`;
     }).join('');
     paintCoherence();
-    const rot = el('rkRotate'), insp = el('rkInspect'), chk = el('rkCheck');
+    const rot = el('rkRotate'), insp = el('rkInspect');
     if (rot)  rot.disabled  = S.solved || B.sel < 0;
     if (insp) insp.disabled = B.sel < 0;
-    if (chk)  chk.disabled  = S.solved;
   }
 
-  // Paints the last reading; never takes a new one.
   function paintCoherence() {
-    const box = el('rkCohBox'), lab = el('rkCohLabel'), v = el('rkCoh'), n = el('rkCohNote');
-    let c, note, stale = false;
-    if (S.solved)        { c = KOHAERENZ[2]; note = 'Die Rekonstruktion hält.'; }
-    else if (!lastCheck) { c = { key:'offen', label:'UNGEPRÜFT' }; note = 'Noch kein Abgleich. [ PRÜFEN ] gleicht mit dem Archiv ab.'; }
-    else {
-      c = lastCheck.c; stale = lastCheck.sig !== boardSig();
-      note = stale ? 'Seit der letzten Prüfung umgelegt. [ PRÜFEN ] gleicht neu ab.' : c.note;
-    }
-    if (box) box.classList.toggle('stale', stale);
-    if (lab) lab.textContent = stale ? 'LETZTE PRÜFUNG' : 'ARCHIVKOHÄRENZ';
+    const c = coherence();
+    const v = el('rkCoh'), n = el('rkCohNote');
     if (v) { v.textContent = c.label; v.className = 'rk-coh-value ' + c.key; }
-    if (n) n.textContent = note;
-  }
-
-  // [ PRÜFEN ] — the only thing that takes a reading. A tap while a line is
-  // up advances the line instead, like the hint buttons, so a check never
-  // replaces a line's continuation.
-  function checkBoard() {
-    if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch (_) {} return; }
-    if (S.solved || !P || !B) return;
-    lastCheck = { c: coherence(), sig: boardSig() };     // latched before any line
-    tone({ freq: 200, dur: 0.07, type: 'sine', vol: 0.045 });
-    paintCoherence();
-    if (lastCheck.c.key === 'spur') {
-      if (S.placedSeen) return;
-      S.placedSeen = true; save();
-      later(() => say([
-        { speaker:'AGN-H3R', text:'„Die Ablage stimmt."' },
-        { speaker:'AGN-H3R', text:'„Jetzt die Spur. Sie muss durchlaufen — von jedem Fragment ins nächste, und nirgendwo über den Rand."' },
-      ]), 420);
-      return;
-    }
-    prettyButImpossible();
+    if (n) n.textContent = S.solved ? 'Die Rekonstruktion hält.' : c.note;
   }
 
   function selectTile(s) {
@@ -686,19 +647,27 @@ const Chapter8 = (() => {
     [B.board[a], B.board[b]] = [B.board[b], B.board[a]];
     [B.rot[a],   B.rot[b]]   = [B.rot[b],   B.rot[a]];
     B.sel = -1;
-    tone({ freq: 240, dur: 0.05, type: 'square', vol: 0.05 });
+    tone({ f: 240, t: 0.05, type: 'square', g: 0.05 });
     afterMove();
   }
   function rotateSel() {
     if (S.solved || !B || B.sel < 0) return;
     B.rot[B.sel] = (B.rot[B.sel] + 1) % 4;
-    tone({ freq: 320, dur: 0.05, type: 'triangle', vol: 0.05 });
+    tone({ f: 320, t: 0.05, type: 'triangle', g: 0.05 });
     afterMove();
   }
   function afterMove() {
     save();
-    renderBoard();                  // the readout only goes stale; it never re-reads
+    renderBoard();
     if (isSolved()) { solveBoard(); return; }
+    prettyButImpossible();
+    if (violations().total === 0 && !S.placedSeen) {
+      S.placedSeen = true; save();
+      later(() => say([
+        { speaker:'AGN-H3R', text:'„Die Ablage stimmt."' },
+        { speaker:'AGN-H3R', text:'„Jetzt die Spur. Sie muss durchlaufen — von jedem Fragment ins nächste, und nirgendwo über den Rand."' },
+      ]), 420);
+    }
   }
 
   // Two fragments that line up beautifully and cannot have been filed
@@ -790,7 +759,6 @@ const Chapter8 = (() => {
     if (S.solved) return;
     switch (btn.dataset.act) {
       case 'rotate':  rotateSel(); break;
-      case 'check':   checkBoard(); break;
       case 'inspect': if (B && B.sel >= 0) inspect(B.sel); break;
       case 'notes':   openNotes(); break;
       case 'close':   closeBoard(); break;
@@ -1122,7 +1090,7 @@ const Chapter8 = (() => {
     // report offers appears underneath them
     if (before) card.insertBefore(box, before); else card.appendChild(box);
     requestAnimationFrame(() => box.classList.add('visible'));
-    try { GameEngine.audio.tone({ freq: 180, dur: 0.09, type: 'sine', vol: 0.05 }); } catch (_) {}
+    try { GameEngine.audio.tone({ f: 180, t: 0.09, type: 'sine', g: 0.05 }); } catch (_) {}
 
     if (!complete) {
       const b = document.createElement('button');
@@ -1140,7 +1108,7 @@ const Chapter8 = (() => {
       a.textContent = '[ ??? BETRETEN ]';
       card.appendChild(a);
       requestAnimationFrame(() => a.classList.add('visible'));
-      try { GameEngine.audio.tone({ freq: 96, dur: 0.14, type: 'sine', vol: 0.045 }); } catch (_) {}
+      try { GameEngine.audio.tone({ f: 96, t: 0.14, type: 'sine', g: 0.045 }); } catch (_) {}
     }, reduceMotion() ? 500 : 1900);
   }
 
@@ -1216,7 +1184,6 @@ const Chapter8 = (() => {
     if (S.hints.step >= HINT_MAX) {
       if (who === 'guest') {
         S.hintsUsed++;
-        try { GameEngine.dialogue.holdNext(); } catch (_) {}
         say([{ speaker:'AGN-H3R', text: conflictLine() }]);
         return;
       }
@@ -1229,7 +1196,6 @@ const Chapter8 = (() => {
     S.hints.step++; S.hintsUsed++;
     save();
     updateHintBar();
-    try { GameEngine.dialogue.holdNext(); } catch (_) {}   // the paid-for line is never cut off
 
     if (step === 0) {
       say([ who === 'r3mi'

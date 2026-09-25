@@ -13,7 +13,7 @@ const H = require('../helpers');
       const f = `${out}/ch${n}_${tag}.png`; await p.screenshot({ path: f }); shots.push(f); await ctx.close();
     }
     for (const [name, sv] of [['title_fresh', H.save({})], ['title_mid', H.save({ chaptersCompleted: H.done(5), signalsFound: ['sig_01','sig_02'] })],
-                              ['title_done', H.save({ chaptersCompleted: H.ALL, signalsFound: H.SIG, flags: { zieldaten: true, truth_revealed: true } })]]) {
+                              ['title_done', H.save({ chaptersCompleted: H.ALL, signalsFound: H.SIG, flags: { ka1_verified: true, zieldaten: true, truth_revealed: true } })]]) {
       const { ctx, p } = await H.open(b, '/index.html', sv, { viewport: { width: w, height: h }, mobile: w < 500 });
       await p.waitForTimeout(7500); const f = `${out}/${name}_${tag}.png`; await p.screenshot({ path: f, fullPage: true }); shots.push(f); await ctx.close();
     }

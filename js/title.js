@@ -274,23 +274,12 @@
     ],
   };
 
-  // One quiet nudge for returning Part-I test subjects (js/archiv.js), and a
-  // different line once the facility has recognised one. Neither means anything
-  // for the game.
-  function archiveLine() {
-    let vet = false;
-    try { vet = GameEngine.achievements.isUnlocked('ka1_veteran'); } catch (_) {}
-    return vet
-      ? ['SYSTEM', 'Ehemaliges Testsubjekt anwesend. Sympathiewert: erhöht. Vorteile: keine.']
-      : ['SYSTEM', 'Abgleich mit dem Archiv der ersten Anlage: ausstehend. Acht Stellen.'];
-  }
-
   let idleQueue = [];
   let idleEl = null;
   let idleTimer = null;
 
   function overlayOpen() {
-    return !!document.querySelector('.overlay-panel:not(.hidden), .vet-party');
+    return !!document.querySelector('.overlay-panel:not(.hidden)');
   }
 
   function showIdleComment() {
@@ -298,13 +287,10 @@
     // Nobody talks over an open panel.
     if (overlayOpen()) { idleTimer = setTimeout(showIdleComment, 6000); return; }
     if (!idleQueue.length) {
-      const pool = (IDLE[stateOf().stage] || IDLE.PRE_CH1).slice();
-      pool.push('ARCHIV');                 // resolved when shown, so it is never stale
-      idleQueue = pool.sort(() => Math.random() - 0.5);
+      const pool = IDLE[stateOf().stage] || IDLE.PRE_CH1;
+      idleQueue = pool.slice().sort(() => Math.random() - 0.5);
     }
-    let next = idleQueue.shift();
-    if (next === 'ARCHIV') next = archiveLine();
-    const [who, text] = next;
+    const [who, text] = idleQueue.shift();
     idleEl.querySelector('.idle-comment-speaker').textContent = who;
     idleEl.dataset.who = who;
     idleEl.querySelector('.idle-comment-text').textContent = text;

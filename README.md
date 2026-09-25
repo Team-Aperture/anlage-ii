@@ -5,10 +5,8 @@ and JavaScript — no build step, no framework, no backend. It runs from any
 static host, GitHub Pages included, and stores nothing anywhere but the
 player's own browser.
 
-A sequel that stands on its own: the player is the test subject who shut the
-first Anlage down, and the facility lets them back in on that signature alone.
-Part I is optional background — its eight digits only earn a party on the
-title screen (`js/archiv.js`).
+A sequel: the player is the same test subject who shut the first Anlage down,
+and the eight digits they carry over are what gets them back in.
 
 ---
 
@@ -17,17 +15,16 @@ title screen (`js/archiv.js`).
 ```
 /
 ├── index.html            Title terminal — boot, sector map, overlays
-├── access.html           The entrance: the player signs in as the test signature
+├── access.html           The KA-I authorisation gate
 ├── css/
 │   ├── global.css        Design system, shared by every page
 │   ├── chapter.css       Shared chapter chrome (scaffold chapters)
 │   ├── title.css         Title terminal
-│   └── access.css        Entrance page
+│   └── access.css        Access gate
 ├── js/
 │   ├── engine.js         GameEngine — load on every page
 │   ├── title.js          Title terminal
-│   ├── access.js         Entrance page (no code — Part II needs nothing from Part I)
-│   ├── archiv.js         Title-screen Archivabgleich: optional Part-I veteran Easter egg
+│   ├── access.js         Authorisation gate
 │   └── mobile-warning.js Two-step "better on a bigger screen" notice
 ├── assets/
 │   ├── logo.png
@@ -73,11 +70,7 @@ answers away.
 there yet they get an in-universe refusal and a route to the sector they are
 actually up to, rather than a redirect chain or a blank page.
 
-- Nothing needs Part I. `access.html` is a moment, not a lock: the player
-  signs in as the external test signature and restarts the Anlage. Returning
-  Part-I players can present their old code on the title screen
-  (`js/archiv.js`) for a party and one secret achievement — zero gameplay
-  effect, not part of the 100 %.
+- `access.html` needs the eight digits from the first Anlage.
 - Each chapter needs the one before it — and a finished chapter can always be
   entered again.
 - Chapter 9 needs Chapter 8 finished **and** all five Signalnischen.

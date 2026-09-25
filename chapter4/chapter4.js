@@ -70,7 +70,7 @@ const Chapter4 = (() => {
     seen:        {},             // hotspot examine counts
     talkSeen:    {},
     coaching:    { pool:{}, lastModule:null, switches:0 },
-    hints:       { step:0, active:null, used:0, spent:{} },
+    hints:       { step:0, active:null, used:0 },
     praise:      0,
     excuse:      0,
   };
@@ -197,7 +197,6 @@ const Chapter4 = (() => {
         seen: S.seen,
         talkSeen: S.talkSeen,
         praise: S.praise,
-        hints: S.hints.spent,
       });
     } catch (_) {}
   }
@@ -225,7 +224,6 @@ const Chapter4 = (() => {
     S.seen             = (d.seen && typeof d.seen === 'object') ? d.seen : {};
     S.talkSeen         = (d.talkSeen && typeof d.talkSeen === 'object') ? d.talkSeen : {};
     S.praise           = d.praise | 0;
-    S.hints.spent      = readSpent(d.hints);
     // A module that claims to be solved but kept no reference value would
     // leave the central lock unsolvable — treat it as unsolved instead.
     ORDER.forEach(k => { if (S.modules[k].solved && S.modules[k].output == null) S.modules[k].solved = false; });
@@ -653,7 +651,7 @@ const Chapter4 = (() => {
 
     openModal = key;
     S.hints.active = key;
-    S.hints.step   = S.hints.spent[key] | 0;
+    S.hints.step   = 0;
     updateHintBar();
 
     el('modModal').classList.remove('hidden');
@@ -743,22 +741,7 @@ const Chapter4 = (() => {
   // one blank output slot, two ruined plates — and the blank never sits
   // next to only readable neighbours, so the strip has to be read as a
   // rule rather than copied from next door.
-  // Both heads step the same amount along the Zeichenkranz. A strip ships
-  // only if every fair way to read "two heads, taking turns" that fits the
-  // five readable plates names the same symbol for the Abnahme.
   // ═══════════════════════════════════════════════════════════════
-  const STRIP_READINGS = (() => {
-    const r = [], P = Array.from({ length: PLATES }, (_, i) => i);
-    for (let e = 0; e < 4; e++) for (let c1 = 0; c1 < 4; c1++)          // each head its own steady step
-      for (let o = 0; o < 4; o++) for (let c2 = 0; c2 < 4; c2++)        // (c1 === c2 is the strip's real rule)
-        r.push(P.map(i => i % 2 ? (o + c2 * (i >> 1)) % 4 : (e + c1 * (i >> 1)) % 4));
-    for (let m = 0; m < 64; m++)  r.push(P.map(i => (m >> 2 * (i % 3)) & 3));   // a motif of three, repeated
-    for (let m = 0; m < 256; m++) r.push(P.map(i => (m >> 2 * (i % 4)) & 3));   // a motif of four, repeated
-    for (let s = 0; s < 4; s++) for (let d = 0; d < 4; d++) for (let g = 0; g < 4; g++)
-      r.push(P.map(i => (s + d * i + g * i * (i - 1) / 2) % 4));                // a jump that grows by g each time
-    return r;
-  })();
-
   function strip(s0, a, b, n) {
     const r = [s0];
     for (let i = 1; i < n; i++) r.push((r[i-1] + (i % 2 === 1 ? a : b)) % 4);
@@ -782,14 +765,15 @@ const Chapter4 = (() => {
       for (let i = 0; i < PLATES; i++) if (!hidden.has(i)) vis.push(i);
 
       const fits = new Set();
-      for (const q of STRIP_READINGS) if (vis.every(i => q[i] === seq[i])) fits.add(q[out]);
+      for (let s = 0; s < 4; s++) for (let x = 0; x < 4; x++) for (let y = 0; y < 4; y++) {
+        const q = strip(s, x, y, PLATES);
+        if (vis.every(i => q[i] === seq[i])) fits.add(q[out]);
+      }
       if (fits.size !== 1) continue;
 
       return { seq, out, dmg, pickSym: null };
     }
-    // ~47 % of tries pass, so 500 misses never happen — but if they did, a
-    // checked strip beats a dead module. Every symbol shifted keeps it clean.
-    return { seq: strip(randInt(0, 3), 1, 2, PLATES), out: 4, dmg: [3, 6], pickSym: null };
+    return null;
   }
 
   function renderPattern() {
@@ -829,8 +813,7 @@ const Chapter4 = (() => {
         `<button class="vs-chip vs-chip-sym${p.pickSym === i ? ' on' : ''}" data-act="pat-sym" data-sym="${i}">
            <span class="vs-chip-glyph">${g}</span><span class="vs-chip-name sys-text">${SYMN[i]}</span>
          </button>`).join('') +
-      `</div>
-      <p class="vs-kranz sys-text">ZEICHENKRANZ: ◆ → ▲ → ■ → ● → ◆</p>`;
+      `</div>`;
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -843,8 +826,7 @@ const Chapter4 = (() => {
     const order = shuffle([0, 1, 2, 3]);        // heaviest first
     const rankOf = [];
     order.forEach((ring, i) => { rankOf[ring] = i; });
-    // known: every pair weighed so far → the heavier ring of the two
-    return { rankOf, left: WEIGH_MAX, log: [], known: {}, sel: [], tilt: 0, rank: [null,null,null,null] };
+    return { rankOf, left: WEIGH_MAX, log: [], sel: [], tilt: 0, rank: [null,null,null,null] };
   }
 
   function renderWeight() {
@@ -864,7 +846,7 @@ const Chapter4 = (() => {
          </button>`).join('') +
       `</div>
       <div class="vs-inline">
-        <button class="ka-btn small" data-act="w-run"${w.sel.length === 2 && (w.left > 0 || weighedBefore(w)) ? '' : ' disabled'}>[ WIEGEN ]</button>
+        <button class="ka-btn small" data-act="w-run"${w.sel.length === 2 && w.left > 0 && w.sel.slice().sort().join() !== w.last ? '' : ' disabled'}>[ WIEGEN ]</button>
         <button class="ka-btn small" data-act="w-clear">[ WAAGE LEEREN ]</button>
       </div>
       <ol class="vs-log">` +
@@ -1062,7 +1044,7 @@ const Chapter4 = (() => {
 
     openModal = 'final';
     S.hints.active = 'final';
-    S.hints.step   = S.hints.spent.final | 0;
+    S.hints.step   = 0;
     updateHintBar();
 
     el('modModal').classList.remove('hidden');
@@ -1228,68 +1210,23 @@ const Chapter4 = (() => {
     solveModule('pattern', p.seq[p.out]);
   }
 
-  // ── What the log already knows ──────────────────────────────────
-  // Four rings have 24 possible orders; the log rules some of them out.
-  // Five weighings always suffice with a good strategy (that is the
-  // minimum for four), but a player can spend runs on pairs the log already
-  // decides and end up at 0 / 5 with two orders still open. The balance
-  // never makes them guess: it tracks what is still open.
-  const pairKey = (x, y) => [x, y].sort().join();
-  const PERMS4 = (() => { const out = []; const go = (a, rest) => { if (!rest.length) { out.push(a); return; }
-    rest.forEach((v, i) => go(a.concat(v), rest.filter((_, j) => j !== i))); }; go([], [0,1,2,3]); return out; })();
-  /** every order (heaviest first) that agrees with every weighing so far */
-  function ordersLeft(w) {
-    return PERMS4.filter(o => Object.entries(w.known).every(([k, heavier]) => {
-      const [a, b] = k.split(',').map(Number), lighter = heavier === a ? b : a;
-      return o.indexOf(heavier) < o.indexOf(lighter);
-    }));
-  }
-  /** does the log already decide which of x, y is heavier (directly or by chain)? */
-  function decided(w, x, y) {
-    const left = ordersLeft(w);
-    return left.every(o => o.indexOf(x) < o.indexOf(y)) || left.every(o => o.indexOf(y) < o.indexOf(x));
-  }
-  const weighedBefore = w => w.sel.length === 2 && w.known[pairKey(w.sel[0], w.sel[1])] !== undefined;
-
   function runBalance() {
     const w = inst.weight;
-    if (w.sel.length !== 2) return;
+    if (w.sel.length !== 2 || w.left <= 0) return;
     const [x, y] = w.sel;
-    const k = pairKey(x, y);
-
-    // The same pair again reads the log back — it costs nothing, and it is
-    // also why a double tap can no longer spend two runs on one question.
-    if (w.known[k] !== undefined) {
-      w.tilt = w.known[k] === x ? -1 : 1;
-      setStatus('SCHON GEWOGEN — STEHT IM PROTOKOLL. KOSTET KEINEN LAUF.', '');
-      render();
-      return;
-    }
-    if (w.left <= 0) return;
-
-    const wasDecided = decided(w, x, y);
+    // a double tap weighed the same pair twice and spent a run of five on it
+    if (w.sel.slice().sort().join() === w.last) return;
+    w.last = w.sel.slice().sort().join();
     w.left--;
     const heavier = w.rankOf[x] < w.rankOf[y] ? x : y;
     const lighter = heavier === x ? y : x;
-    w.known[k] = heavier;
     w.tilt = heavier === x ? -1 : 1;
     w.log.push(`WÄGUNG ${w.log.length + 1} — ${ROMAN[heavier]} senkt sich gegen ${ROMAN[lighter]}.`);
     playSound('ch4_balance.mp3');
     tone({ freq: 190, type:'triangle', dur: 0.16, vol: 0.07 });
-
-    const open = ordersLeft(w).length;
-    if (open === 1 && !wasDecided) {
-      setStatus('LAUF ABGESCHLOSSEN. DAS PROTOKOLL LEGT DIE RANGFOLGE JETZT FEST.', 'ok');
-    } else if (open > 1 && w.left <= 0) {
-      // Out of runs with the order still open: the beam settles and gives
-      // exactly one more run, as often as needed. Never a forced guess.
-      w.left = 1;
-      setStatus('DIE WAAGE SETZT SICH. DAS PROTOKOLL REICHT NOCH NICHT — EIN WEITERER LAUF FREI.', 'warn');
-    } else if (wasDecided) {
-      setStatus(`LAUF ABGESCHLOSSEN. DAS ERGEBNIS STAND SCHON IM PROTOKOLL. ${w.left} ÜBRIG.`, 'warn');
-    } else {
-      setStatus(`LAUF ABGESCHLOSSEN. ${w.left} ÜBRIG.`, '');
-    }
+    setStatus(w.left > 0
+      ? `LAUF ABGESCHLOSSEN. ${w.left} ÜBRIG.`
+      : 'DIE WAAGE MUSS SICH SETZEN. EINE GEPRÜFTE RANGFOLGE TARIERT SIE NEU.', w.left > 0 ? '' : 'warn');
     render();
   }
 
@@ -1302,6 +1239,7 @@ const Chapter4 = (() => {
       // taking anything away.
       w.left = WEIGH_MAX;
       w.sel  = [];
+      w.last = null;
       w.tilt = 0;
       wrong('weight', 'DIE WAAGE WIDERSPRICHT. SIE HAT SICH NEU EINGEPENDELT — LÄUFE WIEDER FREI.');
       return;
@@ -1687,15 +1625,15 @@ const Chapter4 = (() => {
         v:{ t:'"Five plates are readable. Everything you need is in those five."', s:'Fünf Platten sind lesbar. Alles, was du brauchst, steht in diesen fünf.' } },
       { b:{ t:'„Zwei Platten nebeneinander sagen dir nichts über die übernächste. Warum nicht?"' },
         r:{ t:'„Weil der Sprung nicht jedes Mal gleich groß ist. Glaub ich. Ziemlich sicher. Fast."' },
-        v:{ t:'"From plate to plate, the strip does not advance by the same amount. Two heads take turns."', s:'Von Platte zu Platte rückt die Strecke nicht gleich weit. Zwei Köpfe wechseln sich ab.' } },
-      { b:{ t:'„Jede zweite Platte ist derselbe Kopf. Beide Köpfe rücken jedes Mal gleich weit — der eine wie der andere."' },
-        r:{ t:'„Erst jede zweite Platte, dann die andere Hälfte. Zwei kleine Reihen — und beide springen GENAU gleich weit. Nicht ungefähr. Genau."' },
-        v:{ t:'"Read the strip in steps of two. Both halves advance by the same amount every time — one amount for both, and it may be zero."', s:'Lies die Strecke in Zweierschritten. Beide Hälften rücken jedes Mal gleich weit — ein Betrag für beide, und der darf auch null sein.' } },
+        v:{ t:'"The strip does not advance by the same amount every time. Two heads take turns."', s:'Die Strecke rückt nicht jedes Mal gleich weit. Zwei Köpfe wechseln sich ab.' } },
+      { b:{ t:'„Dann nimm nur die Platten, die zum selben Kopf gehören — und lass die anderen weg."' },
+        r:{ t:'„Erst jede zweite Platte anschauen. Dann die andere Hälfte. Zwei kleine Reihen statt einer großen."' },
+        v:{ t:'"Read the strip in steps of two. Each half advances by a constant amount; together they give the missing plate."', s:'Lies die Strecke in Zweierschritten. Jede Hälfte rückt gleichmäßig; zusammen ergeben sie die fehlende Platte.' } },
     ],
     weight: [
       { b:{ t:'„Wie viele Wägungen brauchst du wirklich?"' },
         r:{ t:'„Vier Gewichte, fünf Läufe. Das ist… knapp."' },
-        v:{ t:'"Four counterweights, all different. Five runs is enough — but not if you spend one on something you already know."', s:'Vier Gegengewichte, alle verschieden. Fünf Läufe reichen — aber nicht, wenn du einen für etwas ausgibst, das du schon weißt.' } },
+        v:{ t:'"Four counterweights, all different. Five runs is enough — but not if you spend one twice."', s:'Vier Gegengewichte, alle verschieden. Fünf Läufe reichen — aber nicht, wenn du einen doppelt ausgibst.' } },
       { b:{ t:'„Wenn I schwerer ist als II und II schwerer als III — musst du I und III noch wiegen?"' },
         r:{ t:'„Nein! …oder? Nein."' },
         v:{ t:'"Weight order carries over. Any comparison you can derive is one you should not spend."', s:'Die Gewichtsordnung überträgt sich. Jeden Vergleich, den du herleiten kannst, solltest du nicht ausgeben.' } },
@@ -1738,17 +1676,6 @@ const Chapter4 = (() => {
     ],
   };
 
-  // A ladder is walked once per chapter run. Leaving a puzzle and coming back,
-  // a retry or a reload never hands spent steps back; a fresh run starts at 0.
-  function readSpent(raw) {
-    const o = {};
-    if (raw && typeof raw === 'object') Object.keys(HINTS).forEach(k => {
-      const n = Math.max(0, Math.min(HINT_MAX, raw[k] | 0));
-      if (n) o[k] = n;
-    });
-    return o;
-  }
-
   function useHint(who) {
     const ladder = HINTS[S.hints.active];
     if (!ladder) return;
@@ -1770,10 +1697,7 @@ const Chapter4 = (() => {
     const step = ladder[S.hints.step];
     S.hints.step++;
     S.hints.used++;
-    S.hints.spent[S.hints.active] = S.hints.step;
-    saveState();
     updateHintBar();
-    try { GameEngine.dialogue.holdNext(); } catch (_) {}   // the paid-for line is never cut off
     const entry = who === 'r3mi' ? step.r : who === 'vtgm' ? step.v : step.b;
     const speaker = who === 'r3mi' ? 'R-3MI' : who === 'vtgm' ? 'V-TGM' : 'B-RADF1SH';
     say([{ speaker, text: entry.t, subtitle: entry.s }]);
