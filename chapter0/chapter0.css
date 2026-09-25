@@ -12,11 +12,6 @@
   --accent-alert:        #c0322c;  /* wrong / mechanism refused */
 }
 
-/* Briefly hidden while the pre-paint gate check in <head> decides whether
-   to redirect to the access page — avoids a flash of the sealed entrance
-   for an unverified visitor. */
-html.gate-blocked body { visibility: hidden; }
-
 /* ─── BASE LAYOUT ────────────────────────────────────────────── */
 .chapter-page {
   overflow: hidden;

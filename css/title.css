@@ -401,3 +401,126 @@ a.sector-node:hover { transform: translateY(-3px); border-color: #fff; color: #f
 #chapterProgress { display: flex; gap: var(--sp-md); justify-content: center; flex-wrap: wrap; }
 .tp-part { white-space: nowrap; }
 @media (max-width: 600px) { #chapterProgress { gap: var(--sp-sm); font-size: 10px; } }
+
+/* ─── ARCHIVABGLEICH (optional veteran Easter egg) ───────────────
+   Eight faint slots beside the version tag. Part-I veterans typed their
+   shutdown code into exactly this 4·4 shape. */
+.version-tag { display: flex; align-items: center; gap: 10px; }
+/* the tag is a label: it never swallows a tap meant for what sits above it */
+.version-tag { pointer-events: none; }
+.archiv-slot { pointer-events: auto; }
+/* one line on phones, so the slot never makes the fixed tag grow over the
+   Zieldaten box and its [ KOPIEREN ] */
+@media (max-width: 768px) {
+  .version-tag { white-space: nowrap; gap: 6px; }
+  .version-tag .sys-text { font-size: 9px; letter-spacing: .08em; }
+}
+.archiv-slot {
+  background: none; border: 0; padding: 4px 2px; cursor: pointer;
+  font-family: var(--font-mono, 'Share Tech Mono', monospace);
+  font-size: 11px; letter-spacing: .12em; line-height: 1;
+  color: var(--text-dim); opacity: .55;
+  transition: opacity .3s ease, color .3s ease, text-shadow .3s ease;
+}
+.archiv-slot:hover, .archiv-slot:focus-visible { opacity: 1; color: var(--accent-system); outline: none; text-shadow: 0 0 6px var(--accent-system); }
+.archiv-slot.known { color: var(--accent-warn); opacity: .8; }
+/* a finger-sized target on touch screens; it still looks like eight faint dots */
+@media (pointer: coarse) { .archiv-slot { padding: 12px 8px; margin: -8px 0; } }
+
+.archiv-card { max-width: 460px; }
+.archiv-card .overlay-title { overflow-wrap: anywhere; }
+@media (max-width: 420px) { .archiv-card .overlay-title { font-size: 20px; letter-spacing: .12em; } }
+.archiv-content { display: flex; flex-direction: column; gap: var(--sp-sm); }
+.archiv-text  { font-size: 14px; line-height: 1.6; color: var(--text-secondary); margin: 0; }
+.archiv-small { font-size: 10px; letter-spacing: .16em; color: var(--text-dim); margin: 0; }
+.archiv-row { display: flex; justify-content: center; align-items: center; gap: 6px; margin: var(--sp-sm) 0 0; flex-wrap: nowrap; }
+.archiv-digit {
+  width: 34px; height: 46px; text-align: center; font-size: 20px;
+  font-family: var(--font-mono, 'Share Tech Mono', monospace);
+  background: var(--bg-deep, #05090d); color: var(--text-primary, #dfe8ee);
+  border: 1px solid var(--bdr-mid); border-radius: 0; caret-color: var(--accent-system);
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+.archiv-digit:focus { outline: none; border-color: var(--accent-system); box-shadow: 0 0 0 1px var(--accent-system); }
+.archiv-digit.correct { border-color: var(--accent-r3mi); color: var(--accent-r3mi); }
+.archiv-digit.wrong   { border-color: var(--accent-vtgm); color: var(--accent-vtgm); animation: archivShake .35s ease; }
+.archiv-divider { color: var(--text-dim); margin: 0 2px; }
+.archiv-status { min-height: 1.4em; font-size: 11px; letter-spacing: .14em; text-align: center; color: var(--text-secondary); margin: 0; }
+.archiv-status.error   { color: var(--accent-vtgm); }
+.archiv-status.success { color: var(--accent-r3mi); }
+.archiv-status.wait    { color: var(--accent-warn); }
+.archiv-actions { display: flex; gap: var(--sp-sm); justify-content: center; flex-wrap: wrap; margin-top: var(--sp-md); }
+@keyframes archivShake { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+@media (max-width: 400px) {
+  .archiv-card { padding-left: 12px; padding-right: 12px; }
+  .archiv-row { gap: 3px; }
+  .archiv-digit { width: 28px; height: 42px; font-size: 17px; }
+}
+@media (max-width: 340px) {
+  /* the smallest phones: the eight boxes fit inside the card's content box */
+  .archiv-row { gap: 2px; }
+  .archiv-digit { width: 24px; height: 38px; font-size: 16px; }
+  .archiv-divider { margin: 0 1px; }
+}
+
+/* the party — below the toasts (300) so the achievement lands on top */
+.vet-party {
+  position: fixed; inset: 0; z-index: 290;
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: var(--sp-lg) var(--sp-md);
+  background: rgba(5, 9, 13, .82);
+  opacity: 0; transition: opacity .35s ease;
+  overflow-y: auto;
+}
+.vet-party.visible { opacity: 1; }
+.vet-card {
+  position: relative; z-index: 2;
+  width: 100%; max-width: 520px; margin: auto;   /* centred, but scrollable from the top when tall */
+  background: var(--bg-panel); border: 1px solid var(--accent-warn);
+  padding: var(--sp-lg); display: flex; flex-direction: column; gap: 10px;
+  box-shadow: 0 0 40px rgba(200, 138, 40, .25);
+}
+.vet-label { font-size: 10px; letter-spacing: .22em; color: var(--accent-warn); margin: 0; }
+.vet-title { font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 26px; letter-spacing: .08em; margin: 0; color: var(--text-primary, #fff); }
+.vet-rows { display: flex; flex-direction: column; gap: 4px; }
+.vet-row { display: flex; justify-content: space-between; gap: 12px; opacity: 0; transform: translateX(-8px); transition: opacity .25s ease, transform .25s ease; }
+.vet-row.visible { opacity: 1; transform: none; }
+.vet-k { font-size: 10px; letter-spacing: .16em; color: var(--text-secondary); }
+.vet-v { font-size: 11px; letter-spacing: .16em; color: var(--accent-r3mi); text-align: right; }
+.vet-welcome { margin: 6px 0 0; min-height: 0; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 34px; letter-spacing: .1em; color: var(--accent-warn); text-align: center; }
+.vet-party.burst .vet-welcome { animation: vetPop .6s cubic-bezier(.2, 1.6, .4, 1) both; }
+.vet-party.burst .vet-card { animation: vetGlow 1.6s ease both; }
+.vet-lines { display: flex; flex-direction: column; gap: 6px; }
+.vet-line { margin: 0; font-size: 13px; line-height: 1.5; opacity: 0; transition: opacity .3s ease; }
+.vet-line.visible { opacity: 1; }
+.vet-who { font-size: 10px; letter-spacing: .16em; color: var(--accent-system); margin-right: 4px; }
+.vet-line[data-who="R-3MI"] .vet-who { color: var(--accent-r3mi); }
+.vet-line[data-who="V-TGM"] .vet-who { color: var(--accent-vtgm); }
+.vet-sub { display: block; font-size: 11px; color: var(--text-dim); font-style: italic; }
+/* the only way out: pinned to the bottom of the scrolling layer, so it is on
+   screen on a small phone or in landscape however long the card gets */
+.vet-done { align-self: center; margin-top: var(--sp-sm); position: sticky; bottom: 0; box-shadow: 0 0 0 8px var(--bg-panel), 0 -14px 16px -6px var(--bg-panel); background: var(--bg-panel); }
+.vet-confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 1; }
+.vet-bit { position: absolute; top: -30px; animation-name: vetFall; animation-timing-function: cubic-bezier(.25, .6, .5, 1); animation-fill-mode: both; text-shadow: 0 0 4px currentColor; }
+@keyframes vetFall {
+  0%   { transform: translate(0, 0) rotate(0); opacity: 1; }
+  85%  { opacity: 1; }
+  100% { transform: translate(var(--dx), 110vh) rotate(var(--rot)); opacity: 0; }
+}
+@keyframes vetPop  { 0% { transform: scale(.3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes vetGlow { 0% { box-shadow: 0 0 0 rgba(200,138,40,0); } 30% { box-shadow: 0 0 80px rgba(200,138,40,.6); } 100% { box-shadow: 0 0 40px rgba(200,138,40,.25); } }
+body.vet-shake .title-main, body.vet-shake .sys-bar { animation: vetShake .5s ease; }
+@keyframes vetShake { 20% { transform: translate(-4px, 2px); } 40% { transform: translate(4px, -2px); } 60% { transform: translate(-3px, -1px); } 80% { transform: translate(2px, 1px); } }
+.vet-status-hot { color: var(--accent-warn); }
+.vet-status-joy { color: var(--accent-r3mi); }
+@media (max-width: 480px) {
+  .vet-title { font-size: 20px; }
+  .vet-welcome { font-size: 26px; }
+  .vet-row { flex-direction: column; gap: 0; }
+  .vet-v { text-align: left; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vet-bit { animation: none; }
+  .vet-party.burst .vet-welcome, .vet-party.burst .vet-card, body.vet-shake .title-main, body.vet-shake .sys-bar, .archiv-digit.wrong { animation: none; }
+  .vet-row, .vet-line, .vet-party { transition: none; }
+}

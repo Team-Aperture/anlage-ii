@@ -7,7 +7,7 @@ const read = p => p.evaluate(() => JSON.parse(localStorage.getItem('ka2_save_v1'
   const b = await H.launch();
   console.log('\n[A] a forged "everything done" save is normalised');
   { const forged = { version:'1.0.0-pre', schemaVersion:4, chaptersCompleted:['ch0','ch8'], puzzlesSolved:{}, signalsFound:[],
-      achievementsUnlocked:['ch8_complete','signal_all','bonus_found','truth'], flags:{ ka1_verified:true, truth_revealed:true, zieldaten:true },
+      achievementsUnlocked:['ch8_complete','signal_all','bonus_found','truth'], flags:{ truth_revealed:true, zieldaten:true },
       chapterState:{}, calibration:{}, settings:{}, firstPlay:false };
     const { ctx, p, errs } = await boot(b, forged); const st = await read(p);
     check(!st.chaptersCompleted.includes('ch8'), 'ch8 dropped: the chain is missing');
@@ -17,7 +17,7 @@ const read = p => p.evaluate(() => JSON.parse(localStorage.getItem('ka2_save_v1'
     check(errs.length === 0, '  no page errors'); await ctx.close(); }
   console.log('\n[B] a legitimate finished run survives');
   { const { ctx, p, errs } = await boot(b, H.save({ chaptersCompleted: H.ALL, signalsFound: H.SIG,
-      achievementsUnlocked:['ch8_complete','signal_all','bonus_found','truth'], flags:{ ka1_verified:true, truth_revealed:true, zieldaten:true } }));
+      achievementsUnlocked:['ch8_complete','signal_all','bonus_found','truth'], flags:{ truth_revealed:true, zieldaten:true } }));
     const st = await read(p);
     check(st.chaptersCompleted.length === 9 && st.signalsFound.length === 5 && st.flags.truth_revealed === true, 'everything kept');
     const z = await p.evaluate(() => GameEngine.state.zieldaten());
@@ -43,8 +43,20 @@ const read = p => p.evaluate(() => JSON.parse(localStorage.getItem('ka2_save_v1'
       flags:{}, chapterState:{}, calibration:{ch1:true,ch2:true,ch3:true}, settings:{}, firstPlay:false, zieldaten_text:'N 99° 99.999 · E 099° 99.999' };
     const { ctx, p } = await boot(b, beta); const st = await read(p);
     check(st.schemaVersion === 4 && st.chaptersCompleted.length === 4 && st.provenance === 'beta', 'migrated to schema 4, progress kept, marked beta');
-    check(st.flags.ka1_verified === true, '  a save without the gate flag keeps its progress (finishing a sector is evidence)');
     check(!('zieldaten_text' in st) && (await p.evaluate(() => GameEngine.state.zieldaten())) === '', '  plaintext field gone; unfinished run gets no coordinates');
+    await ctx.close(); }
+  console.log('\n[F] a save the previous build stripped of ch0 keeps its progress; saves with progress stay readable by it');
+  { // the previous build drops ch0 from any save without the legacy flag and keeps ch1…; this build must not then drop the rest
+    const { ctx, p } = await boot(b, H.save({ chaptersCompleted: ['ch1', 'ch2', 'ch3'], flags: {}, achievementsUnlocked: ['ch1_complete'] }));
+    const st = await read(p);
+    check(['ch0', 'ch1', 'ch2', 'ch3'].every(c => st.chaptersCompleted.includes(c)), `  ch0 restored, ch1–ch3 kept (${st.chaptersCompleted.join(',')})`);
+    check(st.flags.ka1_verified === true, '  the save carries the legacy flag the previous build needs to keep ch0');
+    await ctx.close(); }
+  { const { ctx, p } = await boot(b, H.save({ chaptersCompleted: [], flags: {} }));
+    check(!(await read(p)).flags.ka1_verified, '  a brand-new save gets no flag at all');
+    await ctx.close(); }
+  { const { ctx, p } = await boot(b, H.save({ chaptersCompleted: ['ch2', 'ch3'], flags: {} }));
+    check((await read(p)).chaptersCompleted.length === 0, '  the chain rule still holds otherwise (ch2 without ch1 is dropped)');
     await ctx.close(); }
   await b.close(); finish();
 })();

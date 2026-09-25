@@ -19,8 +19,12 @@ const { check, finish } = H.checker('gates');
   { const { ctx, p } = await H.open(b, '/chapter9/chapter9.html', H.save({ chaptersCompleted: H.ALL, signalsFound: ['sig_01'] })); await p.waitForTimeout(900);
     const body = await p.evaluate(() => document.body.innerText);
     check(/ZUGANG VERWEIGERT/.test(body) && /FREMDSIGNALE/.test(body) && !/Kammer/i.test(body), 'ch9 with 1/5 signals: refused without naming itself'); await ctx.close(); }
-  console.log('\n[ch0 without the code]');
-  { const { ctx, p } = await H.open(b, '/chapter0/chapter0.html', H.save({ flags: {} })); await p.waitForTimeout(1500);
-    check(/access\.html/.test(p.url()), 'ch0 without ka1_verified goes to the access page'); await ctx.close(); }
+  console.log('\n[ch0 needs nothing from Part I]');
+  { const { ctx, p, errs } = await H.open(b, '/chapter0/chapter0.html', H.save({ flags: {} })); await p.waitForTimeout(1500);
+    check(/chapter0\.html/.test(p.url()) && !/ZUGANG VERWEIGERT/.test(await p.evaluate(() => document.body.innerText)), 'ch0 without any Part-I flag simply opens');
+    check(errs.length === 0, '  no page errors'); await ctx.close(); }
+  { const { ctx, p } = await H.open(b, '/chapter1/chapter1.html', H.save({ chaptersCompleted: ['ch0'], flags: {} })); await p.waitForTimeout(1500);
+    const st = await p.evaluate(() => JSON.parse(localStorage.getItem('ka2_save_v1')));
+    check(/chapter1\.html/.test(p.url()) && st.chaptersCompleted.includes('ch0'), '  and a finished Sektor 00 is kept without it (the save normaliser drops nothing)'); await ctx.close(); }
   await b.close(); finish();
 })();

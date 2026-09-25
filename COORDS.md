@@ -76,12 +76,16 @@ anderes Etikett.
 
 ## Der Zugangscode aus Teil I
 
-In `chapter9/chapter9.js` steht `const AUTH = [ … ]` — das ist der
-achtstellige Verifizierungscode aus der ersten Anlage, den die
-Autorisierungsakte in Kapitel 9 zurückliest. Der Spieler kennt ihn bereits
-(er hat ihn selbst eingegeben, um überhaupt anzufangen); er liegt nur deshalb
-verschoben vor, damit er nicht beiläufig im Quelltext steht. Der muss **nicht**
-ersetzt werden — es sei denn, der Zugangscode in `js/access.js` ändert sich.
+Teil II verlangt ihn nirgends. Er ist nur noch ein optionales Osterei: im
+Titelterminal (`js/archiv.js`, acht blasse Felder neben der Versionsangabe)
+kann ein ehemaliges Testsubjekt ihn eingeben und bekommt eine Feier plus den
+geheimen Erfolg „Wiederholungstäter" — ohne jede Auswirkung aufs Spiel. Dort
+liegt er nur als gesalzener SHA-256-Wert vor.
+
+Kapitel 9 zeigt in der Autorisierungsakte für alle Spieler `████ · ████`.
+Der Code steht in keiner ausgelieferten Datei; das Titelterminal kennt nur
+seinen gesalzenen SHA-256-Wert (`js/archiv.js`). Ändert sich der Code, wird nur
+`AUTH_DIGEST` dort neu berechnet.
 
 ## Wo die Zieldaten auftauchen
 
@@ -91,8 +95,9 @@ ersetzt werden — es sei denn, der Zugangscode in `js/access.js` ändert sich.
   spielen muss, um die Koordinaten nachzulesen.
 * **Abschlusskarte in Kapitel 9** — mit `[ KOORDINATEN KOPIEREN ]`, und beim
   erneuten Betreten der Kammer über `[ ZIELDATEN ]`. Derselbe Wert.
-* **Spielstand** — als `zieldaten_text` im `localStorage`. Das passiert erst
-  nach dem Lösen; im ausgelieferten Code steht der Wert nicht.
+* **Spielstand** — nie als Klartext: die Zieldaten werden bei Bedarf aus den
+  Kalibrierungsfragmenten eines Laufs rekonstruiert, der Kapitel 8 wirklich
+  gelöst hat (`GameEngine.state.zieldaten()`).
 
 `[ SPIELSTAND ]` im Hauptmenü zeigt an, ob die Zieldaten vorhanden sind, und
 löscht sie auf Wunsch wieder.
@@ -101,7 +106,7 @@ löscht sie auf Wunsch wieder.
 
 - [ ] `MAIN` in `js/engine.js` enthält die echten Fragmente.
 - [x] `KA1_LISTING_URL` und `KA1_GAME_URL` in `js/access.js` zeigen auf die
-      erste Anlage.
+      erste Anlage (nur als optionaler Hintergrund verlinkt).
 - [ ] Kapitel 8 einmal komplett durchgespielt, Zeichenkette stimmt.
 - [ ] Kapitel 9 einmal durchgespielt — dieselbe Zeichenkette, Etikett
       `EXTERN BESTÄTIGT`.
