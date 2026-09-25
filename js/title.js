@@ -56,6 +56,24 @@
     ];
   }
 
+  // A little terminal chatter per boot line, by line type, and a rising tone
+  // when the interface comes up. Only when the browser already lets the page
+  // make sound (after a tap, or on a visit it trusts): a suspended audio
+  // context would otherwise save every blip and fire them all at once later.
+  function bootSound(cls, last) {
+    try {
+      const A = GameEngine.audio, c = A.ensure();
+      if (!c || c.state !== 'running') return;
+      if (last)              { A.tone({ freq: 440, glideTo: 1320, type: 'sine', dur: 0.35, vol: 0.07 }); return; }
+      if (cls === 'error')   { A.tone({ freq: 150, glideTo: 95, type: 'sawtooth', dur: 0.16, vol: 0.05 }); return; }
+      if (cls === 'warn')    { A.tone({ freq: 620, type: 'square', dur: 0.05, vol: 0.035 });
+                               A.tone({ freq: 470, type: 'square', dur: 0.07, vol: 0.035, delay: 0.07 }); return; }
+      if (cls === 'success') { A.tone({ freq: 880, glideTo: 1250, type: 'sine', dur: 0.09, vol: 0.05 }); return; }
+      if (cls === 'dim')     { A.tone({ freq: 300, type: 'square', dur: 0.015, vol: 0.02 }); return; }
+      A.tone({ freq: 1100, type: 'square', dur: 0.02, vol: 0.03 });
+    } catch (_) {}
+  }
+
   // The full BIOS is part of the game's personality, but only the first time
   // per browser session. Coming back to the menu gets a short resume instead,
   // and either can be cut short at any moment.
@@ -100,8 +118,9 @@
     }
 
     let max = 0;
-    lines.forEach(({ text, cls, delay }) => {
+    lines.forEach(({ text, cls, delay }, idx) => {
       timers.push(setTimeout(() => {
+        bootSound(cls, idx === lines.length - 1);
         const line = document.createElement('div');
         line.className = 'boot-line' + (cls ? ' ' + cls : '');
         line.textContent = text;
@@ -542,9 +561,6 @@
       at.textContent = GameEngine.audio.isMuted() ? '[ TON: AUS ]' : '[ TON: AN ]';
     }
 
-    // Start the title theme (autoplay may be blocked until the first click —
-    // the engine retries on the next user gesture). Silent until an mp3 exists.
-    if (typeof GameEngine !== 'undefined' && GameEngine.music) GameEngine.music.play('title');
 
     // Saving, restoring and erasing all live in one panel now
     // (GameEngine.showSaveManager), wired straight from the button.
@@ -557,6 +573,9 @@
     }
 
     runBootSequence(() => {
+      // The title theme fades in as the menu comes up, not under the boot.
+      // If the browser still blocks sound, the engine starts it on the first tap.
+      if (typeof GameEngine !== 'undefined' && GameEngine.music) GameEngine.music.play('title', { fade: 1600 });
       revealUI();
       updateStatusBar();
       initLogoParallax();
