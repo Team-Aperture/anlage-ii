@@ -456,6 +456,12 @@ a.sector-node:hover { transform: translateY(-3px); border-color: #fff; color: #f
   .archiv-row { gap: 3px; }
   .archiv-digit { width: 28px; height: 42px; font-size: 17px; }
 }
+@media (max-width: 340px) {
+  /* the smallest phones: the eight boxes fit inside the card's content box */
+  .archiv-row { gap: 2px; }
+  .archiv-digit { width: 24px; height: 38px; font-size: 16px; }
+  .archiv-divider { margin: 0 1px; }
+}
 
 /* the party — below the toasts (300) so the achievement lands on top */
 .vet-party {
