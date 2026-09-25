@@ -452,6 +452,7 @@ a.sector-node:hover { transform: translateY(-3px); border-color: #fff; color: #f
 .archiv-actions { display: flex; gap: var(--sp-sm); justify-content: center; flex-wrap: wrap; margin-top: var(--sp-md); }
 @keyframes archivShake { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
 @media (max-width: 400px) {
+  .archiv-card { padding-left: 12px; padding-right: 12px; }
   .archiv-row { gap: 3px; }
   .archiv-digit { width: 28px; height: 42px; font-size: 17px; }
 }
@@ -490,7 +491,9 @@ a.sector-node:hover { transform: translateY(-3px); border-color: #fff; color: #f
 .vet-line[data-who="R-3MI"] .vet-who { color: var(--accent-r3mi); }
 .vet-line[data-who="V-TGM"] .vet-who { color: var(--accent-vtgm); }
 .vet-sub { display: block; font-size: 11px; color: var(--text-dim); font-style: italic; }
-.vet-done { align-self: center; margin-top: var(--sp-sm); }
+/* the only way out: pinned to the bottom of the scrolling layer, so it is on
+   screen on a small phone or in landscape however long the card gets */
+.vet-done { align-self: center; margin-top: var(--sp-sm); position: sticky; bottom: 0; box-shadow: 0 0 0 8px var(--bg-panel), 0 -14px 16px -6px var(--bg-panel); background: var(--bg-panel); }
 .vet-confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 1; }
 .vet-bit { position: absolute; top: -30px; animation-name: vetFall; animation-timing-function: cubic-bezier(.25, .6, .5, 1); animation-fill-mode: both; text-shadow: 0 0 4px currentColor; }
 @keyframes vetFall {
