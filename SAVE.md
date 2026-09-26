@@ -19,6 +19,25 @@ Kein Server, kein Konto, kein Tracking.
 | `chapterState` | Wiederaufnahmepunkte einzelner Kapitel |
 | `settings` | Spielereinstellungen (Ton) |
 | `provenance` | `'beta'` für einen aus der Beta übernommenen Lauf — rein kosmetisch |
+| `legacy` | NG+: `null` im ersten Durchlauf, danach `{ cycle, earned, endings, zieldaten }` |
+
+## Neuer Durchlauf (NG+)
+
+Nach Kapitel 9 (`truth_revealed`) bietet das Titelmenü **[ NEUER DURCHLAUF ]**
+an (zweimal tippen). Dann beginnen Sektoren, Rätsel, Hinweise, Wiederaufnahme-
+punkte, Story-Flags und alle fünf Signalnischen neu; es bleiben alle Erfolge,
+die Einstellungen und die Zieldaten.
+
+* `legacy.earned` — alle Erfolge früherer Durchläufe. Die Prüfung unten nimmt
+  sie **nie** zurück; sie prüft nur, was der laufende Durchlauf selbst behauptet.
+  Archivar heißt weiterhin „Kapitel 8 ohne Hinweis — in diesem Durchlauf".
+* `legacy.endings` — die in Kapitel 9 gewählten Schlussworte (`ret`/`trust`/`hiii`).
+* `legacy.zieldaten` — die Zieldaten wurden in einem früheren Durchlauf
+  rekonstruiert; sie bleiben im Titel sichtbar (`state.hasZieldaten()`).
+* Ein Spielstand ohne `legacy` (jeder bisherige) lädt unverändert als
+  Durchlauf 1. Die Prüfsumme bezieht `legacy` nur ein, wenn es da ist, damit
+  ältere Codes weiter unverändert importieren. Ein kaputter `legacy`-Eintrag
+  wird verworfen, nicht geglaubt.
 
 **Die Zieldaten stehen nicht im Spielstand.** Sie werden aus den
 Kalibrierungsfragmenten rekonstruiert, und nur für einen Lauf, der Sektor 08

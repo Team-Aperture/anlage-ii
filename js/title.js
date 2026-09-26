@@ -51,6 +51,8 @@
       { text: '. . .',                                      cls: 'dim',     delay: 2100 },
       { text: '> Notfallwiederherstellung erkannt.',        cls: 'success', delay: 2400 },
       { text: '> Reaktivierungsprotokoll geladen.',         cls: 'success', delay: 2700 },
+      ...(cycleNo() > 1 ? [
+      { text: `> Vorheriger Durchlauf: ARCHIVIERT (${String(cycleNo() - 1).padStart(2, '0')}).`, cls: 'dim', delay: 2850 }] : []),
       { text: 'WARNUNG: Anlage war abgeschaltet. Ursache: unbekannt.', cls: 'warn', delay: 3000 },
       { text: 'Starte Benutzeroberfläche…',                 cls: '',        delay: 3400 },
     ];
@@ -482,9 +484,10 @@
     // confirms this one, and the terminal says so once it has been confirmed.
     const sets = [];
     try {
-      if (GameEngine.state.hasFlag('zieldaten')) {
+      if (GameEngine.state.hasZieldaten()) {
         const t = GameEngine.state.zieldaten();
-        const confirmed = GameEngine.state.hasFlag('truth_revealed');
+        // an earlier cycle had to finish Chapter 9 before NG+ could begin
+        const confirmed = GameEngine.state.hasFlag('truth_revealed') || GameEngine.state.cycle() > 1;
         if (t) sets.push({
           id: 'main',
           label: 'ZIELDATEN',
@@ -532,6 +535,74 @@
   // Three separate readings, never blended into one percentage: how many
   // sectors are behind the player, how much of the facility is actually
   // running, and how much of the transmission has been heard.
+  function cycleNo() { try { return GameEngine.state.cycle(); } catch (_) { return 1; } }
+
+  // ─── NG+: ANOTHER CALIBRATION CYCLE ──────────────────────────
+  // Offered once Chapter 9 is done. The story, every puzzle and all five
+  // Signalnischen start over; achievements, settings and the coordinates stay.
+  // Two taps, like wiping the save — this one is a big step too.
+  function initNewCycle() {
+    let can = false;
+    try { can = GameEngine.state.canNewCycle(); } catch (_) {}
+    const menu = document.querySelector('.title-menu');
+    if (!can || !menu || document.getElementById('newCycleBtn')) return;
+    const btn = document.createElement('button');
+    btn.className = 'ka-btn'; btn.id = 'newCycleBtn';
+    btn.textContent = '[ NEUER DURCHLAUF ]';
+    btn.setAttribute('aria-label', 'Neuen Kalibrierungsdurchlauf beginnen');
+    btn.addEventListener('click', openNewCycle);
+    const after = document.getElementById('startBtn');
+    if (after && after.nextSibling) menu.insertBefore(btn, after.nextSibling); else menu.appendChild(btn);
+  }
+  function openNewCycle() {
+    const next = String(cycleNo() + 1).padStart(2, '0');
+    let panel = document.getElementById('newCycleOverlay');
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.className = 'overlay-panel hidden'; panel.id = 'newCycleOverlay';
+      panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Neuer Kalibrierungsdurchlauf');
+      document.body.appendChild(panel);
+      panel.addEventListener('click', ev => { if (ev.target === panel) GameEngine.closeOverlay(); });
+    }
+    panel.innerHTML = `
+      <div class="overlay-card ncy-card">
+        <h2 class="overlay-title">NEUER DURCHLAUF</h2>
+        <p class="overlay-subtitle sys-text">KALIBRIERUNGSDURCHLAUF ${next} // OPTIONAL</p>
+        <div class="overlay-content ncy-content">
+          <p>Die Anlage fährt noch einmal von vorn hoch. Jeder Sektor, jedes Rätsel und alle fünf Signalnischen warten wieder auf dich.</p>
+          <ul class="sv-list">
+            <li>Bleibt: <b>alle Erfolge</b>, <b>die Zieldaten</b>, deine Einstellungen</li>
+            <li>Beginnt neu: Sektor 00 bis 08, Rätsel, Hinweise, Signalnischen, die Kammer</li>
+          </ul>
+          <p class="ncy-small sys-text">Was dir noch fehlt, ist im neuen Durchlauf wieder erreichbar.</p>
+        </div>
+        <div class="ncy-actions">
+          <button class="ka-btn danger" id="ncyGo">[ DURCHLAUF ${next} STARTEN ]</button>
+          <button class="ka-btn" id="ncyCancel">[ ABBRECHEN ]</button>
+        </div>
+      </div>`;
+    const go = panel.querySelector('#ncyGo');
+    let armed = false, timer = null;
+    go.addEventListener('click', () => {
+      if (!armed) {
+        armed = true; go.textContent = '[ WIRKLICH NEU BEGINNEN? NOCHMAL TIPPEN ]';
+        timer = setTimeout(() => { armed = false; go.textContent = `[ DURCHLAUF ${next} STARTEN ]`; }, 5000);
+        return;
+      }
+      clearTimeout(timer);
+      let ok = false;
+      try { ok = GameEngine.state.newCycle(); } catch (_) {}
+      if (!ok) return;
+      try { sessionStorage.removeItem('ka2_session_boot_seen'); } catch (_) {}
+      go.textContent = '[ ANLAGE FÄHRT NEU HOCH … ]';
+      setTimeout(() => location.reload(), 500);
+    });
+    panel.querySelector('#ncyCancel').addEventListener('click', () => GameEngine.closeOverlay());
+    panel.classList.remove('hidden');
+    document.getElementById('overlayBackdrop')?.classList.remove('hidden');
+    setTimeout(() => { try { panel.querySelector('#ncyCancel').focus(); } catch (_) {} }, 60);
+  }
+
   function updateChapterProgress() {
     const progressEl = document.getElementById('chapterProgress');
     if (!progressEl || typeof GameEngine === 'undefined') return;
@@ -546,6 +617,7 @@
     if (nav.completed.length) parts.push(`REAKTIVIERUNG: ${pct} %`);
     // The archive only counts once the player has heard something.
     if (nav.sigs > 0) parts.push(`FREMDSIGNALE: ${nav.sigs} / ${nav.total}`);
+    if (cycleNo() > 1) parts.push(`DURCHLAUF ${String(cycleNo()).padStart(2, '0')}`);
 
     progressEl.innerHTML = parts.map(t => `<span class="tp-part">${t}</span>`).join('');
   }
@@ -582,6 +654,7 @@
       initIdleComments();
       updateChapterProgress();
       initContinue();
+      initNewCycle();
       initSectorMap();
       initZieldaten();
     });

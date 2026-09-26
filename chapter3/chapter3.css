@@ -210,7 +210,10 @@ button.ka-btn:disabled { opacity:.3; pointer-events:none; }
 .puzzle-status.ok    { color:var(--accent-r3mi); }
 .puzzle-status.error { color:var(--accent-vtgm); }
 .puzzle-status.warn  { color:var(--accent-warn); }
-.puzzle-actions { display:flex; justify-content:center; gap:var(--sp-sm); margin-top:var(--sp-sm); }
+.puzzle-actions { display:flex; justify-content:center; gap:var(--sp-sm); margin-top:var(--sp-sm); flex-wrap:wrap; }
+/* four buttons in one row squeezed [ ZURÜCKSETZEN ] a few pixels short of its
+   label on desktop widths; they keep their size and wrap instead */
+#belModal .puzzle-actions .ka-btn { white-space:nowrap; }
 
 /* ─── BELICHTUNG PUZZLE ───────────────────────────────────────── */
 .bel-meter { display:flex; align-items:center; gap:var(--sp-sm); margin-bottom:var(--sp-md); }

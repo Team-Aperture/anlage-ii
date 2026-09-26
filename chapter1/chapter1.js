@@ -1034,12 +1034,19 @@ const Chapter1 = (() => {
     },
   ];
 
+  const CYCLE = (() => { try { return GameEngine.state.cycle(); } catch (_) { return 1; } })();
+  const REMEMBERED = [
+    { speaker:'V-TGM', text:'"Have we… met before?"', subtitle:'Kennen wir uns… schon?' },
+    { speaker:'R-3MI', text:'„Nein. Bestimmt nicht. …Wieso fragst du?"' },
+  ];
+
   function act2_reaction() {
     askOnce({
       prompt: 'DEINE REAKTION:',
       hint:   'WÄHLE EINE.',
       choices: REACTIONS,
-      onPick: () => act2_minimumExposition(),
+      // a later calibration cycle (NG+): a flicker of recognition, nothing more
+      onPick: () => (CYCLE > 1 ? say(REMEMBERED, act2_minimumExposition) : act2_minimumExposition()),
     });
   }
 
