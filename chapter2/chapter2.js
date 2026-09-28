@@ -1078,7 +1078,20 @@ const Chapter2 = (() => {
   const FROST_PALETTE  = 6;
   const FROST_MAX_CUTS = 18;
   const FROST_FIXED    = new Set(['h,0,1','h,0,3','h,1,1','v,1,0','v,1,1','v,2,1']);
-  function isCut(edge) { return p2State.cuts.has(edge) || FROST_FIXED.has(edge); }
+  // VERSCHÄRFT (NG+): a 6-row, 5-column tablet with two wells and seven
+  // groups. 1029 groupings; the five carved channels leave 18, and the ice
+  // (24 channels, carved ones included) leaves exactly one — four squares,
+  // three other shapes, every channel used. Same rules, longer deduction.
+  // Proven by tests/analyse_ch2_frost.js before it can ship.
+  const FROST_HARD_WELLS    = ['2,1','3,3'];
+  const FROST_HARD_MAX_CUTS = 24;
+  const FROST_HARD_FIXED    = new Set(['h,1,1','h,1,3','h,4,3','h,5,3','v,0,2']);
+  const FROST_HARD = (() => { try { return GameEngine.state.hard(); } catch (_) { return false; } })();
+  const FROST = FROST_HARD
+    ? { ROWS: 6, COLS: 5, WELLS: new Set(FROST_HARD_WELLS), GROUPS: 7, MAX: FROST_HARD_MAX_CUTS, FIXED: FROST_HARD_FIXED }
+    : { ROWS: 5, COLS: 5, WELLS: new Set([WELL]),           GROUPS: 6, MAX: FROST_MAX_CUTS,      FIXED: FROST_FIXED };
+  const isWell = k => FROST.WELLS.has(k);
+  function isCut(edge) { return p2State.cuts.has(edge) || FROST.FIXED.has(edge); }
 
   let p2State = { cuts: new Set() };
 
@@ -1096,7 +1109,7 @@ const Chapter2 = (() => {
     };
     if (!first) { show(); return; }
 
-    say([
+    say(FROST_HARD ? P2_INTRO_HARD : [
       { speaker:'F-RØ5CHI', text:'„De Tafel is a Fünf-mal-Fünf-Feld. In da Mittn da Brunnen — den muassd freihoidn, ganz alloa."', subtitle:'Die Tafel ist ein Fünf-mal-Fünf-Feld. In der Mitte der Brunnen — den musst du freihalten, ganz allein.' },
       { speaker:'F-RØ5CHI', text:'„Drumherum schneidst sechs Bereiche, jeder genau vier Felder. Klick zwischn zwoa Felder, dann setzt a Eiskanal."', subtitle:'Drumherum schneidest du sechs Bereiche, jeder genau vier Felder. Klick zwischen zwei Felder, dann setzt du einen Eiskanal.' },
       { speaker:'F-RØ5CHI', text:'„Und schau: a poar Kanäl san scho ins Eis g\'frorn — de pinkn. De hod er selber eina g\'schnitzt. De bleibn."', subtitle:'Und schau: ein paar Kanäle sind schon ins Eis gefroren — die pinken. Die hat er selber hineingeschnitzt. Die bleiben.' },
@@ -1109,19 +1122,28 @@ const Chapter2 = (() => {
     ], show);
   }
 
+  const P2_INTRO_HARD = [
+    { speaker:'F-RØ5CHI', text:'„De Tafel is größer wordn. Sechs Reihn, fünf Spoitn — und zwoa Brunnen. Jeder vo de zwoa bleibt ganz alloa."', subtitle:'Die Tafel ist größer geworden. Sechs Reihen, fünf Spalten — und zwei Brunnen. Jeder der beiden bleibt ganz allein.' },
+    { speaker:'F-RØ5CHI', text:'„De andern Felder schneidst in sieben Bereiche, jeder genau vier Felder. Klick zwischn zwoa Felder, dann setzt a Eiskanal."', subtitle:'Die anderen Felder schneidest du in sieben Bereiche, jeder genau vier Felder. Klick zwischen zwei Felder, dann setzt du einen Eiskanal.' },
+    { speaker:'F-RØ5CHI', text:'„De pinkn Kanäl hod er wieder selber eina g\'schnitzt. Fünf Stück. De bleibn."', subtitle:'Die pinken Kanäle hat er wieder selbst hineingeschnitzt. Fünf Stück. Die bleiben.' },
+    { speaker:'F-RØ5CHI', text:'„Eis hob i für vierazwanzg Kanäl, de pinkn mitzählt. Aufteiln ko ma\'s auf vui Artn — bloß oane kummt mitm Eis aus."', subtitle:'Eis habe ich für vierundzwanzig Kanäle, die pinken mitgezählt. Aufteilen kann man es auf viele Arten — nur eine kommt mit dem Eis aus.' },
+    { speaker:'R-3MI',    text:'„Größer, zwei Brunnen, gleiche Regeln. Die Anlage hat anscheinend beschlossen, dass wir das können."' },
+    { speaker:'F-RØ5CHI', text:'„Er hod\'s aa beschlossn. Er hod ma zuatraut, dass i\'s ned vergiss."', subtitle:'Er hat es auch beschlossen. Er hat mir zugetraut, dass ich es nicht vergesse.' },
+  ];
+
   function frostNeighbours(r, c) {
     const nb = [];
-    if (c < 4 && !isCut(`h,${r},${c}`))     nb.push([r, c + 1]);
-    if (c > 0 && !isCut(`h,${r},${c - 1}`)) nb.push([r, c - 1]);
-    if (r < 4 && !isCut(`v,${r},${c}`))     nb.push([r + 1, c]);
+    if (c < FROST.COLS - 1 && !isCut(`h,${r},${c}`)) nb.push([r, c + 1]);
+    if (c > 0 && !isCut(`h,${r},${c - 1}`))          nb.push([r, c - 1]);
+    if (r < FROST.ROWS - 1 && !isCut(`v,${r},${c}`)) nb.push([r + 1, c]);
     if (r > 0 && !isCut(`v,${r - 1},${c}`)) nb.push([r - 1, c]);
     return nb;
   }
 
   function frostComponents() {
     const seen = new Set(), comps = [];
-    for (let r = 0; r < 5; r++) {
-      for (let c = 0; c < 5; c++) {
+    for (let r = 0; r < FROST.ROWS; r++) {
+      for (let c = 0; c < FROST.COLS; c++) {
         const start = `${r},${c}`;
         if (seen.has(start)) continue;
         const comp = [], q = [[r, c]];
@@ -1142,24 +1164,31 @@ const Chapter2 = (() => {
 
   function frostStatus() {
     const comps = frostComponents();
-    let regions4 = 0, wellIsolated = false;
+    let regions4 = 0, wellsAlone = 0;
     comps.forEach(comp => {
-      if (comp.includes(WELL)) wellIsolated = comp.length === 1;
+      if (comp.some(isWell)) { if (comp.length === 1) wellsAlone++; }
       else if (comp.length === 4) regions4++;
     });
-    return { comps, regions4, wellIsolated, win: wellIsolated && regions4 === 6 && comps.length === 7 };
+    const wellIsolated = wellsAlone === FROST.WELLS.size;
+    return { comps, regions4, wellsAlone, wellIsolated,
+             win: wellIsolated && regions4 === FROST.GROUPS && comps.length === FROST.GROUPS + FROST.WELLS.size };
   }
 
   function buildFrostGrid() {
     const grid = document.getElementById('frostGrid');
     grid.innerHTML = '';
-    for (let gr = 0; gr < 9; gr++) {
-      for (let gc = 0; gc < 9; gc++) {
+    grid.classList.toggle('tall', FROST.ROWS === 6);
+    if (FROST_HARD) {
+      const sub = document.querySelector('#puzzle2Modal .puzzle-sub');
+      if (sub) sub.textContent = 'SIEBEN 4ER-BEREICHE · ZWEI BRUNNEN, JEDER ALLEIN · PINKE KANÄLE = EINGESCHNITZT · EIS FÜR GENAU 24 KANÄLE, PINKE ZÄHLEN MIT';
+    }
+    for (let gr = 0; gr < 2 * FROST.ROWS - 1; gr++) {
+      for (let gc = 0; gc < 2 * FROST.COLS - 1; gc++) {
         const evenR = gr % 2 === 0, evenC = gc % 2 === 0;
         if (evenR && evenC) {
           const r = gr / 2, c = gc / 2;
           const el = document.createElement('div');
-          el.className = 'frost-cell' + (`${r},${c}` === WELL ? ' frost-well' : '');
+          el.className = 'frost-cell' + (isWell(`${r},${c}`) ? ' frost-well' : '');
           el.dataset.r = r; el.dataset.c = c;
           grid.appendChild(el);
         } else if (evenR && !evenC) {
@@ -1177,7 +1206,7 @@ const Chapter2 = (() => {
 
   function makeChannel(cls, edge) {
     const btn = document.createElement('button');
-    const fixed = FROST_FIXED.has(edge);
+    const fixed = FROST.FIXED.has(edge);
     btn.className = 'frost-ch ' + cls + (fixed ? ' fixed' : '');
     btn.dataset.edge = edge;
     if (fixed) {
@@ -1191,11 +1220,11 @@ const Chapter2 = (() => {
   }
 
   function toggleCut(edge) {
-    if (S.p2Solved || FROST_FIXED.has(edge)) return;
+    if (S.p2Solved || FROST.FIXED.has(edge)) return;
     if (p2State.cuts.has(edge)) {
       p2State.cuts.delete(edge);
     } else {
-      if (p2State.cuts.size + FROST_FIXED.size >= FROST_MAX_CUTS) {
+      if (p2State.cuts.size + FROST.FIXED.size >= FROST.MAX) {
         frostOutOfIce(edge);
         return;
       }
@@ -1209,10 +1238,10 @@ const Chapter2 = (() => {
   function frostIceNeeded(comps) {
     const id = {};
     comps.forEach((comp, i) => comp.forEach(k => { id[k] = i; }));
-    const need = new Set(FROST_FIXED);
-    for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) {
-      if (c < 4 && id[`${r},${c}`] !== id[`${r},${c + 1}`]) need.add(`h,${r},${c}`);
-      if (r < 4 && id[`${r},${c}`] !== id[`${r + 1},${c}`]) need.add(`v,${r},${c}`);
+    const need = new Set(FROST.FIXED);
+    for (let r = 0; r < FROST.ROWS; r++) for (let c = 0; c < FROST.COLS; c++) {
+      if (c < FROST.COLS - 1 && id[`${r},${c}`] !== id[`${r},${c + 1}`]) need.add(`h,${r},${c}`);
+      if (r < FROST.ROWS - 1 && id[`${r},${c}`] !== id[`${r + 1},${c}`]) need.add(`v,${r},${c}`);
     }
     return need.size;
   }
@@ -1225,11 +1254,11 @@ const Chapter2 = (() => {
     const { win, comps } = frostStatus();
     p2State.cuts.delete(edge);
     const need = win ? frostIceNeeded(comps) : 0;
-    const over = need > FROST_MAX_CUTS;
+    const over = need > FROST.MAX;
     setP2Status(
-      over ? `SO WÄREN ALLE BEREICHE FERTIG — MIT ${need} KANÄLEN. DAS EIS REICHT NUR FÜR ${FROST_MAX_CUTS}.`
+      over ? `SO WÄREN ALLE BEREICHE FERTIG — MIT ${need} KANÄLEN. DAS EIS REICHT NUR FÜR ${FROST.MAX}.`
     : win  ? 'SO WÄREN ALLE BEREICHE FERTIG — ABER EIN KANAL TRENNT NICHTS.'
-           : `KEIN EIS MEHR. DIE RICHTIGE AUFTEILUNG KOMMT MIT GENAU ${FROST_MAX_CUTS} KANÄLEN AUS.`,
+           : `KEIN EIS MEHR. DIE RICHTIGE AUFTEILUNG KOMMT MIT GENAU ${FROST.MAX} KANÄLEN AUS.`,
       'error');
     reactP2Ice(over);
   }
@@ -1247,13 +1276,13 @@ const Chapter2 = (() => {
   }
 
   function updateFrost() {
-    const { comps, regions4, wellIsolated, win } = frostStatus();
+    const { comps, regions4, wellsAlone, wellIsolated, win } = frostStatus();
 
     const cellColour = {};
     let ci = 0;
     comps.forEach(comp => {
-      if (!comp.includes(WELL) && comp.length === 4) {
-        const colour = ci % FROST_PALETTE;
+      if (!comp.some(isWell) && comp.length === 4) {
+        const colour = ci % (FROST.GROUPS > FROST_PALETTE ? FROST.GROUPS : FROST_PALETTE);
         comp.forEach(k => cellColour[k] = colour);
         ci++;
       }
@@ -1261,9 +1290,9 @@ const Chapter2 = (() => {
 
     document.querySelectorAll('#frostGrid .frost-cell').forEach(el => {
       const k = `${el.dataset.r},${el.dataset.c}`;
-      const isWell = k === WELL;
-      el.className = 'frost-cell' + (isWell ? ' frost-well' : '');
-      if (isWell) { if (wellIsolated) el.classList.add('isolated'); }
+      const well = isWell(k);
+      el.className = 'frost-cell' + (well ? ' frost-well' : '');
+      if (well) { if (comps.some(comp => comp.length === 1 && comp[0] === k)) el.classList.add('isolated'); }
       else if (cellColour[k] != null) el.classList.add('region', 'region-' + cellColour[k]);
     });
 
@@ -1272,7 +1301,9 @@ const Chapter2 = (() => {
     });
 
     setP2Status(
-      `${regions4} / 6 BEREICHE · BRUNNEN ${wellIsolated ? 'ISOLIERT' : 'OFFEN'} · EIS ${p2State.cuts.size + FROST_FIXED.size}/${FROST_MAX_CUTS}`,
+      (FROST_HARD
+        ? `${regions4} / ${FROST.GROUPS} BEREICHE · BRUNNEN ${wellsAlone}/${FROST.WELLS.size} ISOLIERT · EIS ${p2State.cuts.size + FROST.FIXED.size}/${FROST.MAX}`
+        : `${regions4} / 6 BEREICHE · BRUNNEN ${wellIsolated ? 'ISOLIERT' : 'OFFEN'} · EIS ${p2State.cuts.size + FROST_FIXED.size}/${FROST_MAX_CUTS}`),
       win ? 'ok' : ''
     );
 
@@ -1428,6 +1459,30 @@ const Chapter2 = (() => {
       },
     ],
   };
+
+  // VERSCHÄRFT: the same four steps for the larger tablet
+  if (FROST_HARD) HINTS.p2 = [
+    {
+      froschi: { t:'„De zwoa Brunnen ghörn zu koana Gruppe. Jeder kriagt sei eigens Eis, auf olle vier Seitn."', s:'Die zwei Brunnen gehören zu keiner Gruppe. Jeder bekommt sein eigenes Eis, auf allen vier Seiten.' },
+      r3mi:    { t:'„Beide Brunnen spielen nicht mit. Jeder steht für sich, rundum freigeschnitten."' },
+      vtgm:    { t:'"Neither well belongs to a group. Cut each one free on all four sides."', s:'Keiner der Brunnen gehört zu einer Gruppe. Schneide jeden auf allen vier Seiten frei.' },
+    },
+    {
+      froschi: { t:'„Vierazwanzg Kanäl, de pinkn mitzählt. Mehr Eis hob i ned — und de richtige Aufteilung braucht a jeds Stückerl davo."', s:'Vierundzwanzig Kanäle, die pinken mitgezählt. Mehr Eis hab ich nicht — und die richtige Aufteilung braucht jedes Stückchen davon.' },
+      r3mi:    { t:'„Vierundzwanzig Kanäle, die pinken schon mitgerechnet. Kein Richtwert — das ist alles Eis. Die Lösung braucht jeden einzelnen."' },
+      vtgm:    { t:'"Twenty-four channels, the pink ones included. The solution uses every one."', s:'Vierundzwanzig Kanäle, die pinken eingeschlossen. Die Lösung braucht jeden einzelnen.' },
+    },
+    {
+      froschi: { t:'„A Quadratl, zwoa mal zwoa, spart da an Kanal. Mit vierazwanzg Eis brauchst genau vier Quadratl — und drei andere Formen."', s:'Ein Quadrat, zwei mal zwei, spart dir einen Kanal. Mit vierundzwanzig Eis brauchst du genau vier Quadrate — und drei andere Formen.' },
+      r3mi:    { t:'„Buchhaltung: jedes Zwei-mal-zwei-Quadrat spart einen Kanal. Bei vierundzwanzig Kanälen gehen die Zahlen nur mit genau vier Quadraten auf."' },
+      vtgm:    { t:'"Each two-by-two square saves one channel. Twenty-four channels means exactly four squares and three other shapes."', s:'Jedes Zwei-mal-zwei-Quadrat spart einen Kanal. Vierundzwanzig Kanäle heißen: genau vier Quadrate und drei andere Formen.' },
+    },
+    {
+      froschi: { t:'„De pinkn Linien zoagn da, wo zwoa Gruppn auseinandergehn. Und a Quadratl ko ned über a pinke Linie drüber."', s:'Die pinken Linien zeigen dir, wo zwei Gruppen auseinandergehen. Und ein Quadrat kann nicht über eine pinke Linie hinweg.' },
+      r3mi:    { t:'„Die pinken Schnitte sind feste Grenzen. Such die Stellen, an denen neben ihnen und den Brunnen überhaupt noch ein Quadrat Platz hat."' },
+      vtgm:    { t:'"Treat every pink channel as a finished border. Then find where a square still fits beside them and the wells."', s:'Behandle jeden pinken Kanal als fertige Grenze. Dann suche, wo daneben und neben den Brunnen noch ein Quadrat passt.' },
+    },
+  ];
 
   // A ladder is walked once per chapter run. Leaving a puzzle and coming back,
   // a retry or a reload never hands spent steps back; a fresh run starts at 0.

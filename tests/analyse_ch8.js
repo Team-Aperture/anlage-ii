@@ -19,9 +19,10 @@ const noop = () => {};
 const stubEngine = { chapter: {}, state: { get: () => null, set: noop, setFlag: noop, hasFlag: () => false, isChapterComplete: () => false },
   achievements: { unlock: noop }, signals: { ALL: [], isFound: () => false }, dialogue: { load: noop, advance: noop }, audio: {}, fx: {}, props: { register: noop }, progress: { require: () => true }, calibration };
 const stubDoc = { getElementById: () => null, querySelector: () => null, querySelectorAll: () => [], createElement: () => ({ style: {}, classList: { add: noop, remove: noop } }), addEventListener: noop };
-const M = new Function('GameEngine', 'document', 'window', src + `
-  return { generate, enumerate, holds, noteText, N, isSolved, violations, traceErrors, kalOrder, reconstructZiel, coherence, brokenNotes,
-           setInstance: (p, b) => { P = p; B = b; } };`)(stubEngine, stubDoc, { matchMedia: () => ({ matches: false }), addEventListener: noop });
+const build = hard => new Function('GameEngine', 'document', 'window', src + `
+  return { generate, enumerate, holds, noteText, N, isSolved, violations, traceErrors, kalOrder, reconstructZiel, coherence, brokenNotes, loadCheckpoint,
+           setInstance: (p, b) => { P = p; B = b; } };`)({ ...stubEngine, state: { ...stubEngine.state, hard: () => hard } }, stubDoc, { matchMedia: () => ({ matches: false }), addEventListener: noop });
+const M = build(false), MH = build(true);
 
 let fail = 0; const ok = m => console.log('  ok   ' + m), bad = m => { console.log('  FAIL ' + m); fail++; };
 const N = 2000;
@@ -45,6 +46,32 @@ notUnique ? bad(`${notUnique} instance(s) without a unique solution`) : ok('ever
 redundant ? bad(`${redundant} instance(s) with a redundant archive note`) : ok('every archive note is load-bearing');
 unsolvedSelf ? bad(`${unsolvedSelf} solution(s) the validator itself rejects`) : ok('the validator accepts every generated solution');
 nonIdentity ? bad(`${nonIdentity} solved board(s) with a non-identity calibration order`) : ok('a solved board always reads back as 0..7');
+
+console.log(`\n[1b] VERSCHÄRFT (NG+): ${N} generated instances, 4–5 notes only`);
+{ let notUnique = 0, redundant = 0, count = 0, unsolved = 0, nonId = 0, missing = 0; const dist = {}; const t0 = Date.now(); let slow = 0;
+  for (let t = 0; t < N; t++) {
+    const t1 = Date.now(); const inst = MH.generate(400); if (Date.now() - t1 > 1500) slow++;
+    if (!inst) { missing++; continue; }
+    dist[inst.notes.length] = (dist[inst.notes.length] || 0) + 1;
+    if (inst.notes.length < 4 || inst.notes.length > 5) count++;
+    if (MH.enumerate(inst.frags, inst.notes, 2).found !== 1) notUnique++;
+    for (let k = 0; k < inst.notes.length; k++)
+      if (MH.enumerate(inst.frags, inst.notes.filter((_, i) => i !== k), 2).found < 2) { redundant++; break; }
+    MH.setInstance(inst, { board: inst.sol.slice(), rot: inst.sol.map(() => 0), sel: null });
+    if (!MH.isSolved()) unsolved++;
+    const order = MH.kalOrder(); if (!(order.length === 8 && order.every((v, i) => v === i))) nonId++;
+  }
+  missing ? bad(`${missing} time(s) the hard generator came back empty`) : ok('the hard generator always deals an instance');
+  count ? bad(`${count} hard instance(s) outside 4–5 notes`) : ok(`every hard instance has 4 or 5 notes (${JSON.stringify(dist)})`);
+  notUnique ? bad(`${notUnique} hard instance(s) without a unique solution`) : ok('every hard instance has exactly one solution');
+  redundant ? bad(`${redundant} hard instance(s) with a spare note`) : ok('every hard note is load-bearing');
+  unsolved ? bad(`${unsolved} hard solution(s) the validator rejects`) : ok('the validator accepts every hard solution');
+  nonId ? bad(`${nonId} hard board(s) with a non-identity calibration order`) : ok('a solved hard board reads back as 0..7');
+  slow ? bad(`${slow} hard deal(s) took over 1.5 s`) : ok(`dealing is quick (${((Date.now() - t0) / N).toFixed(0)} ms average)`);
+  // the normal generator is untouched: it still deals 6- and 7-note instances
+  const d2 = {}; for (let t = 0; t < 300; t++) { const i = M.generate(); d2[i.notes.length] = (d2[i.notes.length] || 0) + 1; }
+  (d2[6] && d2[7]) ? ok(`NORMAL still deals 4–7 notes (${JSON.stringify(d2)})`) : bad('the normal generator changed: ' + JSON.stringify(d2));
+}
 
 console.log('\n[2] coordinates');
 const viaBoard = M.reconstructZiel([0,1,2,3,4,5,6,7]), viaDefault = calibration.reconstructMain();

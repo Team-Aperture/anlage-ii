@@ -379,6 +379,12 @@ const Chapter8 = (() => {
   }
 
   // ─── put it together ──────────────────────────────────────────
+  // VERSCHÄRFT (NG+): the same board and rules, but only an instance the
+  // archive can pin down with four or five notes — fewer notes, each one
+  // carrying more of the deduction. Still unique, still no spare note.
+  const HARD = (() => { try { return GameEngine.state.hard(); } catch (_) { return false; } })();
+  const MAX_NOTES = HARD ? 5 : 7;
+
   function generate(maxTries) {
     for (let a = 0; a < (maxTries || 200); a++) {
       const frags = makeFragments();
@@ -412,7 +418,7 @@ const Chapter8 = (() => {
         const trial = notes.slice(0, i).concat(notes.slice(i + 1));
         if (trial.length && enumerate(frags, trial, 2).found === 1) notes.splice(i, 1);
       }
-      if (notes.length < 4 || notes.length > 7) continue;
+      if (notes.length < 4 || notes.length > MAX_NOTES) continue;
 
       const slotMasks = genTrace(800);
       if (!slotMasks) continue;
@@ -609,6 +615,7 @@ const Chapter8 = (() => {
         { speaker:'AGN-H3R', text:'„Zwölf Gruppen, zwölf Plätze. Vier Ebenen zu je drei. Das Archiv hat nach Regeln abgelegt — die Regeln stehen in den Archivnotizen."' },
         { speaker:'AGN-H3R', text:'„Ein Fragment ist noch kein Zusammenhang. Erst der Zusammenhang macht aus Teilen eine Geschichte."' },
         { speaker:'V-TGM',  text:'"The metadata decides where a fragment goes. The picture only confirms it afterwards."', subtitle:'Die Metadaten entscheiden, wohin ein Fragment gehört. Das Bild bestätigt es nur.' },
+        ...(HARD ? [{ speaker:'AGN-H3R', text:'„Von dieser Akte sind weniger Notizen erhalten. Es reicht trotzdem — jede trägt nur mehr."' }] : []),
       ]);
     }
   }
@@ -1320,6 +1327,14 @@ const Chapter8 = (() => {
     try {
       if (!coreInside(inst.sol, frags)) return null;
       if (!notes.every(k => holds(k, inst.sol, frags))) return null;
+      // VERSCHÄRFT: a stored instance must still be one the hard archive
+      // would deal — few enough notes, exactly one filing, no spare note
+      if (HARD) {
+        if (notes.length < 4 || notes.length > MAX_NOTES) return null;
+        if (enumerate(frags, notes, 2).found !== 1) return null;
+        for (let n = 0; n < notes.length; n++)
+          if (enumerate(frags, notes.filter((_, j) => j !== n), 2).found < 2) return null;
+      }
     } catch (_) { return null; }
     let pos = null;
     if (d.pos && Array.isArray(d.pos.board) && d.pos.board.length === N
