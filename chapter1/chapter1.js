@@ -55,6 +55,10 @@ const Chapter1 = (() => {
 
   const HINT_MAX = 3;
 
+  // VERSCHÄRFT (NG+): both repairs get a second hand-built board. Read once;
+  // a run's mode never changes while it lasts.
+  const HARD = (() => { try { return GameEngine.state.hard(); } catch (_) { return false; } })();
+
   // ═══════════════════════════════════════════════════════════════
   // SCENE HELPERS
   // ═══════════════════════════════════════════════════════════════
@@ -1195,6 +1199,12 @@ const Chapter1 = (() => {
         { speaker:'SYSTEM', text:'VERIFIZIERTE TESTSIGNATUR ERKANNT.' },
         { speaker:'R-3MI', text:'„Siehst du? Qualifiziert!"' },
         { speaker:'V-TGM', text:'"That is the facility talking, not an endorsement."', subtitle:'Das ist die Anlage, keine Empfehlung.' },
+        // VERSCHÄRFT: the facility has re-laid the lines for someone it knows
+        ...(HARD ? [
+          { speaker:'SYSTEM', text:'LEITUNGSPLAN ANGEPASST: TESTPERSON BEKANNT.' },
+          { speaker:'R-3MI', text:'„Sie hat die Rohre umgelegt. Extra für dich. Das ist praktisch ein Kompliment."' },
+          { speaker:'V-TGM', text:'"Or a test."', subtitle:'Oder ein Test.' },
+        ] : []),
         { speaker:'R-3MI', text:'„Leitung A muss nach C. Leitung B darf dabei nicht—"' },
         { speaker:'V-TGM', text:'"Don\'t explain it incorrectly."', subtitle:'Erklär es nicht falsch.' },
         { speaker:'R-3MI', text:'„Ich war bei der spannenden Version."' },
@@ -1484,22 +1494,51 @@ const Chapter1 = (() => {
   const P1_SRC = [0, 0];
   const P1_DST = '3,3';
 
+  // VERSCHÄRFT: the terminal sits right under the source, but the way
+  // straight down starts with a corner and ends in a dead end; the one route
+  // is a U through the middle. 10 free tiles (8 above), a route of six (5),
+  // 1024 of 1 048 576 states connect. Proven by tests/analyse_ch1_pipes.js.
+  const P1_HARD_TYPES = [
+    [4, 2, 0, 0],
+    [2, 1, 0, 0],
+    [1, 2, 2, 2],
+    [4, 1, 2, 2],
+  ];
+  const P1_HARD_BASE_ROT = [
+    [0, 2, 0, 0],
+    [1, 0, 0, 0],
+    [1, 0, 2, 0],
+    [0, 1, 3, 0],
+  ];
+  const P1_HARD_FIXED = [
+    [1, 0, 1, 1],
+    [0, 0, 1, 1],
+    [0, 0, 0, 0],
+    [1, 0, 0, 0],
+  ];
+  const P1_HARD_SRC = [0, 0];
+  const P1_HARD_DST = '3,0';
+
+  const P1 = HARD
+    ? { types: P1_HARD_TYPES, base: P1_HARD_BASE_ROT, fixed: P1_HARD_FIXED, src: P1_HARD_SRC, dst: P1_HARD_DST }
+    : { types: P1_TYPES,      base: P1_BASE_ROT,      fixed: P1_FIXED,      src: P1_SRC,      dst: P1_DST };
+
   let p1Grid = [];
 
-  const p1Done = g => bfsReach(g, P1_SRC[0], P1_SRC[1]).has(P1_DST);
+  const p1Done = g => bfsReach(g, P1.src[0], P1.src[1]).has(P1.dst);
 
   function initP1Grid() {
-    p1Grid = scramble(P1_TYPES, P1_BASE_ROT, P1_FIXED, p1Done);
-    S.p1Min = minRotations(p1Grid, P1_TYPES, P1_BASE_ROT, P1_SRC);
+    p1Grid = scramble(P1.types, P1.base, P1.fixed, p1Done);
+    S.p1Min = minRotations(p1Grid, P1.types, P1.base, P1.src);
   }
 
   function renderP1() {
     const gridEl  = document.getElementById('puzzle1Grid');
-    const reached = bfsReach(p1Grid, P1_SRC[0], P1_SRC[1]);
+    const reached = bfsReach(p1Grid, P1.src[0], P1.src[1]);
     renderGrid(gridEl, p1Grid, (tile, r, c) => {
       const key = `${r},${c}`;
-      const isSource   = r === P1_SRC[0] && c === P1_SRC[1];
-      const isTerminal = key === P1_DST;
+      const isSource   = r === P1.src[0] && c === P1.src[1];
+      const isTerminal = key === P1.dst;
       if (isSource)   tile.classList.add('source-w');
       if (isTerminal) tile.classList.add('terminal');
       if (reached.has(key) && !isSource) tile.classList.add('conn');
@@ -1744,7 +1783,12 @@ const Chapter1 = (() => {
       return;
     }
     if (key === 'console' && !S.p2Solved) {
-      say(NODE_LINES.console[1], () => openPuzzle2());
+      // VERSCHÄRFT: the first time the repair is opened, the new routing is named
+      const hardIntro = (HARD && !p2Grid.length) ? [
+        { speaker:'SYSTEM', text:'SIGNALPFADE NEU VERLEGT: TESTPERSON BEKANNT.' },
+        { speaker:'V-TGM',  text:'"Mine takes the long way now."', subtitle:'Meins nimmt jetzt den langen Weg.' },
+      ] : [];
+      say(NODE_LINES.console[1].concat(hardIntro), () => openPuzzle2());
       return;
     }
     if (key === 'door' && S.revisit) {
@@ -1795,18 +1839,49 @@ const Chapter1 = (() => {
   const P2_SRC_A = [0, 0], P2_DST_A = '3,1';
   const P2_SRC_B = [0, 3], P2_DST_B = '3,2';
 
+  // VERSCHÄRFT: both terminals bottom left. R-3MI's line drops straight
+  // down; V-TGM's has exactly one way across the middle, and R-3MI's other
+  // way would run into it — so the tight line is laid first. The T-pieces
+  // on both lines sit side by side: open ends facing each other bridge.
+  // 8 free tiles (6 above); 88 of 65 536 states win, 12 056 bridge.
+  // Proven by tests/analyse_ch1_pipes.js.
+  const P2_HARD_TYPES = [
+    [1, 0, 0, 1],
+    [3, 2, 2, 2],
+    [3, 3, 2, 2],
+    [1, 1, 0, 0],
+  ];
+  const P2_HARD_BASE_ROT = [
+    [0, 0, 0, 0],
+    [2, 0, 1, 3],
+    [2, 1, 3, 1],
+    [0, 0, 0, 0],
+  ];
+  const P2_HARD_FIXED = [
+    [1, 0, 0, 1],
+    [0, 0, 0, 0],
+    [0, 0, 0, 0],
+    [1, 1, 0, 0],
+  ];
+  const P2_HARD_SRC_A = [0, 0], P2_HARD_DST_A = '3,0';
+  const P2_HARD_SRC_B = [0, 3], P2_HARD_DST_B = '3,1';
+
+  const P2 = HARD
+    ? { types: P2_HARD_TYPES, base: P2_HARD_BASE_ROT, fixed: P2_HARD_FIXED, srcA: P2_HARD_SRC_A, dstA: P2_HARD_DST_A, srcB: P2_HARD_SRC_B, dstB: P2_HARD_DST_B }
+    : { types: P2_TYPES,      base: P2_BASE_ROT,      fixed: P2_FIXED,      srcA: P2_SRC_A,      dstA: P2_DST_A,      srcB: P2_SRC_B,      dstB: P2_DST_B };
+
   let p2Grid = [];
 
   function p2Evaluate(g) {
-    const a = bfsReach(g, P2_SRC_A[0], P2_SRC_A[1]);
-    const b = bfsReach(g, P2_SRC_B[0], P2_SRC_B[1]);
-    const bridged = [...a].some(t => b.has(t)) || a.has(P2_DST_B) || b.has(P2_DST_A);
-    return { a, b, bridged, okA: a.has(P2_DST_A), okB: b.has(P2_DST_B) };
+    const a = bfsReach(g, P2.srcA[0], P2.srcA[1]);
+    const b = bfsReach(g, P2.srcB[0], P2.srcB[1]);
+    const bridged = [...a].some(t => b.has(t)) || a.has(P2.dstB) || b.has(P2.dstA);
+    return { a, b, bridged, okA: a.has(P2.dstA), okB: b.has(P2.dstB) };
   }
   const p2Done = g => { const e = p2Evaluate(g); return e.okA && e.okB && !e.bridged; };
 
   function initP2Grid() {
-    p2Grid = scramble(P2_TYPES, P2_BASE_ROT, P2_FIXED, p2Done);
+    p2Grid = scramble(P2.types, P2.base, P2.fixed, p2Done);
   }
 
   function renderP2() {
@@ -1814,11 +1889,11 @@ const Chapter1 = (() => {
     const { a, b } = p2Evaluate(p2Grid);
     renderGrid(gridEl, p2Grid, (tile, r, c) => {
       const key = `${r},${c}`;
-      const srcA = key === `${P2_SRC_A[0]},${P2_SRC_A[1]}`, srcB = key === `${P2_SRC_B[0]},${P2_SRC_B[1]}`;
+      const srcA = key === `${P2.srcA[0]},${P2.srcA[1]}`, srcB = key === `${P2.srcB[0]},${P2.srcB[1]}`;
       if (srcA) tile.classList.add('source-w');
       if (srcB) tile.classList.add('source-g2');
-      if (key === P2_DST_A) tile.classList.add('terminal2r');
-      if (key === P2_DST_B) tile.classList.add('terminal2g');
+      if (key === P2.dstA) tile.classList.add('terminal2r');
+      if (key === P2.dstB) tile.classList.add('terminal2g');
       // a terminal lights its own arm too — a finished path must not end in a dark stub
       if (!srcA && !srcB) { if (a.has(key)) tile.classList.add('conn-r'); else if (b.has(key)) tile.classList.add('conn-g'); }
     }, rotateP2Tile);
@@ -2019,6 +2094,24 @@ const Chapter1 = (() => {
           s:'Leg den stärker eingeschränkten Pfad zuerst fest und führe den zweiten dann darum herum.' },
       ],
     },
+  };
+
+  // VERSCHÄRFT: the second repair's board is a different shape, so its
+  // ladder talks about that board. Same three kinds of step.
+  if (HARD) HINTS.p2 = {
+    r3mi: [
+      '„Zwei Signale, zwei Ziele — und diesmal liegen beide Ziele links unten. Eins der Signale muss quer durch die Mitte."',
+      '„Kein gemeinsames Feld. Und wo offene Enden aus beiden Leitungen aufeinander zeigen, ist es schon eine Brücke — der dritte Arm eines T-Stücks zählt mit."',
+      '„V-TGMs Signal hat genau einen möglichen Weg. Leg den zuerst — meins hat Platz zum Ausweichen."',
+    ],
+    vtgm: [
+      { t:'"Both terminals sit bottom left this time. One signal has to cross the middle to reach its own."',
+        s:'Beide Ziele liegen diesmal links unten. Ein Signal muss quer durch die Mitte zu seinem eigenen.' },
+      { t:'"No shared tile. And where open ends of both lines face each other, they are already bridged — the third arm of a T-piece counts."',
+        s:'Kein gemeinsames Feld. Und wo offene Enden beider Leitungen aufeinander zeigen, sind sie schon verbunden — der dritte Arm eines T-Stücks zählt mit.' },
+      { t:'"My signal has exactly one possible route. Lay it first, then keep his out of its way."',
+        s:'Mein Signal hat genau einen möglichen Weg. Leg ihn zuerst und halte seins dann aus dem Weg.' },
+    ],
   };
 
   // A ladder is walked once per chapter run. Leaving a puzzle and coming back,
