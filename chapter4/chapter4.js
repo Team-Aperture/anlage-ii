@@ -368,6 +368,7 @@ const Chapter4 = (() => {
     ], competence);
   }
 
+  const DEJA = (() => { try { return GameEngine.state.cycle() > 1; } catch (_) { return false; } })();   // NG+: they half remember
   function competence() {
     playSound('ch4_bradfish.mp3');
     say([
@@ -386,6 +387,7 @@ const Chapter4 = (() => {
       { speaker:'B-RADF1SH', text:'„Und wieder zusammen. Falsch herum. Zweimal."' },
       { speaker:'SYSTEM', text:'Pause.' },
       { speaker:'B-RADF1SH', text:'„Nimm dir eins. Egal welches."' },
+      ...(DEJA ? [{ speaker:'B-RADF1SH', text:'„…Die Waage kennst du schon, oder? Na. Sieht nur so aus."' }] : []),
       { speaker:'R-3MI',  text:'„Das war überraschend wenig Widerstand."' },
       { speaker:'B-RADF1SH', text:'„Vier stehen vor einem Schloss. Wär dumm, nur zwei Hände zu benutzen."' },
     ], () => { S.started = true; showBradfish(true); loadRoom(); });

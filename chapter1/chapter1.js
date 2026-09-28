@@ -1037,7 +1037,10 @@ const Chapter1 = (() => {
   const CYCLE = (() => { try { return GameEngine.state.cycle(); } catch (_) { return 1; } })();
   const REMEMBERED = [
     { speaker:'V-TGM', text:'"Have we… met before?"', subtitle:'Kennen wir uns… schon?' },
-    { speaker:'R-3MI', text:'„Nein. Bestimmt nicht. …Wieso fragst du?"' },
+    // last cycle ended on "…Hiii." — something of it is still in there
+    (() => { try { return GameEngine.state.lastEnding() === 'hiii'; } catch (_) { return false; } })()
+      ? { speaker:'R-3MI', text:'„Nein. Bestimmt nicht. …Hiii?"' }
+      : { speaker:'R-3MI', text:'„Nein. Bestimmt nicht. …Wieso fragst du?"' },
   ];
 
   function act2_reaction() {

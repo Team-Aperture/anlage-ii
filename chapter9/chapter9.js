@@ -566,8 +566,15 @@ const Chapter9 = (() => {
     save();
     el('faceBar')?.classList.add('hidden');
     let cyc = 1; try { cyc = GameEngine.state.cycle(); } catch (_) {}
-    // a later calibration cycle (NG+) — one quiet line, nothing changes
-    const again = cyc > 1 ? [{ speaker:'SYSTEM', text:'Diesmal wirkt keiner der beiden überrascht.' }] : [];
+    // a later calibration cycle (NG+) — a quiet nod to how the last one ended
+    let last = ''; try { last = GameEngine.state.lastEnding(); } catch (_) {}
+    const again = cyc < 2 ? [] : ({
+      ret:   [{ speaker:'R-3MI', text:'„Du hast gesagt, du kommst zurück."' },
+              { speaker:'V-TGM', text:'"You did."', subtitle:'Du bist gekommen.' }],
+      trust: [{ speaker:'V-TGM', text:'"You said you would never trust us again."', subtitle:'Du hast gesagt, du vertraust uns nie wieder.' },
+              { speaker:'R-3MI', text:'„Und trotzdem bist du hier."' }],
+      hiii:  [{ speaker:'R-3MI', text:'„…Hiii."' }],
+    })[last] || [{ speaker:'SYSTEM', text:'Diesmal wirkt keiner der beiden überrascht.' }];
     const open = again.concat(who === 'r3mi'
       ? [
           { speaker:'SYSTEM', text:'Du drehst dich zu R-3MI.' },

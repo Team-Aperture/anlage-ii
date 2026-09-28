@@ -44,6 +44,8 @@ const GameEngine = (() => {
       // NG+: what earlier calibration cycles left behind. null on a first run.
       // { cycle, earned: [achievement ids], endings: [ret|trust|hiii], zieldaten }
       legacy:               null,
+      // NG+: '' (normal) or 'hard' (VERSCHÄRFT) — only ever set from cycle 2 on
+      mode:                 '',
     };
 
     let _data = null;
@@ -151,7 +153,8 @@ const GameEngine = (() => {
       const cyc = Math.floor(+l.cycle);
       if (!(cyc >= 2)) return null;
       const list = x => Array.isArray(x) ? [...new Set(x.filter(v => typeof v === 'string'))] : [];
-      return { cycle: cyc, earned: list(l.earned), endings: list(l.endings).filter(e => ENDINGS.indexOf(e) >= 0), zieldaten: !!l.zieldaten };
+      return { cycle: cyc, earned: list(l.earned), endings: list(l.endings).filter(e => ENDINGS.indexOf(e) >= 0), zieldaten: !!l.zieldaten,
+               lastEnding: ENDINGS.indexOf(l.lastEnding) >= 0 ? l.lastEnding : '' };
     }
 
     function normalise(d) {
@@ -160,6 +163,8 @@ const GameEngine = (() => {
       // ── NG+: achievements earned in an earlier cycle are permanent. The rules
       // below check what THIS cycle has done; they never take those back. ──
       d.legacy = cleanLegacy(d.legacy);
+      // VERSCHÄRFT exists only in a later cycle; run 1 can never be made harder
+      if (d.mode !== 'hard' || !d.legacy) d.mode = '';
       const perm = new Set(d.legacy ? d.legacy.earned : []);
 
       // ── chapters form an unbroken chain (nothing from Part I is needed) ──
@@ -256,6 +261,7 @@ const GameEngine = (() => {
         ...(d.legacy && typeof d.legacy === 'object' ? [[+d.legacy.cycle,
           (Array.isArray(d.legacy.earned) ? d.legacy.earned : []).slice().sort(),
           (Array.isArray(d.legacy.endings) ? d.legacy.endings : []).slice().sort(), !!d.legacy.zieldaten]] : []),
+        ...(d.mode === 'hard' ? ['hard'] : []),
       ]);
       let h = 0x811c9dc5;
       for (let i = 0; i < material.length; i++) {
@@ -351,7 +357,10 @@ const GameEngine = (() => {
     function canNewCycle() { return !!_data.flags.truth_revealed; }
     function cycle() { return (_data.legacy && _data.legacy.cycle) || 1; }
     function legacy() { return _data.legacy ? JSON.parse(JSON.stringify(_data.legacy)) : null; }
-    function newCycle() {
+    // VERSCHÄRFT: same mechanics, other instances, a little less slack
+    function hard() { return !!(_data.legacy && _data.mode === 'hard'); }
+    function lastEnding() { return (_data.legacy && _data.legacy.lastEnding) || ''; }
+    function newCycle(mode) {
       if (!canNewCycle()) return false;
       const prev = _data.legacy || { cycle: 1, earned: [], endings: [], zieldaten: false };
       const earned = [...new Set([...prev.earned, ..._data.achievementsUnlocked])];
@@ -362,8 +371,10 @@ const GameEngine = (() => {
       fresh.provenance = _data.provenance || '';
       fresh.firstPlay = false;
       fresh.achievementsUnlocked = earned.slice();
-      fresh.legacy = { cycle: prev.cycle + 1, earned, endings,
+      const last = ENDINGS.indexOf(_data.flags.ch9_ending) >= 0 ? _data.flags.ch9_ending : (prev.lastEnding || '');
+      fresh.legacy = { cycle: prev.cycle + 1, earned, endings, lastEnding: last,
                        zieldaten: !!(prev.zieldaten || _data.chaptersCompleted.indexOf('ch8') >= 0) };
+      fresh.mode = mode === 'hard' ? 'hard' : '';
       _data = normalise(migrate(fresh)).data;
       save();
       return true;
@@ -409,7 +420,7 @@ const GameEngine = (() => {
     return {
       load, save, get, set, setFlag, hasFlag, canPersist, chapter, setting,
       markChapterComplete, isChapterComplete, zieldaten, hasZieldaten,
-      canNewCycle, newCycle, cycle, legacy,
+      canNewCycle, newCycle, cycle, legacy, hard, lastEnding,
       markPuzzleSolved, isPuzzleSolved, reset, repair,
       exportSave, importSave, SCHEMA,
     };

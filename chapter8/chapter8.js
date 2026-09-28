@@ -868,6 +868,7 @@ const Chapter8 = (() => {
   // ═══════════════════════════════════════════════════════════════
   // THE TABLE — the 36 fragments, the old refusal, the pre-sort
   // ═══════════════════════════════════════════════════════════════
+  const DEJA = (() => { try { return GameEngine.state.cycle() > 1; } catch (_) { return false; } })();   // NG+: they half remember
   function table() {
     if (S.solved) { finishedArchive(); return; }
     if (S.presorted) { openBoard(); return; }
@@ -875,6 +876,7 @@ const Chapter8 = (() => {
     say([
       { speaker:'SYSTEM', text:'Ein Tisch, so lang wie ein Bahnsteig. Darauf liegt eine einzige Akte — auseinandergefallen, in Stücken, mit Kreide grob umrandet, damit nichts verrutscht.' },
       { speaker:'AGN-H3R', text:'„Die zehnte. An der sitze ich seit einer Weile. Sie ist die einzige, die euch betrifft."' },
+      ...(DEJA ? [{ speaker:'AGN-H3R', text:'„…Nein. Die elfte. Ich zähle wohl nicht mehr richtig."' }] : []),
       { speaker:'SYSTEM', text:'36 ARCHIVFRAGMENTE ERKANNT.' },
       { speaker:'R-3MI',  text:'„Nein."' },
       { speaker:'SYSTEM', text:'REKONSTRUKTION ERFORDERLICH.' },

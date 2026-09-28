@@ -41,6 +41,28 @@ const CYCLE2 = (over = {}) => H.save({ achievementsUnlocked: EARNED1.slice(), le
     check(await p.locator('#newCycleBtn').count() === 0, '  no second new cycle before this one reaches Chapter 9');
     check(errs.length === 0, '  no page errors' + (errs.length ? ': ' + errs[0] : '')); await ctx.close(); }
 
+  console.log('\n[A2] the new cycle can be VERSCHÄRFT; NORMAL is the default; run 1 never is');
+  { const { ctx, p, errs } = await H.open(b, '/index.html', DONE1());
+    await p.waitForTimeout(6500);
+    await p.locator('#newCycleBtn').click(); await p.waitForTimeout(300);
+    check(await p.locator('.ncy-mode.on[data-mode=""]').count() === 1, '  NORMAL is preselected');
+    await p.locator('.ncy-mode[data-mode="hard"]').click(); await p.waitForTimeout(100);
+    check(/EINGESTELLT/.test(await p.locator('#ncyNote').innerText()), '  VERSCHÄRFT says the Anlage has adapted, not that it punishes');
+    await p.locator('#ncyGo').click(); await p.locator('#ncyGo').click(); await p.waitForTimeout(1600);
+    const st = await saved(p);
+    check(st.mode === 'hard' && st.legacy.cycle === 2 && st.legacy.lastEnding === 'hiii', `  cycle 2 is VERSCHÄRFT and remembers the last ending (${st.mode}, ${st.legacy.lastEnding})`);
+    await p.waitForTimeout(6500);
+    check(/DURCHLAUF 02 · VERSCHÄRFT/.test(await p.evaluate(() => document.body.innerText)), '  the title says so');
+    check(errs.length === 0, '  no page errors'); await ctx.close(); }
+  { const { ctx, p } = await H.open(b, '/index.html', H.save({ mode: 'hard' }));
+    await p.waitForTimeout(800);
+    check((await saved(p)).mode === '' && !(await p.evaluate(() => GameEngine.state.hard())), '  a first run can never be VERSCHÄRFT, even if a save claims it');
+    await ctx.close(); }
+  { const { ctx, p } = await H.open(b, '/index.html', CYCLE2());
+    await p.waitForTimeout(800);
+    check(!(await p.evaluate(() => GameEngine.state.hard())), '  a cycle-2 save without a mode is NORMAL');
+    await ctx.close(); }
+
   console.log('\n[B] a cycle-2 save keeps its achievements through reloads and export/import');
   { const { ctx, p, errs } = await H.open(b, '/index.html', CYCLE2());
     await p.waitForTimeout(1500);
@@ -114,8 +136,20 @@ const CYCLE2 = (over = {}) => H.save({ achievementsUnlocked: EARNED1.slice(), le
       await ctx.close(); }
   }
 
+  { const need = { 2: /Kennan mia uns/, 3: /anders hin als beim letzten Mal/, 4: /Die Waage kennst du schon/, 5: /Ihr kennt den Weg schon/, 6: /…Wieder\./, 7: /Du wieder\. Die Türen/, 8: /Nein\. Die elfte/ };
+    for (const [n, re] of Object.entries(need)) { const src = H.fs.readFileSync(H.path.join(H.ROOT, `chapter${n}/chapter${n}.js`), 'utf8');
+      const line = src.split('\n').find(l => re.test(l)) || '';
+      check(/\.\.\.\(DEJA \?/.test(line), `  Chapter ${n}: one recognition moment, only in cycle 2+`); }
+    const c9 = H.fs.readFileSync(H.path.join(H.ROOT, 'chapter9/chapter9.js'), 'utf8');
+    check(/lastEnding\(\)/.test(c9) && /Du hast gesagt, du kommst zurück/.test(c9) && /never trust us again/.test(c9), '  Chapter 9 answers the previous ending'); }
+  for (const [label, sv, want] of [['cycle 1', H.save({ chaptersCompleted: H.done(6) }), false], ['cycle 2', CYCLE2({ chaptersCompleted: H.done(6) }), true]]) {
+    const { ctx, p } = await H.open(b, '/chapter6/chapter6.html', sv);
+    for (let i = 0; i < 30; i++) { await H.drain(p); await p.waitForTimeout(250); if (await p.evaluate(() => GameEngine.dialogue.history().some(l => /genügen/.test(l.subtitle || '')))) break; }
+    const h = await p.evaluate(() => GameEngine.dialogue.history().map(l => l.text).join(' | '));
+    check(/„…Wieder\."/.test(h) === want, `  ${label}: ASP-1024 ${want ? 'says "…Wieder."' : 'just says "Moin."'}`);
+    await ctx.close(); }
   { const c1 = H.fs.readFileSync(H.path.join(H.ROOT, 'chapter1/chapter1.js'), 'utf8'), c9 = H.fs.readFileSync(H.path.join(H.ROOT, 'chapter9/chapter9.js'), 'utf8');
     check(/CYCLE > 1 \? say\(REMEMBERED, act2_minimumExposition\)/.test(c1) && /Have we… met before/.test(c1), '  Chapter 1: the first meeting gets its flicker of recognition only in cycle 2+');
-    check(/cyc > 1 \? \[\{ speaker:'SYSTEM', text:'Diesmal wirkt keiner der beiden überrascht\.' \}\]/.test(c9), '  Chapter 9: one quiet line only in cycle 2+'); }
+    check(/const again = cyc < 2 \? \[\] :/.test(c9) && /Diesmal wirkt keiner der beiden überrascht/.test(c9), '  Chapter 9: its recognition only in cycle 2+ (a neutral line if no ending is on record)'); }
   await b.close(); finish();
 })();

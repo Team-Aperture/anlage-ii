@@ -590,6 +590,7 @@ const Chapter5 = (() => {
     say([{ speaker:'SYSTEM', text:'14-E // SCHALTGALERIE. Eine Wand aus alten Schaltern, darüber die Leitungsbündel, die aus der Galerie hinauslaufen.' }]);
   }
 
+  const DEJA = (() => { try { return GameEngine.state.cycle() > 1; } catch (_) { return false; } })();   // NG+: they half remember
   function meetTflon() {
     // Latch the meeting before any narration: a lost callback must not make
     // the chapter forget that T-FLON14 is standing right there.
@@ -613,6 +614,7 @@ const Chapter5 = (() => {
       { speaker:'T-FLON14', text:'„Ihr seid auch hier."' },
       { speaker:'R-3MI',  text:'„Auch?"' },
       { speaker:'T-FLON14', text:'„Mhm."' },
+      ...(DEJA ? [{ speaker:'T-FLON14', text:'„Ihr kennt den Weg schon. …Woher eigentlich?"' }] : []),
       { speaker:'SYSTEM', text:'Die Einheit dreht sich wieder zur Wand.' },
       { speaker:'T-FLON14', text:'„Die hier spinnen."' },
       { speaker:'R-3MI',  text:'„Die Schalter oder die Spinnen?"' },

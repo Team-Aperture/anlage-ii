@@ -343,6 +343,7 @@ const Chapter2 = (() => {
   }
 
   /** The frozen reveal — kept exactly as it was. */
+  const DEJA = (() => { try { return GameEngine.state.cycle() > 1; } catch (_) { return false; } })();   // NG+: they half remember
   function act1_froschi() {
     setScene('frozen-pavilion');
     // latched before the lines, never inside their callback (house rule);
@@ -359,6 +360,7 @@ const Chapter2 = (() => {
       { speaker:'F-RØ5CHI', text:'„R…3…M…I…!"', subtitle:'R-3-M-I!' },
       { speaker:'SYSTEM',   text:'Sie wackelt. Frost bröckelt von ihren Schultern. Ihre Bewegungen werden schneller — aber nicht ganz normal.' },
       { speaker:'F-RØ5CHI', text:'„A Bsuach! A echter Bsuach! Wia lang hob i scho keinen mehr g\'sehn!"', subtitle:'Ein Besuch! Ein echter Besuch! Wie lang hab ich schon keinen mehr gesehen!' },
+      ...(DEJA ? [{ speaker:'F-RØ5CHI', text:'„…Wart. Kennan mia uns? Na. Na, des hätt i ma gmerkt."', subtitle:'…Warte. Kennen wir uns? Nein. Nein, das hätte ich mir gemerkt.' }] : []),
       { speaker:'F-RØ5CHI', text:'„Kemmt eina, kemmt eina! Hosd Hunger? Wos kann i da geben? Oh, mei…"', subtitle:'Kommt herein, kommt herein! Hast du Hunger? Was kann ich dir geben? Oh je…' },
       { speaker:'F-RØ5CHI', text:'„…i hob nix do. Olles is g\'frorn."', subtitle:'…ich hab nichts da. Alles ist gefroren.' },
       { speaker:'V-TGM',    text:'"Including you."', subtitle:'Dich eingeschlossen.' },

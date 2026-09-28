@@ -397,6 +397,7 @@ const Chapter3 = (() => {
   // ═══════════════════════════════════════════════════════════════
   // ACT 2 — EXPLORE THE FAILING SECTOR
   // ═══════════════════════════════════════════════════════════════
+  const DEJA = (() => { try { return GameEngine.state.cycle() > 1; } catch (_) { return false; } })();   // NG+: they half remember
   function act2_explore() {
     S.metLux = true;
     showLux(true);
@@ -407,6 +408,7 @@ const Chapter3 = (() => {
       { speaker:'L-UX',   text:'„Schau dich um. Das Array kannst du danach immer noch anfassen."' },
       { speaker:'R-3MI',  text:'„Er sagt das, als wäre das Array nicht das Einzige, was hier zählt."' },
       { speaker:'L-UX',   text:'„Ist es nicht."' },
+      ...(DEJA ? [{ speaker:'L-UX', text:'„…Du schaust anders hin als beim letzten Mal."' }] : []),
     ], () => loadHotspots());
   }
 

@@ -575,6 +575,11 @@
             <li>Beginnt neu: Sektor 00 bis 08, Rätsel, Hinweise, Signalnischen, die Kammer</li>
           </ul>
           <p class="ncy-small sys-text">Was dir noch fehlt, ist im neuen Durchlauf wieder erreichbar.</p>
+          <div class="ncy-modes" role="radiogroup" aria-label="Kalibrierung">
+            <button class="ka-btn ncy-mode on" data-mode="" role="radio" aria-checked="true">[ NORMAL ]</button>
+            <button class="ka-btn ncy-mode" data-mode="hard" role="radio" aria-checked="false">[ VERSCHÄRFT ]</button>
+          </div>
+          <p class="ncy-mode-note sys-text" id="ncyNote">NORMAL: DIESELBEN AUFGABEN WIE BEIM ERSTEN MAL.</p>
         </div>
         <div class="ncy-actions">
           <button class="ka-btn danger" id="ncyGo">[ DURCHLAUF ${next} STARTEN ]</button>
@@ -582,7 +587,14 @@
         </div>
       </div>`;
     const go = panel.querySelector('#ncyGo');
-    let armed = false, timer = null;
+    let armed = false, timer = null, mode = '';
+    const NOTES = { '': 'NORMAL: DIESELBEN AUFGABEN WIE BEIM ERSTEN MAL.',
+                    hard: 'VERSCHÄRFT: DIE ANLAGE HAT SICH AUF DICH EINGESTELLT. GLEICHE REGELN, NEUE AUFGABEN, ETWAS WENIGER SPIELRAUM.' };
+    panel.querySelectorAll('.ncy-mode').forEach(b => b.addEventListener('click', () => {
+      mode = b.dataset.mode;
+      panel.querySelectorAll('.ncy-mode').forEach(x => { const on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-checked', on ? 'true' : 'false'); });
+      panel.querySelector('#ncyNote').textContent = NOTES[mode];
+    }));
     go.addEventListener('click', () => {
       if (!armed) {
         armed = true; go.textContent = '[ WIRKLICH NEU BEGINNEN? NOCHMAL TIPPEN ]';
@@ -591,7 +603,7 @@
       }
       clearTimeout(timer);
       let ok = false;
-      try { ok = GameEngine.state.newCycle(); } catch (_) {}
+      try { ok = GameEngine.state.newCycle(mode); } catch (_) {}
       if (!ok) return;
       try { sessionStorage.removeItem('ka2_session_boot_seen'); } catch (_) {}
       go.textContent = '[ ANLAGE FÄHRT NEU HOCH … ]';
@@ -617,7 +629,10 @@
     if (nav.completed.length) parts.push(`REAKTIVIERUNG: ${pct} %`);
     // The archive only counts once the player has heard something.
     if (nav.sigs > 0) parts.push(`FREMDSIGNALE: ${nav.sigs} / ${nav.total}`);
-    if (cycleNo() > 1) parts.push(`DURCHLAUF ${String(cycleNo()).padStart(2, '0')}`);
+    if (cycleNo() > 1) {
+      let hard = false; try { hard = GameEngine.state.hard(); } catch (_) {}
+      parts.push(`DURCHLAUF ${String(cycleNo()).padStart(2, '0')}${hard ? ' · VERSCHÄRFT' : ''}`);
+    }
 
     progressEl.innerHTML = parts.map(t => `<span class="tp-part">${t}</span>`).join('');
   }
