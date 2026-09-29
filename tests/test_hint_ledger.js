@@ -179,9 +179,11 @@ async function probe(b) {
     await spend(p, 2); rec('ch8', 'board after 2 hints', await count(p));
     await p.locator('#rkModal [data-act="close"]').first().click(); await p.waitForTimeout(200);
     await hs(p, 'Rekonstruktionstisch'); await all(p);
+    await p.locator('.choice-btn', { hasText: 'Weiter rekonstruieren' }).click().catch(() => {}); await p.waitForTimeout(200);   // the refusal is on offer again
     rec('ch8', 'board close+reopen', await count(p));
     await p.reload({ waitUntil: 'domcontentloaded' }); await p.waitForTimeout(3000); await H.settled(p); await all(p);
     await hs(p, 'Rekonstruktionstisch'); await all(p);
+    await p.locator('.choice-btn', { hasText: 'Weiter rekonstruieren' }).click().catch(() => {}); await p.waitForTimeout(200);
     rec('ch8', 'board after reload', await count(p));
     const cp = (await saved(p)).ch8_progress || {};
     rec('ch8', 'checkpoint hintStep/hintsUsed', `${cp.hintStep}/${cp.hintsUsed}`);

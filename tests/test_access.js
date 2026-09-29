@@ -72,8 +72,8 @@ const typeIn = async (p, code) => { for (let i = 0; i < code.length; i++) { awai
     await p.keyboard.press('Escape'); await p.waitForTimeout(300);
     check(await p.locator('#archivOverlay.hidden').count() === 1, '  Escape closes it');
     await p.evaluate(() => GameEngine.achievements.showOverlay()); await p.waitForTimeout(200);
-    const listed = await p.evaluate(() => ({ n: document.querySelectorAll('#achievementList .ach-item').length, all: GameEngine.achievements.ALL.length }));
-    check(listed.n === listed.all - 1, `  the secret achievement is not even listed before it is earned (${listed.n} of ${listed.all})`);
+    const listed = await p.evaluate(() => ({ n: document.querySelectorAll('#achievementList .ach-item').length, all: GameEngine.achievements.ALL.filter(a => !a.retired).length }));
+    check(listed.n === listed.all - 1, `  the secret achievement is not even listed before it is earned (${listed.n} of ${listed.all} current)`);
     check(errs.length === 0, '  no page errors'); await ctx.close(); }
 
   if (!CODE) { console.log('  --   KA1_CODE not provided; the party itself is skipped (see tests/README.md)'); }
@@ -136,8 +136,8 @@ const typeIn = async (p, code) => { for (let i = 0; i < code.length; i++) { awai
     await p.evaluate(() => GameEngine.showSaveManager()); await p.waitForTimeout(300);
     const t = await p.locator('#saveOverlay').innerText();
     const m = /Freigeschaltete Erfolge:\s*(\d+)\s*\/\s*(\d+)/.exec(t);
-    const all = await p.evaluate(() => GameEngine.achievements.ALL.length);
-    check(m && +m[2] === all - 1, `  "${m && m[0]}" (the secret one is not part of the total)`);
+    const all = await p.evaluate(() => GameEngine.achievements.ALL.filter(a => !a.retired).length);
+    check(m && +m[2] === all - 1, `  "${m && m[0]}" (neither the secret one nor the retired ones are part of the total)`);
     await ctx.close(); }
 
   await b.close(); finish();

@@ -17,7 +17,7 @@ const GameEngine = (() => {
   'use strict';
 
   const SAVE_KEY = 'ka2_save_v1';
-  const VERSION  = '2.0.0-pre';   // what the game calls itself; NOT the save schema
+  const VERSION  = '1.0.0-pre';   // what the game calls itself; NOT the save schema
 
   // ═══════════════════════════════════════════════════════════════
   // STATE MANAGER
@@ -41,9 +41,6 @@ const GameEngine = (() => {
       settings:             {},
       firstPlay:            true,
       provenance:           '',   // 'beta' for a run carried over from the beta
-      // NG+: what earlier calibration cycles left behind. null on a first run.
-      // { cycle, earned: [achievement ids], endings: [ret|trust|hiii], zieldaten }
-      legacy:               null,
     };
 
     let _data = null;
@@ -143,24 +140,30 @@ const GameEngine = (() => {
     // flag stripped it on every load and re-toasted it on every re-entry.
     const TRUTH_ACH = ['bonus_found','truth','said_hiii','will_return','ch9_complete'];
 
-    // An earlier cycle's record, reduced to known shapes. Anything else in
-    // that slot is not a record at all.
-    const ENDINGS = ['ret', 'trust', 'hiii'];
+    // ── Read-only compatibility: a second calibration cycle (NG+) ─────────
+    // For a short while the live build let a finished save start the story
+    // over, keeping what it had earned in a `legacy` record. That option is
+    // gone — KA-II is one save that reaches 100 % — but saves that already
+    // began a second cycle keep their record: its achievements stay earned
+    // and its coordinates stay readable. Nothing here ever creates one.
     function cleanLegacy(l) {
       if (!l || typeof l !== 'object' || Array.isArray(l)) return null;
       const cyc = Math.floor(+l.cycle);
       if (!(cyc >= 2)) return null;
       const list = x => Array.isArray(x) ? [...new Set(x.filter(v => typeof v === 'string'))] : [];
-      return { cycle: cyc, earned: list(l.earned), endings: list(l.endings).filter(e => ENDINGS.indexOf(e) >= 0), zieldaten: !!l.zieldaten };
+      return { cycle: cyc, earned: list(l.earned), endings: list(l.endings).filter(e => ['ret', 'trust', 'hiii'].indexOf(e) >= 0), zieldaten: !!l.zieldaten };
     }
 
     function normalise(d) {
       const dropped = [];
       const drop = what => { if (dropped.indexOf(what) < 0) dropped.push(what); };
-      // ── NG+: achievements earned in an earlier cycle are permanent. The rules
-      // below check what THIS cycle has done; they never take those back. ──
-      d.legacy = cleanLegacy(d.legacy);
-      const perm = new Set(d.legacy ? d.legacy.earned : []);
+
+      // ── an earlier cycle's record (see cleanLegacy): its achievements are
+      //    permanent, whatever this cycle has or has not done yet ──
+      const legacy = cleanLegacy(d.legacy);
+      if (legacy) d.legacy = legacy; else delete d.legacy;
+      delete d.mode;                                  // a difficulty that never shipped
+      const perm = new Set(legacy ? legacy.earned : []);
 
       // ── chapters form an unbroken chain (nothing from Part I is needed) ──
       // The previous build (still live while this one is tested) drops ch0
@@ -233,7 +236,7 @@ const GameEngine = (() => {
 
     // A save's own coordinates are never stored as readable text; they are
     // rebuilt from the fragments, and only for a run that actually finished
-    // the reconstruction — this cycle, or an earlier one (NG+ keeps them).
+    // the reconstruction.
     function hasZieldaten() {
       return !!(_data.flags.zieldaten || (_data.legacy && _data.legacy.zieldaten));
     }
@@ -252,7 +255,7 @@ const GameEngine = (() => {
         d.schemaVersion, d.chaptersCompleted, d.signalsFound.slice().sort(),
         d.achievementsUnlocked.slice().sort(), Object.keys(d.calibration).sort(),
         !!d.flags.ka1_verified, !!d.flags.truth_revealed, !!d.flags.zieldaten,
-        // only when present, so every code exported before NG+ still matches
+        // only when present, so codes exported from a second cycle still match
         ...(d.legacy && typeof d.legacy === 'object' ? [[+d.legacy.cycle,
           (Array.isArray(d.legacy.earned) ? d.legacy.earned : []).slice().sort(),
           (Array.isArray(d.legacy.endings) ? d.legacy.endings : []).slice().sort(), !!d.legacy.zieldaten]] : []),
@@ -344,31 +347,6 @@ const GameEngine = (() => {
 
     function reset() { _data = migrate(null); _persist = true; save(); }
 
-    // ── NG+ ─────────────────────────────────────────────────────
-    // Once Chapter 9 is done, another calibration cycle can begin: the story,
-    // every puzzle, checkpoint and Signalnische start over; achievements
-    // (all of them, from every cycle), settings and the coordinates stay.
-    function canNewCycle() { return !!_data.flags.truth_revealed; }
-    function cycle() { return (_data.legacy && _data.legacy.cycle) || 1; }
-    function legacy() { return _data.legacy ? JSON.parse(JSON.stringify(_data.legacy)) : null; }
-    function newCycle() {
-      if (!canNewCycle()) return false;
-      const prev = _data.legacy || { cycle: 1, earned: [], endings: [], zieldaten: false };
-      const earned = [...new Set([...prev.earned, ..._data.achievementsUnlocked])];
-      const endings = [...new Set([...prev.endings, ...(ENDINGS.indexOf(_data.flags.ch9_ending) >= 0 ? [_data.flags.ch9_ending] : [])])];
-      const fresh = blank();
-      fresh.schemaVersion = SCHEMA;
-      fresh.settings = { ..._data.settings };
-      fresh.provenance = _data.provenance || '';
-      fresh.firstPlay = false;
-      fresh.achievementsUnlocked = earned.slice();
-      fresh.legacy = { cycle: prev.cycle + 1, earned, endings,
-                       zieldaten: !!(prev.zieldaten || _data.chaptersCompleted.indexOf('ch8') >= 0) };
-      _data = normalise(migrate(fresh)).data;
-      save();
-      return true;
-    }
-
     // Copy a save between browsers or keep a backup of a long run.
     function exportSave() {
       try {
@@ -409,7 +387,6 @@ const GameEngine = (() => {
     return {
       load, save, get, set, setFlag, hasFlag, canPersist, chapter, setting,
       markChapterComplete, isChapterComplete, zieldaten, hasZieldaten,
-      canNewCycle, newCycle, cycle, legacy,
       markPuzzleSolved, isPuzzleSolved, reset, repair,
       exportSave, importSave, SCHEMA,
     };
@@ -760,13 +737,17 @@ const GameEngine = (() => {
       { id: 'signal_all',       icon: '▲', title: 'Die Übertragung',      desc: 'Alle Signalnischen gefunden.' },
       { id: 'italian_brainrot', icon: '🐪', title: 'Frigo Camelo',        desc: 'F–R–I–G–O. Du weißt, was du getan hast.' },
       { id: 'bayern_pmo',       icon: '🥨', title: 'A Bsuach im Bsuach',   desc: 'Eine alte bayerische Tafel angeklickt.' },
-      { id: 'archivar',         icon: '▤', title: 'Archivar',             desc: 'Die Rekonstruktion ohne einen einzigen Hinweis gelegt.' },
+      { id: 'archivar',         icon: '▤', title: 'Archivar',             desc: 'Eine Rekonstruktion ohne einen einzigen Hinweis gelegt.' },
       { id: 'jigsaw_refused',   icon: '■', title: 'Nein.',                desc: 'Das Puzzle wurde abgelehnt. Wie immer.' },
       { id: 'all_guests',       icon: '◎', title: 'Gute Gesellschaft',    desc: 'Allen sieben Gasteinheiten begegnet.' },
       { id: 'chamber',          icon: '▚', title: 'Nicht registriert',    desc: 'Eine Kammer betreten, die in keinem Plan steht.' },
       { id: 'truth',            icon: '⌖', title: 'Die Wahrheit',         desc: 'Bis zum Ende zugehört.' },
-      { id: 'said_hiii',        icon: '☻', title: 'Hiii.',                desc: 'Am Ende doch noch einmal gegrüßt.' },
-      { id: 'will_return',      icon: '↺', title: 'Ich komme zurück',     desc: 'Ein Versprechen, das niemand widerrufen hat.' },
+      // Retired: they belonged to one-time final lines in Chapter 9, so no
+      // save could hold both. Every ending still plays; Die Wahrheit marks
+      // reaching it. A save that earned one keeps it as an unlisted memento —
+      // never shown, never counted, never needed for 100 %.
+      { id: 'said_hiii',        icon: '☻', title: 'Hiii.',                desc: 'Am Ende doch noch einmal gegrüßt.', retired: true },
+      { id: 'will_return',      icon: '↺', title: 'Ich komme zurück',     desc: 'Ein Versprechen, das niemand widerrufen hat.', retired: true },
       { id: 'bonus_found',      icon: '?', title: '???',                  desc: '…' },
     ];
 
@@ -774,11 +755,12 @@ const GameEngine = (() => {
       return state.get('achievementsUnlocked').includes(id);
     }
     // What the list shows: a secret achievement only once it is earned.
-    function listed() { return ALL.filter(a => !a.secret || isUnlocked(a.id)); }
+    // Every listed achievement stays obtainable from a finished save.
+    function listed() { return ALL.filter(a => !a.retired && (!a.secret || isUnlocked(a.id))); }
 
     function unlock(id) {
       const def = ALL.find(a => a.id === id);
-      if (!def || isUnlocked(id)) return;
+      if (!def || def.retired || isUnlocked(id)) return;
       const list = state.get('achievementsUnlocked');
       list.push(id);
       state.set('achievementsUnlocked', list);
