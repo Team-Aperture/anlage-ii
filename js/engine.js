@@ -737,13 +737,17 @@ const GameEngine = (() => {
       { id: 'signal_all',       icon: '▲', title: 'Die Übertragung',      desc: 'Alle Signalnischen gefunden.' },
       { id: 'italian_brainrot', icon: '🐪', title: 'Frigo Camelo',        desc: 'F–R–I–G–O. Du weißt, was du getan hast.' },
       { id: 'bayern_pmo',       icon: '🥨', title: 'A Bsuach im Bsuach',   desc: 'Eine alte bayerische Tafel angeklickt.' },
-      { id: 'archivar',         icon: '▤', title: 'Archivar',             desc: 'Die Rekonstruktion ohne einen einzigen Hinweis gelegt.' },
+      { id: 'archivar',         icon: '▤', title: 'Archivar',             desc: 'Eine Rekonstruktion ohne einen einzigen Hinweis gelegt.' },
       { id: 'jigsaw_refused',   icon: '■', title: 'Nein.',                desc: 'Das Puzzle wurde abgelehnt. Wie immer.' },
       { id: 'all_guests',       icon: '◎', title: 'Gute Gesellschaft',    desc: 'Allen sieben Gasteinheiten begegnet.' },
       { id: 'chamber',          icon: '▚', title: 'Nicht registriert',    desc: 'Eine Kammer betreten, die in keinem Plan steht.' },
       { id: 'truth',            icon: '⌖', title: 'Die Wahrheit',         desc: 'Bis zum Ende zugehört.' },
-      { id: 'said_hiii',        icon: '☻', title: 'Hiii.',                desc: 'Am Ende doch noch einmal gegrüßt.' },
-      { id: 'will_return',      icon: '↺', title: 'Ich komme zurück',     desc: 'Ein Versprechen, das niemand widerrufen hat.' },
+      // Retired: they belonged to one-time final lines in Chapter 9, so no
+      // save could hold both. Every ending still plays; Die Wahrheit marks
+      // reaching it. A save that earned one keeps it as an unlisted memento —
+      // never shown, never counted, never needed for 100 %.
+      { id: 'said_hiii',        icon: '☻', title: 'Hiii.',                desc: 'Am Ende doch noch einmal gegrüßt.', retired: true },
+      { id: 'will_return',      icon: '↺', title: 'Ich komme zurück',     desc: 'Ein Versprechen, das niemand widerrufen hat.', retired: true },
       { id: 'bonus_found',      icon: '?', title: '???',                  desc: '…' },
     ];
 
@@ -751,11 +755,12 @@ const GameEngine = (() => {
       return state.get('achievementsUnlocked').includes(id);
     }
     // What the list shows: a secret achievement only once it is earned.
-    function listed() { return ALL.filter(a => !a.secret || isUnlocked(a.id)); }
+    // Every listed achievement stays obtainable from a finished save.
+    function listed() { return ALL.filter(a => !a.retired && (!a.secret || isUnlocked(a.id))); }
 
     function unlock(id) {
       const def = ALL.find(a => a.id === id);
-      if (!def || isUnlocked(id)) return;
+      if (!def || def.retired || isUnlocked(id)) return;
       const list = state.get('achievementsUnlocked');
       list.push(id);
       state.set('achievementsUnlocked', list);

@@ -92,6 +92,7 @@ const Chapter8 = (() => {
     started: false,
     solved: false,
     ended: false,
+    practice: false,        // a fresh reconstruction laid on a finished sector
     hintsUsed: 0,
     seen: {},
     talkSeen: {},
@@ -869,8 +870,11 @@ const Chapter8 = (() => {
   // THE TABLE — the 36 fragments, the old refusal, the pre-sort
   // ═══════════════════════════════════════════════════════════════
   function table() {
-    if (S.solved) { finishedArchive(); return; }
-    if (S.presorted) { openBoard(); return; }
+    if (S.practice && !S.solved) { openBoard(); return; }
+    if (S.solved) { if (S.ended) archiveMenu(); else finishedArchive(); return; }
+    // back at the table mid-reconstruction: the old refusal is still on offer
+    // until it has been said once — it is never a one-time chance
+    if (S.presorted) { if (refusedEver()) openBoard(); else resumeOffer(); return; }
     if (bump('table') > 1 && !S.presorted && S.act >= 2 && S.seen['offer']) { offerReconstruction(); return; }
     say([
       { speaker:'SYSTEM', text:'Ein Tisch, so lang wie ein Bahnsteig. Darauf liegt eine einzige Akte — auseinandergefallen, in Stücken, mit Kreide grob umrandet, damit nichts verrutscht.' },
@@ -898,7 +902,23 @@ const Chapter8 = (() => {
     });
   }
 
-  function refuse() {
+  function refusedEver() {
+    try { return S.refused || GameEngine.achievements.isUnlocked('jigsaw_refused'); } catch (_) { return S.refused; }
+  }
+  function resumeOffer() {
+    CH.showChoices({
+      prompt: 'DIE ZEHNTE REKONSTRUKTION:',
+      hint: 'EINE ALTE FRAGE',
+      choices: [
+        { key:'go',     label:'[ Weiter rekonstruieren ]', fn: openBoard },
+        { key:'refuse', label:'[ Nein. Wie damals. ]',     fn: () => refuse(openBoard) },
+      ],
+    });
+  }
+
+  // `then` continues after the lines: the pre-sort the first time, the
+  // board when the refusal comes later
+  function refuse(then) {
     if (!S.refused) { S.refused = true; save(); try { GameEngine.achievements.unlock('jigsaw_refused'); } catch (_) {} }
     say([
       { speaker:'R-3MI',  text:'„HA!"' },
@@ -906,7 +926,76 @@ const Chapter8 = (() => {
       { speaker:'R-3MI',  text:'„…oh."' },
       { speaker:'AGN-H3R', text:'„Damals war das ein Scherz. Diesmal nicht."' },
       { speaker:'V-TGM',  text:'"He is not going to blink. Sit down."', subtitle:'Er wird nicht blinzeln. Setz dich.' },
-    ], presort);
+    ], typeof then === 'function' ? then : presort);
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // A FINISHED ARCHIVE — the table stays a table. AGN-H3R always has another
+  // file: a freshly dealt reconstruction (same generator, so exactly one
+  // solution, every note needed). Laid without a hint, it earns Archivar; with
+  // one, the next file is right there. Nothing here touches the sector's
+  // completion, its finale or the coordinates.
+  // ═══════════════════════════════════════════════════════════════
+  function archiveMenu() {
+    CH.showChoices({
+      prompt: 'DER REKONSTRUKTIONSTISCH:',
+      hint: 'AGN-H3R HAT NOCH AKTEN',
+      choices: [
+        { key:'more',   label:'[ Neue Rekonstruktion ]',   fn: startPractice },
+        { key:'view',   label:'[ Die zehnte ansehen ]',    fn: finishedArchive },
+        { key:'refuse', label:'[ Nein. Wie damals. ]',     fn: refuseAgain },
+      ],
+    });
+  }
+
+  function refuseAgain() {
+    try { GameEngine.achievements.unlock('jigsaw_refused'); } catch (_) {}
+    say([
+      { speaker:'R-3MI',   text:'„Nein. Wie damals."' },
+      { speaker:'AGN-H3R', text:'„Diesmal darfst du. Die zehnte ist fertig."' },
+      { speaker:'R-3MI',   text:'„…das fühlt sich weniger gut an, als ich gedacht hab."' },
+    ]);
+  }
+
+  function startPractice() {
+    const first = !S.seen['practice'];
+    bump('practice');
+    buildInstance();                       // a new, proven instance; B is reset
+    lastCheck = null;
+    S.practice = true; S.solved = false;
+    S.hints.step = 0; S.hintsUsed = 0;
+    el('rkModal')?.classList.remove('done');
+    el('rkBanner')?.classList.remove('visible');
+    scramble();
+    say(first ? [
+      { speaker:'AGN-H3R', text:'„Die zehnte ist fertig. Das Archiv hat mehr als zehn Akten."' },
+      { speaker:'AGN-H3R', text:'„Die hier gehört niemandem. Gleiche Regeln. Wer sie ohne einen einzigen Hinweis legt, darf sich Archivar nennen."' },
+      { speaker:'AGN-H3R', text:'„Mit Hilfe ist auch gut. Dann eben die nächste."' },
+    ] : [
+      { speaker:'AGN-H3R', text:'„Noch eine. Frisch aus dem Regal."' },
+    ], openBoard);
+  }
+
+  function practiceSolved() {
+    S.solved = true; S.practice = false;
+    B.sel = -1;
+    closeSheet();
+    CH.showHintBar(false);
+    renderBoard();
+    el('rkModal')?.classList.add('done');
+    const b = el('rkBanner');
+    if (b) { b.textContent = 'REKONSTRUKTION KOHÄRENT'; b.classList.add('visible'); }
+    try { GameEngine.audio.solve(); } catch (_) {}
+    const clean = S.hintsUsed === 0;
+    if (clean) { try { GameEngine.achievements.unlock('archivar'); } catch (_) {} }
+    later(() => {
+      closeBoard();
+      el('rkModal')?.classList.remove('done');
+      if (b) b.classList.remove('visible');
+      say([ clean
+        ? { speaker:'AGN-H3R', text:'„Ohne eine einzige Frage. Das ist Archivarbeit."' }
+        : { speaker:'AGN-H3R', text:'„Hält. Mit Hilfe — das zählt fürs Archiv, nicht für den Titel. Die nächste liegt bereit, wenn du willst."' } ]);
+    }, reduceMotion() ? 900 : 2200);
   }
 
   function presort() {
@@ -954,7 +1043,7 @@ const Chapter8 = (() => {
   };
   function clickRobot(who) {
     if (dialogueBusy()) { try { GameEngine.dialogue.advance(); } catch (_) {} return; }
-    if (S.solved) { afterTalk(who); return; }
+    if (S.solved || S.ended) { afterTalk(who); return; }   // a finished sector, practice board or not
     const pool = TALK[who] || [];
     if (!pool.length) return;
     const n = (S.talkSeen[who] = (S.talkSeen[who] || 0) + 1);
@@ -977,6 +1066,7 @@ const Chapter8 = (() => {
   // ═══════════════════════════════════════════════════════════════
   function solveBoard() {
     if (S.solved) return;
+    if (S.practice) { practiceSolved(); return; }
     S.solved = true;                 // latched before anything async runs
     // The sector is finished the moment the board holds — not twenty seconds
     // later at the end of the finale. Completion also commits the calibration
@@ -994,6 +1084,7 @@ const Chapter8 = (() => {
     const b = el('rkBanner');
     if (b) { b.textContent = 'REKONSTRUKTION KOHÄRENT'; b.classList.add('visible'); }
     try { GameEngine.audio.solve(); } catch (_) {}
+    // the tenth itself still counts: laid without a hint, it is Archivar too
     if (S.hintsUsed === 0) { try { GameEngine.achievements.unlock('archivar'); } catch (_) {} }
     later(finale, reduceMotion() ? 1200 : 3000);
   }
@@ -1551,7 +1642,12 @@ const Chapter8 = (() => {
     if (ev.target.classList && ev.target.classList.contains('rk-sheet-scrim')) closeSheet();
   }
 
-  return { init };
+  // For the test suites: the time stamps a practice board wants, slot by slot
+  // (its orientation is 0 everywhere). No more than the tenth's own answer,
+  // which sits in the save anyway.
+  function practiceTarget() { return (S.practice && P) ? P.sol.map(id => P.frags[id].ts) : null; }
+
+  return { init, practiceTarget };
 
 })();
 

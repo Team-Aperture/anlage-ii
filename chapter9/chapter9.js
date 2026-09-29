@@ -227,7 +227,7 @@ const Chapter9 = (() => {
                  aria:'Konsole', fn:openConsole });
     // left in a corner by whoever used to work here, and never catalogued
     addHotspot({ prop:'c9_crate', x:6, y:74, w:10, h:12, label:'KISTE',
-                 aria:'Kiste', fn:openCrate });
+                 aria:'Kiste', fn:() => openCrate() });
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -427,7 +427,8 @@ const Chapter9 = (() => {
   }
 
   // ─── the crate: one thing nobody wrote down ───────────────────
-  function openCrate() {
+  // `after` runs once the lines are read (the revisit menu comes back)
+  function openCrate(after) {
     const n = bump('crate');
     if (n === 1) {
       try { GameEngine.achievements.unlock('italian_brainrot'); } catch (_) {}
@@ -436,10 +437,10 @@ const Chapter9 = (() => {
         { speaker:'R-3MI',  text:'„…was."' },
         { speaker:'V-TGM',  text:'"Not ours."', subtitle:'Nicht von uns.' },
         { speaker:'R-3MI',  text:'„Gott sei Dank."' },
-      ]);
+      ], after);
       return;
     }
-    say([{ speaker:'R-3MI', text:'„Nein. Ich will nicht nochmal reinschauen."' }]);
+    say([{ speaker:'R-3MI', text:'„Nein. Ich will nicht nochmal reinschauen."' }], after);
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -878,7 +879,7 @@ const Chapter9 = (() => {
   // ONE LAST THING TO SAY
   // ═══════════════════════════════════════════════════════════════
   const FINAL = {
-    ret: { key:'ret', label:'[ Ich komme zurück. ]', ach:'will_return', lines:[
+    ret: { key:'ret', label:'[ Ich komme zurück. ]', lines:[
       { speaker:'TESTPERSON', text:'„Ich komme zurück."' },
       { speaker:'R-3MI', text:'„Das hoffe ich."' },
       { speaker:'V-TGM', text:'"I know."', subtitle:'Ich weiß.' },
@@ -888,7 +889,7 @@ const Chapter9 = (() => {
       { speaker:'V-TGM', text:'"You shouldn’t."', subtitle:'Solltest du auch nicht.' },
       { speaker:'R-3MI', text:'„…fair."' },
     ]},
-    hiii: { key:'hiii', label:'[ …Hiii. ]', ach:'said_hiii', lines:[
+    hiii: { key:'hiii', label:'[ …Hiii. ]', lines:[
       { speaker:'TESTPERSON', text:'„…Hiii."' },
       { speaker:'SYSTEM', text:'Eine lange Pause.' },
       { speaker:'R-3MI', text:'„…Hiii."' },
@@ -909,7 +910,6 @@ const Chapter9 = (() => {
     const f = FINAL[key];
     S.finalPick = key;
     save();
-    if (f.ach) { try { GameEngine.achievements.unlock(f.ach); } catch (_) {} }
     say(f.lines, exitSequence);
   }
 
@@ -1124,6 +1124,8 @@ const Chapter9 = (() => {
         { key:'coords', label:'[ ZIELDATEN ]', fn: showZielAgain },
         { key:'again',  label:'[ ERINNERUNG WIEDERHOLEN ]', fn: () => say(WARNING, revisitMenu) },
         { key:'log',    label:'[ PROTOKOLL ]', fn: () => { openLog(); revisitMenu(); } },
+        // still in its corner: a finished save can open it any time
+        { key:'crate',  label:'[ KISTE IN DER ECKE ]', fn: () => openCrate(revisitMenu) },
         { key:'leave',  label:'[ ZURÜCK ]', fn: () => { location.href = '../index.html'; } },
       ],
     });
