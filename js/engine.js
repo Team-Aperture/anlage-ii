@@ -230,6 +230,13 @@ const GameEngine = (() => {
       }
       if (sigs >= 1 && d.achievementsUnlocked.indexOf('signal_first') < 0) d.achievementsUnlocked.push('signal_first');
       if (sigs >= SIG_IDS.length && d.achievementsUnlocked.indexOf('signal_all') < 0) d.achievementsUnlocked.push('signal_all');
+      // ??? (bonus_found) is awarded in the same step that sets truth_revealed
+      // — the remainder of the transmission in Chapter 9. Some beta saves have
+      // the flag (and Die Wahrheit) but lost the hidden one. The flag has
+      // already survived the check above (only kept with Sektor 08 finished and
+      // all five signals found), so it is the evidence; the visible achievement
+      // is not trusted on its own.
+      if (d.flags.truth_revealed && d.achievementsUnlocked.indexOf('bonus_found') < 0) d.achievementsUnlocked.push('bonus_found');
 
       return { data: d, dropped };
     }
@@ -2362,6 +2369,9 @@ const GameEngine = (() => {
     if (document.querySelector('.overlay-panel:not(.hidden)')) { e.preventDefault(); closeOverlay(); }
   });
 
+  // Confirmed beta testers — one name per entry; add more here as they are confirmed.
+  const BETA_TESTERS = ['hihatzz', 'TeamReiselustigen'];
+
   function showCredits() {
     // Built fresh every time so it works on chapter pages too, and so the guest
     // thanks only appear once the player has reached the end of the story.
@@ -2458,6 +2468,13 @@ const GameEngine = (() => {
           </section>
 
           ${guests}
+
+          <section class="cr-block">
+            <h3 class="cr-head sys-text">BETA-TESTS // TEST &amp; FEEDBACK</h3>
+            <p class="cr-guests cr-testers">${BETA_TESTERS.map(n => `<span>${String(n).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]))}</span>`).join('<br>')}</p>
+            <p class="cr-body">Vielen Dank fürs Testen, für Rückmeldungen und dafür, die Anlage
+              vor der Veröffentlichung auf die Probe zu stellen.</p>
+          </section>
 
           <section class="cr-block">
             <h3 class="cr-head sys-text">THE TRANSMISSION</h3>
