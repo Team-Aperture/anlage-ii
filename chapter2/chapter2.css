@@ -510,8 +510,6 @@ button.ka-btn:disabled { opacity:.3; pointer-events:none; }
   margin: 0 auto var(--sp-md);
 }
 
-.frost-board.tall { grid-template-rows: repeat(5, var(--fc-cell) var(--fc-gap)) var(--fc-cell); }   /* VERSCHÄRFT: 6 rows */
-
 .frost-cell {
   width: var(--fc-cell); height: var(--fc-cell);
   background: rgba(127,184,212,0.10);
@@ -551,7 +549,6 @@ button.ka-btn:disabled { opacity:.3; pointer-events:none; }
 .frost-cell.region-3 { background: rgba(186,255,201,0.28); }
 .frost-cell.region-4 { background: rgba(186,225,255,0.30); }
 .frost-cell.region-5 { background: rgba(223,186,255,0.30); }
-.frost-cell.region-6 { background: rgba(186,255,245,0.28); }
 
 /* Channels (ice cuts) sit between cells in the thin gap tracks */
 .frost-ch {

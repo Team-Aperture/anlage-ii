@@ -304,7 +304,6 @@ const Chapter7 = (() => {
     };
   }
 
-  const DEJA = (() => { try { return GameEngine.state.cycle() > 1; } catch (_) { return false; } })();   // NG+: they half remember
   function meetFaxn() {
     S.metFaxn = true;
     save();
@@ -315,7 +314,6 @@ const Chapter7 = (() => {
       { speaker:'R-3MI',  text:'„…haben wir gewonnen?"' },
       { speaker:'FAX-N',  text:'„Nein."' },
       { speaker:'R-3MI',  text:'„WER SAGT DAS?"' },
-      ...(DEJA ? [{ speaker:'FAX-N', text:'„Du wieder. Die Türen lügen immer noch."' }] : []),
       { speaker:'SYSTEM', text:'Aus einer offenen Schalttafel an der Wand, halb darin verschwunden, hebt sich ein Kürbiskopf. Er leuchtet. Er grinst. Er grinst immer.' },
       { speaker:'FAX-N',  text:'„Das macht er seit gestern."' },
       { speaker:'FAX-N',  text:'„Hallo."' },

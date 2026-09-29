@@ -439,7 +439,6 @@ const Chapter6 = (() => {
     ], meetAsp);
   }
 
-  const DEJA = (() => { try { return GameEngine.state.cycle() > 1; } catch (_) { return false; } })();   // NG+: they half remember
   function meetAsp() {
     S.metAsp = true;
     save();
@@ -448,7 +447,6 @@ const Chapter6 = (() => {
     say([
       { speaker:'SYSTEM', text:'Die Einheit sieht kurz herüber.' },
       { speaker:'ASP-1024', text:'„Moin."' },
-      ...(DEJA ? [{ speaker:'ASP-1024', text:'„…Wieder."' }] : []),
       { speaker:'R-3MI',  text:'„Moin?"' },
       { speaker:'ASP-1024', text:'„Moin."' },
       { speaker:'V-TGM',  text:'"That seems sufficient."', subtitle:'Das scheint zu genügen.' },

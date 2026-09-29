@@ -565,17 +565,7 @@ const Chapter9 = (() => {
     S.facedFirst = who;
     save();
     el('faceBar')?.classList.add('hidden');
-    let cyc = 1; try { cyc = GameEngine.state.cycle(); } catch (_) {}
-    // a later calibration cycle (NG+) — a quiet nod to how the last one ended
-    let last = ''; try { last = GameEngine.state.lastEnding(); } catch (_) {}
-    const again = cyc < 2 ? [] : ({
-      ret:   [{ speaker:'R-3MI', text:'„Du hast gesagt, du kommst zurück."' },
-              { speaker:'V-TGM', text:'"You did."', subtitle:'Du bist gekommen.' }],
-      trust: [{ speaker:'V-TGM', text:'"You said you would never trust us again."', subtitle:'Du hast gesagt, du vertraust uns nie wieder.' },
-              { speaker:'R-3MI', text:'„Und trotzdem bist du hier."' }],
-      hiii:  [{ speaker:'R-3MI', text:'„…Hiii."' }],
-    })[last] || [{ speaker:'SYSTEM', text:'Diesmal wirkt keiner der beiden überrascht.' }];
-    const open = again.concat(who === 'r3mi'
+    const open = who === 'r3mi'
       ? [
           { speaker:'SYSTEM', text:'Du drehst dich zu R-3MI.' },
           { speaker:'TESTPERSON', text:'„Was habt ihr getan?"' },
@@ -591,7 +581,7 @@ const Chapter9 = (() => {
           { speaker:'V-TGM', text:'"We should explain."', subtitle:'Wir sollten das erklären.' },
           { speaker:'R-3MI', text:'„Müssen wir das jetzt wirklich—"' },
           { speaker:'V-TGM', text:'"Yes."', subtitle:'Ja.' },
-        ]);
+        ];
     say(open, askMenu);
   }
 
@@ -919,8 +909,6 @@ const Chapter9 = (() => {
     const f = FINAL[key];
     S.finalPick = key;
     save();
-    // which ending this cycle chose; a new cycle (NG+) keeps the record
-    try { GameEngine.state.setFlag('ch9_ending', key); } catch (_) {}
     if (f.ach) { try { GameEngine.achievements.unlock(f.ach); } catch (_) {} }
     say(f.lines, exitSequence);
   }
