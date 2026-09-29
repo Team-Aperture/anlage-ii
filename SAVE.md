@@ -19,6 +19,7 @@ Kein Server, kein Konto, kein Tracking.
 | `chapterState` | Wiederaufnahmepunkte einzelner Kapitel |
 | `settings` | Spielereinstellungen (Ton) |
 | `provenance` | `'beta'` für einen aus der Beta übernommenen Lauf — rein kosmetisch |
+| `legacy` | nur in Spielständen, die einen zweiten Durchlauf begonnen hatten: `{ cycle, earned, endings, zieldaten }` (siehe unten) |
 
 **Die Zieldaten stehen nicht im Spielstand.** Sie werden aus den
 Kalibrierungsfragmenten rekonstruiert, und nur für einen Lauf, der Sektor 08
@@ -91,6 +92,22 @@ Beta-Spielstände (Schema ≤ 3) werden übernommen, nicht blind vertraut:
 
 Nichts davon schaltet Inhalte frei; `provenance` ist eine Kennzeichnung und
 wird nirgends als Prüfung verwendet.
+
+## Ein Spielstand, 100 %
+
+KA-II ist auf **einen** Spielstand ausgelegt: Jeder gelistete Erfolg bleibt nach
+Kapitel 9 im selben Spielstand erreichbar — durch Wiederbesuch, nie durch einen
+Neustart. Eine Zeit lang bot die Live-Version nach Kapitel 9 einen **neuen
+Durchlauf** an. Diese Option gibt es nicht mehr; Spielstände, die ihn schon
+begonnen hatten, laden weiter unverändert:
+
+* `legacy.earned` — Erfolge des früheren Durchlaufs. Die Prüfung unten nimmt
+  sie **nie** zurück.
+* `legacy.zieldaten` — die Zieldaten bleiben im Titel sichtbar
+  (`state.hasZieldaten()`).
+* Die Prüfsumme bezieht `legacy` nur ein, wenn es da ist, damit Codes aus einem
+  solchen Spielstand weiter unverändert importieren. Ein kaputter
+  `legacy`-Eintrag wird verworfen, nicht geglaubt. Neu angelegt wird er nie.
 
 ## Wenn gar nichts gespeichert werden kann
 

@@ -140,9 +140,30 @@ const GameEngine = (() => {
     // flag stripped it on every load and re-toasted it on every re-entry.
     const TRUTH_ACH = ['bonus_found','truth','said_hiii','will_return','ch9_complete'];
 
+    // ── Read-only compatibility: a second calibration cycle (NG+) ─────────
+    // For a short while the live build let a finished save start the story
+    // over, keeping what it had earned in a `legacy` record. That option is
+    // gone — KA-II is one save that reaches 100 % — but saves that already
+    // began a second cycle keep their record: its achievements stay earned
+    // and its coordinates stay readable. Nothing here ever creates one.
+    function cleanLegacy(l) {
+      if (!l || typeof l !== 'object' || Array.isArray(l)) return null;
+      const cyc = Math.floor(+l.cycle);
+      if (!(cyc >= 2)) return null;
+      const list = x => Array.isArray(x) ? [...new Set(x.filter(v => typeof v === 'string'))] : [];
+      return { cycle: cyc, earned: list(l.earned), endings: list(l.endings).filter(e => ['ret', 'trust', 'hiii'].indexOf(e) >= 0), zieldaten: !!l.zieldaten };
+    }
+
     function normalise(d) {
       const dropped = [];
       const drop = what => { if (dropped.indexOf(what) < 0) dropped.push(what); };
+
+      // ── an earlier cycle's record (see cleanLegacy): its achievements are
+      //    permanent, whatever this cycle has or has not done yet ──
+      const legacy = cleanLegacy(d.legacy);
+      if (legacy) d.legacy = legacy; else delete d.legacy;
+      delete d.mode;                                  // a difficulty that never shipped
+      const perm = new Set(legacy ? legacy.earned : []);
 
       // ── chapters form an unbroken chain (nothing from Part I is needed) ──
       // The previous build (still live while this one is tested) drops ch0
@@ -190,6 +211,7 @@ const GameEngine = (() => {
 
       // ── achievements need the thing they are awarded for ──
       d.achievementsUnlocked = d.achievementsUnlocked.filter(a => {
+        if (perm.has(a)) return true;
         const m = /^ch(\d)_complete$/.exec(a);
         if (m && m[1] !== '9' && !done.has('ch' + m[1]))            { drop(a); return false; }
         if (a === 'signal_first' && sigs < 1)                       { drop(a); return false; }
@@ -215,9 +237,12 @@ const GameEngine = (() => {
     // A save's own coordinates are never stored as readable text; they are
     // rebuilt from the fragments, and only for a run that actually finished
     // the reconstruction.
+    function hasZieldaten() {
+      return !!(_data.flags.zieldaten || (_data.legacy && _data.legacy.zieldaten));
+    }
     function zieldaten() {
       try {
-        if (!_data.chaptersCompleted.includes('ch8')) return '';
+        if (!_data.chaptersCompleted.includes('ch8') && !(_data.legacy && _data.legacy.zieldaten)) return '';
         return calibration.reconstructMain() || '';
       } catch (_) { return ''; }
     }
@@ -230,6 +255,10 @@ const GameEngine = (() => {
         d.schemaVersion, d.chaptersCompleted, d.signalsFound.slice().sort(),
         d.achievementsUnlocked.slice().sort(), Object.keys(d.calibration).sort(),
         !!d.flags.ka1_verified, !!d.flags.truth_revealed, !!d.flags.zieldaten,
+        // only when present, so codes exported from a second cycle still match
+        ...(d.legacy && typeof d.legacy === 'object' ? [[+d.legacy.cycle,
+          (Array.isArray(d.legacy.earned) ? d.legacy.earned : []).slice().sort(),
+          (Array.isArray(d.legacy.endings) ? d.legacy.endings : []).slice().sort(), !!d.legacy.zieldaten]] : []),
       ]);
       let h = 0x811c9dc5;
       for (let i = 0; i < material.length; i++) {
@@ -357,7 +386,7 @@ const GameEngine = (() => {
     load();
     return {
       load, save, get, set, setFlag, hasFlag, canPersist, chapter, setting,
-      markChapterComplete, isChapterComplete, zieldaten,
+      markChapterComplete, isChapterComplete, zieldaten, hasZieldaten,
       markPuzzleSolved, isPuzzleSolved, reset, repair,
       exportSave, importSave, SCHEMA,
     };
@@ -2474,7 +2503,7 @@ const GameEngine = (() => {
     const sigs     = (state.get('signalsFound') || []).length;
     let achs = 0, achTotal = 0;
     try { const l = achievements.listed(); achTotal = l.length; achs = l.filter(a => achievements.isUnlocked(a.id)).length; } catch (_) {}
-    const ziel     = !!state.hasFlag('zieldaten');
+    const ziel     = state.hasZieldaten();
 
     const warn = state.canPersist() ? '' : `
       <p class="sv-warn">Dieser Browser lässt zurzeit keine Speicherung zu — vermutlich

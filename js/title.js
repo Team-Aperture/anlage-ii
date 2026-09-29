@@ -482,7 +482,7 @@
     // confirms this one, and the terminal says so once it has been confirmed.
     const sets = [];
     try {
-      if (GameEngine.state.hasFlag('zieldaten')) {
+      if (GameEngine.state.hasZieldaten()) {
         const t = GameEngine.state.zieldaten();
         const confirmed = GameEngine.state.hasFlag('truth_revealed');
         if (t) sets.push({
