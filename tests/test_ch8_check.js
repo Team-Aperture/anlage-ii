@@ -16,6 +16,9 @@ async function toBoard(p) {
   if (await go.count()) { await go.click(); await p.waitForTimeout(200); }
   for (let i = 0; i < 6; i++) { await H.drain(p); await p.waitForTimeout(200); }
   if (!(await p.locator('#rkModal:not(.hidden)').count())) { await hs(p, 'Rekonstruktionstisch'); await H.drain(p); }
+  // mid-reconstruction the table offers the old refusal again: carry on
+  const on = p.locator('.choice-btn', { hasText: 'Weiter rekonstruieren' });
+  if (await on.count()) { await on.click(); await p.waitForTimeout(200); }
 }
 async function seed(p, pos) {           // same instance, a chosen position; then back to the table
   await p.evaluate(pos => { const s = JSON.parse(localStorage.getItem('ka2_save_v1')); s.ch8_progress.pos = pos; localStorage.setItem('ka2_save_v1', JSON.stringify(s)); }, pos);
