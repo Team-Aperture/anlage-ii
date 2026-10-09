@@ -60,3 +60,20 @@ zusammenbinden — nötig ist es nicht.
   eine sichtbare Entsprechung; das ganze Spiel ist stummgeschaltet spielbar.
 - Alte Dateinamen dürfen bleiben. Wird ein Slot umbenannt, wird die alte Datei
   weiterverwendet statt gelöscht — der Slot ist die Semantik, die Datei nicht.
+
+## Pegel
+
+- Die Titel werden mit **20 %** ihrer Dateilautstärke abgespielt
+  (`VOL` im Musikmodul von `js/engine.js`). Die vorhandenen Stücke sind
+  laut gemastert (im Schnitt etwa −10 dBFS RMS, Spitzen nahe 0 dBFS) und
+  landen damit im Spiel bei rund −24 dBFS. Neue Titel gern ähnlich laut
+  mastern — dann stimmt das Verhältnis zu den Charakter- und Systemgeräuschen
+  ohne weitere Anpassung.
+- Die Geräusche (Charakter-Blips, Klicks, Jingles) sind synthetisch und
+  liegen über `SFX_GAIN` (Audiomodul, `js/engine.js`) deutlich über der Musik.
+  `tests/test_sound_levels.js` misst dieses Verhältnis an den echten Dateien
+  nach: wird ein neuer Titel deutlich lauter als die bisherigen, schlägt der
+  Test an — dann `VOL` senken (oder `SFX_GAIN` anheben).
+- Auf iPhone/iPad kann der Browser die Lautstärke eines Audio-Elements nicht
+  setzen. Dort läuft die Musik deshalb über einen Web-Audio-Regler mit
+  demselben Wert; auf allen anderen Geräten wird die Elementlautstärke genutzt.

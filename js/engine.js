@@ -1819,6 +1819,26 @@ const GameEngine = (() => {
   const audio = (() => {
     let ctx = null, master = null, muted = false;
 
+    // How loud the interface sounds are. Every blip, click and jingle below is
+    // written at a small level and then lifted by SFX_GAIN. Measured against
+    // the shipped soundtrack (mastered hot, about -10 dBFS RMS, played at
+    // music VOL = 0.2, so about -24 dBFS): the blips used to peak at -22 to
+    // -27 dBFS, 11-18 dB UNDER the music. At 2.5 they peak at about -8 to
+    // -13 dBFS, clearly on top of it. One number to tune; the voices keep
+    // their balance against each other. (tests/test_sound_levels.js guards it.)
+    const SFX_GAIN = 2.5;
+
+    // A soft ceiling instead of a hard clip: transparent for a single blip
+    // (slope 1 near zero), bending gently towards 0.89 so that a chord of
+    // several tones can never overload the output.
+    function softCeiling(c) {
+      const sh = c.createWaveShaper(), N = 2049, k = 0.6, L = 0.89, curve = new Float32Array(N);
+      for (let i = 0; i < N; i++) curve[i] = L * Math.tanh(k * ((i / (N - 1)) * 2 - 1)) / Math.tanh(k);
+      sh.curve = curve;
+      try { sh.oversample = '2x'; } catch (_) {}
+      return sh;
+    }
+
     function ensure() {
       if (ctx) return ctx;
       try {
@@ -1826,12 +1846,20 @@ const GameEngine = (() => {
         if (!AC) return null;
         ctx = new AC();
         master = ctx.createGain();
-        master.gain.value = 0.5;
-        master.connect(ctx.destination);
+        master.gain.value = SFX_GAIN;
+        try { master.connect(softCeiling(ctx)).connect(ctx.destination); }
+        catch (_) { master.connect(ctx.destination); }
       } catch (_) { ctx = null; }
       return ctx;
     }
-    function resume() { const c = ensure(); if (c && c.state === 'suspended') c.resume(); }
+    // iOS also leaves a context 'interrupted' (a call, the lock screen), not
+    // only 'suspended'; and a refused resume must never surface as an error.
+    function resume() {
+      const c = ensure();
+      if (c && c.state !== 'running' && c.state !== 'closed') {
+        try { const r = c.resume(); if (r && r.catch) r.catch(() => {}); } catch (_) {}
+      }
+    }
 
     function tone(o) {
       if (muted) return;
@@ -1874,10 +1902,13 @@ const GameEngine = (() => {
 
     // Chapter-clear jingle — three rising "dings" then a bright major resolve.
     function fanfare() {
-      [784, 988, 1175].forEach((f, i) => tone({ freq: f, type: 'triangle', dur: 0.14, vol: 0.19, delay: i * 0.16 }));
+      // five tones stack in the chord, so the whole jingle is trimmed to keep
+      // its peak near -6 dBFS instead of crowding the ceiling
+      const T = 0.55;
+      [784, 988, 1175].forEach((f, i) => tone({ freq: f, type: 'triangle', dur: 0.14, vol: 0.19 * T, delay: i * 0.16 }));
       // resolving chord (C-E-G-C) blooming after the dings
-      [523, 659, 784, 1047].forEach((f) => tone({ freq: f, type: 'triangle', dur: 0.9, vol: 0.13, delay: 0.56 }));
-      tone({ freq: 1568, type: 'sine', dur: 0.9, vol: 0.10, delay: 0.6 });
+      [523, 659, 784, 1047].forEach((f) => tone({ freq: f, type: 'triangle', dur: 0.9, vol: 0.13 * T, delay: 0.56 }));
+      tone({ freq: 1568, type: 'sine', dur: 0.9, vol: 0.10 * T, delay: 0.6 });
     }
 
     // Signalnische discovery — a creepy numbers-station/SSTV sting.
@@ -1947,12 +1978,40 @@ const GameEngine = (() => {
 
     let cur = null, curId = null, pending = null;
     // Music sits under the interface blips and the character voices (those run
-    // through the Web-Audio master at 0.5). One number to tune the soundtrack.
+    // through the Web-Audio master at audio SFX_GAIN). One number to tune the
+    // soundtrack.
     const VOL = 0.2;
 
-    function _vol(a, v){ try { a.volume = Math.max(0, Math.min(1, v)); } catch(_){} }
+    // iPhones and iPads never honour HTMLMediaElement.volume (it is fixed at
+    // 1), so there the soundtrack would play at full file level, some 25 dB
+    // over the interface sounds, whatever VOL says. Where the volume cannot be
+    // set, a track is routed through a Web-Audio gain instead. Everywhere else
+    // (desktop, Android) nothing changes: the element's own volume is used.
+    // If the routing cannot be set up, the track simply plays as before.
+    const VOLUME_SETTABLE = (() => {
+      try { const t = new Audio(); t.volume = 0.5; return Math.abs(t.volume - 0.5) < 0.01; }
+      catch (_) { return true; }
+    })();
+    function _gainOf(a) {
+      if (a._gain !== undefined) return a._gain;       // null = plain element
+      a._gain = null;
+      if (VOLUME_SETTABLE) return null;
+      try {
+        const c = audio.ensure(); if (!c) return null;
+        const src = c.createMediaElementSource(a), g = c.createGain();
+        g.gain.value = 0;                              // starts silent, like volume 0
+        src.connect(g); g.connect(c.destination);      // the music bus: not through the SFX gain
+        a._gain = g;
+      } catch (_) { a._gain = null; }
+      return a._gain;
+    }
+    function _getVol(a) { const g = a._gain; return g ? g.gain.value : a.volume; }
+    function _vol(a, v) {
+      const x = Math.max(0, Math.min(1, v));
+      try { const g = _gainOf(a); if (g) g.gain.value = x; else a.volume = x; } catch(_){}
+    }
     function _fade(a, to, ms, done){
-      const steps = Math.max(1, Math.round(ms / 40)); let i = 0; const from = a.volume;
+      const steps = Math.max(1, Math.round(ms / 40)); let i = 0; const from = _getVol(a);
       const t = setInterval(() => { i++; _vol(a, from + (to - from) * i / steps); if (i >= steps) { clearInterval(t); if (done) done(); } }, 40);
     }
     function play(id, opts) {
@@ -1964,6 +2023,7 @@ const GameEngine = (() => {
       const a = new Audio(BASE + TRACKS[id]);
       a.loop = opts.loop !== false;
       _vol(a, 0);
+      if (a._gain) audio.resume();      // routed through Web Audio: it has to be running
       // A missing file errors on load → stop retrying it (no 404 spam while the
       // soundtrack is still placeholders). Autoplay-blocked files don't error,
       // so they stay pending and start on the next gesture.
@@ -1987,7 +2047,10 @@ const GameEngine = (() => {
       if (pending) play(pending);
       else if (cur && cur.paused) cur.play().catch(() => {});
     }
-    return { play, stop, setMuted, _retry, TRACKS };
+    // what the current track is playing at (0..1), and whether it goes through Web Audio
+    function level()  { return cur ? _getVol(cur) : 0; }
+    function routed() { return !!(cur && cur._gain); }
+    return { play, stop, setMuted, _retry, level, routed, TRACKS };
   })();
 
 
