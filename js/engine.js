@@ -230,13 +230,24 @@ const GameEngine = (() => {
       }
       if (sigs >= 1 && d.achievementsUnlocked.indexOf('signal_first') < 0) d.achievementsUnlocked.push('signal_first');
       if (sigs >= SIG_IDS.length && d.achievementsUnlocked.indexOf('signal_all') < 0) d.achievementsUnlocked.push('signal_all');
-      // ??? (bonus_found) is awarded in the same step that sets truth_revealed
-      // — the remainder of the transmission in Chapter 9. Some beta saves have
-      // the flag (and Die Wahrheit) but lost the hidden one. The flag has
-      // already survived the check above (only kept with Sektor 08 finished and
-      // all five signals found), so it is the evidence; the visible achievement
-      // is not trusted on its own.
-      if (d.flags.truth_revealed && d.achievementsUnlocked.indexOf('bonus_found') < 0) d.achievementsUnlocked.push('bonus_found');
+      // The end of Chapter 9 sets truth_revealed and, in the same step, awards
+      // Die Wahrheit and ??? (bonus_found); with every sector finished and
+      // every Frequenz heard, which the flag already implies (it only survives
+      // the check above with Sektor 08 done and all five signals found), the
+      // platinum Die ganze Wahrheit follows. Some beta saves kept the flag and
+      // lost some of these, and a lost platinum can never fire again on a save
+      // that has nothing left to earn. The flag is the evidence; the visible
+      // achievements are not trusted on their own.
+      if (d.flags.truth_revealed) {
+        ['truth', 'bonus_found', 'ch9_complete'].forEach(a => { if (d.achievementsUnlocked.indexOf(a) < 0) d.achievementsUnlocked.push(a); });
+      }
+      // Erstkontakt is awarded 1.2 s after the first page opens, and firstPlay
+      // is cleared at once — leaving or reloading in that window used to lose
+      // it for good. A save that has been past the first page has earned it.
+      // Gute Gesellschaft is awarded on arriving in Sektor 08, the last guest;
+      // a finished Sektor 08 is the evidence.
+      if (d.firstPlay === false && d.achievementsUnlocked.indexOf('first_boot') < 0) d.achievementsUnlocked.push('first_boot');
+      if (done.has('ch8') && d.achievementsUnlocked.indexOf('all_guests') < 0) d.achievementsUnlocked.push('all_guests');
 
       return { data: d, dropped };
     }
@@ -275,10 +286,23 @@ const GameEngine = (() => {
       return h.toString(16).padStart(8, '0');
     }
 
+    // A browser that refuses site data would lose everything at every page
+    // change (each sector is its own page). window.name survives navigation
+    // within one tab, so when localStorage cannot even be read, the save is
+    // carried there instead: it lasts as long as the tab, as the warning says.
+    const TAB = 'ka2tab:';
+    function tabRead() {
+      try { const n = window.name; if (typeof n === 'string' && n.indexOf(TAB) === 0) return JSON.parse(n.slice(TAB.length)); } catch (_) {}
+      return null;
+    }
+    function tabWrite() { try { window.name = TAB + JSON.stringify(_data); } catch (_) {} }
+
     function load() {
-      let raw = null;
-      try { raw = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); }
+      let raw = null, str = null, blocked = false;
+      try { str = localStorage.getItem(SAVE_KEY); } catch (_) { blocked = true; }   // storage denied
+      try { raw = JSON.parse(str || 'null'); }
       catch (_) { raw = null; }               // unreadable: start clean, but keep playing
+      if (blocked) { raw = tabRead(); _persist = false; }
       const had = raw && typeof raw === 'object';
       _data = normalise(migrate(had ? raw : null)).data;
       // Write the upgraded shape back once, so the next load has nothing to do
@@ -299,12 +323,25 @@ const GameEngine = (() => {
 
 
     function save() {
-      if (!_persist) return;
+      if (!_persist) { tabWrite(); return; }
       try { localStorage.setItem(SAVE_KEY, JSON.stringify(_data)); }
       catch (e) {
         _persist = false;                     // out of quota or storage blocked
+        tabWrite();
         console.warn('[KA-II] Fortschritt kann nicht gespeichert werden — das Spiel läuft weiter.', e);
       }
+    }
+
+    // Take the stored save again: another tab (or this very page, kept alive by
+    // the browser) holds an older copy, and its next write would put the old
+    // progress back over the newer.
+    function refresh() {
+      if (!_persist) return false;
+      let raw = null;
+      try { raw = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (_) { return false; }
+      if (!raw || typeof raw !== 'object') return false;
+      _data = normalise(migrate(raw)).data;
+      return true;
     }
 
     function get(key)           { return _data[key]; }
@@ -394,7 +431,7 @@ const GameEngine = (() => {
     return {
       load, save, get, set, setFlag, hasFlag, canPersist, chapter, setting,
       markChapterComplete, isChapterComplete, zieldaten, hasZieldaten,
-      markPuzzleSolved, isPuzzleSolved, reset, repair,
+      markPuzzleSolved, isPuzzleSolved, reset, repair, refresh,
       exportSave, importSave, SCHEMA,
     };
   })();
@@ -2742,7 +2779,8 @@ const GameEngine = (() => {
             <div class="toast-label">SPEICHER NICHT VERFÜGBAR</div>
             <div class="toast-title">⚠ Fortschritt wird nicht behalten</div>
             <div class="toast-desc">Dieser Browser lässt keine Website-Daten zu. Du kannst
-              spielen, aber beim Schließen ist alles weg. Unter [ SPIELSTAND ] gibt es einen
+              spielen, aber der Fortschritt bleibt nur in diesem Tab erhalten — beim
+              Schließen ist alles weg. Unter [ SPIELSTAND ] gibt es einen
               Sicherungscode.</div>`;
           return t;
         }, 7000), 2000);
@@ -2751,6 +2789,14 @@ const GameEngine = (() => {
     const wake = () => audio.resume();
     document.addEventListener('pointerdown', wake);
     document.addEventListener('keydown', wake);
+
+    // A page the browser kept alive (the back/forward cache) comes back with
+    // its old copy of the save, and with whatever state its fade-out left on
+    // it (a black screen after a door); the next write from it would put old
+    // progress back over newer. Load it afresh instead — every sector resumes
+    // from its checkpoint. A second tab that saves takes effect here as well.
+    window.addEventListener('pageshow', e => { if (e.persisted) { try { location.reload(); } catch (_) {} } });
+    window.addEventListener('storage', e => { if (e.key === null || e.key === SAVE_KEY) { try { state.refresh(); } catch (_) {} } });
     // "Erstkontakt — das System erwacht" belongs to the moment the player
     // actually enters the facility, not to the access page, where it used to
     // greet them before they had even signed in.

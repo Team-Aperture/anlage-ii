@@ -119,5 +119,24 @@ async function toArchiveMenu(p) {
     check(await p.locator('#rkModal:not(.hidden)').count() === 1 && !(await p.evaluate(() => document.getElementById('choiceOverlay').classList.contains('visible'))), '  once said, the table opens straight to the board');
     check(errs.length === 0, '  no page errors'); await ctx.close(); }
 
+  console.log('\n[E] a second practice board never gets the first one\'s adjacency hint');
+  { const { ctx, p, errs } = await H.open(b, '/chapter8/chapter8.html', FINISHED());
+    await toArchiveMenu(p);
+    const adj = async () => {                 // the third hint names two time stamps; both must be on THIS board
+      for (let i = 0; i < 3; i++) { await p.locator('#hintBtnR3MI').click(); await p.waitForTimeout(120); await drainAll(p); }
+      const line = (await hist(p)).filter(t => /sichere Nachbarschaft/.test(t)).pop() || '';
+      const m = /T-(\d+) liegt direkt links neben T-(\d+)/.exec(line);
+      const onBoard = m && await p.evaluate(([a, b]) => { const t = [...document.querySelectorAll('.rk-tile')].map(x => x.getAttribute('aria-label') || ''); return t.some(x => x.includes('Zeitmarke T-' + a + '.')) && t.some(x => x.includes('Zeitmarke T-' + b + '.')); }, [m[1], m[2]]);
+      return { text: m && m[0], onBoard };
+    };
+    await pick(p, 'Neue Rekonstruktion'); await drainAll(p);
+    const one = await adj();
+    check(one.onBoard, `  board one: the hint names fragments on it (${one.text})`);
+    await layPractice(p); await p.waitForTimeout(2600); await drainAll(p);
+    await hs(p, 'Die fertige Rekonstruktion'); await untilMenu(p); await pick(p, 'Neue Rekonstruktion'); await drainAll(p);
+    const two = await adj();
+    check(two.onBoard, `  board two: the hint names fragments on it, not on the first (${two.text})`);
+    check(errs.length === 0, '  no page errors ' + errs.join(';')); await ctx.close(); }
+
   await b.close(); finish();
 })();

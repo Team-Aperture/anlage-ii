@@ -910,7 +910,9 @@ const Chapter5 = (() => {
       ]) : openStation('marker') });
 
     if (S.marker) {
-      addHotspot({ prop:'c5_foreign', cls:'prop-brown', x:66, y:60, w:13, h:16,
+      // a little higher on a very short portrait phone: the Nachsuche bar has to sit above
+      // this chapter's own bottom strips there, and would cover the niche
+      addHotspot({ prop:'c5_foreign', cls:'prop-brown', x:66, y:(window.innerHeight < 600 && window.innerWidth < 480 ? 53 : 60), w:13, h:16,
         label: S.sigFound ? 'FREMDES BAUTEIL' : 'HINTER DER PLATTE',
         aria:'Hinter der falschen Platte nachsehen', fn:() => inspectSig() });
       addHotspot({ prop:'c5_passage', x:44, y:64, w:15, h:30,

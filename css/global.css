@@ -1209,6 +1209,10 @@ body.fx-leaving { animation: fxLeave 0.42s ease forwards; }
   bottom: calc(var(--sp-sm) + env(safe-area-inset-bottom, 0px));
   z-index: 240; display: flex; align-items: center; gap: var(--sp-sm);
   flex-wrap: wrap; justify-content: center; max-width: min(94vw, 520px);
+  /* left:50% leaves a fixed box only half the screen to size itself in, which
+     stacked the label and both buttons into a 105-115px block on a phone and
+     covered the signal niches behind it: size to the content instead */
+  width: max-content;
   padding: 7px 12px; background: rgba(4,8,12,0.92);
   border: 1px solid var(--bdr-mid); backdrop-filter: blur(4px);
 }
@@ -1220,7 +1224,17 @@ body.fx-leaving { animation: fxLeave 0.42s ease forwards; }
 @media (max-width: 640px) {
   .nachsuche-bar { bottom: calc(4px + env(safe-area-inset-bottom, 0px)); padding: 5px 8px; gap: 6px; }
   .nachsuche-bar .ka-btn.small { padding: 5px 8px; font-size: 10px; }
+}
+/* a narrow portrait phone has no room for the label beside the buttons */
+@media (max-width: 480px) {
   .ns-label { flex: 1 1 100%; text-align: center; }
+}
+/* a landscape phone is short, not narrow: one small row, so it covers as
+   little of the room as possible (the signal niches sit in its lower half) */
+@media (max-height: 480px) {
+  .nachsuche-bar { bottom: calc(3px + env(safe-area-inset-bottom, 0px)); padding: 3px 8px; gap: 6px; }
+  .nachsuche-bar .ka-btn.small { padding: 4px 8px; font-size: 10px; }
+  .ns-label { flex: 0 1 auto; }
 }
 
 /* A fragment in a sector the player has not reached yet: stated, not linked. */
@@ -1340,4 +1354,7 @@ body:has(.hint-bar:not(.hidden)) .puzzle-modal {
    robot icons; they step above its measured height. */
 @media (max-width: 760px) {
   body.ns-up .robot-icons { bottom: calc(var(--ns-h, 0px) + 16px + env(safe-area-inset-bottom, 0px)); }
+}
+@media (max-height: 480px) {
+  body.ns-up .robot-icons { bottom: calc(var(--ns-h, 0px) + 8px + env(safe-area-inset-bottom, 0px)); }
 }

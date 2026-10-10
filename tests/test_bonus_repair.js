@@ -60,6 +60,34 @@ const BETA = (over = {}) => ({
     check(!(await saved(p)).achievementsUnlocked.includes('bonus_found'), '  a run in progress gains nothing');
     check(errs.length === 0, '  no page errors'); await ctx.close(); }
 
+  console.log('\n[E] the rest of Chapter 9\'s awards, Erstkontakt and Gute Gesellschaft: restored from their evidence');
+  { // the flag survived, the awards did not: Die Wahrheit, ??? and the platinum come back together
+    const ach = ['first_boot', ...H.ALL.map(c => c + '_complete'), 'signal_first', 'signal_all', 'chamber', 'all_guests', 'italian_brainrot', 'bayern_pmo', 'archivar', 'jigsaw_refused'];
+    const { ctx, p, errs } = await H.open(b, '/index.html', BETA({ achievementsUnlocked: ach }));
+    await p.waitForTimeout(1200);
+    const sv = await saved(p);
+    check(['truth', 'bonus_found', 'ch9_complete'].every(a => sv.achievementsUnlocked.includes(a)), '  truth_revealed present: Die Wahrheit, ??? and the platinum are restored together (a save with nothing left to earn could never fire the platinum again)');
+    const left = await p.evaluate(() => GameEngine.achievements.listed().filter(a => !GameEngine.achievements.isUnlocked(a.id)).map(a => a.id));
+    check(left.length === 0, `  the save manager can read ${await p.evaluate(() => GameEngine.achievements.listed().length)} / ${await p.evaluate(() => GameEngine.achievements.listed().length)} (not earned: ${left.join(',') || 'none'})`);
+    check(errs.length === 0, '  no page errors'); await ctx.close(); }
+  { // Erstkontakt: a save that has been past the first page has it; one that has not, does not
+    const { ctx, p, errs } = await H.open(b, '/index.html', BETA({ firstPlay: false, achievementsUnlocked: [] , chaptersCompleted: ['ch0'], signalsFound: [], flags: { ka1_verified: true } }));
+    await p.waitForTimeout(1200);
+    check((await saved(p)).achievementsUnlocked.includes('first_boot'), '  firstPlay false (the first page was left within 1.2 s): Erstkontakt restored');
+    check(errs.length === 0, '  no page errors'); await ctx.close(); }
+  { const { ctx, p, errs } = await H.open(b, '/access.html', BETA({ firstPlay: true, achievementsUnlocked: [], chaptersCompleted: [], signalsFound: [], flags: {} }));
+    await p.waitForTimeout(1200);
+    check(!(await saved(p)).achievementsUnlocked.includes('first_boot'), '  a first visit still has nothing: no Erstkontakt before the player is in');
+    check(errs.length === 0, '  no page errors'); await ctx.close(); }
+  { // Gute Gesellschaft: the evidence is a finished Sektor 08, not one step less
+    const mk = n => H.save({ chaptersCompleted: H.done(n), achievementsUnlocked: [] });
+    const { ctx, p } = await H.open(b, '/index.html', mk(9)); await p.waitForTimeout(1000);
+    check((await saved(p)).achievementsUnlocked.includes('all_guests'), '  Sektor 08 finished: Gute Gesellschaft restored');
+    await ctx.close();
+    const r = await H.open(b, '/index.html', mk(8)); await r.p.waitForTimeout(1000);
+    check(!(await saved(r.p)).achievementsUnlocked.includes('all_guests'), '  Sektor 07 the last one finished: not yet');
+    await r.ctx.close(); }
+
   console.log('\n[D] the beta-test credit');
   for (const vp of [{ width: 1280, height: 800 }, { width: 320, height: 568 }]) {
     const { ctx, p, errs } = await H.open(b, '/index.html', H.save({}), { viewport: vp, mobile: vp.width < 500 });
