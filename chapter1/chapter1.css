@@ -239,6 +239,7 @@
 .choice-overlay {
   position: fixed; bottom:0; left:0; right:0; z-index:60;
   pointer-events: none;   /* only the panel takes clicks — the icons beside it stay alive */
+  max-height: 86vh; overflow-y: auto;   /* a long menu on a short window scrolls instead of leaving the top */
   padding: var(--sp-md);
   transform: translateY(110%);
   transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
@@ -387,12 +388,12 @@
 /* ─── CHAPTER COMPLETE ────────────────────────────────────────── */
 .chapter-complete {
   position:fixed; inset:0; background:var(--bg-deep); z-index:400;
-  display:flex; align-items:center; justify-content:center; padding:var(--sp-lg);
+  display:flex; align-items:flex-start; overflow-y:auto; justify-content:center; padding:var(--sp-lg);
   opacity:0; animation:ccIn 1.2s ease forwards;
 }
 @keyframes ccIn { to{opacity:1} }
 
-.cc-card { text-align:center; display:flex; flex-direction:column; align-items:center; gap:var(--sp-md); max-width:480px; }
+.cc-card { text-align:center; display:flex; flex-direction:column; align-items:center; gap:var(--sp-md); max-width:480px; margin:auto; }
 .cc-header { letter-spacing:.2em; }
 .cc-title  { font-family:var(--font-display); font-size:clamp(26px,4vw,44px); font-weight:700; letter-spacing:.2em; color:var(--ok-green); text-shadow:0 0 16px rgba(46,207,98,0.5); }
 .cc-next   { font-family:var(--font-display); font-size:20px; letter-spacing:.15em; color:var(--text-primary); }

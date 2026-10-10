@@ -1420,6 +1420,7 @@ const Chapter8 = (() => {
   }
 
   function buildInstance() {
+    _adjFact = null;                // the hint's adjacency belongs to the board it was drawn for
     P = generate(400);
     if (!P) {                       // vanishingly unlikely; keep the room usable
       P = generate(2000);

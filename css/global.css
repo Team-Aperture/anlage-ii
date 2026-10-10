@@ -772,7 +772,8 @@ body {
   z-index: 9999;
   background: rgba(4,8,12,0.96);
   backdrop-filter: blur(8px);
-  display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: flex-start; justify-content: center;
+  overflow-y: auto;          /* a short landscape phone scrolls the card instead of cutting it off */
   padding: var(--sp-md);
   animation: mwIn 0.4s ease;
 }
@@ -788,6 +789,7 @@ body {
 #mobileWarning.mw-step-2 .mw-step-two { display: flex; }
 
 .mw-card {
+  margin: auto;              /* centred when it fits, top-aligned and scrollable when it does not */
   background: var(--bg-panel);
   border: 1px solid var(--bdr-bright);
   padding: var(--sp-lg) var(--sp-md);
@@ -1209,6 +1211,10 @@ body.fx-leaving { animation: fxLeave 0.42s ease forwards; }
   bottom: calc(var(--sp-sm) + env(safe-area-inset-bottom, 0px));
   z-index: 240; display: flex; align-items: center; gap: var(--sp-sm);
   flex-wrap: wrap; justify-content: center; max-width: min(94vw, 520px);
+  /* left:50% leaves a fixed box only half the screen to size itself in, which
+     stacked the label and both buttons into a 105-115px block on a phone and
+     covered the signal niches behind it: size to the content instead */
+  width: max-content;
   padding: 7px 12px; background: rgba(4,8,12,0.92);
   border: 1px solid var(--bdr-mid); backdrop-filter: blur(4px);
 }
@@ -1220,7 +1226,22 @@ body.fx-leaving { animation: fxLeave 0.42s ease forwards; }
 @media (max-width: 640px) {
   .nachsuche-bar { bottom: calc(4px + env(safe-area-inset-bottom, 0px)); padding: 5px 8px; gap: 6px; }
   .nachsuche-bar .ka-btn.small { padding: 5px 8px; font-size: 10px; }
+}
+/* a narrow portrait phone has no room for the label beside the buttons */
+@media (max-width: 480px) {
   .ns-label { flex: 1 1 100%; text-align: center; }
+}
+/* a landscape phone is short, not narrow: one small row, so it covers as
+   little of the room as possible (the signal niches sit in its lower half) */
+@media (max-height: 480px) {
+  .nachsuche-bar { bottom: calc(3px + env(safe-area-inset-bottom, 0px)); padding: 3px 8px; gap: 6px; }
+  .nachsuche-bar .ka-btn.small { padding: 4px 8px; font-size: 10px; }
+  .ns-label { flex: 0 1 auto; }
+}
+/* a very small window (a laptop at 250-300 % zoom) has no room for the label
+   and both buttons in one row: keep the buttons, drop the words */
+@media (max-height: 480px) and (max-width: 560px) {
+  .ns-label { display: none; }
 }
 
 /* A fragment in a sector the player has not reached yet: stated, not linked. */
@@ -1338,6 +1359,9 @@ body:has(.hint-bar:not(.hidden)) .puzzle-modal {
 
 /* On a revisit the return bar wraps to three rows on a phone and sat on the
    robot icons; they step above its measured height. */
-@media (max-width: 760px) {
+@media (max-width: 980px) {   /* a tablet in portrait too: the 520 px bar reaches the icons there */
   body.ns-up .robot-icons { bottom: calc(var(--ns-h, 0px) + 16px + env(safe-area-inset-bottom, 0px)); }
+}
+@media (max-height: 480px) {
+  body.ns-up .robot-icons { bottom: calc(var(--ns-h, 0px) + 8px + env(safe-area-inset-bottom, 0px)); }
 }

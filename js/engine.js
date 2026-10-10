@@ -230,13 +230,24 @@ const GameEngine = (() => {
       }
       if (sigs >= 1 && d.achievementsUnlocked.indexOf('signal_first') < 0) d.achievementsUnlocked.push('signal_first');
       if (sigs >= SIG_IDS.length && d.achievementsUnlocked.indexOf('signal_all') < 0) d.achievementsUnlocked.push('signal_all');
-      // ??? (bonus_found) is awarded in the same step that sets truth_revealed
-      // — the remainder of the transmission in Chapter 9. Some beta saves have
-      // the flag (and Die Wahrheit) but lost the hidden one. The flag has
-      // already survived the check above (only kept with Sektor 08 finished and
-      // all five signals found), so it is the evidence; the visible achievement
-      // is not trusted on its own.
-      if (d.flags.truth_revealed && d.achievementsUnlocked.indexOf('bonus_found') < 0) d.achievementsUnlocked.push('bonus_found');
+      // The end of Chapter 9 sets truth_revealed and, in the same step, awards
+      // Die Wahrheit and ??? (bonus_found); with every sector finished and
+      // every Frequenz heard, which the flag already implies (it only survives
+      // the check above with Sektor 08 done and all five signals found), the
+      // platinum Die ganze Wahrheit follows. Some beta saves kept the flag and
+      // lost some of these, and a lost platinum can never fire again on a save
+      // that has nothing left to earn. The flag is the evidence; the visible
+      // achievements are not trusted on their own.
+      if (d.flags.truth_revealed) {
+        ['truth', 'bonus_found', 'ch9_complete'].forEach(a => { if (d.achievementsUnlocked.indexOf(a) < 0) d.achievementsUnlocked.push(a); });
+      }
+      // Erstkontakt is awarded 1.2 s after the first page opens, and firstPlay
+      // is cleared at once — leaving or reloading in that window used to lose
+      // it for good. A save that has been past the first page has earned it.
+      // Gute Gesellschaft is awarded on arriving in Sektor 08, the last guest;
+      // a finished Sektor 08 is the evidence.
+      if (d.firstPlay === false && d.achievementsUnlocked.indexOf('first_boot') < 0) d.achievementsUnlocked.push('first_boot');
+      if (done.has('ch8') && d.achievementsUnlocked.indexOf('all_guests') < 0) d.achievementsUnlocked.push('all_guests');
 
       return { data: d, dropped };
     }
@@ -275,15 +286,44 @@ const GameEngine = (() => {
       return h.toString(16).padStart(8, '0');
     }
 
+    // A browser that refuses site data would lose everything at every page
+    // change (each sector is its own page). window.name survives navigation
+    // within one tab, so when localStorage cannot even be read, the save is
+    // carried there instead: it lasts as long as the tab, as the warning says.
+    // The same holds when storage can be read but not written (a full quota,
+    // some privacy modes): every write falls back to the tab, and a page that
+    // finds no usable stored save looks there before starting blank. Once a
+    // write to storage works again, the tab copy is dropped.
+    const TAB = 'ka2tab:';
+    let _tabHeld = false;
+    function tabRead() {
+      try { const n = window.name; if (typeof n === 'string' && n.indexOf(TAB) === 0) return JSON.parse(n.slice(TAB.length)); } catch (_) {}
+      return null;
+    }
+    function tabWrite() { try { window.name = TAB + JSON.stringify(_data); _tabHeld = true; } catch (_) {} }
+    function tabDrop() {
+      if (!_tabHeld) return;
+      _tabHeld = false;
+      try { if (typeof window.name === 'string' && window.name.indexOf(TAB) === 0) window.name = ''; } catch (_) {}
+    }
+
     function load() {
-      let raw = null;
-      try { raw = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); }
+      let raw = null, str = null, blocked = false;
+      try { str = localStorage.getItem(SAVE_KEY); } catch (_) { blocked = true; }   // storage denied
+      try { raw = JSON.parse(str || 'null'); }
       catch (_) { raw = null; }               // unreadable: start clean, but keep playing
+      let fromTab = false;
+      if (blocked) { raw = tabRead(); _persist = false; fromTab = !!raw; }
+      else if (!raw || typeof raw !== 'object') {      // readable, but nothing usable stored
+        const t = tabRead();                           // (only our own tab-only mode ever writes one)
+        if (t && typeof t === 'object') { raw = t; fromTab = true; }
+      }
+      if (fromTab) _tabHeld = true;
       const had = raw && typeof raw === 'object';
       _data = normalise(migrate(had ? raw : null)).data;
       // Write the upgraded shape back once, so the next load has nothing to do
       // and a half-migrated save can never be observed.
-      if (!had || raw.schemaVersion !== SCHEMA) save();
+      if (!had || fromTab || raw.schemaVersion !== SCHEMA) save();
     }
 
     // A finished chapter whose reward went missing — an interrupted write, a
@@ -299,12 +339,25 @@ const GameEngine = (() => {
 
 
     function save() {
-      if (!_persist) return;
-      try { localStorage.setItem(SAVE_KEY, JSON.stringify(_data)); }
+      if (!_persist) { tabWrite(); return; }
+      try { localStorage.setItem(SAVE_KEY, JSON.stringify(_data)); tabDrop(); }
       catch (e) {
         _persist = false;                     // out of quota or storage blocked
+        tabWrite();
         console.warn('[KA-II] Fortschritt kann nicht gespeichert werden — das Spiel läuft weiter.', e);
       }
+    }
+
+    // Take the stored save again: another tab (or this very page, kept alive by
+    // the browser) holds an older copy, and its next write would put the old
+    // progress back over the newer.
+    function refresh() {
+      if (!_persist) return false;
+      let raw = null;
+      try { raw = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch (_) { return false; }
+      if (!raw || typeof raw !== 'object') return false;
+      _data = normalise(migrate(raw)).data;
+      return true;
     }
 
     function get(key)           { return _data[key]; }
@@ -394,7 +447,7 @@ const GameEngine = (() => {
     return {
       load, save, get, set, setFlag, hasFlag, canPersist, chapter, setting,
       markChapterComplete, isChapterComplete, zieldaten, hasZieldaten,
-      markPuzzleSolved, isPuzzleSolved, reset, repair,
+      markPuzzleSolved, isPuzzleSolved, reset, repair, refresh,
       exportSave, importSave, SCHEMA,
     };
   })();
@@ -1819,6 +1872,26 @@ const GameEngine = (() => {
   const audio = (() => {
     let ctx = null, master = null, muted = false;
 
+    // How loud the interface sounds are. Every blip, click and jingle below is
+    // written at a small level and then lifted by SFX_GAIN. Measured against
+    // the shipped soundtrack (mastered hot, about -10 dBFS RMS, played at
+    // music VOL = 0.2, so about -24 dBFS): the blips used to peak at -22 to
+    // -27 dBFS, 11-18 dB UNDER the music. At 2.5 they peak at about -8 to
+    // -13 dBFS, clearly on top of it. One number to tune; the voices keep
+    // their balance against each other. (tests/test_sound_levels.js guards it.)
+    const SFX_GAIN = 2.5;
+
+    // A soft ceiling instead of a hard clip: transparent for a single blip
+    // (slope 1 near zero), bending gently towards 0.89 so that a chord of
+    // several tones can never overload the output.
+    function softCeiling(c) {
+      const sh = c.createWaveShaper(), N = 2049, k = 0.6, L = 0.89, curve = new Float32Array(N);
+      for (let i = 0; i < N; i++) curve[i] = L * Math.tanh(k * ((i / (N - 1)) * 2 - 1)) / Math.tanh(k);
+      sh.curve = curve;
+      try { sh.oversample = '2x'; } catch (_) {}
+      return sh;
+    }
+
     function ensure() {
       if (ctx) return ctx;
       try {
@@ -1826,12 +1899,20 @@ const GameEngine = (() => {
         if (!AC) return null;
         ctx = new AC();
         master = ctx.createGain();
-        master.gain.value = 0.5;
-        master.connect(ctx.destination);
+        master.gain.value = SFX_GAIN;
+        try { master.connect(softCeiling(ctx)).connect(ctx.destination); }
+        catch (_) { master.connect(ctx.destination); }
       } catch (_) { ctx = null; }
       return ctx;
     }
-    function resume() { const c = ensure(); if (c && c.state === 'suspended') c.resume(); }
+    // iOS also leaves a context 'interrupted' (a call, the lock screen), not
+    // only 'suspended'; and a refused resume must never surface as an error.
+    function resume() {
+      const c = ensure();
+      if (c && c.state !== 'running' && c.state !== 'closed') {
+        try { const r = c.resume(); if (r && r.catch) r.catch(() => {}); } catch (_) {}
+      }
+    }
 
     function tone(o) {
       if (muted) return;
@@ -1874,10 +1955,13 @@ const GameEngine = (() => {
 
     // Chapter-clear jingle — three rising "dings" then a bright major resolve.
     function fanfare() {
-      [784, 988, 1175].forEach((f, i) => tone({ freq: f, type: 'triangle', dur: 0.14, vol: 0.19, delay: i * 0.16 }));
+      // five tones stack in the chord, so the whole jingle is trimmed to keep
+      // its peak near -6 dBFS instead of crowding the ceiling
+      const T = 0.55;
+      [784, 988, 1175].forEach((f, i) => tone({ freq: f, type: 'triangle', dur: 0.14, vol: 0.19 * T, delay: i * 0.16 }));
       // resolving chord (C-E-G-C) blooming after the dings
-      [523, 659, 784, 1047].forEach((f) => tone({ freq: f, type: 'triangle', dur: 0.9, vol: 0.13, delay: 0.56 }));
-      tone({ freq: 1568, type: 'sine', dur: 0.9, vol: 0.10, delay: 0.6 });
+      [523, 659, 784, 1047].forEach((f) => tone({ freq: f, type: 'triangle', dur: 0.9, vol: 0.13 * T, delay: 0.56 }));
+      tone({ freq: 1568, type: 'sine', dur: 0.9, vol: 0.10 * T, delay: 0.6 });
     }
 
     // Signalnische discovery — a creepy numbers-station/SSTV sting.
@@ -1947,12 +2031,40 @@ const GameEngine = (() => {
 
     let cur = null, curId = null, pending = null;
     // Music sits under the interface blips and the character voices (those run
-    // through the Web-Audio master at 0.5). One number to tune the soundtrack.
+    // through the Web-Audio master at audio SFX_GAIN). One number to tune the
+    // soundtrack.
     const VOL = 0.2;
 
-    function _vol(a, v){ try { a.volume = Math.max(0, Math.min(1, v)); } catch(_){} }
+    // iPhones and iPads never honour HTMLMediaElement.volume (it is fixed at
+    // 1), so there the soundtrack would play at full file level, some 25 dB
+    // over the interface sounds, whatever VOL says. Where the volume cannot be
+    // set, a track is routed through a Web-Audio gain instead. Everywhere else
+    // (desktop, Android) nothing changes: the element's own volume is used.
+    // If the routing cannot be set up, the track simply plays as before.
+    const VOLUME_SETTABLE = (() => {
+      try { const t = new Audio(); t.volume = 0.5; return Math.abs(t.volume - 0.5) < 0.01; }
+      catch (_) { return true; }
+    })();
+    function _gainOf(a) {
+      if (a._gain !== undefined) return a._gain;       // null = plain element
+      a._gain = null;
+      if (VOLUME_SETTABLE) return null;
+      try {
+        const c = audio.ensure(); if (!c) return null;
+        const src = c.createMediaElementSource(a), g = c.createGain();
+        g.gain.value = 0;                              // starts silent, like volume 0
+        src.connect(g); g.connect(c.destination);      // the music bus: not through the SFX gain
+        a._gain = g;
+      } catch (_) { a._gain = null; }
+      return a._gain;
+    }
+    function _getVol(a) { const g = a._gain; return g ? g.gain.value : a.volume; }
+    function _vol(a, v) {
+      const x = Math.max(0, Math.min(1, v));
+      try { const g = _gainOf(a); if (g) g.gain.value = x; else a.volume = x; } catch(_){}
+    }
     function _fade(a, to, ms, done){
-      const steps = Math.max(1, Math.round(ms / 40)); let i = 0; const from = a.volume;
+      const steps = Math.max(1, Math.round(ms / 40)); let i = 0; const from = _getVol(a);
       const t = setInterval(() => { i++; _vol(a, from + (to - from) * i / steps); if (i >= steps) { clearInterval(t); if (done) done(); } }, 40);
     }
     function play(id, opts) {
@@ -1964,6 +2076,7 @@ const GameEngine = (() => {
       const a = new Audio(BASE + TRACKS[id]);
       a.loop = opts.loop !== false;
       _vol(a, 0);
+      if (a._gain) audio.resume();      // routed through Web Audio: it has to be running
       // A missing file errors on load → stop retrying it (no 404 spam while the
       // soundtrack is still placeholders). Autoplay-blocked files don't error,
       // so they stay pending and start on the next gesture.
@@ -1979,7 +2092,7 @@ const GameEngine = (() => {
       if (old) _fade(old, 0, fade || 700, () => { try { old.pause(); } catch(_){} });
     }
     function setMuted(m) {
-      if (m) { if (cur) _fade(cur, 0, 300, () => { try { cur.pause(); } catch(_){} }); }
+      if (m) { const old = cur; if (old) _fade(old, 0, 300, () => { try { old.pause(); } catch(_){} }); }
       else if (curId) { const id = curId; cur = null; curId = null; play(id); }
     }
     function _retry() {   // called on user gestures: start a track that was blocked
@@ -1987,7 +2100,10 @@ const GameEngine = (() => {
       if (pending) play(pending);
       else if (cur && cur.paused) cur.play().catch(() => {});
     }
-    return { play, stop, setMuted, _retry, TRACKS };
+    // what the current track is playing at (0..1), and whether it goes through Web Audio
+    function level()  { return cur ? _getVol(cur) : 0; }
+    function routed() { return !!(cur && cur._gain); }
+    return { play, stop, setMuted, _retry, level, routed, TRACKS };
   })();
 
 
@@ -2679,7 +2795,8 @@ const GameEngine = (() => {
             <div class="toast-label">SPEICHER NICHT VERFÜGBAR</div>
             <div class="toast-title">⚠ Fortschritt wird nicht behalten</div>
             <div class="toast-desc">Dieser Browser lässt keine Website-Daten zu. Du kannst
-              spielen, aber beim Schließen ist alles weg. Unter [ SPIELSTAND ] gibt es einen
+              spielen, aber der Fortschritt bleibt nur in diesem Tab erhalten — beim
+              Schließen ist alles weg. Unter [ SPIELSTAND ] gibt es einen
               Sicherungscode.</div>`;
           return t;
         }, 7000), 2000);
@@ -2688,6 +2805,14 @@ const GameEngine = (() => {
     const wake = () => audio.resume();
     document.addEventListener('pointerdown', wake);
     document.addEventListener('keydown', wake);
+
+    // A page the browser kept alive (the back/forward cache) comes back with
+    // its old copy of the save, and with whatever state its fade-out left on
+    // it (a black screen after a door); the next write from it would put old
+    // progress back over newer. Load it afresh instead — every sector resumes
+    // from its checkpoint. A second tab that saves takes effect here as well.
+    window.addEventListener('pageshow', e => { if (e.persisted) { try { location.reload(); } catch (_) {} } });
+    window.addEventListener('storage', e => { if (e.key === null || e.key === SAVE_KEY) { try { state.refresh(); } catch (_) {} } });
     // "Erstkontakt — das System erwacht" belongs to the moment the player
     // actually enters the facility, not to the access page, where it used to
     // greet them before they had even signed in.
