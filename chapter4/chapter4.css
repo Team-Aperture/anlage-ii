@@ -185,7 +185,7 @@
 .accent-bradfish { color: var(--accent-bradfish); }
 
 /* ─── CHOICE OVERLAY ──────────────────────────────────────────── */
-.choice-overlay { pointer-events:none; position: fixed; bottom:0; left:0; right:0; z-index:60; padding: var(--sp-md); transform: translateY(110%); transition: transform 0.4s cubic-bezier(0.16,1,0.3,1); }
+.choice-overlay { pointer-events:none; max-height: 86vh; overflow-y: auto; position: fixed; bottom:0; left:0; right:0; z-index:60; padding: var(--sp-md); transform: translateY(110%); transition: transform 0.4s cubic-bezier(0.16,1,0.3,1); }
 .choice-overlay.visible { transform: translateY(0); }
 .choice-panel { pointer-events:auto; outline:none; background: var(--bg-panel); border:1px solid var(--bdr-mid); border-bottom:none; max-width:720px; margin:0 auto; padding:var(--sp-md); }
 .choice-prompt { font-size:10px; letter-spacing:.15em; color:var(--text-secondary); margin-bottom:var(--sp-sm); }
@@ -358,9 +358,9 @@ button.ka-btn:disabled { opacity:.3; pointer-events:none; }
 .vs-ring-name  { font-size:8px; letter-spacing:.05em; color:var(--text-dim); }
 
 /* ─── CHAPTER COMPLETE ────────────────────────────────────────── */
-.chapter-complete { position:fixed; inset:0; background:var(--bg-deep); z-index:400; display:flex; align-items:center; justify-content:center; padding:var(--sp-lg); opacity:0; animation:ccIn 1.2s ease forwards; }
+.chapter-complete { position:fixed; inset:0; background:var(--bg-deep); z-index:400; display:flex; align-items:flex-start; overflow-y:auto; justify-content:center; padding:var(--sp-lg); opacity:0; animation:ccIn 1.2s ease forwards; }
 @keyframes ccIn { to{opacity:1} }
-.cc-card { text-align:center; display:flex; flex-direction:column; align-items:center; gap:var(--sp-md); max-width:480px; }
+.cc-card { text-align:center; display:flex; flex-direction:column; align-items:center; gap:var(--sp-md); max-width:480px; margin:auto; }
 .cc-header { letter-spacing:.2em; }
 .cc-title  { font-family:var(--font-display); font-size:clamp(26px,4vw,44px); font-weight:700; letter-spacing:.2em; color:var(--accent-bradfish); text-shadow:0 0 16px rgba(243,198,35,0.5); }
 .cc-next   { font-family:var(--font-display); font-size:20px; letter-spacing:.15em; color:var(--text-primary); }
@@ -392,4 +392,9 @@ button.ka-btn:disabled { opacity:.3; pointer-events:none; }
 
   .vs-pan { width:56px; height:38px; }
   .vs-beam { width:44px; }
+}
+
+/* reduced motion: the rings, the lock mark, the pulsing hotspots and the eyes stand still */
+@media (prefers-reduced-motion: reduce) {
+  .ch-ring-1, .ch-ring-2, .ch4-lock, .hotspot::before, .ri-eye { animation: none !important; }
 }

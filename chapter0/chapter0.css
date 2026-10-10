@@ -840,7 +840,8 @@
   background: var(--bg-deep);
   z-index: 400;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  overflow-y: auto;   /* a window shorter than the card scrolls instead of cutting it off */
   justify-content: center;
   padding: var(--sp-lg);
   opacity: 0;
@@ -858,6 +859,7 @@
   gap: var(--sp-md);
   align-items: center;
   max-width: 520px;
+  margin: auto;
 }
 
 .cc-glitch {

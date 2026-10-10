@@ -290,24 +290,40 @@ const GameEngine = (() => {
     // change (each sector is its own page). window.name survives navigation
     // within one tab, so when localStorage cannot even be read, the save is
     // carried there instead: it lasts as long as the tab, as the warning says.
+    // The same holds when storage can be read but not written (a full quota,
+    // some privacy modes): every write falls back to the tab, and a page that
+    // finds no usable stored save looks there before starting blank. Once a
+    // write to storage works again, the tab copy is dropped.
     const TAB = 'ka2tab:';
+    let _tabHeld = false;
     function tabRead() {
       try { const n = window.name; if (typeof n === 'string' && n.indexOf(TAB) === 0) return JSON.parse(n.slice(TAB.length)); } catch (_) {}
       return null;
     }
-    function tabWrite() { try { window.name = TAB + JSON.stringify(_data); } catch (_) {} }
+    function tabWrite() { try { window.name = TAB + JSON.stringify(_data); _tabHeld = true; } catch (_) {} }
+    function tabDrop() {
+      if (!_tabHeld) return;
+      _tabHeld = false;
+      try { if (typeof window.name === 'string' && window.name.indexOf(TAB) === 0) window.name = ''; } catch (_) {}
+    }
 
     function load() {
       let raw = null, str = null, blocked = false;
       try { str = localStorage.getItem(SAVE_KEY); } catch (_) { blocked = true; }   // storage denied
       try { raw = JSON.parse(str || 'null'); }
       catch (_) { raw = null; }               // unreadable: start clean, but keep playing
-      if (blocked) { raw = tabRead(); _persist = false; }
+      let fromTab = false;
+      if (blocked) { raw = tabRead(); _persist = false; fromTab = !!raw; }
+      else if (!raw || typeof raw !== 'object') {      // readable, but nothing usable stored
+        const t = tabRead();                           // (only our own tab-only mode ever writes one)
+        if (t && typeof t === 'object') { raw = t; fromTab = true; }
+      }
+      if (fromTab) _tabHeld = true;
       const had = raw && typeof raw === 'object';
       _data = normalise(migrate(had ? raw : null)).data;
       // Write the upgraded shape back once, so the next load has nothing to do
       // and a half-migrated save can never be observed.
-      if (!had || raw.schemaVersion !== SCHEMA) save();
+      if (!had || fromTab || raw.schemaVersion !== SCHEMA) save();
     }
 
     // A finished chapter whose reward went missing — an interrupted write, a
@@ -324,7 +340,7 @@ const GameEngine = (() => {
 
     function save() {
       if (!_persist) { tabWrite(); return; }
-      try { localStorage.setItem(SAVE_KEY, JSON.stringify(_data)); }
+      try { localStorage.setItem(SAVE_KEY, JSON.stringify(_data)); tabDrop(); }
       catch (e) {
         _persist = false;                     // out of quota or storage blocked
         tabWrite();
@@ -2076,7 +2092,7 @@ const GameEngine = (() => {
       if (old) _fade(old, 0, fade || 700, () => { try { old.pause(); } catch(_){} });
     }
     function setMuted(m) {
-      if (m) { if (cur) _fade(cur, 0, 300, () => { try { cur.pause(); } catch(_){} }); }
+      if (m) { const old = cur; if (old) _fade(old, 0, 300, () => { try { old.pause(); } catch(_){} }); }
       else if (curId) { const id = curId; cur = null; curId = null; play(id); }
     }
     function _retry() {   // called on user gestures: start a track that was blocked

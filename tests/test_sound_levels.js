@@ -132,6 +132,19 @@ async function musicPage(b, init) {
     check(!s.routed && s.els.length === 1 && !s.els[0].paused, `  plays plain, not routed (${JSON.stringify(s.els[0])})`);
     check(errs.length === 0, '  and raises nothing ' + errs.join(';')); await ctx.close(); }
 
+  console.log('\n[B3] mute and unmute within a third of a second must not leave the music silent');
+  for (const [label, init] of [['normal browser', null], ['iPhone', IOS_SIM]]) {
+    const { ctx, p, errs } = await musicPage(bi, init);
+    await p.evaluate(() => GameEngine.music.play('title')); await p.waitForTimeout(1900);
+    await p.evaluate(() => { GameEngine.audio.toggleMute(); setTimeout(() => GameEngine.audio.toggleMute(), 120); });
+    await p.waitForTimeout(2400);
+    const s = await probe(p), playing = s.els.filter(e => !e.paused), last = s.els[s.els.length - 1];
+    // the track now at the music volume is the NEWEST element; the one that stays playing must be that one,
+    // not the muted copy the old fade forgot to pause
+    check(Math.abs(s.level - VOL) < 0.02 && playing.length === 1 && last && !last.paused, `  ${label}: back at the music volume, and it is the new track that plays (level ${s.level.toFixed(3)}, ${playing.length} playing of ${s.els.length}, newest paused: ${last && last.paused})`);
+    check(errs.length === 0, '  no page errors ' + errs.join(';')); await ctx.close();
+  }
+
   console.log('\n[C] everywhere else the element\'s own volume is used, nothing is routed');
   { const { ctx, p, errs } = await musicPage(bi, null);
     await p.evaluate(() => GameEngine.music.play('title')); await p.waitForTimeout(1900);

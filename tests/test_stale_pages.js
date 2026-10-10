@@ -94,5 +94,29 @@ async function seeded(b, save, vp = { width: 390, height: 780 }) {
     check(errs.length === 0, '  no page errors ' + errs.join(';'));
     await ctx.close(); await b2.close(); }
 
+  console.log('\n[D2] storage that can be read but not written: the tab carries the save, and hands it back when writing works again');
+  { const b3 = await H.launch();
+    const ctx = await b3.newContext({ viewport: { width: 390, height: 780 }, hasTouch: true });
+    await ctx.addInitScript(() => {
+      const set = Storage.prototype.setItem;
+      Storage.prototype.setItem = function (k, v) {                 // only localStorage refuses, and only until the test says so
+        if (this === window.localStorage && sessionStorage.getItem('__allow') !== '1') throw new DOMException('full', 'QuotaExceededError');
+        return set.call(this, k, v);
+      };
+    });
+    await ctx.route('**://fonts.g**/**', r => r.abort());
+    const errs = []; const p = await ctx.newPage(); p.on('pageerror', e => errs.push(String(e)));
+    await p.goto(H.BASE + '/chapter0/chapter0.html'); await p.waitForTimeout(1800);
+    await p.evaluate(() => GameEngine.state.markChapterComplete('ch0'));
+    await p.goto(H.BASE + '/chapter1/chapter1.html'); await p.waitForTimeout(2200);
+    let s = await p.evaluate(() => ({ ch0: GameEngine.state.isChapterComplete('ch0'), lock: /ZUGANG VERWEIGERT|NOCH NICHT ERREICHBAR/.test(document.body.innerText), persist: GameEngine.state.canPersist() }));
+    check(s.ch0 && !s.lock && !s.persist, `  Sektor 00 survives the move to Sektor 01 (finished ${s.ch0}, locked ${s.lock})`);
+    await p.evaluate(() => { GameEngine.state.markChapterComplete('ch1'); sessionStorage.setItem('__allow', '1'); });   // the quota frees up
+    await p.goto(H.BASE + '/chapter2/chapter2.html'); await p.waitForTimeout(2200);
+    s = await p.evaluate(() => ({ lock: /ZUGANG VERWEIGERT|NOCH NICHT ERREICHBAR/.test(document.body.innerText), stored: (JSON.parse(localStorage.getItem('ka2_save_v1') || 'null') || {}).chaptersCompleted, name: window.name, persist: GameEngine.state.canPersist() }));
+    check(!s.lock && s.stored && s.stored.join() === 'ch0,ch1' && s.name === '' && s.persist, `  once writing works the save moves back into storage and the tab copy is dropped (stored ${s.stored}, window.name "${s.name}")`);
+    check(errs.length === 0, '  no page errors ' + errs.join(';'));
+    await ctx.close(); await b3.close(); }
+
   finish();
 })();
