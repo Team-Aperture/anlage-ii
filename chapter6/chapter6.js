@@ -410,7 +410,7 @@ const Chapter6 = (() => {
         { speaker:'SYSTEM', text:`VERSUCHSREIHE ${SERIES} // PROTOKOLL WIEDERHERGESTELLT.` },
         { speaker:'ASP-1024', text:'„Moin."' },
         { speaker:'R-3MI',  text:'„Wir waren nur kurz weg."' },
-        { speaker:'ASP-1024', text:'„Die Daten auch nicht."' },
+        { speaker:'ASP-1024', text:'„Die Daten sind noch da."' },
       ]);
       return;
     }

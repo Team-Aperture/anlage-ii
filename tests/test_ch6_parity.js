@@ -85,6 +85,11 @@ async function openCh6(b, prog) {
     const L = await lines(p);
     check(L.some(t => /PROTOKOLL WIEDERHERGESTELLT/.test(t)), '  resume line shown');
     await H.drain(p);
+    // coming back: R-3MI says they were only gone briefly, so ASP's answer has to follow from that
+    // ("Die Daten auch nicht" had no negative to refer back to)
+    const all = await p.evaluate(() => GameEngine.dialogue.history().map(l => l.text));
+    const at = all.findIndex(t => /Wir waren nur kurz weg/.test(t));
+    check(at >= 0 && /Die Daten sind noch da/.test(all[at + 1] || '') && !all.some(t => /Die Daten auch nicht/.test(t)), `  ASP answers "Wir waren nur kurz weg" sensibly (${all[at + 1] || 'no answer'})`);
     const st = await saved(p);
     check(st.ch6_progress && st.ch6_progress.rule.cond === 'cd' && JSON.stringify(st.ch6_progress.archive) === JSON.stringify(archive), '  rule and archive unchanged');
     for (let i = 0; i < 8 && !(await p.locator('#bbModal:not(.hidden)').count()); i++) { await hs(p, 'Blackbox bedienen'); await H.drain(p); }
